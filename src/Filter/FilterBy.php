@@ -7,8 +7,7 @@ use FiiSoft\Jackdaw\Internal\Helper;
 
 final class FilterBy implements Filter
 {
-    /** @var Filter */
-    private $filter;
+    private Filter $filter;
     
     /** @var string|int */
     private $field;

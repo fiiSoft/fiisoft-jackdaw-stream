@@ -6,17 +6,10 @@ use FiiSoft\Jackdaw\Stream;
 
 final class LazyResult extends BaseStreamPipe implements Result
 {
-    /** @var Stream */
-    private $stream;
-    
-    /** @var ResultProvider */
-    private $resultProvider;
-    
-    /** @var Result */
-    private $resultItem;
-    
-    /** @var bool */
-    private $isExecuted = false;
+    private Stream $stream;
+    private ResultProvider $resultProvider;
+    private ?Result $resultItem;
+    private bool $isExecuted = false;
     
     /** @var mixed|null */
     private $orElse;
@@ -28,7 +21,7 @@ final class LazyResult extends BaseStreamPipe implements Result
         $this->orElse = $orElse;
     }
     
-    public function run()
+    public function run(): void
     {
         $this->execute();
     }
@@ -116,7 +109,7 @@ final class LazyResult extends BaseStreamPipe implements Result
     /**
      * @inheritDoc
      */
-    public function call($consumer)
+    public function call($consumer): void
     {
         $this->execute()->call($consumer);
     }

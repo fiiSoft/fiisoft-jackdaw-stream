@@ -6,8 +6,7 @@ use FiiSoft\Jackdaw\Internal\Helper;
 
 final class Remove implements Mapper
 {
-    /** @var int[]|string[] */
-    private $fields;
+    private array $fields;
     
     /**
      * @param array|string|int $fields

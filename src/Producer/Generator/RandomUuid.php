@@ -8,14 +8,10 @@ use Ramsey\Uuid\Uuid;
 
 final class RandomUuid implements Producer
 {
-    /** @var int */
-    private $count = 0;
+    private int $count = 0;
+    private int $limit;
     
-    /** @var int */
-    private $limit;
-    
-    /** @var bool */
-    private $asHex;
+    private bool $asHex;
     
     public function __construct(bool $asHex = true, int $limit = \PHP_INT_MAX)
     {
@@ -32,7 +28,7 @@ final class RandomUuid implements Producer
         while ($this->count !== $this->limit) {
     
             $item->key = $this->count++;
-            $item->value = $this->asHex ? Uuid::uuid4()->getHex() : Uuid::uuid4()->toString();
+            $item->value = $this->asHex ? Uuid::uuid4()->getHex()->toString() : Uuid::uuid4()->toString();
             
             yield;
         }

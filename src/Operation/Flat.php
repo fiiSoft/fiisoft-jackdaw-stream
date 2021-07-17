@@ -8,11 +8,10 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Flat extends BaseOperation
 {
-    /** @var int */
-    private $maxLevel;
+    private int $maxLevel;
     
     /** @var Item[] */
-    private $items = [];
+    private array $items = [];
     
     /**
      * @param int $level 0 means no nesting restrictions (well, almost)
@@ -26,9 +25,9 @@ final class Flat extends BaseOperation
         $this->maxLevel = $level === 0 ? \PHP_INT_MAX : $level;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
-        if (\is_array($signal->item->value) || $signal->item->value instanceof \Traversable) {
+        if (\is_iterable($signal->item->value)) {
             $this->collectItems($signal->item->value, 1);
             if (empty($this->items)) {
                 return;
@@ -50,11 +49,11 @@ final class Flat extends BaseOperation
         }
     }
     
-    private function collectItems($values, int $level)
+    private function collectItems($values, int $level): void
     {
         if ($level < $this->maxLevel) {
             foreach ($values as $key => $value) {
-                if (\is_array($value) || $value instanceof \Traversable) {
+                if (\is_iterable($value)) {
                     $this->collectItems($value, $level + 1);
                 } else {
                     $this->items[] = new Item($key, $value);

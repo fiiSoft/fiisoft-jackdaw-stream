@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Comparator;
 final class SortBy implements Comparator
 {
     /** @var string[] */
-    private $fields = [];
+    private array $fields = [];
     
     /**
      * @param string[] $fields format: "id asc", "name desc"
@@ -33,7 +33,7 @@ final class SortBy implements Comparator
         return 0;
     }
     
-    private function validateAndSetFields(array $fields)
+    private function validateAndSetFields(array $fields): void
     {
         if (empty($fields)) {
             throw new \InvalidArgumentException('Fields cannot be empty');

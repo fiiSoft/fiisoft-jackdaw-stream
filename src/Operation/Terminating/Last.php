@@ -10,11 +10,8 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Last extends FinalOperation implements ResultProvider
 {
-    /** @var Item|null */
-    private $item = null;
-    
-    /** @var bool */
-    private $found = false;
+    private ?Item $item = null;
+    private bool $found = false;
     
     /**
      * @param Stream $stream
@@ -25,14 +22,14 @@ final class Last extends FinalOperation implements ResultProvider
         parent::__construct($stream, $this, $default);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->found === false) {
             $this->found = true;
         }
     }
     
-    public function streamingFinished(Signal $signal)
+    public function streamingFinished(Signal $signal): void
     {
         if ($this->found) {
             $this->item = $signal->item->copy();

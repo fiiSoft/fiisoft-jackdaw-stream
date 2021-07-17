@@ -7,28 +7,22 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 final class RandomString implements Producer
 {
-    const DEFAULT_CHARSET = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890';
+    private const DEFAULT_CHARSET = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890';
     
-    /** @var int  */
-    private $minLength;
+    private int $minLength;
+    private int $maxLength;
     
-    /** @var int  */
-    private $maxLength;
-    
-    /** @var int  */
-    private $count = 0;
-    
-    /** @var int  */
-    private $limit;
+    private int $count = 0;
+    private int $limit;
     
     /** @var string[] */
-    private $chars = [];
+    private array $chars = [];
     
     public function __construct(
         int $minLength,
-        int $maxLength = null,
+        ?int $maxLength = null,
         int $limit = \PHP_INT_MAX,
-        string $charset = null
+        ?string $charset = null
     ) {
         if ($maxLength !== null && $maxLength < $minLength) {
             throw new \InvalidArgumentException('Max length cannot be less than min length');

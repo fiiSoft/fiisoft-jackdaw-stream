@@ -13,14 +13,10 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Find extends FinalOperation implements ResultProvider
 {
-    /** @var Predicate */
-    private $predicate;
+    private Predicate $predicate;
+    private int $mode;
     
-    /** @var int */
-    private $mode;
-    
-    /** @var Item|null */
-    private $item = null;
+    private ?Item $item = null;
     
     /**
      * @param Stream $stream
@@ -35,7 +31,7 @@ final class Find extends FinalOperation implements ResultProvider
         parent::__construct($stream, $this);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->predicate->isSatisfiedBy($signal->item->value, $signal->item->key, $this->mode)) {
             $this->item = $signal->item->copy();

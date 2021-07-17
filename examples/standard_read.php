@@ -13,7 +13,7 @@ $stream = [];
 $fp = fopen(__DIR__.'/../var/testfile.txt', 'rb');
 
 while (($line = fgets($fp)) !== false) {
-    $row = json_decode($line, true);
+    $row = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
     
     if ($row['isVerified']
         && isset($row['facebookId'])

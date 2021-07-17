@@ -6,8 +6,7 @@ use FiiSoft\Jackdaw\Consumer\Consumers;
 
 final class ResultItem implements Result
 {
-    /** @var bool */
-    private $found = false;
+    private bool $found = false;
     
     /** @var string|int */
     private $key = null;
@@ -15,7 +14,7 @@ final class ResultItem implements Result
     /** @var mixed */
     private $value = null;
     
-    public static function create(Item $item = null, $default = null): Result
+    public static function create(?Item $item, $default = null): Result
     {
         return $item !== null ? self::createFound($item) : self::createNotFound($default);
     }
@@ -30,7 +29,7 @@ final class ResultItem implements Result
         return new self(null, $default);
     }
     
-    private function __construct(Item $item = null, $default = null)
+    private function __construct(?Item $item, $default = null)
     {
         if ($item !== null) {
             $this->found = true;
@@ -84,7 +83,7 @@ final class ResultItem implements Result
     /**
      * @inheritdoc
      */
-    public function call($consumer)
+    public function call($consumer): void
     {
         Consumers::getAdapter($consumer)->consume($this->value, $this->key);
     }
@@ -119,7 +118,7 @@ final class ResultItem implements Result
     public function toJson(int $flags = 0): string
     {
         $data = $this->found || $this->value !== null ? $this->value : null;
-        return \json_encode($data, $flags);
+        return \json_encode($data, \JSON_THROW_ON_ERROR | $flags);
     }
     
     /**
@@ -128,7 +127,7 @@ final class ResultItem implements Result
     public function toJsonAssoc(int $flags = 0): string
     {
         $data = $this->found || $this->value !== null ? [$this->key ?? 0 => $this->value] : null;
-        return \json_encode($data, $flags);
+        return \json_encode($data, \JSON_THROW_ON_ERROR | $flags);
     }
     
     /**
@@ -139,10 +138,7 @@ final class ResultItem implements Result
         return $this->toString();
     }
     
-    /**
-     * @inheritdoc
-     */
-    public function run()
+    public function run(): void
     {
         //do noting
     }

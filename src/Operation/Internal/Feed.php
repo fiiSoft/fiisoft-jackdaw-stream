@@ -7,15 +7,14 @@ use FiiSoft\Jackdaw\Internal\Signal;
 
 final class Feed extends BaseOperation
 {
-    /** @var BaseStreamPipe|null */
-    private $stream;
+    private ?BaseStreamPipe $stream;
     
     public function __construct(BaseStreamPipe $stream)
     {
         $this->stream = $stream;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->stream !== null && !$signal->sendTo($this->stream)) {
             $this->stream = null;

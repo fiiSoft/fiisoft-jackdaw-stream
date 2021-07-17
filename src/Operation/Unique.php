@@ -11,20 +11,14 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Unique extends BaseOperation
 {
-    /** @var Comparator|null  */
-    private $comparator = null;
-    
-    /** @var int */
-    private $mode;
+    private ?Comparator $comparator = null;
+    private int $mode;
     
     /** @var Item[] */
-    private $keysAndValues = [];
+    private array $keysAndValues = [];
     
-    /** @var array */
-    private $valuesMap = [];
-    
-    /** @var array */
-    private $values = [];
+    private array $valuesMap = [];
+    private array $values = [];
     
     /**
      * @param Comparator|callable|null $comparator
@@ -35,7 +29,7 @@ final class Unique extends BaseOperation
         $this->mode = Check::getMode($mode);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         switch ($this->mode) {
             case Check::VALUE:

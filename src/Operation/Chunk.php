@@ -7,20 +7,12 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Chunk extends BaseOperation
 {
-    /** @var int */
-    private $size;
+    private int $size;
+    private int $count = 0;
+    private int $index = 0;
     
-    /** @var int */
-    private $count = 0;
-    
-    /** @var int */
-    private $index = 0;
-    
-    /** @var array */
-    private $chunked = [];
-    
-    /** @var bool */
-    private $preserveKeys;
+    private array $chunked = [];
+    private bool $preserveKeys;
     
     public function __construct(int $size, bool $preserveKeys = false)
     {
@@ -32,7 +24,7 @@ final class Chunk extends BaseOperation
         $this->preserveKeys = $preserveKeys;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $item = $signal->item;
         
@@ -55,7 +47,7 @@ final class Chunk extends BaseOperation
         }
     }
     
-    public function streamingFinished(Signal $signal)
+    public function streamingFinished(Signal $signal): void
     {
         if (!empty($this->chunked) && $signal->isStreamEmpty()) {
             $signal->resume();
@@ -65,7 +57,7 @@ final class Chunk extends BaseOperation
         }
     }
     
-    private function pass(Signal $signal)
+    private function pass(Signal $signal): void
     {
         $signal->item->key = $this->index++;
         $signal->item->value = $this->chunked;

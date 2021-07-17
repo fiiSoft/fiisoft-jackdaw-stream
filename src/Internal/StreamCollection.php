@@ -7,13 +7,10 @@ use FiiSoft\Jackdaw\StreamMaker;
 final class StreamCollection implements \Iterator
 {
     /** @var StreamApi[] */
-    private $streams = [];
+    private array $streams = [];
     
-    /** @var array */
-    private $dataCollection;
-    
-    /** @var array */
-    private $keys;
+    private array $dataCollection;
+    private array $keys;
     
     public function __construct(array $dataCollection)
     {
@@ -54,7 +51,7 @@ final class StreamCollection implements \Iterator
      */
     public function toJson(int $flags = 0): string
     {
-        return \json_encode($this->dataCollection, $flags);
+        return \json_encode($this->dataCollection, \JSON_THROW_ON_ERROR | $flags);
     }
     
     /**
@@ -70,7 +67,7 @@ final class StreamCollection implements \Iterator
         return $this->get(\current($this->keys));
     }
     
-    public function next()
+    public function next(): void
     {
         \next($this->keys);
     }
@@ -88,7 +85,7 @@ final class StreamCollection implements \Iterator
         return \key($this->keys) !== null;
     }
     
-    public function rewind()
+    public function rewind(): void
     {
         \reset($this->keys);
     }

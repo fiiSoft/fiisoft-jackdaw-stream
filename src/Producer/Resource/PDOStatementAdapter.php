@@ -7,13 +7,10 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 final class PDOStatementAdapter implements Producer
 {
-    /** @var \PDOStatement */
-    private $statement;
+    private \PDOStatement $statement;
+    private ?int $fetchMode;
     
-    /** @var int|null */
-    private $fetchMode;
-    
-    public function __construct(\PDOStatement $statement, int $fetchMode = null)
+    public function __construct(\PDOStatement $statement, ?int $fetchMode = null)
     {
         $this->statement = $statement;
         $this->fetchMode = $fetchMode;

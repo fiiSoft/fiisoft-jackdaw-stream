@@ -7,8 +7,7 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 final class IteratorAdapter implements Producer
 {
-    /** @var \Iterator */
-    private $iterator;
+    private \Iterator $iterator;
     
     public function __construct(\Iterator $iterator)
     {

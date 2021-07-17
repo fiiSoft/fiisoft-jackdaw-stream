@@ -7,15 +7,14 @@ use FiiSoft\Jackdaw\Internal\StreamIterator;
 
 final class Iterate extends BaseOperation
 {
-    /** @var StreamIterator */
-    private $iterator;
+    private StreamIterator $iterator;
     
     public function __construct(StreamIterator $iterator)
     {
         $this->iterator = $iterator;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $this->iterator->setItem($signal->item);
         

@@ -6,8 +6,7 @@ use FiiSoft\Jackdaw\Internal\Item;
 
 final class Average implements Reducer
 {
-    /** @var int */
-    private $count = 0;
+    private int $count = 0;
     
     /** @var float|int */
     private $total = 0;
@@ -16,7 +15,7 @@ final class Average implements Reducer
      * @param float|int $value
      * @return void
      */
-    public function consume($value)
+    public function consume($value): void
     {
         $this->total += $value;
         

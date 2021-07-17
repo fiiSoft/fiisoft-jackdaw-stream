@@ -13,7 +13,7 @@ final class Max implements Reducer
      * @param float|int $value
      * @return void
      */
-    public function consume($value)
+    public function consume($value): void
     {
         if ($this->result === null) {
             $this->result = $value;

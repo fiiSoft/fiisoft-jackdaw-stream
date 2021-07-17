@@ -4,8 +4,7 @@ namespace FiiSoft\Jackdaw\Mapper;
 
 final class Append implements Mapper
 {
-    /** @var Mapper */
-    private $mapper;
+    private Mapper $mapper;
     
     /** @var string|int */
     private $field;

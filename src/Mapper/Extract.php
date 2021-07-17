@@ -12,8 +12,7 @@ final class Extract implements Mapper
     /** @var mixed|null */
     private $orElse;
     
-    /** @var bool */
-    private $single;
+    private bool $single;
     
     /**
      * @param array|string|int $fields

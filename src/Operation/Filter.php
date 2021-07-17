@@ -10,14 +10,10 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Filter extends BaseOperation
 {
-    /** @var FilterStrategy */
-    private $filterStrategy;
+    private FilterStrategy $filterStrategy;
     
-    /** @var bool */
-    private $negation;
-    
-    /** @var int */
-    private $mode;
+    private bool $negation;
+    private int $mode;
     
     /**
      * @param FilterStrategy|callable|mixed $filter
@@ -31,7 +27,7 @@ final class Filter extends BaseOperation
         $this->mode = Check::getMode($mode);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->negation
             XOR $this->filterStrategy->isAllowed($signal->item->value, $signal->item->key, $this->mode)

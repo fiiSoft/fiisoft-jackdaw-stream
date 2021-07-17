@@ -11,23 +11,16 @@ abstract class Collaborator extends BaseStreamPipe
      * @param Item[] $items
      * @return void
      */
-    abstract protected function restartFrom(Operation $operation, array $items);
+    abstract protected function restartFrom(Operation $operation, array $items): void;
     
     /**
      * @param Operation $operation
      * @param Item[] $items
      * @return void
      */
-    abstract protected function continueFrom(Operation $operation, array $items);
+    abstract protected function continueFrom(Operation $operation, array $items): void;
     
-    /**
-     * @param Operation $operation
-     * @return void
-     */
-    abstract protected function limitReached(Operation $operation);
+    abstract protected function limitReached(Operation $operation): void;
     
-    /**
-     * @return void
-     */
-    abstract protected function streamIsEmpty();
+    abstract protected function streamIsEmpty(): void;
 }

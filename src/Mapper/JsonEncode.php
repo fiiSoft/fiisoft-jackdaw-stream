@@ -4,8 +4,7 @@ namespace FiiSoft\Jackdaw\Mapper;
 
 final class JsonEncode implements Mapper
 {
-    /** @var int */
-    private $flags;
+    private int $flags;
     
     public function __construct(int $flags = 0)
     {
@@ -14,6 +13,6 @@ final class JsonEncode implements Mapper
     
     public function map($value, $key)
     {
-        return \json_encode($value, $this->flags);
+        return \json_encode($value, \JSON_THROW_ON_ERROR | $this->flags);
     }
 }

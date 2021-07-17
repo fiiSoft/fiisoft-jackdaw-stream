@@ -9,11 +9,8 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Collect extends BaseOperation
 {
-    /** @var Collector */
-    private $collector;
-    
-    /** @var bool */
-    private $preserveKeys;
+    private Collector $collector;
+    private bool $preserveKeys;
     
     /**
      * @param Collector|\ArrayAccess $collector
@@ -25,7 +22,7 @@ final class Collect extends BaseOperation
         $this->preserveKeys = $preserveKeys;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->preserveKeys) {
             $this->collector->set($signal->item->key, $signal->item->value);

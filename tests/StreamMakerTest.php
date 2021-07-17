@@ -15,15 +15,14 @@ use PHPUnit\Framework\TestCase;
 
 class StreamMakerTest extends TestCase
 {
-    /** @var StreamApi */
-    private $stream;
+    private StreamApi $stream;
     
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->stream = StreamMaker::from([1, 2, 3, 4]);
     }
     
-    public function test_from_array()
+    public function test_from_array(): void
     {
         $stream = StreamMaker::from([6,2,4,8]);
         
@@ -31,7 +30,7 @@ class StreamMakerTest extends TestCase
         self::assertSame('6,2,4,8', $stream->toString());
     }
     
-    public function test_from_Iterator()
+    public function test_from_Iterator(): void
     {
         $stream = StreamMaker::from(new ArrayIterator([6, 2, 4, 8]));
     
@@ -39,7 +38,7 @@ class StreamMakerTest extends TestCase
         self::assertSame('6,2,4,8', $stream->toString());
     }
     
-    public function test_from_Producer()
+    public function test_from_Producer(): void
     {
         $producer = new SequentialInt(1, 1, 4);
         $stream = StreamMaker::from($producer);
@@ -48,53 +47,51 @@ class StreamMakerTest extends TestCase
         self::assertSame('1,2,3,4', $stream->toString());
     }
     
-    public function test_from_callable_StreamApi_factory()
+    public function test_from_callable_StreamApi_factory(): void
     {
-        $stream = StreamMaker::from(static function () {
-            return Stream::from([5, 3, 1]);
-        });
+        $stream = StreamMaker::from(static fn() => Stream::from([5, 3, 1]));
     
         self::assertSame([5, 3, 1], $stream->toArray());
         self::assertSame('5,3,1', $stream->toString());
     }
     
-    public function test_make_with_method_of()
+    public function test_make_with_method_of(): void
     {
         $stream = StreamMaker::of(['a', 'b'], 1, 2, ['c', 'd']);
         self::assertSame('a,b,1,2,c,d', $stream->toString());
         self::assertSame('a,b,1,2,c,d', $stream->toString());
     }
     
-    public function test_make_empty_stream()
+    public function test_make_empty_stream(): void
     {
         $stream = StreamMaker::empty();
         self::assertSame('', $stream->toString());
         self::assertSame('', $stream->toString());
     }
     
-    public function test_wrog_factory_param()
+    public function test_wrog_factory_param(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         
         StreamMaker::from('yolo');
     }
     
-    public function test_notNull()
+    public function test_notNull(): void
     {
         self::assertTrue($this->stream->notNull()->isNotEmpty()->get());
     }
     
-    public function test_lessOrEqual()
+    public function test_lessOrEqual(): void
     {
         self::assertSame([1, 2], $this->stream->lessOrEqual(2)->toArray());
     }
     
-    public function test_skip()
+    public function test_skip(): void
     {
         self::assertSame([3, 4], $this->stream->skip(2)->toArray());
     }
     
-    public function test_call()
+    public function test_call(): void
     {
         $counter = Consumers::counter();
         $this->stream->call($counter)->run();
@@ -102,106 +99,102 @@ class StreamMakerTest extends TestCase
         self::assertSame(4, $counter->count());
     }
     
-    public function test_notEmpty()
+    public function test_notEmpty(): void
     {
         self::assertSame(4, $this->stream->notEmpty()->count()->get());
     }
     
-    public function test_without()
+    public function test_without(): void
     {
         self::assertSame([1, 4], $this->stream->without([2, 3])->toArray());
     }
     
-    public function test_lessThan()
+    public function test_lessThan(): void
     {
         self::assertSame('1', $this->stream->lessThan(2)->toString());
     }
     
-    public function test_greaterOrEqual()
+    public function test_greaterOrEqual(): void
     {
         self::assertSame([3, 4], $this->stream->greaterOrEqual(3)->toArray());
     }
     
-    public function test_onlyNumeric()
+    public function test_onlyNumeric(): void
     {
         self::assertSame(4, $this->stream->onlyNumeric()->count()->get());
     }
     
-    public function test_onlyIntegers()
+    public function test_onlyIntegers(): void
     {
         self::assertSame(4, $this->stream->onlyIntegers()->count()->get());
     }
     
-    public function test_onlyStrings()
+    public function test_onlyStrings(): void
     {
         self::assertSame(0, $this->stream->onlyStrings()->count()->get());
     }
     
-    public function test_map()
+    public function test_map(): void
     {
-        self::assertSame([1, 4, 9, 16], $this->stream->map(static function (int $v) {
-            return $v * $v;
-        })->toArray());
+        self::assertSame([1, 4, 9, 16], $this->stream->map(static fn(int $v) => $v * $v)->toArray());
     }
     
-    public function test_mapKey()
+    public function test_mapKey(): void
     {
         $expected = ['_0' => 1, '_1' => 2, '_2' => 3, '_3' => 4];
-        self::assertSame($expected, $this->stream->mapKey(static function ($_, $k) {
-            return '_'.$k;
-        })->toArrayAssoc());
+        self::assertSame($expected, $this->stream->mapKey(static fn($_, $k) => '_'.$k)->toArrayAssoc());
     }
     
-    public function test_castToInt()
+    public function test_castToInt(): void
     {
         self::assertSame([1, 2, 3, 4], $this->stream->castToInt()->toArray());
     }
     
-    public function test_greaterThan()
+    public function test_greaterThan(): void
     {
         self::assertSame([4], $this->stream->greaterThan(3)->toArray());
     }
     
-    public function test_collectKeys()
+    public function test_collectKeys(): void
     {
         $buffer = new \ArrayObject();
         $this->stream->collectKeys($buffer)->run();
         self::assertSame([0, 1, 2, 3], $buffer->getArrayCopy());
     }
     
-    public function test_only()
+    public function test_only(): void
     {
         self::assertSame([2, 3], $this->stream->only([2, 3])->toArray());
     }
     
-    public function test_omit()
+    public function test_omit(): void
     {
         self::assertSame([1, 2], $this->stream->omit(Filters::greaterOrEqual(3))->toArray());
     }
     
-    public function test_join()
+    public function test_join(): void
     {
         self::assertSame([1, 2, 3, 4, 'a', 'b', 'c'], $this->stream->join(['a', 'b', 'c'])->toArray());
     }
     
-    public function test_unique()
+    public function test_unique(): void
     {
         self::assertSame([1, 3, 5, 2], StreamMaker::from([1, 3, 5, 1, 2, 5])->unique()->toArray());
     }
     
-    public function test_reindex()
+    public function test_reindex(): void
     {
         $actual = StreamMaker::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4])->reindex()->toArrayAssoc();
         self::assertSame([1, 2, 3, 4], $actual);
     }
     
-    public function test_flip()
+    public function test_flip(): void
     {
         $actual = $this->stream->flip()->toArrayAssoc();
         self::assertSame([1 => 0, 2 => 1, 3 => 2, 4 => 3], $actual);
     }
     
-    public function test_chunk()
+    public function test_chunk(): void
     {
         self::assertSame([[1], [2], [3], [4]], $this->stream->chunk(1)->toArray());
         self::assertSame([[1, 2], [3, 4]], $this->stream->chunk(2)->toArray());
@@ -210,7 +203,7 @@ class StreamMakerTest extends TestCase
         self::assertSame([[1, 2, 3, 4]], $this->stream->chunk(5)->toArray());
     }
     
-    public function test_chunkAssoc()
+    public function test_chunkAssoc(): void
     {
         $stream = StreamMaker::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
         
@@ -219,13 +212,13 @@ class StreamMakerTest extends TestCase
         self::assertSame($expected, $stream->chunkAssoc(2)->toArrayAssoc());
     }
     
-    public function test_extract()
+    public function test_extract(): void
     {
         $rows = [['id' => 1, 'name' => 'Joel'], ['id' => 2, 'name' => 'Grim']];
         self::assertSame(['Joel', 'Grim'], StreamMaker::from($rows)->extract('name')->toArray());
     }
     
-    public function test_split()
+    public function test_split(): void
     {
         $sentences = [
             'cedrium devirginato et adelphis',
@@ -240,12 +233,12 @@ class StreamMakerTest extends TestCase
         self::assertSame($expected, StreamMaker::from($sentences)->split()->toArray());
     }
     
-    public function test_scan()
+    public function test_scan(): void
     {
         self::assertSame([0, 1, 3, 6, 10], $this->stream->scan(0, Reducers::sum())->toArray());
     }
     
-    public function test_flat()
+    public function test_flat(): void
     {
         $stream = StreamMaker::from([
             ['a' => 1],
@@ -256,35 +249,33 @@ class StreamMakerTest extends TestCase
         self::assertSame([1, 'b', 2], $stream->flat()->toArray());
     }
     
-    public function test_flatMap()
+    public function test_flatMap(): void
     {
-        $actual = $this->stream->flatMap(static function ($v, $k) {
-            return [$k => [$v]];
-        })->toArray();
+        $actual = $this->stream->flatMap(static fn($v, $k) => [$k => [$v]])->toArray();
         self::assertSame([1, 2, 3, 4], $actual);
     }
     
-    public function test_sort()
+    public function test_sort(): void
     {
         self::assertSame([1, 2, 3, 4], $this->stream->sort()->toArray());
     }
     
-    public function test_reverse_sort()
+    public function test_reverse_sort(): void
     {
         self::assertSame([4, 3, 2, 1], $this->stream->rsort()->toArray());
     }
     
-    public function test_reverse()
+    public function test_reverse(): void
     {
         self::assertSame([4, 3, 2, 1], $this->stream->reverse()->toArray());
     }
     
-    public function test_shuffle()
+    public function test_shuffle(): void
     {
         self::assertSame(4, $this->stream->shuffle()->count()->get());
     }
     
-    public function test_feed()
+    public function test_feed(): void
     {
         //given
         $buffer = new \ArrayObject();
@@ -297,22 +288,20 @@ class StreamMakerTest extends TestCase
         self::assertSame([1, 2, 3, 4], $buffer->getArrayCopy());
     }
     
-    public function test_until()
+    public function test_until(): void
     {
         $counter = Consumers::counter();
-        $this->stream->until(static function ($v) {
-            return $v > 2;
-        })->call($counter)->run();
+        $this->stream->until(static fn($v) => $v > 2)->call($counter)->run();
         
         self::assertSame(2, $counter->count());
     }
     
-    public function test_while()
+    public function test_while(): void
     {
         self::assertSame([1, 2], $this->stream->while(Filters::lessOrEqual(2))->toArray());
     }
     
-    public function test_forEach()
+    public function test_forEach(): void
     {
         $counter = Consumers::counter();
         $this->stream->forEach($counter);
@@ -320,48 +309,48 @@ class StreamMakerTest extends TestCase
         self::assertSame(4, $counter->count());
     }
     
-    public function test_reduce()
+    public function test_reduce(): void
     {
         self::assertSame(10, $this->stream->reduce(Reducers::sum())->get());
     }
     
-    public function test_fold()
+    public function test_fold(): void
     {
         self::assertSame(13, $this->stream->fold(13, Reducers::max())->get());
     }
     
-    public function test_groupBy()
+    public function test_groupBy(): void
     {
         $streams = $this->stream->groupBy(Discriminators::evenOdd());
         self::assertSame(['odd', 'even'], $streams->classifiers());
     }
     
-    public function test_isNotEmpty()
+    public function test_isNotEmpty(): void
     {
         self::assertTrue($this->stream->isNotEmpty()->get());
     }
     
-    public function test_has()
+    public function test_has(): void
     {
         self::assertTrue($this->stream->has(3)->get());
     }
     
-    public function test_hasAny()
+    public function test_hasAny(): void
     {
         self::assertTrue($this->stream->hasAny([8,2,5])->get());
     }
     
-    public function test_hasEvery()
+    public function test_hasEvery(): void
     {
         self::assertTrue($this->stream->hasEvery([1, 4])->get());
     }
     
-    public function test_hasOnly()
+    public function test_hasOnly(): void
     {
         self::assertTrue($this->stream->hasOnly([6, 3, 2, 5, 1, 4])->get());
     }
     
-    public function test_find()
+    public function test_find(): void
     {
         $item = $this->stream->find(3);
         
@@ -370,7 +359,7 @@ class StreamMakerTest extends TestCase
         self::assertSame(3, $item->get());
     }
     
-    public function test_toArrayAssoc()
+    public function test_toArrayAssoc(): void
     {
         $intputData = ['a' => 1, 'b' => 2];
         
@@ -378,7 +367,7 @@ class StreamMakerTest extends TestCase
         self::assertSame($intputData, StreamMaker::from($intputData)->toArrayAssoc());
     }
     
-    public function test_toJsonAssoc()
+    public function test_toJsonAssoc(): void
     {
         $inputData = ['a' => 1, 'b' => 2];
         $expected = '{"a":1,"b":2}';
@@ -387,23 +376,23 @@ class StreamMakerTest extends TestCase
         self::assertSame($expected, StreamMaker::from($inputData)->toJsonAssoc());
     }
     
-    public function test_first()
+    public function test_first(): void
     {
         self::assertSame(1, $this->stream->first()->get());
     }
     
-    public function test_last()
+    public function test_last(): void
     {
         self::assertSame(4, $this->stream->last()->get());
     }
     
-    public function test_run()
+    public function test_run(): void
     {
         $this->stream->run();
         self::assertTrue(true);
     }
     
-    public function test_filterBy()
+    public function test_filterBy(): void
     {
         $stream = StreamMaker::from([
             ['id' => 4, 'name' => 'Joe'],
@@ -414,13 +403,13 @@ class StreamMakerTest extends TestCase
         self::assertSame([['id' => 5, 'name' => 'Christine']], $actual);
     }
     
-    public function test_sortBy()
+    public function test_sortBy(): void
     {
         $actual = StreamMaker::from([['a' => 1], ['a' => 5]])->sortBy('a desc')->toArray();
         self::assertSame([['a' => 5], ['a' => 1]], $actual);
     }
     
-    public function test_remove()
+    public function test_remove(): void
     {
         $stream = StreamMaker::from([
             ['id' => 4, 'name' => 'Joe'],
@@ -430,11 +419,9 @@ class StreamMakerTest extends TestCase
         self::assertSame([['name' => 'Joe'], ['name' => 'Christine']], $stream->remove('id')->toArray());
     }
     
-    public function test_append()
+    public function test_append(): void
     {
-        $actual = $this->stream->append('doubled', static function (int $v) {
-            return 2 * $v;
-        })->toArray();
+        $actual = $this->stream->append('doubled', static fn(int $v) => 2 * $v)->toArray();
         self::assertSame([
             [0 => 1, 'doubled' => 2],
             [1 => 2, 'doubled' => 4],

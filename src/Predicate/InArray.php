@@ -6,8 +6,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 
 final class InArray implements Predicate
 {
-    /** @var array */
-    private $values;
+    private array $values;
     
     public function __construct(array $values)
     {

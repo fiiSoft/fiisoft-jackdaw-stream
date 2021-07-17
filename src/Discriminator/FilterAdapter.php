@@ -7,11 +7,8 @@ use FiiSoft\Jackdaw\Internal\Check;
 
 final class FilterAdapter implements Discriminator
 {
-    /** @var Filter */
-    private $filter;
-    
-    /** @var int */
-    private $mode;
+    private Filter $filter;
+    private int $mode;
     
     public function __construct(Filter $filter, int $mode = Check::VALUE)
     {

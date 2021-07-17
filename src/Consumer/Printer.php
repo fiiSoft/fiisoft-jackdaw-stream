@@ -6,15 +6,14 @@ use FiiSoft\Jackdaw\Internal\Check;
 
 final class Printer implements Consumer
 {
-    /** @var int */
-    private $mode;
+    private int $mode;
     
     public function __construct(int $mode = Check::BOTH)
     {
         $this->mode = Check::getMode($mode);
     }
     
-    public function consume($value, $key)
+    public function consume($value, $key): void
     {
         switch ($this->mode) {
             case Check::BOTH:

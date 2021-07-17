@@ -7,7 +7,7 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Flip extends BaseOperation
 {
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $item = $signal->item;
         

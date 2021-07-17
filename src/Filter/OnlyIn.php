@@ -6,11 +6,8 @@ use FiiSoft\Jackdaw\Internal\Check;
 
 final class OnlyIn implements Filter
 {
-    /** @var array|int[]|string[] */
-    private $values;
-    
-    /** @var bool */
-    private $hashMap;
+    private array $values;
+    private bool $hashMap;
     
     public function __construct(array $values)
     {

@@ -7,10 +7,9 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Reindex extends BaseOperation
 {
-    /** @var int */
-    private $index = 0;
+    private int $index = 0;
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $signal->item->key = $this->index++;
     

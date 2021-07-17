@@ -7,11 +7,8 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Skip extends BaseOperation
 {
-    /** @var int */
-    private $offset;
-    
-    /** @var int */
-    private $count = 0;
+    private int $offset;
+    private int $count = 0;
     
     public function __construct(int $offset)
     {
@@ -22,7 +19,7 @@ final class Skip extends BaseOperation
         $this->offset = $offset;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->count === $this->offset) {
             $this->next->handle($signal);

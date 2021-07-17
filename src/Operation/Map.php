@@ -9,8 +9,7 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Map extends BaseOperation
 {
-    /** @var Mapper */
-    private $mapper;
+    private Mapper $mapper;
     
     /**
      * @param Mapper|callable $mapper
@@ -20,7 +19,7 @@ final class Map extends BaseOperation
         $this->mapper = Mappers::getAdapter($mapper);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $signal->item->value = $this->mapper->map($signal->item->value, $signal->item->key);
     

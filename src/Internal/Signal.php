@@ -7,29 +7,16 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Signal extends Collaborator
 {
-    /** @var Item */
-    public $item;
+    public Item $item;
     
-    /** @var bool */
-    private $isStopped = false;
+    private bool $isStopped = false;
+    private bool $isInterrupted = false;
+    private bool $isEmpty = false;
+    private bool $isTerminated = false;
+    private bool $isRestarted = false;
+    private int $innerLoopLevel = 0;
     
-    /** @var bool */
-    private $isInterrupted = false;
-    
-    /** @var bool */
-    private $isEmpty = false;
-    
-    /** @var bool */
-    private $isTerminated = false;
-    
-    /** @var bool */
-    private $isRestarted = false;
-    
-    /** @var int */
-    private $innerLoopLevel = 0;
-    
-    /** @var Stream */
-    private $stream;
+    private Stream $stream;
     
     public function __construct(Stream $stream)
     {
@@ -37,12 +24,12 @@ final class Signal extends Collaborator
         $this->item = new Item();
     }
     
-    public function stop()
+    public function stop(): void
     {
         $this->isStopped = true;
     }
     
-    public function terminate()
+    public function terminate(): void
     {
         $this->isStopped = true;
         $this->isTerminated = true;
@@ -67,7 +54,7 @@ final class Signal extends Collaborator
         return $this->isStopped && $this->innerLoopLevel === 0;
     }
     
-    public function interrupt()
+    public function interrupt(): void
     {
         $this->isInterrupted = true;
     }
@@ -86,27 +73,27 @@ final class Signal extends Collaborator
      * @param Operation $operation
      * @param Item[] $items
      */
-    public function restartFrom(Operation $operation, array $items)
+    public function restartFrom(Operation $operation, array $items): void
     {
         $this->isStopped = false;
         $this->isRestarted = true;
         $this->stream->restartFrom($operation, $items);
     }
     
-    public function continueFrom(Operation $operation, array $items)
+    public function continueFrom(Operation $operation, array $items): void
     {
         ++$this->innerLoopLevel;
         $this->stream->continueFrom($operation, $items);
     }
     
-    public function streamIsEmpty()
+    public function streamIsEmpty(): void
     {
         $this->isStopped = true;
         $this->isEmpty = true;
         $this->stream->streamIsEmpty();
     }
     
-    public function limitReached(Operation $operation)
+    public function limitReached(Operation $operation): void
     {
         $this->streamIsEmpty();
         $this->stream->limitReached($operation);
@@ -117,7 +104,7 @@ final class Signal extends Collaborator
         return $this->isEmpty;
     }
     
-    public function resume()
+    public function resume(): void
     {
         $this->isStopped = false;
         $this->isEmpty = false;

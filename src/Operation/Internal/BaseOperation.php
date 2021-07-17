@@ -7,8 +7,7 @@ use FiiSoft\Jackdaw\Operation\Operation;
 
 abstract class BaseOperation implements Operation
 {
-    /** @var Operation|null */
-    protected $next = null;
+    protected ?Operation $next = null;
     
     final public function setNext(Operation $next): Operation
     {
@@ -20,7 +19,7 @@ abstract class BaseOperation implements Operation
         return $next;
     }
     
-    public function streamingFinished(Signal $signal)
+    public function streamingFinished(Signal $signal): void
     {
         $this->next->streamingFinished($signal);
     }

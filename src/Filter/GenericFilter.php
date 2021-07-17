@@ -10,8 +10,7 @@ final class GenericFilter implements Filter
     /** @var callable */
     private $filter;
     
-    /** @var int */
-    private $numOfArgs;
+    private int $numOfArgs;
     
     public function __construct(callable $filter)
     {

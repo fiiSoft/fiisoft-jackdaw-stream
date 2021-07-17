@@ -9,8 +9,7 @@ final class GenericDiscriminator implements Discriminator
     /** @var callable */
     private $classifier;
     
-    /** @var int */
-    private $numOfArgs;
+    private int $numOfArgs;
     
     public function __construct(callable $classifier)
     {

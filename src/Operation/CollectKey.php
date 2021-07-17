@@ -9,8 +9,7 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class CollectKey extends BaseOperation
 {
-    /** @var Collector */
-    private $collector;
+    private Collector $collector;
     
     /**
      * @param Collector|\ArrayAccess $collector
@@ -20,7 +19,7 @@ final class CollectKey extends BaseOperation
         $this->collector = Collectors::getAdapter($collector);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $this->collector->add($signal->item->key);
         

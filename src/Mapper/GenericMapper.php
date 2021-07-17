@@ -9,8 +9,7 @@ final class GenericMapper implements Mapper
     /** @var callable */
     private $mapper;
     
-    /** @var int */
-    private $numOfArgs;
+    private int $numOfArgs;
     
     public function __construct(callable $mapper)
     {

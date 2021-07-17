@@ -16,12 +16,8 @@ $stream = Stream::from([4, 7, 2, 'a', 8, null, 5, 3, 7])
     ->notNull()
     ->limit(6)
     ->filter('is_int')
-    ->map(function (int $x) {
-        return $x ** 2;
-    })
-    ->filter(function (int $x) {
-        return $x <= 50;
-    })
+    ->map(fn(int $x) => $x ** 2)
+    ->filter(fn(int $x) => $x <= 50)
     ->collectIn($buffer)
     ->call(function ($v, $k) {
         echo 'key: ', $k;
@@ -88,9 +84,7 @@ Stream::of(5, 'five', 2, 'six', 4, 'seven', 2)
         echo 'element: ', $item, PHP_EOL;
     });
 
-$sorted = StreamMaker::from(function () {
-    return Stream::of(7, 4, 3, 8, 7, 6, 9, 1, 2, 7, 6)->unique()->sort();
-});
+$sorted = StreamMaker::from(fn() => Stream::of(7,4,3,8,7,6,9,1,2,7,6)->unique()->sort());
 echo 'sorted unique: ', $sorted->toString(), PHP_EOL;
 
 echo Stream::of(['a', 'b'], 6, 'z', 3, ['c', 'd'], $sorted)
@@ -127,9 +121,7 @@ echo 'sort normally: ', $words->sort()->toString(', '), PHP_EOL;
 $assoc = StreamMaker::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
 echo 'normal: ', $assoc->toJson(), PHP_EOL,
     'flipped: ', $assoc->flip()->toJson(0, false), PHP_EOL,
-    'map keys: ', $assoc->mapKey(static function ($v, $k) {
-                        return $v.'_'.$k;
-                    })->toJsonAssoc(), PHP_EOL;
+    'map keys: ', $assoc->mapKey(static fn($v, $k) => $v.'_'.$k)->toJsonAssoc(), PHP_EOL;
 
 if ($assoc->has(3)) {
     echo '3 is in stream!', PHP_EOL;

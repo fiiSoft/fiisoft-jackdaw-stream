@@ -4,10 +4,9 @@ namespace FiiSoft\Jackdaw\Consumer;
 
 final class Counter implements Consumer
 {
-    /** @var int */
-    private $count = 0;
+    private int $count = 0;
     
-    public function consume($value, $key)
+    public function consume($value, $key): void
     {
         ++$this->count;
     }

@@ -9,14 +9,13 @@ final class Sum implements Reducer
     /** @var float|int */
     private $result = 0;
     
-    /** @var bool */
-    private $hasAny = false;
+    private bool $hasAny = false;
     
     /**
      * @param float|int $value
      * @return void
      */
-    public function consume($value)
+    public function consume($value): void
     {
         $this->hasAny = true;
         $this->result += $value;

@@ -8,42 +8,38 @@ use PHPUnit\Framework\TestCase;
 
 final class DiscriminatorTest extends TestCase
 {
-    public function test_getAdapter_throws_exception_on_invalid_argument()
+    public function test_getAdapter_throws_exception_on_invalid_argument(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         
         Discriminators::getAdapter(15);
     }
     
-    public function test_GenericDiscriminator_throws_exception_when_callable_accepts_wrong_number_of_arguments()
+    public function test_GenericDiscriminator_throws_exception_when_callable_accepts_wrong_number_of_arguments(): void
     {
         $this->expectException(\LogicException::class);
         
-        Discriminators::generic(static function ($a, $b, $c) {
-            return true;
-        })->classify(15, 1);
+        Discriminators::generic(static fn($a,$b,$c) => true)->classify(15, 1);
     }
     
-    public function test_GenericDiscriminator_can_call_callable_with_two_arguments()
+    public function test_GenericDiscriminator_can_call_callable_with_two_arguments(): void
     {
-        self::assertSame('151', Discriminators::generic(static function ($a, $b) {
-            return $a.$b;
-        })->classify(15, 1));
+        self::assertSame('151', Discriminators::generic(static fn($a, $b) => $a.$b)->classify(15, 1));
     }
     
-    public function test_EvenOdd_throws_exception_when_checked_value_is_not_integer()
+    public function test_EvenOdd_throws_exception_when_checked_value_is_not_integer(): void
     {
         $this->expectException(\UnexpectedValueException::class);
         
         Discriminators::evenOdd()->classify('a', 5);
     }
     
-    public function test_EvenOdd_can_evaluate_key()
+    public function test_EvenOdd_can_evaluate_key(): void
     {
         self::assertSame('odd', Discriminators::evenOdd(Check::KEY)->classify('a', 5));
     }
     
-    public function test_EvenOdd_can_evaluate_both_value_and_key_together()
+    public function test_EvenOdd_can_evaluate_both_value_and_key_together(): void
     {
         foreach ([Check::BOTH, Check::ANY] as $mode) {
             $evenOdd = Discriminators::evenOdd($mode);

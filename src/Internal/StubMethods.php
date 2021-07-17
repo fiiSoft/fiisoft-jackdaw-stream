@@ -7,17 +7,17 @@ use FiiSoft\Jackdaw\Stream;
 
 trait StubMethods
 {
-    protected function restartFrom(Operation $operation, array $items)
+    protected function restartFrom(Operation $operation, array $items): void
     {
         //noop
     }
     
-    protected function continueFrom(Operation $operation, array $items)
+    protected function continueFrom(Operation $operation, array $items): void
     {
         //noop
     }
     
-    protected function limitReached(Operation $operation)
+    protected function limitReached(Operation $operation): void
     {
         //noop
     }
@@ -28,7 +28,7 @@ trait StubMethods
         return false;
     }
     
-    protected function streamIsEmpty()
+    protected function streamIsEmpty(): void
     {
         //noop
     }

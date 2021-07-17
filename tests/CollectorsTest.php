@@ -8,13 +8,13 @@ use PHPUnit\Framework\TestCase;
 
 final class CollectorsTest extends TestCase
 {
-    public function test_getAdapter_returns_passed_Collector()
+    public function test_getAdapter_returns_passed_Collector(): void
     {
         $collector = new ArrayAccess(new \ArrayObject());
         self::assertSame($collector, Collectors::getAdapter($collector));
     }
     
-    public function test_getAdapter_throws_exception_on_invalid_argument()
+    public function test_getAdapter_throws_exception_on_invalid_argument(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         

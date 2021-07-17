@@ -6,8 +6,7 @@ use FiiSoft\Jackdaw\Internal\Helper;
 
 final class Split implements Mapper
 {
-    /** @var string */
-    private $separator;
+    private string $separator;
     
     public function __construct(string $separator = '')
     {

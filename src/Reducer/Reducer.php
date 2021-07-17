@@ -10,7 +10,7 @@ interface Reducer extends ResultProvider
      * @param mixed $value
      * @return void
      */
-    public function consume($value);
+    public function consume($value): void;
     
     /**
      * @return mixed|null

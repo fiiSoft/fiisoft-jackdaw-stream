@@ -9,8 +9,7 @@ final class GenericComparator implements Comparator
     /** @var callable */
     private $comparator;
     
-    /** @var int */
-    private $numOfArgs;
+    private int $numOfArgs;
     
     public function __construct(callable $comparator)
     {

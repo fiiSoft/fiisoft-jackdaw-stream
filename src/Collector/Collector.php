@@ -9,11 +9,11 @@ interface Collector
      * @param mixed $value
      * @return void
      */
-    public function set($key, $value);
+    public function set($key, $value): void;
     
     /**
      * @param mixed $value
      * @return void
      */
-    public function add($value);
+    public function add($value): void;
 }

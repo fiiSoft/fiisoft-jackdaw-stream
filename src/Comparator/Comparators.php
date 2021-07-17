@@ -8,7 +8,7 @@ final class Comparators
      * @param Comparator|callable|null $comparator
      * @return Comparator|null
      */
-    public static function getAdapter($comparator)
+    public static function getAdapter($comparator): ?Comparator
     {
         if ($comparator instanceof Comparator) {
             $adapter = $comparator;

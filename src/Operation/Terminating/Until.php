@@ -10,14 +10,9 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Until extends BaseOperation
 {
-    /** @var Filter */
-    private $filter;
-    
-    /** @var int */
-    private $mode;
-    
-    /** @var bool */
-    private $doWhile;
+    private Filter $filter;
+    private int $mode;
+    private bool $doWhile;
     
     /**
      * @param Filter|callable|mixed $condition
@@ -31,7 +26,7 @@ final class Until extends BaseOperation
         $this->doWhile = $doWhile;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->doWhile XOR $this->filter->isAllowed($signal->item->value, $signal->item->key, $this->mode)) {
             $signal->terminate();

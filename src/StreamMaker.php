@@ -33,17 +33,11 @@ final class StreamMaker implements StreamApi
     public static function from($factory): StreamApi
     {
         if (\is_array($factory)) {
-            $callable = static function () use ($factory) {
-                return Stream::from($factory);
-            };
+            $callable = static fn() => Stream::from($factory);
         } elseif ($factory instanceof Producer) {
-            $callable = static function () use ($factory) {
-                return Stream::from(clone $factory);
-            };
+            $callable = static fn() => Stream::from(clone $factory);
         } elseif ($factory instanceof \Iterator) {
-            $callable = static function () use ($factory) {
-                return Stream::from(clone $factory);
-            };
+            $callable = static fn() => Stream::from(clone $factory);
         } elseif (\is_callable($factory)) {
             $callable = $factory;
         } else {
@@ -422,7 +416,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function forEach($consumer)
+    public function forEach($consumer): void
     {
         $this->make()->forEach($consumer);
     }
@@ -582,7 +576,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function run()
+    public function run(): void
     {
         $this->make()->run();
     }

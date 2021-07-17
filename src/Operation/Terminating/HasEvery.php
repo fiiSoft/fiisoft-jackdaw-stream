@@ -11,14 +11,10 @@ use FiiSoft\Jackdaw\Stream;
 
 final class HasEvery extends FinalOperation implements ResultProvider
 {
-    /** @var array */
-    private $values;
+    private array $values;
     
-    /** @var bool */
-    private $hasEvery = false;
-    
-    /** @var int */
-    private $mode;
+    private bool $hasEvery = false;
+    private int $mode;
     
     public function __construct(Stream $stream, array $values, int $mode = Check::VALUE)
     {
@@ -28,7 +24,7 @@ final class HasEvery extends FinalOperation implements ResultProvider
         parent::__construct($stream, $this);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->mode === Check::VALUE) {
             $this->testSingle($signal->item->value, $signal);
@@ -57,7 +53,7 @@ final class HasEvery extends FinalOperation implements ResultProvider
         return true;
     }
     
-    private function testValueAndKey(Signal $signal)
+    private function testValueAndKey(Signal $signal): void
     {
         $item = $signal->item;
         

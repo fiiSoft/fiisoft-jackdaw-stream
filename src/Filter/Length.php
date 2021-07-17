@@ -6,11 +6,8 @@ use FiiSoft\Jackdaw\Internal\Check;
 
 final class Length implements Filter
 {
-    /** @var int */
-    private $length;
-    
-    /** @var string */
-    private $type;
+    private int $length;
+    private string $type;
     
     public function __construct(int $length, string $type)
     {

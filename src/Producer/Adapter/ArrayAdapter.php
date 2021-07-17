@@ -7,8 +7,7 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 final class ArrayAdapter implements Producer
 {
-    /** @var array */
-    private $source;
+    private array $source;
     
     public function __construct(array $source)
     {

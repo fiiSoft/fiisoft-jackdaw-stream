@@ -6,11 +6,8 @@ use FiiSoft\Jackdaw\Internal\Helper;
 
 final class ToInt implements Mapper
 {
-    /** @var array|null */
-    private $fields = null;
-    
-    /** @var bool */
-    private $simple;
+    private ?array $fields = null;
+    private bool $simple;
     
     /**
      * @param array|string|int|null $fields

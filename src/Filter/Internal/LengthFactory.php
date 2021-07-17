@@ -6,8 +6,7 @@ use FiiSoft\Jackdaw\Filter\Length;
 
 final class LengthFactory
 {
-    /** @var LengthFactory|null */
-    private static $instance = null;
+    private static ?LengthFactory $instance = null;
     
     public static function instance(): LengthFactory
     {

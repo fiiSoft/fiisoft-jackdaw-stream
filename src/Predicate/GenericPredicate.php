@@ -10,8 +10,7 @@ final class GenericPredicate implements Predicate
     /** @var callable */
     private $predicate;
     
-    /** @var int */
-    private $numOfArgs;
+    private int $numOfArgs;
     
     public function __construct(callable $predicate)
     {

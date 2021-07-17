@@ -58,32 +58,23 @@ use FiiSoft\Jackdaw\Producer\Producers;
 
 final class Stream extends Collaborator implements StreamApi
 {
-    /** @var Producer */
-    private $producer;
+    private Producer $producer;
+    private Operation $head;
+    private Operation $last;
     
-    /** @var Operation */
-    private $head;
+    private ?\Generator $producerIterator = null;
+    private ?Signal $signal = null;
     
-    /** @var Operation */
-    private $last;
-    
-    /** @var \Generator|null */
-    private $producerIterator = null;
-    
-    /** @var Signal|null */
-    private $signal = null;
-    
-    /** @var bool */
-    private $executed = false;
+    private bool $executed = false;
     
     /** @var Item[] */
-    private $extraItems = [];
+    private array $extraItems = [];
     
     /** @var Operation[] */
-    private $stack = [];
+    private array $stack = [];
     
-    /** @var \SplObjectStorage|Stream[]|null */
-    private $pushToStreams = null;
+    /** @var \SplObjectStorage|Stream[] */
+    private ?\SplObjectStorage $pushToStreams = null;
     
     public static function of(...$elements): StreamApi
     {
@@ -118,7 +109,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function limit(int $limit): StreamApi
+    public function limit(int $limit): self
     {
         return $this->chainOperation(new Limit($limit));
     }
@@ -126,7 +117,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function skip(int $offset): StreamApi
+    public function skip(int $offset): self
     {
         return $this->chainOperation(new Skip($offset));
     }
@@ -134,7 +125,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function notNull(): StreamApi
+    public function notNull(): self
     {
         return $this->filter(Filters::notNull());
     }
@@ -142,7 +133,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function notEmpty(): StreamApi
+    public function notEmpty(): self
     {
         return $this->filter(Filters::notEmpty());
     }
@@ -150,10 +141,10 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function without(array $values, int $mode = Check::VALUE): StreamApi
+    public function without(array $values, int $mode = Check::VALUE): self
     {
         if (\count($values) === 1) {
-            $filter = Filters::equal(\reset($values));
+            $filter = Filters::equal($values[\array_key_first($values)]);
         } else {
             $filter = Filters::onlyIn($values);
         }
@@ -164,10 +155,10 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function only(array $values, int $mode = Check::VALUE): StreamApi
+    public function only(array $values, int $mode = Check::VALUE): self
     {
         if (\count($values) === 1) {
-            $filter = Filters::equal(\reset($values));
+            $filter = Filters::equal($values[\array_key_first($values)]);
         } else {
             $filter = Filters::onlyIn($values);
         }
@@ -178,7 +169,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function greaterThan($value): StreamApi
+    public function greaterThan($value): self
     {
         return $this->filter(Filters::greaterThan($value));
     }
@@ -186,7 +177,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function greaterOrEqual($value): StreamApi
+    public function greaterOrEqual($value): self
     {
         return $this->filter(Filters::greaterOrEqual($value));
     }
@@ -194,7 +185,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function lessThan($value): StreamApi
+    public function lessThan($value): self
     {
         return $this->omit(Filters::greaterOrEqual($value));
     }
@@ -202,7 +193,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function lessOrEqual($value): StreamApi
+    public function lessOrEqual($value): self
     {
         return $this->omit(Filters::greaterThan($value));
     }
@@ -210,7 +201,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function onlyNumeric(): StreamApi
+    public function onlyNumeric(): self
     {
         return $this->filter(Filters::isNumeric());
     }
@@ -218,7 +209,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function onlyIntegers(): StreamApi
+    public function onlyIntegers(): self
     {
         return $this->filter(Filters::isInt());
     }
@@ -226,7 +217,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function onlyStrings(): StreamApi
+    public function onlyStrings(): self
     {
         return $this->filter(Filters::isString());
     }
@@ -234,7 +225,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function filterBy($field, $filter): StreamApi
+    public function filterBy($field, $filter): self
     {
         return $this->filter(Filters::filterBy($field, $filter));
     }
@@ -242,7 +233,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function filter($filter, int $mode = Check::VALUE): StreamApi
+    public function filter($filter, int $mode = Check::VALUE): self
     {
         return $this->chainOperation(new Filter($filter, false, $mode));
     }
@@ -250,7 +241,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function omit($filter, int $mode = Check::VALUE): StreamApi
+    public function omit($filter, int $mode = Check::VALUE): self
     {
         return $this->chainOperation(new Filter($filter, true, $mode));
     }
@@ -258,7 +249,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function castToInt($fields = null): StreamApi
+    public function castToInt($fields = null): self
     {
         return $this->map(Mappers::toInt($fields));
     }
@@ -266,7 +257,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function map($mapper): StreamApi
+    public function map($mapper): self
     {
         return $this->chainOperation(new Map($mapper));
     }
@@ -274,7 +265,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function mapKey($mapper): StreamApi
+    public function mapKey($mapper): self
     {
         return $this->chainOperation(new MapKey($mapper));
     }
@@ -282,7 +273,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function collectIn($collector, bool $preserveKeys = false): StreamApi
+    public function collectIn($collector, bool $preserveKeys = false): self
     {
         return $this->chainOperation(new Collect($collector, $preserveKeys));
     }
@@ -290,7 +281,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function collectKeys($collector): StreamApi
+    public function collectKeys($collector): self
     {
         return $this->chainOperation(new CollectKey($collector));
     }
@@ -298,7 +289,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function call($consumer): StreamApi
+    public function call($consumer): self
     {
         return $this->chainOperation(new SendTo($consumer));
     }
@@ -306,7 +297,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function join($producer): StreamApi
+    public function join($producer): self
     {
         if ($this->producer instanceof MultiProducer) {
             $this->producer->addProducer(Producers::getAdapter($producer));
@@ -320,7 +311,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function unique($comparator = null, int $mode = Check::VALUE): StreamApi
+    public function unique($comparator = null, int $mode = Check::VALUE): self
     {
         return $this->chainOperation(new Unique($comparator, $mode));
     }
@@ -328,7 +319,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function sortBy(...$fields): StreamApi
+    public function sortBy(...$fields): self
     {
         return $this->sort(Comparators::sortBy($fields));
     }
@@ -336,7 +327,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function sort($comparator = null, int $mode = Check::VALUE): StreamApi
+    public function sort($comparator = null, int $mode = Check::VALUE): self
     {
         return $this->chainOperation(new Sort($comparator, $mode));
     }
@@ -344,7 +335,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function rsort($comparator = null, int $mode = Check::VALUE): StreamApi
+    public function rsort($comparator = null, int $mode = Check::VALUE): self
     {
         return $this->chainOperation(new Sort($comparator, $mode, true));
     }
@@ -352,7 +343,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function reverse(): StreamApi
+    public function reverse(): self
     {
         return $this->chainOperation(new Reverse());
     }
@@ -360,7 +351,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function shuffle(): StreamApi
+    public function shuffle(): self
     {
         return $this->chainOperation(new Shuffle());
     }
@@ -368,7 +359,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function reindex(): StreamApi
+    public function reindex(): self
     {
         return $this->chainOperation(new Reindex());
     }
@@ -376,7 +367,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function flip(): StreamApi
+    public function flip(): self
     {
         return $this->chainOperation(new Flip());
     }
@@ -384,7 +375,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function scan($initial, $reducer): StreamApi
+    public function scan($initial, $reducer): self
     {
         return $this->chainOperation(new Scan($initial, $reducer));
     }
@@ -392,7 +383,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function chunkAssoc(int $size): StreamApi
+    public function chunkAssoc(int $size): self
     {
         return $this->chunk($size, true);
     }
@@ -400,7 +391,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function chunk(int $size, bool $preserveKeys = false): StreamApi
+    public function chunk(int $size, bool $preserveKeys = false): self
     {
         return $this->chainOperation(new Chunk($size, $preserveKeys));
     }
@@ -408,7 +399,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function append($field, $mapper): StreamApi
+    public function append($field, $mapper): self
     {
         return $this->map(Mappers::append($field, $mapper));
     }
@@ -416,7 +407,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function extract($fields, $orElse = null): StreamApi
+    public function extract($fields, $orElse = null): self
     {
         return $this->map(Mappers::extract($fields, $orElse));
     }
@@ -424,7 +415,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function remove(...$fields): StreamApi
+    public function remove(...$fields): self
     {
         if (\count($fields) === 1 && \is_array($fields[0] ?? null)) {
             $fields = $fields[0];
@@ -436,7 +427,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function split(string $separator = ' '): StreamApi
+    public function split(string $separator = ' '): self
     {
         return $this->map(Mappers::split($separator));
     }
@@ -444,7 +435,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function flat(int $level = 0): StreamApi
+    public function flat(int $level = 0): self
     {
         return $this->chainOperation(new Flat($level));
     }
@@ -452,7 +443,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function flatMap($mapper, int $level = 0): StreamApi
+    public function flatMap($mapper, int $level = 0): self
     {
         return $this->map($mapper)->flat($level);
     }
@@ -460,7 +451,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function feed(StreamPipe $stream): StreamApi
+    public function feed(StreamPipe $stream): self
     {
         if ($this->pushToStreams === null) {
             $this->pushToStreams = new \SplObjectStorage();
@@ -474,7 +465,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function while($condition, int $mode = Check::VALUE): StreamApi
+    public function while($condition, int $mode = Check::VALUE): self
     {
         return $this->chainOperation(new Until($condition, $mode, true));
     }
@@ -482,7 +473,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function until($condition, int $mode = Check::VALUE): StreamApi
+    public function until($condition, int $mode = Check::VALUE): self
     {
         return $this->chainOperation(new Until($condition, $mode));
     }
@@ -490,7 +481,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function tail(int $numOfItems): StreamApi
+    public function tail(int $numOfItems): self
     {
         return $this->chainOperation(new Tail($numOfItems));
     }
@@ -508,7 +499,7 @@ final class Stream extends Collaborator implements StreamApi
      */
     public function toJson(int $flags = 0, bool $preserveKeys = false): string
     {
-        return \json_encode($this->toArray($preserveKeys), $flags);
+        return \json_encode($this->toArray($preserveKeys), \JSON_THROW_ON_ERROR | $flags);
     }
     
     /**
@@ -681,12 +672,12 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function forEach($consumer)
+    public function forEach($consumer): void
     {
         $this->runWith(new SendTo($consumer));
     }
     
-    private function runWith(Operation $operation)
+    private function runWith(Operation $operation): void
     {
         $this->chainOperation($operation)->run();
     }
@@ -694,7 +685,7 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function run()
+    public function run(): void
     {
         $this->prepareToRun();
         $this->continueIteration();
@@ -702,7 +693,7 @@ final class Stream extends Collaborator implements StreamApi
         $this->finishSubstreems();
     }
     
-    private function prepareToRun()
+    private function prepareToRun(): void
     {
         if ($this->executed) {
             throw new \LogicException('Stream can be executed only once!');
@@ -726,6 +717,7 @@ final class Stream extends Collaborator implements StreamApi
                 } elseif (empty($this->stack)) {
                     $this->signal->streamIsEmpty();
                 } else {
+                    /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
                     $this->head = \array_pop($this->stack);
                     $this->signal->resume();
                 }
@@ -763,13 +755,13 @@ final class Stream extends Collaborator implements StreamApi
         return $this->producerIterator->valid();
     }
     
-    protected function restartFrom(Operation $operation, array $items)
+    protected function restartFrom(Operation $operation, array $items): void
     {
         $this->head = $operation;
         $this->extraItems = empty($this->extraItems) ? $items : \array_merge($this->extraItems, $items);
     }
     
-    protected function continueFrom(Operation $operation, array $items)
+    protected function continueFrom(Operation $operation, array $items): void
     {
         $this->stack[] = $this->head;
         $this->head = $operation;
@@ -787,7 +779,7 @@ final class Stream extends Collaborator implements StreamApi
         return $iterator;
     }
     
-    private function chainOperation(Operation $next): StreamApi
+    private function chainOperation(Operation $next): self
     {
         if ($this->last->isLazy()) {
             throw new \LogicException('You cannot chain next operation to lazy one');
@@ -802,13 +794,13 @@ final class Stream extends Collaborator implements StreamApi
         return $this;
     }
     
-    protected function limitReached(Operation $operation)
+    protected function limitReached(Operation $operation): void
     {
         $this->head = $operation;
         $this->stack = [];
     }
     
-    protected function streamIsEmpty()
+    protected function streamIsEmpty(): void
     {
         $this->extraItems = [];
     }
@@ -825,7 +817,7 @@ final class Stream extends Collaborator implements StreamApi
         return $this->continueIteration(true);
     }
     
-    private function finishSubstreems()
+    private function finishSubstreems(): void
     {
         if ($this->pushToStreams !== null) {
             while ($this->pushToStreams->count() > 0) {

@@ -10,8 +10,7 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Reduce extends FinalOperation
 {
-    /** @var Reducer */
-    private $reducer;
+    private Reducer $reducer;
     
     /**
      * @param Stream $stream
@@ -25,7 +24,7 @@ final class Reduce extends FinalOperation
         parent::__construct($stream, $this->reducer, $orElse);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $this->reducer->consume($signal->item->value);
     }

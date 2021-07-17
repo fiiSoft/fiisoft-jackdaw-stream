@@ -7,7 +7,7 @@ use FiiSoft\Jackdaw\Internal\Item;
 final class MultiProducer implements Producer
 {
     /** @var Producer[] */
-    private $producers = [];
+    private array $producers = [];
     
     /**
      * @param Producer ...$producers
@@ -19,7 +19,7 @@ final class MultiProducer implements Producer
         }
     }
     
-    public function addProducer(Producer $producer)
+    public function addProducer(Producer $producer): void
     {
         $this->producers[] = $producer;
     }

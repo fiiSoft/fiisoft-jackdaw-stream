@@ -6,11 +6,8 @@ use FiiSoft\Jackdaw\Internal\Helper;
 
 final class JsonDecode implements Mapper
 {
-    /** @var bool */
-    private $associative;
-    
-    /** @var int */
-    private $flags;
+    private bool $associative;
+    private int $flags;
     
     public function __construct(int $flags = 0, bool $associative = true)
     {
@@ -21,7 +18,7 @@ final class JsonDecode implements Mapper
     public function map($value, $key)
     {
         if (\is_string($value)) {
-            return \json_decode($value, $this->associative, 512, $this->flags);
+            return \json_decode($value, $this->associative, 512, \JSON_THROW_ON_ERROR | $this->flags);
         }
         
         throw new \LogicException('You cannot decode '.Helper::typeOfParam($value).' to JSON');

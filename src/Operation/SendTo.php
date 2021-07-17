@@ -9,8 +9,7 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class SendTo extends BaseOperation
 {
-    /** @var Consumer */
-    private $consumer;
+    private Consumer $consumer;
     
     /**
      * @param Consumer|callable $consumer
@@ -20,7 +19,7 @@ final class SendTo extends BaseOperation
         $this->consumer = Consumers::getAdapter($consumer);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $this->consumer->consume($signal->item->value, $signal->item->key);
     

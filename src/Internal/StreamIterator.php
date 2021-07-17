@@ -8,14 +8,10 @@ final class StreamIterator extends Collaborator implements \Iterator
 {
     use StubMethods;
     
-    /** @var Stream */
-    private $stream;
+    private Stream $stream;
+    private Item $item;
     
-    /** @var Item */
-    private $item;
-    
-    /** @var bool */
-    private $isValid = false;
+    private bool $isValid = false;
     
     public function __construct(Stream $stream)
     {
@@ -56,7 +52,7 @@ final class StreamIterator extends Collaborator implements \Iterator
         }
     }
     
-    public function setItem(Item $item)
+    public function setItem(Item $item): void
     {
         $this->item = $item;
         $this->isValid = true;

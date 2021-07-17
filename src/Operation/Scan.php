@@ -9,8 +9,7 @@ use FiiSoft\Jackdaw\Reducer\Reducers;
 
 final class Scan extends BaseOperation
 {
-    /** @var Reducer */
-    private $reducer;
+    private Reducer $reducer;
     
     /** @var mixed */
     private $previous;
@@ -25,7 +24,7 @@ final class Scan extends BaseOperation
         $this->previous = $initial;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $this->reducer->consume($this->previous);
         
@@ -35,7 +34,7 @@ final class Scan extends BaseOperation
         $this->next->handle($signal);
     }
     
-    public function streamingFinished(Signal $signal)
+    public function streamingFinished(Signal $signal): void
     {
         //TODO check if it works properly in complex scenarios
         

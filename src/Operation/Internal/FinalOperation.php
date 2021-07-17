@@ -8,8 +8,7 @@ use FiiSoft\Jackdaw\Stream;
 
 abstract class FinalOperation extends BaseOperation
 {
-    /** @var LazyResult */
-    private $result;
+    private LazyResult $result;
     
     public function __construct(Stream $stream, ResultProvider $resultProvider, $orElse = null)
     {

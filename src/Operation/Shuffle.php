@@ -9,14 +9,14 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 final class Shuffle extends BaseOperation
 {
     /** @var Item[] */
-    private $items = [];
+    private array $items = [];
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $this->items[] = $signal->item->copy();
     }
     
-    public function streamingFinished(Signal $signal)
+    public function streamingFinished(Signal $signal): void
     {
         \shuffle($this->items);
         

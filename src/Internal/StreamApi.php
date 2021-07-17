@@ -297,12 +297,12 @@ interface StreamApi extends \IteratorAggregate
      * @param Consumer|callable $consumer
      * @return void
      */
-    public function forEach($consumer);
+    public function forEach($consumer): void;
     
     /**
      * @return void
      */
-    public function run();
+    public function run(): void;
     
     /**
      * Tell if element occurs in stream.

@@ -6,10 +6,7 @@ use FiiSoft\Jackdaw\Consumer\Consumer;
 
 interface Result extends StreamPipe
 {
-    /**
-     * @return void
-     */
-    public function run();
+    public function run(): void;
     
     public function found(): bool;
     
@@ -41,7 +38,7 @@ interface Result extends StreamPipe
      * @param Consumer|callable $consumer
      * @return void
      */
-    public function call($consumer);
+    public function call($consumer): void;
     
     public function __toString(): string;
 }

@@ -7,14 +7,10 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Tail extends BaseOperation
 {
-    /** @var \SplFixedArray|null */
-    private $buffer;
+    private \SplFixedArray $buffer;
     
-    /** @var int */
-    private $numOfItems;
-    
-    /** @var int */
-    private $index = 0;
+    private int $numOfItems;
+    private int $index = 0;
     
     public function __construct(int $numOfItems)
     {
@@ -26,7 +22,7 @@ final class Tail extends BaseOperation
         $this->buffer = new \SplFixedArray($numOfItems);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->numOfItems > 0) {
             $this->buffer[$this->index] = $signal->item->copy();
@@ -37,7 +33,7 @@ final class Tail extends BaseOperation
         }
     }
     
-    public function streamingFinished(Signal $signal)
+    public function streamingFinished(Signal $signal): void
     {
         $items = [];
         

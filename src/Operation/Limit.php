@@ -7,11 +7,8 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Limit extends BaseOperation
 {
-    /** @var int */
-    private $limit;
-    
-    /** @var int */
-    private $count = 0;
+    private int $limit;
+    private int $count = 0;
     
     public function __construct(int $limit)
     {
@@ -22,7 +19,7 @@ final class Limit extends BaseOperation
         $this->limit = $limit;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->limit === 0) {
             $signal->limitReached($this);

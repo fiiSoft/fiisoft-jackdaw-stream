@@ -114,9 +114,9 @@ final class Producers
     
     public static function randomString(
         int $minLength,
-        int $maxLength = null,
+        ?int $maxLength = null,
         int $limit = \PHP_INT_MAX,
-        string $charset = null
+        ?string $charset = null
     ): RandomString
     {
         return new RandomString($minLength, $maxLength, $limit, $charset);

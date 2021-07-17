@@ -13,11 +13,8 @@ final class GenericReducer implements Reducer
     /** @var mixed|null */
     private $result;
     
-    /** @var bool */
-    private $isFirst = true;
-    
-    /** @var bool */
-    private $hasAny = false;
+    private bool $isFirst = true;
+    private bool $hasAny = false;
     
     public function __construct(callable $reducer)
     {
@@ -28,7 +25,7 @@ final class GenericReducer implements Reducer
         $this->reducer = $reducer;
     }
     
-    public function consume($value)
+    public function consume($value): void
     {
         $this->hasAny = true;
         

@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 
 final class ResultItemTest extends TestCase
 {
-    public function test_default_not_null()
+    public function test_default_not_null(): void
     {
         $item = ResultItem::createNotFound('a');
         
@@ -29,7 +29,7 @@ final class ResultItemTest extends TestCase
         self::assertSame([0, 'a'], $item->tuple());
     }
     
-    public function test_default_null()
+    public function test_default_null(): void
     {
         $item = ResultItem::createNotFound();
         
@@ -50,7 +50,7 @@ final class ResultItemTest extends TestCase
         self::assertSame([], $item->tuple());
     }
     
-    public function test_item_found()
+    public function test_item_found(): void
     {
         $item = ResultItem::createFound(new Item('a', 15));
     

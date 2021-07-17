@@ -13,14 +13,9 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Has extends FinalOperation implements ResultProvider
 {
-    /** @var Predicate */
-    private $predicate;
-    
-    /** @var bool */
-    private $has = false;
-    
-    /** @var int */
-    private $mode;
+    private Predicate $predicate;
+    private bool $has = false;
+    private int $mode;
     
     /**
      * @param Stream $stream
@@ -35,7 +30,7 @@ final class Has extends FinalOperation implements ResultProvider
         parent::__construct($stream, $this);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $item = $signal->item;
         

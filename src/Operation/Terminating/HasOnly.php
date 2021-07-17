@@ -11,14 +11,10 @@ use FiiSoft\Jackdaw\Stream;
 
 final class HasOnly extends FinalOperation implements ResultProvider
 {
-    /** @var array */
-    private $values;
+    private array $values;
     
-    /** @var bool */
-    private $hasOnly = true;
-    
-    /** @var int */
-    private $mode;
+    private bool $hasOnly = true;
+    private int $mode;
     
     public function __construct(Stream $stream, array $values, int $mode = Check::VALUE)
     {
@@ -28,7 +24,7 @@ final class HasOnly extends FinalOperation implements ResultProvider
         parent::__construct($stream, $this);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         if ($this->mode === Check::VALUE) {
             $this->testSingle($signal->item->value, $signal);
@@ -52,7 +48,7 @@ final class HasOnly extends FinalOperation implements ResultProvider
         return false;
     }
     
-    private function testValueAndKey(Signal $signal)
+    private function testValueAndKey(Signal $signal): void
     {
         if (!\in_array($signal->item->value, $this->values, true)
             || !\in_array($signal->item->key, $this->values, true)

@@ -6,8 +6,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 
 final class EvenOdd implements Discriminator
 {
-    /** @var int */
-    private $mode;
+    private int $mode;
     
     public function __construct(int $mode = Check::VALUE)
     {

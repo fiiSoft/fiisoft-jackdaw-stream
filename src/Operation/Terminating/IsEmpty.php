@@ -10,8 +10,7 @@ use FiiSoft\Jackdaw\Stream;
 
 final class IsEmpty extends FinalOperation implements ResultProvider
 {
-    /** @var bool */
-    private $isEmpty;
+    private bool $isEmpty;
     
     public function __construct(Stream $stream, bool $initial)
     {
@@ -20,7 +19,7 @@ final class IsEmpty extends FinalOperation implements ResultProvider
         parent::__construct($stream, $this);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $this->isEmpty = !$this->isEmpty;
         

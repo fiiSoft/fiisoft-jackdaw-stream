@@ -6,21 +6,16 @@ use FiiSoft\Jackdaw\Internal\Item;
 
 final class Concat implements Reducer
 {
-    /** @var string */
-    private $separator;
-    
-    /** @var string */
-    private $result = '';
-    
-    /** @var bool */
-    private $hasAny = false;
+    private string $separator;
+    private string $result = '';
+    private bool $hasAny = false;
     
     public function __construct(string $separator = '')
     {
         $this->separator = $separator;
     }
     
-    public function consume($value)
+    public function consume($value): void
     {
         $this->hasAny = true;
         

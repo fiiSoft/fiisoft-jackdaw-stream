@@ -4,8 +4,7 @@ namespace FiiSoft\Jackdaw\Mapper;
 
 final class Concat implements Mapper
 {
-    /** @var string */
-    private $separator;
+    private string $separator;
     
     public function __construct(string $separator = '')
     {

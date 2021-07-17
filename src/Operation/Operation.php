@@ -6,19 +6,11 @@ use FiiSoft\Jackdaw\Internal\Signal;
 
 interface Operation
 {
-    /**
-     * @param Signal $signal
-     * @return void
-     */
-    public function handle(Signal $signal);
+    public function handle(Signal $signal): void;
     
     public function setNext(Operation $next): Operation;
     
-    /**
-     * @param Signal $signal
-     * @return void
-     */
-    public function streamingFinished(Signal $signal);
+    public function streamingFinished(Signal $signal): void;
     
     public function isLazy(): bool;
 }

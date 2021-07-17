@@ -10,15 +10,14 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Count extends FinalOperation implements ResultProvider
 {
-    /** @var int */
-    private $count = 0;
+    private int $count = 0;
     
     public function __construct(Stream $stream)
     {
         parent::__construct($stream, $this);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         ++$this->count;
     }

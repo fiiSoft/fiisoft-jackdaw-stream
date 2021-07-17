@@ -7,37 +7,31 @@ use PHPUnit\Framework\TestCase;
 
 final class ComparatorsTest extends TestCase
 {
-    public function test_getAdapter_throws_exception_on_invalid_argument()
+    public function test_getAdapter_throws_exception_on_invalid_argument(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         
         Comparators::getAdapter(15);
     }
     
-    public function test_GenericComparator_throws_exception_when_callable_accepts_wrong_number_of_arguments()
+    public function test_GenericComparator_throws_exception_when_callable_accepts_wrong_number_of_arguments(): void
     {
         $this->expectException(\LogicException::class);
         
-        Comparators::generic(static function ($v, $k, $n) {
-            return true;
-        });
+        Comparators::generic(static fn($v, $k, $n) => true);
     }
     
-    public function test_GenericComparator_throws_exception_when_wrong_callable_is_used()
+    public function test_GenericComparator_throws_exception_when_wrong_callable_is_used(): void
     {
         try {
-            Comparators::generic(static function ($a, $b, $c, $d) {
-                return true;
-            })->compare(1, 2);
+            Comparators::generic(static fn($a, $b, $c, $d) => true)->compare(1, 2);
             self::fail('Expected exception was not thrown');
         } catch (\LogicException $e) {
             //ok
         }
         
         try {
-            Comparators::generic(static function ($a, $b) {
-                return true;
-            })->compareAssoc(1, 2, 3, 4);
+            Comparators::generic(static fn($a, $b) => true)->compareAssoc(1, 2, 3, 4);
             self::fail('Expected exception was not thrown');
         } catch (\LogicException $e) {
             //ok
@@ -46,7 +40,7 @@ final class ComparatorsTest extends TestCase
         self::assertTrue(true);
     }
     
-    public function test_SortBy_throws_exception_when_value_is_not_array()
+    public function test_SortBy_throws_exception_when_value_is_not_array(): void
     {
         $comparator = Comparators::sortBy(['id']);
     
@@ -67,26 +61,26 @@ final class ComparatorsTest extends TestCase
         self::assertTrue(true);
     }
     
-    public function test_SortBy()
+    public function test_SortBy(): void
     {
         self::assertSame(0, Comparators::sortBy(['id'])->compare(['id' => 1], ['id' => 1]));
     }
     
-    public function test_SortBy_throws_exception_when_fields_is_empty()
+    public function test_SortBy_throws_exception_when_fields_is_empty(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         
         Comparators::sortBy([]);
     }
     
-    public function test_SortBy_throws_exception_when_fields_contains_not_string()
+    public function test_SortBy_throws_exception_when_fields_contains_not_string(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         
         Comparators::sortBy([15]);
     }
     
-    public function test_SortBy_compareAssoc_is_not_implemented_and_cannot_be_called()
+    public function test_SortBy_compareAssoc_is_not_implemented_and_cannot_be_called(): void
     {
         $this->expectException(\LogicException::class);
         

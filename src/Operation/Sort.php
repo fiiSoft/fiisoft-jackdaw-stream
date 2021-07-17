@@ -11,17 +11,13 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Sort extends BaseOperation
 {
-    /** @var Comparator|null  */
-    private $comparator = null;
+    private ?Comparator $comparator = null;
     
-    /** @var bool */
-    private $reversed;
-    
-    /** @var int */
-    private $mode;
+    private bool $reversed;
+    private int $mode;
     
     /** @var Item[] */
-    private $items = [];
+    private array $items = [];
     
     /**
      * @param Comparator|callable|null $comparator
@@ -38,12 +34,12 @@ final class Sort extends BaseOperation
         $this->reversed = $reversed;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $this->items[] = $signal->item->copy();
     }
     
-    public function streamingFinished(Signal $signal)
+    public function streamingFinished(Signal $signal): void
     {
         if (\count($this->items) > 1) {
             $this->sortItems();
@@ -52,7 +48,7 @@ final class Sort extends BaseOperation
         $signal->restartFrom($this->next, $this->items);
     }
     
-    private function sortItems()
+    private function sortItems(): void
     {
         switch ($this->mode) {
             case Check::VALUE:

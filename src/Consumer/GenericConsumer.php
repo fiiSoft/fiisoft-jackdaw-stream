@@ -9,8 +9,7 @@ final class GenericConsumer implements Consumer
     /** @var callable */
     private $consumer;
     
-    /** @var int */
-    private $numOfArgs;
+    private int $numOfArgs;
     
     public function __construct(callable $consumer)
     {
@@ -18,7 +17,7 @@ final class GenericConsumer implements Consumer
         $this->numOfArgs = Helper::getNumOfArgs($consumer);
     }
     
-    public function consume($value, $key)
+    public function consume($value, $key): void
     {
         $consume = $this->consumer;
     

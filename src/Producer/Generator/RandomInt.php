@@ -7,17 +7,11 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 final class RandomInt implements Producer
 {
-    /** @var int */
-    private $min;
+    private int $min;
+    private int $max;
     
-    /** @var int */
-    private $max;
-    
-    /** @var int */
-    private $count = 0;
-    
-    /** @var int */
-    private $limit;
+    private int $count = 0;
+    private int $limit;
     
     public function __construct(int $min = 1, int $max = \PHP_INT_MAX, int $limit = \PHP_INT_MAX)
     {

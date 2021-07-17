@@ -7,7 +7,7 @@ use FiiSoft\Jackdaw\Operation\Operation;
 
 final class Ending implements Operation
 {
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         //noop
     }
@@ -17,7 +17,7 @@ final class Ending implements Operation
         throw new \LogicException('It should never happen (Ending::setNext)');
     }
     
-    public function streamingFinished(Signal $signal)
+    public function streamingFinished(Signal $signal): void
     {
         //noop
     }

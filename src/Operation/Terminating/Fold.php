@@ -12,8 +12,7 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Fold extends FinalOperation implements ResultProvider
 {
-    /** @var Reducer */
-    private $reducer;
+    private Reducer $reducer;
     
     /**
      * @param Stream $stream
@@ -28,7 +27,7 @@ final class Fold extends FinalOperation implements ResultProvider
         parent::__construct($stream, $this->reducer, null);
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $this->reducer->consume($signal->item->value);
     }

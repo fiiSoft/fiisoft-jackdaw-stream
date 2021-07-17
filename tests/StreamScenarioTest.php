@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 
 final class StreamScenarioTest extends TestCase
 {
-    public function test_scenario_01()
+    public function test_scenario_01(): void
     {
         $row1 = ['id' => 2, 'name' => 'Kate'];
         $row2 = ['id' => 5, 'name' => 'Chris'];
@@ -27,7 +27,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame('Chris,Joanna,Kate', $stream->toString());
     }
     
-    public function test_scenario_02()
+    public function test_scenario_02(): void
     {
         $stream = Stream::from(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
             ->chunk(3)
@@ -38,7 +38,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame(['C', 'B', 'A', 'F', 'E', 'D', 'H', 'G'], $stream->toArray());
     }
     
-    public function test_scenario_03()
+    public function test_scenario_03(): void
     {
         //given
         $counter1 = 0;
@@ -55,9 +55,7 @@ final class StreamScenarioTest extends TestCase
             ->call(function () use (&$counter2) {
                 ++$counter2;
             })
-            ->map(function (int $x) {
-                return $x ** 2;
-            })
+            ->map(fn(int $x) => $x ** 2)
             ->omit(Filters::greaterThan(50))
             ->collectIn($buffer);
         
@@ -70,7 +68,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([16, 49, 4, 25], $buffer->getArrayCopy());
     }
     
-    public function test_scenario_04()
+    public function test_scenario_04(): void
     {
         //given
         $buffer1 = [];
@@ -78,12 +76,10 @@ final class StreamScenarioTest extends TestCase
     
         $inputData = [4, 'c' => 7, 2, 'a', 'z' => 8, null, 5, '', 3, 7];
         
-        $stream = StreamMaker::from(function () use ($inputData) {
-            return Stream::from($inputData)
-                ->filter('is_int')
-                ->limit(5)
-                ->skip(2);
-        }
+        $stream = StreamMaker::from(fn() => Stream::from($inputData)
+            ->filter('is_int')
+            ->limit(5)
+            ->skip(2)
         );
         
         //when
@@ -103,12 +99,12 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([2, 8, 5], $buffer3);
     }
     
-    public function test_scenario_05()
+    public function test_scenario_05(): void
     {
         self::assertSame(10, Stream::from([1,0,2,9,3,8,4,7,5,6,1,0,2,9,3,8,4,8,5,7,6])->unique()->count()->get());
     }
     
-    public function test_scenario_06()
+    public function test_scenario_06(): void
     {
         $numbers = Stream::from(['6', '3', '2', null, '5', '0', null, '3', '2', '1', null])
             ->map('intval')
@@ -120,7 +116,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([1, 2, 3, 5, 6], $numbers);
     }
     
-    public function test_scenario_07()
+    public function test_scenario_07(): void
     {
         $otherStream = Stream::of(7,4,3,8,7,6,9,1,2,7,6);
     
@@ -132,7 +128,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame('a|b 7|4 3|8 6|9 1|2 z|c d', $result);
     }
     
-    public function test_scenario_08()
+    public function test_scenario_08(): void
     {
         $words = Stream::from(['The quick brown fox jumps over the lazy dog'])
             ->flatMap(Mappers::split())
@@ -143,63 +139,53 @@ final class StreamScenarioTest extends TestCase
         self::assertSame('the,fox,the,dog,over,lazy,quick,brown,jumps', $words);
     }
     
-    public function test_scenario_09()
+    public function test_scenario_09(): void
     {
         $inputData = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6, 'g' => 7, 'h' => 8];
-        $stream = StreamMaker::from(static function () use ($inputData) {
-            return Stream::from($inputData)->limit(7)->chunk(3);
-        });
+        $stream = StreamMaker::from(static fn() => Stream::from($inputData)->limit(7)->chunk(3));
     
         self::assertSame('[[1,2,3],[4,5,6],[7]]', $stream->limit(3)->toJson());
         self::assertSame('[[1,2,3],[4,5,6]]', $stream->limit(2)->toJson());
         
-        self::assertSame('[[1,2,3],[4,5,6]]', $stream->filter(static function ($ch) {
-            return \count($ch) === 3;
-        })->toJson());
+        self::assertSame('[[1,2,3],[4,5,6]]', $stream->filter(static fn($ch) => \count($ch) === 3)->toJson());
         self::assertSame('[[1,2,3],[4,5,6]]', $stream->filter(Filters::length()->eq(3))->toJson());
         
         self::assertSame('[[1,2,3],[4,5,6]]', $stream->limit(2)->filter(Filters::length()->eq(3))->toJson());
     }
     
-    public function test_scenario_10()
+    public function test_scenario_10(): void
     {
         $inputData = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6, 'g' => 7, 'h' => 8];
         $stream = Stream::from($inputData)
             ->limit(7) //without h=>8
-            ->while(static function ($v) {
-                return $v <= 5;
-            }) //it should stop on f=>6
+            ->while(static fn($v) => $v <= 5) //it should stop on f=>6
             ->chunk(3);
         
         self::assertSame('[[1,2,3]]', $stream->toJson());
     }
     
-    public function test_scenario_11()
+    public function test_scenario_11(): void
     {
         $inputData = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6, 'g' => 7, 'h' => 8];
         $stream = Stream::from($inputData)
-            ->while(static function ($v) {
-                return $v <= 5;
-            }) //it should stop on f=>6
+            ->while(static fn($v) => $v <= 5) //it should stop on f=>6
             ->sort(); //only five first should be passed to sort
         
         self::assertSame('1,2,3,4,5', $stream->toString());
     }
     
-    public function test_scenario_12()
+    public function test_scenario_12(): void
     {
         $inputData = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6, 'g' => 7, 'h' => 8];
         $stream = Stream::from($inputData)
-            ->while(static function ($v) {
-                return $v <= 5;
-            }) //it should stop on f=>6
+            ->while(static fn($v) => $v <= 5) //it should stop on f=>6
             ->sort() //only five first should be passed to sort
             ->chunk(3); //it should produce two chunks: 3 and 2 elements
     
         self::assertSame('[[1,2,3],[4,5]]', $stream->toJson());
     }
     
-    public function test_scenario_13()
+    public function test_scenario_13(): void
     {
         $stream = Stream::from(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'])
             ->chunk(5) //[[a,b,c,d,e],[f,g,h,i,j],[k]]
@@ -214,7 +200,7 @@ final class StreamScenarioTest extends TestCase
     }
     
     
-    public function test_scenario_14()
+    public function test_scenario_14(): void
     {
         $rowset = [
             ['id' => 2, 'name' => 'Kate', 'age' => 35],
@@ -241,7 +227,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame($expected, $actual);
     }
     
-    public function test_scenario_15()
+    public function test_scenario_15(): void
     {
         $rowset = [
             ['id' => 7, 'name' => 'Sue', 'age' => 17],
@@ -260,7 +246,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([2, 'Kate', 35, 6, 'Joanna'], $actual);
     }
     
-    public function test_scenario_16()
+    public function test_scenario_16(): void
     {
         $rowset = [
             ['id' => 7, 'name' => 'Sue', 'age' => 17],
@@ -280,7 +266,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([[2, 'Kate', 35], [6, 'Joanna']], $actual);
     }
     
-    public function test_scenario_17()
+    public function test_scenario_17(): void
     {
         $stream = Stream::from($this->rowsetDataset())
             ->filterBy('name', 'Chris')
@@ -291,7 +277,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([[4, 'Chris', 30], [11, 'Chris', 42], [13, 'Chris', 62]], $stream->toArray());
     }
     
-    public function test_scenario_18()
+    public function test_scenario_18(): void
     {
         $stream = Stream::from($this->rowsetDataset())
             ->filterBy('name', 'Chris')
@@ -303,7 +289,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([[4, 'Chris', 30], [11, 'Chris', 42]], $stream->toArray());
     }
     
-    public function test_scenario_19()
+    public function test_scenario_19(): void
     {
         $stream = Stream::from($this->rowsetDataset())
             ->filterBy('name', 'Chris')
@@ -316,7 +302,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([[4, 'Chris', 30], [11, 'Chris', 42]], $stream->toArray());
     }
     
-    public function test_scenario_20()
+    public function test_scenario_20(): void
     {
         $stream = Stream::from($this->rowsetDataset())
             ->filterBy('name', 'Chris')
@@ -328,7 +314,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([[4, 'Chris', 30], [11, 'Chris', 42], [13, 'Chris']], $stream->toArray());
     }
     
-    public function test_scenario_21()
+    public function test_scenario_21(): void
     {
         $stream = Stream::from($this->rowsetDataset())
             ->filterBy('name', 'Chris')
@@ -339,7 +325,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([4, 'Chris', 30, 11, 'Chris', 42, 13, 'Chris'], $stream->toArray());
     }
     
-    public function test_scenario_22()
+    public function test_scenario_22(): void
     {
         $stream = Stream::from($this->rowsetDataset())
             ->filterBy('name', 'Chris')
@@ -351,7 +337,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([4, 30, 11, 42, 13], $stream->toArray());
     }
     
-    public function test_scenario_23()
+    public function test_scenario_23(): void
     {
         $stream = Stream::from($this->rowsetDataset())
             ->filterBy('name', 'Chris')
@@ -365,7 +351,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([11, 42], $stream->toArray());
     }
     
-    public function test_scenario_24()
+    public function test_scenario_24(): void
     {
         $stream = Stream::from($this->rowsetDataset())
             ->feed(Stream::empty()->extract('name')->unique()->sort()->limit(5)
@@ -408,13 +394,13 @@ final class StreamScenarioTest extends TestCase
         ];
     }
     
-    public function test_scenario_25()
+    public function test_scenario_25(): void
     {
         $count = Stream::from([6, 'a', 3, 'n', 2, 'g'])->onlyStrings()->count();
         self::assertSame(3, $count->get());
     }
     
-    public function test_scenario_26()
+    public function test_scenario_26(): void
     {
         $counter = Stream::empty()->lessOrEqual(3)->count();
         $source = Stream::from([1, 2, 3, 4, 5])->greaterOrEqual(3)->feed($counter);
@@ -423,7 +409,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame(1, $counter->get());
     }
     
-    public function test_scenario_27()
+    public function test_scenario_27(): void
     {
         $consumer = Stream::empty()->onlyIntegers()->greaterThan(0)->reduce(Reducers::sum());
         $source = Stream::from(['v', -3, 'a', 5, 'f', 2, 'u', 0, 'b', -1])->limit(7)->feed($consumer);

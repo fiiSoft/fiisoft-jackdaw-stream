@@ -12,8 +12,7 @@ use FiiSoft\Jackdaw\Filter\Number\NumberFilter;
 
 final class NumberFactory
 {
-    /** @var NumberFactory|null */
-    private static $instance = null;
+    private static ?NumberFactory $instance = null;
     
     public static function instance(): NumberFactory
     {

@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\Internal\Signal;
 
 final class Initial extends BaseOperation
 {
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $this->next->handle($signal);
     }

@@ -8,8 +8,7 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 final class StreamAdapter implements Producer
 {
-    /** @var StreamApi */
-    private $stream;
+    private StreamApi $stream;
     
     public function __construct(StreamApi $stream)
     {

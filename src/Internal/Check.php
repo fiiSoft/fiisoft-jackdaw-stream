@@ -4,10 +4,10 @@ namespace FiiSoft\Jackdaw\Internal;
 
 final class Check
 {
-    const VALUE = 1;
-    const KEY = 2;
-    const BOTH = 3;
-    const ANY = 4;
+    public const VALUE = 1;
+    public const KEY = 2;
+    public const BOTH = 3;
+    public const ANY = 4;
     
     public static function getMode(int $mode): int
     {

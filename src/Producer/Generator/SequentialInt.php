@@ -7,17 +7,11 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 final class SequentialInt implements Producer
 {
-    /** @var int */
-    private $start;
+    private int $start;
+    private int $step;
     
-    /** @var int */
-    private $step;
-    
-    /** @var int */
-    private $count = 0;
-    
-    /** @var int */
-    private $limit;
+    private int $count = 0;
+    private int $limit;
     
     public function __construct(int $start = 1, int $step = 1, int $limit = \PHP_INT_MAX)
     {

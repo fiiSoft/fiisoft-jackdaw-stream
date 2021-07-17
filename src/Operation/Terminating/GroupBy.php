@@ -12,14 +12,10 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class GroupBy extends BaseOperation
 {
-    /** @var Discriminator */
-    private $discriminator;
+    private Discriminator $discriminator;
+    private bool $preserveKeys;
     
-    /** @var bool */
-    private $preserveKeys;
-    
-    /** @var array */
-    private $collections = [];
+    private array $collections = [];
     
     /**
      * @param Discriminator|Filter|string|callable $discriminator
@@ -31,7 +27,7 @@ final class GroupBy extends BaseOperation
         $this->preserveKeys = $preserveKeys;
     }
     
-    public function handle(Signal $signal)
+    public function handle(Signal $signal): void
     {
         $item = $signal->item;
         
