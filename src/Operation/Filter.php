@@ -1,0 +1,42 @@
+<?php declare(strict_types=1);
+
+namespace FiiSoft\Jackdaw\Operation;
+
+use FiiSoft\Jackdaw\Filter\Filter as FilterStrategy;
+use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+
+final class Filter extends BaseOperation
+{
+    /** @var FilterStrategy */
+    private $filterStrategy;
+    
+    /** @var bool */
+    private $negation;
+    
+    /** @var int */
+    private $mode;
+    
+    /**
+     * @param FilterStrategy|callable|mixed $filter
+     * @param bool $negation
+     * @param int $mode
+     */
+    public function __construct($filter, bool $negation = false, int $mode = Check::VALUE)
+    {
+        $this->filterStrategy = Filters::getAdapter($filter);
+        $this->negation = $negation;
+        $this->mode = Check::getMode($mode);
+    }
+    
+    public function handle(Signal $signal)
+    {
+        if ($this->negation
+            XOR $this->filterStrategy->isAllowed($signal->item->value, $signal->item->key, $this->mode)
+        ) {
+            $this->next->handle($signal);
+        }
+    }
+}

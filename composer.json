@@ -1,0 +1,38 @@
+{
+    "name": "fiisoft/jackdaw-stream",
+    "type": "library",
+    "description": "A funny library to provide stream-like operations on iterable data",
+    "keywords": ["streams", "iterators", "generators", "data processing"],
+    "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
+    "license": "MIT",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "fiiSoft",
+            "email": "fiisoft.production@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.0.0",
+        "ext-json": "*"
+    },
+    "suggest": {
+        "ext-pdo": "Required to use PDOStatementAdapter as Producer for Stream",
+        "ramsey/uuid": "Required to use RandomUuid generator as Producer for Stream"
+    },
+    "autoload": {
+        "psr-4": {
+            "FiiSoft\\Jackdaw\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "FiiSoft\\Test\\Jackdaw\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.5",
+        "ramsey/uuid": "^3.9"
+    }
+}
