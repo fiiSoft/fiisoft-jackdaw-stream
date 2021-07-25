@@ -313,3 +313,9 @@ echo 'min value from feed: ', $minValue->get(), PHP_EOL;
 
 $minValue = Stream::from([8,2,6,1,4])->reduce('min')->get();
 echo 'min value: ', $minValue, PHP_EOL;
+
+//collect feed
+$collector = Stream::empty()->onlyIntegers()->collect();
+Stream::from(['a', 1, 'b', 2])->feed($collector)->onlyStrings()->run();
+
+echo 'collected numbers: ', implode(',', $collector->get()), PHP_EOL;

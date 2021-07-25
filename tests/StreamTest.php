@@ -1411,4 +1411,24 @@ final class StreamTest extends TestCase
         self::assertSame([1], $count->toArrayAssoc());
         self::assertSame([0, 1], $count->tuple());
     }
+    
+    public function test_collect()
+    {
+        $result = Stream::from([1, 2, 3, 4])->collect();
+        
+        self::assertTrue($result->found());
+        self::assertSame([1, 2, 3, 4], $result->get());
+        self::assertSame([[1, 2, 3, 4]], $result->toArray());
+        self::assertSame([[1, 2, 3, 4]], $result->toArrayAssoc());
+        self::assertSame('[1,2,3,4]', $result->toJson());
+        self::assertSame('[[1,2,3,4]]', $result->toJsonAssoc());
+        self::assertSame([0, [1, 2, 3, 4]], $result->tuple());
+        
+        $counter = 0;
+        $result->call(function (array $data) use (&$counter) {
+            $counter = \count($data);
+        });
+        
+        self::assertSame(4, $counter);
+    }
 }

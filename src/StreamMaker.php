@@ -451,6 +451,11 @@ final class StreamMaker implements StreamApi
         return $this->make()->groupBy($discriminator);
     }
     
+    public function collect(): Result
+    {
+        return $this->make()->collect();
+    }
+    
     /**
      * @inheritdoc
      */

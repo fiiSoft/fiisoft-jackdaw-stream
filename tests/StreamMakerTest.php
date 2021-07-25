@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use ArrayIterator;
+use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
@@ -441,5 +442,19 @@ class StreamMakerTest extends TestCase
             [2 => 3, 'doubled' => 6],
             [3 => 4, 'doubled' => 8],
         ], $actual);
+    }
+    
+    public function test_collect()
+    {
+        $result = $this->stream->collect();
+        self::assertSame([1, 2, 3, 4], $result->get());
+    }
+    
+    public function test_collectIn()
+    {
+        $collector = Collectors::default();
+        $this->stream->collectIn($collector)->run();
+        
+        self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
     }
 }

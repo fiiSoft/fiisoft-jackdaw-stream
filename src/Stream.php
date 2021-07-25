@@ -17,13 +17,14 @@ use FiiSoft\Jackdaw\Internal\StreamIterator;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Chunk;
-use FiiSoft\Jackdaw\Operation\Collect;
+use FiiSoft\Jackdaw\Operation\CollectIn;
 use FiiSoft\Jackdaw\Operation\CollectKey;
 use FiiSoft\Jackdaw\Operation\Filter;
 use FiiSoft\Jackdaw\Operation\Flat;
 use FiiSoft\Jackdaw\Operation\Flip;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Feed;
+use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Initial;
 use FiiSoft\Jackdaw\Operation\Internal\Iterate;
 use FiiSoft\Jackdaw\Operation\Limit;
@@ -38,6 +39,7 @@ use FiiSoft\Jackdaw\Operation\Shuffle;
 use FiiSoft\Jackdaw\Operation\Skip;
 use FiiSoft\Jackdaw\Operation\Sort;
 use FiiSoft\Jackdaw\Operation\Tail;
+use FiiSoft\Jackdaw\Operation\Terminating\Collect;
 use FiiSoft\Jackdaw\Operation\Terminating\Count;
 use FiiSoft\Jackdaw\Operation\Terminating\Find;
 use FiiSoft\Jackdaw\Operation\Terminating\First;
@@ -284,7 +286,7 @@ final class Stream extends Collaborator implements StreamApi
      */
     public function collectIn($collector, bool $preserveKeys = false): StreamApi
     {
-        return $this->chainOperation(new Collect($collector, $preserveKeys));
+        return $this->chainOperation(new CollectIn($collector, $preserveKeys));
     }
     
     /**
@@ -533,7 +535,7 @@ final class Stream extends Collaborator implements StreamApi
     public function toArray(bool $preserveKeys = false): array
     {
         $buffer = new \ArrayIterator();
-        $this->runWith(new Collect($buffer, $preserveKeys));
+        $this->runWith(new CollectIn($buffer, $preserveKeys));
         
         return $buffer->getArrayCopy();
     }
@@ -541,12 +543,17 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function collect(): Result
+    {
+        return $this->runLast(new Collect($this));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function count(): Result
     {
-        $counter = new Count($this);
-        $this->chainOperation($counter);
-        
-        return $counter->result();
+        return $this->runLast(new Count($this));
     }
     
     /**
@@ -554,10 +561,7 @@ final class Stream extends Collaborator implements StreamApi
      */
     public function reduce($reducer, $orElse = null): Result
     {
-        $reduce = new Reduce($this, $reducer, $orElse);
-        $this->chainOperation($reduce);
-        
-        return $reduce->result();
+        return $this->runLast(new Reduce($this, $reducer, $orElse));
     }
     
     /**
@@ -565,10 +569,79 @@ final class Stream extends Collaborator implements StreamApi
      */
     public function fold($initial, $reducer): Result
     {
-        $fold = new Fold($this, $initial, $reducer);
-        $this->chainOperation($fold);
-        
-        return $fold->result();
+        return $this->runLast(new Fold($this, $initial, $reducer));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function isNotEmpty(): Result
+    {
+        return $this->runLast(new IsEmpty($this, false));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function isEmpty(): Result
+    {
+        return $this->runLast(new IsEmpty($this, true));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function has($value, int $mode = Check::VALUE): Result
+    {
+        return $this->runLast(new Has($this, $value, $mode));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function hasAny(array $values, int $mode = Check::VALUE): Result
+    {
+        return $this->has(Predicates::inArray($values), $mode);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function hasEvery(array $values, int $mode = Check::VALUE): Result
+    {
+        return $this->runLast(new HasEvery($this, $values, $mode));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function hasOnly(array $values, int $mode = Check::VALUE): Result
+    {
+        return $this->runLast(new HasOnly($this, $values, $mode));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function find($predicate, int $mode = Check::VALUE): Result
+    {
+        return $this->runLast(new Find($this, $predicate, $mode));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function first($orElse = null): Result
+    {
+        return $this->runLast(new First($this, $orElse));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function last($orElse = null): Result
+    {
+        return $this->runLast(new Last($this, $orElse));
     }
     
     /**
@@ -585,102 +658,6 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function isNotEmpty(): Result
-    {
-        $isEmpty = new IsEmpty($this, false);
-        $this->chainOperation($isEmpty);
-    
-        return $isEmpty->result();
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function isEmpty(): Result
-    {
-        $isEmpty = new IsEmpty($this, true);
-        $this->chainOperation($isEmpty);
-        
-        return $isEmpty->result();
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function has($value, int $mode = Check::VALUE): Result
-    {
-        $has = new Has($this, $value, $mode);
-        $this->chainOperation($has);
-        
-        return $has->result();
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function hasAny(array $values, int $mode = Check::VALUE): Result
-    {
-        return $this->has(Predicates::inArray($values), $mode);
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function hasEvery(array $values, int $mode = Check::VALUE): Result
-    {
-        $hasEvery = new HasEvery($this, $values, $mode);
-        $this->chainOperation($hasEvery);
-        
-        return $hasEvery->result();
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function hasOnly(array $values, int $mode = Check::VALUE): Result
-    {
-        $hasOnly = new HasOnly($this, $values, $mode);
-        $this->chainOperation($hasOnly);
-        
-        return $hasOnly->result();
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function find($predicate, int $mode = Check::VALUE): Result
-    {
-        $find = new Find($this, $predicate, $mode);
-        $this->chainOperation($find);
-        
-        return $find->result();
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function first($orElse = null): Result
-    {
-        $first = new First($this, $orElse);
-        $this->chainOperation($first);
-        
-        return $first->result();
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function last($orElse = null): Result
-    {
-        $last = new Last($this, $orElse);
-        $this->chainOperation($last);
-    
-        return $last->result();
-    }
-    
-    /**
-     * @inheritdoc
-     */
     public function forEach($consumer)
     {
         $this->runWith(new SendTo($consumer));
@@ -689,6 +666,13 @@ final class Stream extends Collaborator implements StreamApi
     private function runWith(Operation $operation)
     {
         $this->chainOperation($operation)->run();
+    }
+    
+    private function runLast(FinalOperation $operation): Result
+    {
+        $this->chainOperation($operation);
+        
+        return $operation->result();
     }
     
     /**

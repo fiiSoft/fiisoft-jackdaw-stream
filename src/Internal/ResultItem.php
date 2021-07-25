@@ -15,11 +15,6 @@ final class ResultItem implements Result
     /** @var mixed */
     private $value = null;
     
-    public static function create(Item $item = null, $default = null): Result
-    {
-        return $item !== null ? self::createFound($item) : self::createNotFound($default);
-    }
-    
     public static function createFound(Item $item): Result
     {
         return new self($item);

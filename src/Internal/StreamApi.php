@@ -383,6 +383,11 @@ interface StreamApi extends \IteratorAggregate
     public function fold($initial, $reducer): Result;
     
     /**
+     * @return Result
+     */
+    public function collect(): Result;
+    
+    /**
      * @param Discriminator|Filter|string|callable $discriminator
      * @return StreamCollection
      */
