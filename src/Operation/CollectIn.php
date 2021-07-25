@@ -7,7 +7,7 @@ use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
-final class Collect extends BaseOperation
+final class CollectIn extends BaseOperation
 {
     private Collector $collector;
     private bool $preserveKeys;

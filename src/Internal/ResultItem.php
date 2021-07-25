@@ -14,11 +14,6 @@ final class ResultItem implements Result
     /** @var mixed */
     private $value = null;
     
-    public static function create(?Item $item, $default = null): Result
-    {
-        return $item !== null ? self::createFound($item) : self::createNotFound($default);
-    }
-    
     public static function createFound(Item $item): Result
     {
         return new self($item);
@@ -138,6 +133,9 @@ final class ResultItem implements Result
         return $this->toString();
     }
     
+    /**
+     * @inheritdoc
+     */
     public function run(): void
     {
         //do noting
