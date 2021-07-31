@@ -68,9 +68,9 @@ final class LazyResult extends BaseStreamPipe implements Result
     /**
      * @inheritDoc
      */
-    public function toString(): string
+    public function toString(string $separator = ','): string
     {
-        return $this->execute()->toString();
+        return $this->execute()->toString($separator);
     }
     
     /**

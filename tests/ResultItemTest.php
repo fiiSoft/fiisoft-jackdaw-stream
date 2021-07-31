@@ -70,4 +70,12 @@ final class ResultItemTest extends TestCase
     
         self::assertSame(['a', 15], $item->tuple());
     }
+    
+    public function test_convert_array_to_string()
+    {
+        $item = ResultItem::createFound(new Item(0, [1, 2, 3]));
+        
+        self::assertSame('1,2,3', $item->toString());
+        self::assertSame('1 2 3', $item->toString(' '));
+    }
 }

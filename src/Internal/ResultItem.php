@@ -87,9 +87,17 @@ final class ResultItem implements Result
     /**
      * @inheritdoc
      */
-    public function toString(): string
+    public function toString(string $separator = ','): string
     {
-        return $this->found || $this->value !== null ? (string) $this->value : '';
+        if ($this->found || $this->value !== null) {
+            if (\is_array($this->value) || $this->value instanceof \Traversable) {
+                return \implode($separator, $this->value);
+            }
+    
+            return (string) $this->value;
+        }
+    
+        return '';
     }
     
     /**

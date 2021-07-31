@@ -25,7 +25,11 @@ interface Result extends StreamPipe
      */
     public function key();
     
-    public function toString(): string;
+    /**
+     * @param string $separator default comma
+     * @return string
+     */
+    public function toString(string $separator = ','): string;
     
     public function toJson(): string;
     
