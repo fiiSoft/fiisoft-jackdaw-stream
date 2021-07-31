@@ -291,6 +291,11 @@ final class StreamMaker implements StreamApi
         return $this->make()->chunk($size, true);
     }
     
+    public function aggregate(array $keys): StreamApi
+    {
+        return $this->make()->aggregate($keys);
+    }
+    
     /**
      * @inheritdoc
      */

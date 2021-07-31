@@ -16,6 +16,7 @@ use FiiSoft\Jackdaw\Internal\StreamCollection;
 use FiiSoft\Jackdaw\Internal\StreamIterator;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Operation\Aggregate;
 use FiiSoft\Jackdaw\Operation\Chunk;
 use FiiSoft\Jackdaw\Operation\CollectIn;
 use FiiSoft\Jackdaw\Operation\CollectKey;
@@ -405,6 +406,11 @@ final class Stream extends Collaborator implements StreamApi
     public function chunk(int $size, bool $preserveKeys = false): StreamApi
     {
         return $this->chainOperation(new Chunk($size, $preserveKeys));
+    }
+    
+    public function aggregate(array $keys): StreamApi
+    {
+        return $this->chainOperation(new Aggregate($keys));
     }
     
     /**

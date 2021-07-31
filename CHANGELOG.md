@@ -6,6 +6,7 @@ All important changes to `fiisoft-jackdaw-stream` will be documented in this fil
 
 - removed method ResultItem::create
 - added method StreamApi::collect
+- added method StreamApi::aggregate
 - class FiiSoft\Jackdaw\Collector\Collectors\Collect renamed to CollectIn
 - composer.lock added to .gitignore
 

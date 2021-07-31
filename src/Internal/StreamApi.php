@@ -195,6 +195,12 @@ interface StreamApi extends \IteratorAggregate
     public function chunkAssoc(int $size): self;
     
     /**
+     * @param array $keys
+     * @return $this
+     */
+    public function aggregate(array $keys): self;
+    
+    /**
      * @param string|int $field
      * @param Mapper|callable|mixed $mapper
      * @return $this

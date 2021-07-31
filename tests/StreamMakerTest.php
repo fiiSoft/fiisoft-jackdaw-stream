@@ -457,4 +457,10 @@ class StreamMakerTest extends TestCase
         
         self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
     }
+    
+    public function test_aggregate()
+    {
+        $result = $this->stream->aggregate([1, 3])->toJsonAssoc();
+        self::assertSame('[{"1":2,"3":4}]', $result);
+    }
 }

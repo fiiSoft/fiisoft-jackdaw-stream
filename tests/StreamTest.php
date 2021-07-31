@@ -1431,4 +1431,53 @@ final class StreamTest extends TestCase
         
         self::assertSame(4, $counter);
     }
+    
+    public function test_aggregate()
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Kate', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 8, 'name' => 'Joanna', 'age' => 18],
+        ];
+    
+        $result = Stream::from($rowset)->flat()->aggregate(['id', 'age'])->toArrayAssoc();
+        
+        $expected = [
+            ['id' => 2, 'age' => 35],
+            ['id' => 5, 'age' => 26],
+            ['id' => 8, 'age' => 18],
+        ];
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_aggregate_with_single_key()
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Kate', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 8, 'name' => 'Joanna', 'age' => 18],
+        ];
+    
+        $result = Stream::from($rowset)->flat()->aggregate(['name'])->toArrayAssoc();
+    
+        $expected = [
+            ['name' => 'Kate'],
+            ['name' => 'Chris'],
+            ['name' => 'Joanna'],
+        ];
+    
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_aggregate_with_no_key_in_stream()
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Kate', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 8, 'name' => 'Joanna', 'age' => 18],
+        ];
+    
+        self::assertSame([], Stream::from($rowset)->flat()->aggregate(['foo'])->toArrayAssoc());
+    }
 }

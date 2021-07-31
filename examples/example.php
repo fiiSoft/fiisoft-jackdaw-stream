@@ -319,3 +319,6 @@ $collector = Stream::empty()->onlyIntegers()->collect();
 Stream::from(['a', 1, 'b', 2])->feed($collector)->onlyStrings()->run();
 
 echo 'collected numbers: ', implode(',', $collector->get()), PHP_EOL;
+
+//aggregate some values
+echo 'aggregate example: ', Stream::from($rowset)->flat()->aggregate(['id', 'age'])->toJsonAssoc(), PHP_EOL;
