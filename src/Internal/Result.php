@@ -42,6 +42,4 @@ interface Result extends StreamPipe
      * @return void
      */
     public function call($consumer);
-    
-    public function __toString(): string;
 }

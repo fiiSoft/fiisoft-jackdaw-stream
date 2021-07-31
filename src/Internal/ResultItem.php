@@ -129,14 +129,6 @@ final class ResultItem implements Result
     /**
      * @inheritdoc
      */
-    public function __toString(): string
-    {
-        return $this->toString();
-    }
-    
-    /**
-     * @inheritdoc
-     */
     public function run()
     {
         //do noting

@@ -121,14 +121,6 @@ final class LazyResult extends BaseStreamPipe implements Result
         $this->execute()->call($consumer);
     }
     
-    /**
-     * @inheritDoc
-     */
-    public function __toString(): string
-    {
-        return $this->execute()->toString();
-    }
-    
     private function execute(): Result
     {
         if (!$this->isExecuted) {

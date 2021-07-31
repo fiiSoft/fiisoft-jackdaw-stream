@@ -39,11 +39,11 @@ foreach ($stream->filter('is_int')->limit(5)->skip(2) as $key => $value) {
     echo 'key: ', $key,' value: ', $value, PHP_EOL;
 }
 
-echo 'count: ', $stream->notEmpty()->count(), PHP_EOL;
+echo 'count: ', $stream->notEmpty()->count()->get(), PHP_EOL;
 
-echo 'first: ', Stream::from(['a', 5, 'b', 3, 'c'])->filter('is_int')->first(0), PHP_EOL;
+echo 'first: ', Stream::from(['a', 5, 'b', 3, 'c'])->filter('is_int')->first(0)->get(), PHP_EOL;
 
-echo 'last: ', Stream::from(['a', 5, 'b', 3, 'c'])->filter('is_int')->last(0), PHP_EOL;
+echo 'last: ', Stream::from(['a', 5, 'b', 3, 'c'])->filter('is_int')->last(0)->get(), PHP_EOL;
 
 echo 'only a,b,c: ', Stream::from(['a', 5, 'b', 3, 'c'])->only(['a', 'b', 'c'])->toString(), PHP_EOL;
 
@@ -53,18 +53,18 @@ echo 'join: ', Stream::from(['a', 'b', 'c'])->join([1, 2, 3])->skip(2)->limit(2)
 
 $integersFrom1To10 = StreamMaker::from(Producers::sequentialInt(1, 1, 10));
 
-echo 'min: ', $integersFrom1To10->reduce(Reducers::min()), PHP_EOL;
-echo 'max: ', $integersFrom1To10->reduce(Reducers::max()), PHP_EOL;
-echo 'sum: ', $integersFrom1To10->reduce(Reducers::sum()), PHP_EOL;
-echo 'avg: ', $integersFrom1To10->reduce(Reducers::average()), PHP_EOL;
+echo 'min: ', $integersFrom1To10->reduce(Reducers::min())->get(), PHP_EOL;
+echo 'max: ', $integersFrom1To10->reduce(Reducers::max())->get(), PHP_EOL;
+echo 'sum: ', $integersFrom1To10->reduce(Reducers::sum())->get(), PHP_EOL;
+echo 'avg: ', $integersFrom1To10->reduce(Reducers::average())->get(), PHP_EOL;
 
-echo 'min: ', $integersFrom1To10->reduce('min'), PHP_EOL;
-echo 'max: ', $integersFrom1To10->reduce('max'), PHP_EOL;
+echo 'min: ', $integersFrom1To10->reduce('min')->get(), PHP_EOL;
+echo 'max: ', $integersFrom1To10->reduce('max')->get(), PHP_EOL;
 
 $someNumbers = StreamMaker::from([8,3,6,2,7]);
 
-echo 'min from ', $someNumbers->toString(), ' is ', $someNumbers->reduce(Reducers::min()), PHP_EOL;
-echo 'max from ', $someNumbers->toString(), ' is ', $someNumbers->reduce(Reducers::max()), PHP_EOL;
+echo 'min from ', $someNumbers->toString(), ' is ', $someNumbers->reduce(Reducers::min())->get(), PHP_EOL;
+echo 'max from ', $someNumbers->toString(), ' is ', $someNumbers->reduce(Reducers::max())->get(), PHP_EOL;
 
 echo 'unique values: ', Stream::from([1,0,2,9,3,8,4,7,5,6,1,0,2,9,3,8,4,8,5,7,6])
     ->unique()->skip(5)->limit(5)->toString(), PHP_EOL;
@@ -150,7 +150,7 @@ if (Stream::from([5, 3, 7, 3, 5, 1, 5, 3, 7])->hasOnly([1, 3, 5, 7])->get()) {
 echo 'find in stream: ', print_r($assoc->find('d', Check::ANY)->toArrayAssoc(), true), PHP_EOL;
 echo 'find in stream: ', print_r($assoc->find('d', Check::ANY)->toArray(), true), PHP_EOL;
 
-echo 'fold: ', Stream::from([1, 1, 1])->fold(7, Reducers::sum()), PHP_EOL;
+echo 'fold: ', Stream::from([1, 1, 1])->fold(7, Reducers::sum())->get(), PHP_EOL;
 
 echo 'example of chunking: ', Stream::from(['a','b','c','d','e','f','g','h'])
     ->chunk(3)
@@ -270,7 +270,7 @@ echo 'sort by fields: ', Stream::from($rowset)->sortBy('age asc', 'name desc', '
 $byName = Stream::from($rowset)->groupBy('name');
 echo 'rowset groups by name for streams: ', Stream::from($byName->classifiers())->toString(), PHP_EOL;
 
-echo 'number of rows with name Chris: ', $byName->get('Chris')->count(), PHP_EOL;
+echo 'number of rows with name Chris: ', $byName->get('Chris')->count()->get(), PHP_EOL;
 
 echo 'remove id from rows: ', Stream::from($rowset)->remove('id')->toJson(), PHP_EOL;
 echo 'remove id and age from rows: ', Stream::from($rowset)->remove(['id', 'age'])->toJson(), PHP_EOL;
@@ -300,7 +300,7 @@ $numOfNumbers = $source->feed($count)->feed($target)->feed($lastFive)->greaterTh
 $numOfNumbers->run();
 
 echo 'total num of numbers: ', $count->get(), PHP_EOL;
-echo 'num of numbers greater than 5: ', $numOfNumbers, PHP_EOL;
+echo 'num of numbers greater than 5: ', $numOfNumbers->get(), PHP_EOL;
 echo 'min value of last 5 elements: ', $minValue->get(), PHP_EOL;
 echo 'max value of last 5 elements: ', $maxValue->get(), PHP_EOL;
 
