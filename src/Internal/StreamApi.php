@@ -14,7 +14,7 @@ use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 
-interface StreamApi extends \IteratorAggregate
+interface StreamApi extends ResultCaster, \IteratorAggregate
 {
     /**
      * @param FilterStrategy|callable|mixed $filter
@@ -398,38 +398,4 @@ interface StreamApi extends \IteratorAggregate
      * @return StreamCollection
      */
     public function groupBy($discriminator): StreamCollection;
-    
-    /**
-     * @param string $separator
-     * @return string
-     */
-    public function toString(string $separator = ','): string;
-    
-    /**
-     * @param int $flags
-     * @param bool $preserveKeys
-     * @return string
-     */
-    public function toJson(int $flags = 0, bool $preserveKeys = false): string;
-    
-    /**
-     * It works in the same way as toJson($flags, true).
-     *
-     * @param int $flags
-     * @return string
-     */
-    public function toJsonAssoc(int $flags = 0): string;
-    
-    /**
-     * @param bool $preserveKeys
-     * @return array
-     */
-    public function toArray(bool $preserveKeys = false): array;
-    
-    /**
-     * It works in the same way as toArray(true).
-     *
-     * @return array
-     */
-    public function toArrayAssoc(): array;
 }

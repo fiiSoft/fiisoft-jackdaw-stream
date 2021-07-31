@@ -90,10 +90,14 @@ final class ResultItem implements Result
     public function toString(string $separator = ','): string
     {
         if ($this->found || $this->value !== null) {
-            if (\is_array($this->value) || $this->value instanceof \Traversable) {
+            if (\is_array($this->value)) {
                 return \implode($separator, $this->value);
             }
     
+            if ($this->value instanceof \Traversable) {
+                return \implode($separator, \iterator_to_array($this->value, false));
+            }
+            
             return (string) $this->value;
         }
     
@@ -103,8 +107,12 @@ final class ResultItem implements Result
     /**
      * @inheritdoc
      */
-    public function toArray(): array
+    public function toArray(bool $preserveKeys = false): array
     {
+        if ($preserveKeys || \is_array($this->value) || $this->value instanceof \Traversable) {
+            return $this->toArrayAssoc();
+        }
+        
         return $this->found || $this->value !== null ? [$this->value] : [];
     }
     
@@ -113,14 +121,18 @@ final class ResultItem implements Result
      */
     public function toArrayAssoc(): array
     {
-        return $this->found || $this->value !== null ? [$this->key ?? 0 => $this->value] : [];
+        return $this->getValue() ?? [];
     }
     
     /**
      * @inheritdoc
      */
-    public function toJson(int $flags = 0): string
+    public function toJson(int $flags = 0, bool $preserveKeys = false): string
     {
+        if ($preserveKeys || \is_array($this->value) || $this->value instanceof \Traversable) {
+            return $this->toJsonAssoc($flags);
+        }
+    
         $data = $this->found || $this->value !== null ? $this->value : null;
         return \json_encode($data, $flags);
     }
@@ -130,8 +142,24 @@ final class ResultItem implements Result
      */
     public function toJsonAssoc(int $flags = 0): string
     {
-        $data = $this->found || $this->value !== null ? [$this->key ?? 0 => $this->value] : null;
-        return \json_encode($data, $flags);
+        return \json_encode($this->getValue(), $flags);
+    }
+    
+    private function getValue()
+    {
+        if ($this->found || $this->value !== null) {
+            if (\is_array($this->value)) {
+                return $this->value;
+            }
+        
+            if ($this->value instanceof \Traversable) {
+                return \iterator_to_array($this->value);
+            }
+        
+            return [$this->key ?? 0 => $this->value];
+        }
+        
+        return null;
     }
     
     /**

@@ -76,25 +76,25 @@ final class LazyResult extends BaseStreamPipe implements Result
     /**
      * @inheritDoc
      */
-    public function toJson(): string
+    public function toJson(int $flags = 0, bool $preserveKeys = false): string
     {
-        return $this->execute()->toJson();
+        return $this->execute()->toJson($flags, $preserveKeys);
     }
     
     /**
      * @inheritDoc
      */
-    public function toJsonAssoc(): string
+    public function toJsonAssoc(int $flags = 0): string
     {
-        return $this->execute()->toJsonAssoc();
+        return $this->execute()->toJsonAssoc($flags);
     }
     
     /**
      * @inheritDoc
      */
-    public function toArray(): array
+    public function toArray(bool $preserveKeys = false): array
     {
-        return $this->execute()->toArray();
+        return $this->execute()->toArray($preserveKeys);
     }
     
     /**
