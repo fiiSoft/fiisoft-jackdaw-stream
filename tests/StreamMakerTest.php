@@ -470,4 +470,12 @@ class StreamMakerTest extends TestCase
     {
         self::assertSame('[{"name":"Bob"}]', Stream::from([['name' => 'Bob'],])->onlyWith(['name'])->toJsonAssoc());
     }
+    
+    public function test_callOnce()
+    {
+        $counter = Consumers::counter();
+        $this->stream->callOnce($counter)->run();
+        
+        self::assertSame(1, $counter->count());
+    }
 }

@@ -9,8 +9,9 @@ All important changes to `fiisoft-jackdaw-stream` will be documented in this fil
 - added method StreamApi::collect
 - added method StreamApi::aggregate
 - added method StreamApi::onlyWith
+- added method StreamApi::callOnce
 - method Result::toString() accepts param `string $separator = ','`
-- changed methods in Result: toJson, toJsonAssoc, toArray, toArrayAssoc - they accept default parameters as StreamApi and work different for array-results
+- many changes in methods of Result: toJson, toJsonAssoc, toArray, toArrayAssoc - they accept default parameters as StreamApi and work different for array-results
 - identical methods from StreamApi and Result moved to ResultCaster 
 - class FiiSoft\Jackdaw\Collector\Collectors\Collect renamed to CollectIn
 - composer.lock added to .gitignore

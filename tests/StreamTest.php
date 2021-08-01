@@ -1506,4 +1506,15 @@ final class StreamTest extends TestCase
         
         self::assertSame('[{"name":"Bob"},{"name":null}]', $result);
     }
+    
+    public function test_callOnce()
+    {
+        Stream::from([1, 2, 3])
+            ->callOnce($onlyOnce = Consumers::counter())
+            ->call($threeTimes = Consumers::counter())
+            ->run();
+        
+        self::assertSame(1, $onlyOnce->count());
+        self::assertSame(3, $threeTimes->count());
+    }
 }

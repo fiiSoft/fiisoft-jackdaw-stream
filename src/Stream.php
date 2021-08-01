@@ -36,6 +36,7 @@ use FiiSoft\Jackdaw\Operation\Reindex;
 use FiiSoft\Jackdaw\Operation\Reverse;
 use FiiSoft\Jackdaw\Operation\Scan;
 use FiiSoft\Jackdaw\Operation\SendTo;
+use FiiSoft\Jackdaw\Operation\SendToMax;
 use FiiSoft\Jackdaw\Operation\Shuffle;
 use FiiSoft\Jackdaw\Operation\Skip;
 use FiiSoft\Jackdaw\Operation\Sort;
@@ -312,6 +313,14 @@ final class Stream extends Collaborator implements StreamApi
     public function call($consumer): StreamApi
     {
         return $this->chainOperation(new SendTo($consumer));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function callOnce($consumer): StreamApi
+    {
+        return $this->chainOperation(new SendToMax(1, $consumer));
     }
     
     /**

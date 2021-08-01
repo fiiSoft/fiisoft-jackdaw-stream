@@ -126,6 +126,12 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function call($consumer): self;
     
     /**
+     * @param Consumer|callable $consumer
+     * @return $this
+     */
+    public function callOnce($consumer): self;
+    
+    /**
      * @param Mapper|callable $mapper
      * @return $this
      */

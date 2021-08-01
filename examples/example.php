@@ -328,3 +328,8 @@ echo 'only with keys: ', Stream::from([
     ['id' => 15, 'name' => 'Agatha'],
     ['id' => 4, 'name' => null],
 ])->onlyWith(['name'])->toJsonAssoc(), PHP_EOL;
+
+//call consumer only once
+echo 'call once: ';
+Stream::from($rowset)->extract('name')->flat()->callOnce(Consumers::printer(Check::VALUE))->run();
+echo PHP_EOL;
