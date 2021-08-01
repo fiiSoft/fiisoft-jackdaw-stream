@@ -70,4 +70,23 @@ final class ResultItemTest extends TestCase
     
         self::assertSame(['a', 15], $item->tuple());
     }
+    
+    public function test_convert_array_to_string(): void
+    {
+        $item = ResultItem::createFound(new Item(0, [1, 2, 3]));
+        
+        self::assertSame('1,2,3', $item->toString());
+        self::assertSame('1 2 3', $item->toString(' '));
+    }
+    
+    public function test_item_with_array_as_value_always_returns_oryginal_array_and_prevents_its_keys(): void
+    {
+        $item = ResultItem::createFound(new Item(0, ['a' => 1, 'b' => 2, 'c' => 3]));
+        
+        self::assertSame('1,2,3', $item->toString());
+        self::assertSame('{"a":1,"b":2,"c":3}', $item->toJson());
+        self::assertSame('{"a":1,"b":2,"c":3}', $item->toJsonAssoc());
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3], $item->toArray());
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3], $item->toArrayAssoc());
+    }
 }

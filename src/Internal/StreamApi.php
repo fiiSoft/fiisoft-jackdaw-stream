@@ -4,20 +4,20 @@ namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Collector\Collector;
 use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Filter\Filter as FilterStrategy;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 
-interface StreamApi extends \IteratorAggregate
+interface StreamApi extends ResultCaster, \IteratorAggregate
 {
     /**
-     * @param FilterStrategy|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      * @param int $mode
      * @return $this
      */
@@ -25,13 +25,13 @@ interface StreamApi extends \IteratorAggregate
     
     /**
      * @param string|int $field
-     * @param FilterStrategy|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      * @return $this
      */
     public function filterBy($field, $filter): self;
     
     /**
-     * @param FilterStrategy|callable $filter
+     * @param Filter|callable $filter
      * @param int $mode
      * @return $this
      */
@@ -91,6 +91,13 @@ interface StreamApi extends \IteratorAggregate
     public function only(array $values, int $mode = Check::VALUE): self;
     
     /**
+     * @param array|string|int $keys list of keys or single key
+     * @param bool $allowNulls
+     * @return $this
+     */
+    public function onlyWith($keys, bool $allowNulls = false): self;
+    
+    /**
      * @return $this
      */
     public function notNull(): self;
@@ -119,10 +126,39 @@ interface StreamApi extends \IteratorAggregate
     public function call($consumer): self;
     
     /**
+     * @param Consumer|callable $consumer
+     * @return $this
+     */
+    public function callOnce($consumer): self;
+    
+    /**
+     * @param int $times
+     * @param Consumer|callable $consumer
+     * @return $this
+     */
+    public function callMax(int $times, $consumer): self;
+    
+    /**
+     * @param Condition|Predicate|Filter|callable $condition
+     * @param Consumer|callable $consumer
+     * @param Consumer|callable|null $elseConsumer
+     * @return $this
+     */
+    public function callWhen($condition, $consumer, $elseConsumer = null): self;
+    
+    /**
      * @param Mapper|callable $mapper
      * @return $this
      */
     public function map($mapper): self;
+    
+    /**
+     * @param Condition|Predicate|Filter|callable $condition
+     * @param Mapper|callable $mapper
+     * @param Mapper|callable|null $elseMapper
+     * @return $this
+     */
+    public function mapWhen($condition, $mapper, $elseMapper = null): self;
     
     /**
      * @param Mapper|callable $mapper
@@ -195,11 +231,24 @@ interface StreamApi extends \IteratorAggregate
     public function chunkAssoc(int $size): self;
     
     /**
+     * @param array $keys
+     * @return $this
+     */
+    public function aggregate(array $keys): self;
+    
+    /**
      * @param string|int $field
      * @param Mapper|callable|mixed $mapper
      * @return $this
      */
     public function append($field, $mapper): self;
+    
+    /**
+     * @param string|int $field
+     * @param Mapper|callable|mixed $mapper
+     * @return $this
+     */
+    public function complete($field, $mapper): self;
     
     /**
      * @param array|string|int $fields
@@ -392,38 +441,4 @@ interface StreamApi extends \IteratorAggregate
      * @return StreamCollection
      */
     public function groupBy($discriminator): StreamCollection;
-    
-    /**
-     * @param string $separator
-     * @return string
-     */
-    public function toString(string $separator = ','): string;
-    
-    /**
-     * @param int $flags
-     * @param bool $preserveKeys
-     * @return string
-     */
-    public function toJson(int $flags = 0, bool $preserveKeys = false): string;
-    
-    /**
-     * It works in the same way as toJson($flags, true).
-     *
-     * @param int $flags
-     * @return string
-     */
-    public function toJsonAssoc(int $flags = 0): string;
-    
-    /**
-     * @param bool $preserveKeys
-     * @return array
-     */
-    public function toArray(bool $preserveKeys = false): array;
-    
-    /**
-     * It works in the same way as toArray(true).
-     *
-     * @return array
-     */
-    public function toArrayAssoc(): array;
 }

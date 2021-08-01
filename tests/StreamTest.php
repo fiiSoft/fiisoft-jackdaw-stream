@@ -1392,10 +1392,10 @@ final class StreamTest extends TestCase
         
         self::assertTrue($result->found());
         self::assertSame([1, 2, 3, 4], $result->get());
-        self::assertSame([[1, 2, 3, 4]], $result->toArray());
-        self::assertSame([[1, 2, 3, 4]], $result->toArrayAssoc());
+        self::assertSame([1, 2, 3, 4], $result->toArray());
+        self::assertSame([1, 2, 3, 4], $result->toArrayAssoc());
         self::assertSame('[1,2,3,4]', $result->toJson());
-        self::assertSame('[[1,2,3,4]]', $result->toJsonAssoc());
+        self::assertSame('[1,2,3,4]', $result->toJsonAssoc());
         self::assertSame([0, [1, 2, 3, 4]], $result->tuple());
         
         $counter = 0;
@@ -1404,5 +1404,133 @@ final class StreamTest extends TestCase
         });
         
         self::assertSame(4, $counter);
+    }
+    
+    public function test_aggregate(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Kate', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 8, 'name' => 'Joanna', 'age' => 18],
+        ];
+    
+        $result = Stream::from($rowset)->flat()->aggregate(['id', 'age'])->toArrayAssoc();
+        
+        $expected = [
+            ['id' => 2, 'age' => 35],
+            ['id' => 5, 'age' => 26],
+            ['id' => 8, 'age' => 18],
+        ];
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_aggregate_with_single_key(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Kate', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 8, 'name' => 'Joanna', 'age' => 18],
+        ];
+    
+        $result = Stream::from($rowset)->flat()->aggregate(['name'])->toArrayAssoc();
+    
+        $expected = [
+            ['name' => 'Kate'],
+            ['name' => 'Chris'],
+            ['name' => 'Joanna'],
+        ];
+    
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_aggregate_with_no_key_in_stream(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Kate', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 8, 'name' => 'Joanna', 'age' => 18],
+        ];
+    
+        self::assertSame([], Stream::from($rowset)->flat()->aggregate(['foo'])->toArrayAssoc());
+    }
+    
+    public function test_onlyWith_without_nulls(): void
+    {
+        $rowset = [
+            ['id' => 3, 'name' => 'Bob'],
+            ['id' => 3, 'name' => null],
+            ['id' => 3],
+        ];
+        
+        $result = Stream::from($rowset)->onlyWith(['name'])->remove('id')->toJsonAssoc();
+        
+        self::assertSame('[{"name":"Bob"}]', $result);
+    }
+    
+    public function test_onlyWith_with_nulls(): void
+    {
+        $rowset = [
+            ['id' => 3, 'name' => 'Bob'],
+            ['id' => 3, 'name' => null],
+            ['id' => 3],
+        ];
+        
+        $result = Stream::from($rowset)->onlyWith('name', true)->remove('id')->toJsonAssoc();
+        
+        self::assertSame('[{"name":"Bob"},{"name":null}]', $result);
+    }
+    
+    public function test_call_different_number_of_times(): void
+    {
+        Stream::from([1, 2, 3])
+            ->callOnce($onlyOnce = Consumers::counter())
+            ->callMax(2, $maxTwice = Consumers::counter())
+            ->call($all = Consumers::counter())
+            ->run();
+        
+        self::assertSame(1, $onlyOnce->count());
+        self::assertSame(2, $maxTwice->count());
+        self::assertSame(3, $all->count());
+    }
+    
+    public function test_callWhen(): void
+    {
+        Stream::from([1, 'a', 2, 'b', 3])
+            ->callWhen('is_int', $countInts = Consumers::counter(), $countOthers = Consumers::counter())
+            ->run();
+        
+        self::assertSame(3, $countInts->count());
+        self::assertSame(2, $countOthers->count());
+    }
+    
+    public function test_mapWhen(): void
+    {
+        $result = Stream::from(['a', 1, 'b', 2, 'c', 3])
+            ->mapWhen('is_string', 'strtoupper', static function (int $n) {
+                return $n * 2;
+            })
+            ->toArray();
+        
+        self::assertSame(['A', 2, 'B', 4, 'C', 6], $result);
+    }
+    
+    public function test_complete(): void
+    {
+        $rowset = [
+            ['id' => 3, 'name' => 'Ole'],
+            ['id' => 7, 'name' => null],
+            ['id' => 2],
+        ];
+        
+        $result = Stream::from($rowset)->complete('name', 'anonymous')->toArray();
+        
+        $expected = [
+            ['id' => 3, 'name' => 'Ole'],
+            ['id' => 7, 'name' => 'anonymous'],
+            ['id' => 2, 'name' => 'anonymous'],
+        ];
+        
+        self::assertSame($expected, $result);
     }
 }

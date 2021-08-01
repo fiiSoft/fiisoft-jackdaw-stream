@@ -112,6 +112,30 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function callOnce($consumer): StreamApi
+    {
+        return $this->make()->callOnce($consumer);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function callMax(int $times, $consumer): StreamApi
+    {
+        return $this->make()->callMax($times, $consumer);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function callWhen($condition, $consumer, $elseConsumer = null): StreamApi
+    {
+        return $this->make()->callWhen($condition, $consumer, $elseConsumer);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function notEmpty(): StreamApi
     {
         return $this->make()->notEmpty();
@@ -176,6 +200,14 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function mapWhen($condition, $mapper, $elseMapper = null): StreamApi
+    {
+        return $this->make()->mapWhen($condition, $mapper, $elseMapper);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function mapKey($mapper): StreamApi
     {
         return $this->make()->mapKey($mapper);
@@ -211,6 +243,14 @@ final class StreamMaker implements StreamApi
     public function collectKeys($collector): StreamApi
     {
         return $this->make()->collectKeys($collector);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function onlyWith($keys, bool $allowNulls = false): StreamApi
+    {
+        return $this->make()->onlyWith($keys, $allowNulls);
     }
     
     /**
@@ -285,12 +325,25 @@ final class StreamMaker implements StreamApi
         return $this->make()->chunk($size, true);
     }
     
+    public function aggregate(array $keys): StreamApi
+    {
+        return $this->make()->aggregate($keys);
+    }
+    
     /**
      * @inheritdoc
      */
     public function append($field, $mapper): StreamApi
     {
         return $this->make()->append($field, $mapper);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function complete($field, $mapper): StreamApi
+    {
+        return $this->make()->complete($field, $mapper);
     }
     
     /**

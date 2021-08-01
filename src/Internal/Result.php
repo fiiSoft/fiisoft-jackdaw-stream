@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Consumer\Consumer;
 
-interface Result extends StreamPipe
+interface Result extends StreamPipe, ResultCaster
 {
     public function run(): void;
     
@@ -22,16 +22,9 @@ interface Result extends StreamPipe
      */
     public function key();
     
-    public function toString(): string;
-    
-    public function toJson(): string;
-    
-    public function toJsonAssoc(): string;
-    
-    public function toArray(): array;
-    
-    public function toArrayAssoc(): array;
-    
+    /**
+     * @return array with two values: first is key, second is value, both indexed numerically
+     */
     public function tuple(): array;
     
     /**
@@ -39,6 +32,4 @@ interface Result extends StreamPipe
      * @return void
      */
     public function call($consumer): void;
-    
-    public function __toString(): string;
 }

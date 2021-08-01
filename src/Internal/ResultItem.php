@@ -86,16 +86,32 @@ final class ResultItem implements Result
     /**
      * @inheritdoc
      */
-    public function toString(): string
+    public function toString(string $separator = ','): string
     {
-        return $this->found || $this->value !== null ? (string) $this->value : '';
+        if ($this->found || $this->value !== null) {
+            if (\is_array($this->value)) {
+                return \implode($separator, $this->value);
+            }
+    
+            if ($this->value instanceof \Traversable) {
+                return \implode($separator, \iterator_to_array($this->value, false));
+            }
+            
+            return (string) $this->value;
+        }
+    
+        return '';
     }
     
     /**
      * @inheritdoc
      */
-    public function toArray(): array
+    public function toArray(bool $preserveKeys = false): array
     {
+        if ($preserveKeys || \is_iterable($this->value)) {
+            return $this->toArrayAssoc();
+        }
+        
         return $this->found || $this->value !== null ? [$this->value] : [];
     }
     
@@ -104,14 +120,18 @@ final class ResultItem implements Result
      */
     public function toArrayAssoc(): array
     {
-        return $this->found || $this->value !== null ? [$this->key ?? 0 => $this->value] : [];
+        return $this->getValue() ?? [];
     }
     
     /**
      * @inheritdoc
      */
-    public function toJson(int $flags = 0): string
+    public function toJson(int $flags = 0, bool $preserveKeys = false): string
     {
+        if ($preserveKeys || \is_iterable($this->value)) {
+            return $this->toJsonAssoc($flags);
+        }
+    
         $data = $this->found || $this->value !== null ? $this->value : null;
         return \json_encode($data, \JSON_THROW_ON_ERROR | $flags);
     }
@@ -121,16 +141,24 @@ final class ResultItem implements Result
      */
     public function toJsonAssoc(int $flags = 0): string
     {
-        $data = $this->found || $this->value !== null ? [$this->key ?? 0 => $this->value] : null;
-        return \json_encode($data, \JSON_THROW_ON_ERROR | $flags);
+        return \json_encode($this->getValue(), \JSON_THROW_ON_ERROR | $flags);
     }
     
-    /**
-     * @inheritdoc
-     */
-    public function __toString(): string
+    private function getValue()
     {
-        return $this->toString();
+        if ($this->found || $this->value !== null) {
+            if (\is_array($this->value)) {
+                return $this->value;
+            }
+        
+            if ($this->value instanceof \Traversable) {
+                return \iterator_to_array($this->value);
+            }
+        
+            return [$this->key ?? 0 => $this->value];
+        }
+        
+        return null;
     }
     
     /**

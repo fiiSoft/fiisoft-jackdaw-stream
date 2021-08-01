@@ -106,6 +106,16 @@ final class Mappers
     }
     
     /**
+     * @param string|int $field
+     * @param Mapper|callable|mixed $mapper
+     * @return Complete
+     */
+    public static function complete($field, $mapper): Complete
+    {
+        return new Complete($field, $mapper);
+    }
+    
+    /**
      * @param mixed $value
      * @return Simple
      */

@@ -16,6 +16,7 @@ use FiiSoft\Jackdaw\Internal\StreamCollection;
 use FiiSoft\Jackdaw\Internal\StreamIterator;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Operation\Aggregate;
 use FiiSoft\Jackdaw\Operation\Chunk;
 use FiiSoft\Jackdaw\Operation\CollectIn;
 use FiiSoft\Jackdaw\Operation\CollectKey;
@@ -30,11 +31,14 @@ use FiiSoft\Jackdaw\Operation\Internal\Iterate;
 use FiiSoft\Jackdaw\Operation\Limit;
 use FiiSoft\Jackdaw\Operation\Map;
 use FiiSoft\Jackdaw\Operation\MapKey;
+use FiiSoft\Jackdaw\Operation\MapWhen;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Reindex;
 use FiiSoft\Jackdaw\Operation\Reverse;
 use FiiSoft\Jackdaw\Operation\Scan;
 use FiiSoft\Jackdaw\Operation\SendTo;
+use FiiSoft\Jackdaw\Operation\SendWhen;
+use FiiSoft\Jackdaw\Operation\SendToMax;
 use FiiSoft\Jackdaw\Operation\Shuffle;
 use FiiSoft\Jackdaw\Operation\Skip;
 use FiiSoft\Jackdaw\Operation\Sort;
@@ -171,6 +175,14 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function onlyWith($keys, bool $allowNulls = false): self
+    {
+        return $this->filter(Filters::onlyWith($keys, $allowNulls));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function greaterThan($value): self
     {
         return $this->filter(Filters::greaterThan($value));
@@ -267,6 +279,14 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function mapWhen($condition, $mapper, $elseMapper = null): self
+    {
+        return $this->chainOperation(new MapWhen($condition, $mapper, $elseMapper));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function mapKey($mapper): self
     {
         return $this->chainOperation(new MapKey($mapper));
@@ -294,6 +314,30 @@ final class Stream extends Collaborator implements StreamApi
     public function call($consumer): self
     {
         return $this->chainOperation(new SendTo($consumer));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function callOnce($consumer): self
+    {
+        return $this->callMax(1, $consumer);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function callMax(int $times, $consumer): self
+    {
+        return $this->chainOperation(new SendToMax($times, $consumer));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function callWhen($condition, $consumer, $elseConsumer = null): self
+    {
+        return $this->chainOperation(new SendWhen($condition, $consumer, $elseConsumer));
     }
     
     /**
@@ -401,9 +445,25 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function aggregate(array $keys): self
+    {
+        return $this->chainOperation(new Aggregate($keys));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function append($field, $mapper): self
     {
         return $this->map(Mappers::append($field, $mapper));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function complete($field, $mapper): self
+    {
+        return $this->map(Mappers::complete($field, $mapper));
     }
     
     /**

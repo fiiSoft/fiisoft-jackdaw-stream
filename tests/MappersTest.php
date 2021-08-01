@@ -196,4 +196,13 @@ final class MappersTest extends TestCase
     {
         self::assertSame('g', Mappers::simple('g')->map(5, 'a'));
     }
+    
+    public function test_Append_replaces_only_null_or_missing_keys(): void
+    {
+        $mapper = Mappers::complete('name', 'anonymous');
+        
+        self::assertSame(['id' => 3, 'name' => 'Ole'], $mapper->map(['id' => 3, 'name' => 'Ole'], 0));
+        self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3, 'name' => null], 0));
+        self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3], 0));
+    }
 }
