@@ -36,4 +36,22 @@ final class OtherTest extends TestCase
         
         Check::getMode(0);
     }
+    
+    public function test_how_ArrayObject_handles_isset_on_null_values()
+    {
+        $data = ['a' => 5, 'b' => null];
+        $obj = new \ArrayObject($data);
+        
+        self::assertTrue(isset($obj['a']));
+        self::assertFalse(isset($obj['b']));
+        self::assertFalse(isset($obj['c']));
+        
+        self::assertNotEmpty($obj['a']);
+        self::assertEmpty($obj['b']);
+        self::assertEmpty($obj['c']);
+        
+        self::assertTrue($obj->offsetExists('a'));
+        self::assertTrue($obj->offsetExists('b'));
+        self::assertFalse($obj->offsetExists('c'));
+    }
 }

@@ -138,4 +138,14 @@ final class Filters
     {
         return new FilterBy($field, self::getAdapter($filter));
     }
+    
+    /**
+     * @param array|string|int $keys
+     * @param bool $allowNulls
+     * @return OnlyWith
+     */
+    public static function onlyWith($keys, bool $allowNulls = false): OnlyWith
+    {
+        return new OnlyWith($keys, $allowNulls);
+    }
 }

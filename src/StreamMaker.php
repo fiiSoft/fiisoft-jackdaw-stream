@@ -222,6 +222,14 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function onlyWith($keys, bool $allowNulls = false): StreamApi
+    {
+        return $this->make()->onlyWith($keys, $allowNulls);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function only(array $values, int $mode = Check::VALUE): StreamApi
     {
         return $this->make()->only($values, $mode);

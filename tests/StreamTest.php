@@ -1480,4 +1480,30 @@ final class StreamTest extends TestCase
     
         self::assertSame([], Stream::from($rowset)->flat()->aggregate(['foo'])->toArrayAssoc());
     }
+    
+    public function test_onlyWith_without_nulls()
+    {
+        $rowset = [
+            ['id' => 3, 'name' => 'Bob'],
+            ['id' => 3, 'name' => null],
+            ['id' => 3],
+        ];
+        
+        $result = Stream::from($rowset)->onlyWith(['name'])->remove('id')->toJsonAssoc();
+        
+        self::assertSame('[{"name":"Bob"}]', $result);
+    }
+    
+    public function test_onlyWith_with_nulls()
+    {
+        $rowset = [
+            ['id' => 3, 'name' => 'Bob'],
+            ['id' => 3, 'name' => null],
+            ['id' => 3],
+        ];
+        
+        $result = Stream::from($rowset)->onlyWith('name', true)->remove('id')->toJsonAssoc();
+        
+        self::assertSame('[{"name":"Bob"},{"name":null}]', $result);
+    }
 }

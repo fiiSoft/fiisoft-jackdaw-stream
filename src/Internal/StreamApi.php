@@ -91,6 +91,13 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function only(array $values, int $mode = Check::VALUE): self;
     
     /**
+     * @param array|string|int $keys list of keys or single key
+     * @param bool $allowNulls
+     * @return $this
+     */
+    public function onlyWith($keys, bool $allowNulls = false): self;
+    
+    /**
      * @return $this
      */
     public function notNull(): self;

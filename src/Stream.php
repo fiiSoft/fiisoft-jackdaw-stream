@@ -181,6 +181,14 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function onlyWith($keys, bool $allowNulls = false): StreamApi
+    {
+        return $this->filter(Filters::onlyWith($keys, $allowNulls));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function greaterThan($value): StreamApi
     {
         return $this->filter(Filters::greaterThan($value));

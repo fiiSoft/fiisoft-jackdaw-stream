@@ -62,6 +62,7 @@ class StreamMakerTest extends TestCase
     public function test_make_with_method_of()
     {
         $stream = StreamMaker::of(['a', 'b'], 1, 2, ['c', 'd']);
+        
         self::assertSame('a,b,1,2,c,d', $stream->toString());
         self::assertSame('a,b,1,2,c,d', $stream->toString());
     }
@@ -69,6 +70,7 @@ class StreamMakerTest extends TestCase
     public function test_make_empty_stream()
     {
         $stream = StreamMaker::empty();
+        
         self::assertSame('', $stream->toString());
         self::assertSame('', $stream->toString());
     }
@@ -148,6 +150,7 @@ class StreamMakerTest extends TestCase
     public function test_mapKey()
     {
         $expected = ['_0' => 1, '_1' => 2, '_2' => 3, '_3' => 4];
+        
         self::assertSame($expected, $this->stream->mapKey(static function ($_, $k) {
             return '_'.$k;
         })->toArrayAssoc());
@@ -167,6 +170,7 @@ class StreamMakerTest extends TestCase
     {
         $buffer = new \ArrayObject();
         $this->stream->collectKeys($buffer)->run();
+        
         self::assertSame([0, 1, 2, 3], $buffer->getArrayCopy());
     }
     
@@ -198,8 +202,7 @@ class StreamMakerTest extends TestCase
     
     public function test_flip()
     {
-        $actual = $this->stream->flip()->toArrayAssoc();
-        self::assertSame([1 => 0, 2 => 1, 3 => 2, 4 => 3], $actual);
+        self::assertSame([1 => 0, 2 => 1, 3 => 2, 4 => 3], $this->stream->flip()->toArrayAssoc());
     }
     
     public function test_chunk()
@@ -262,6 +265,7 @@ class StreamMakerTest extends TestCase
         $actual = $this->stream->flatMap(static function ($v, $k) {
             return [$k => [$v]];
         })->toArray();
+        
         self::assertSame([1, 2, 3, 4], $actual);
     }
     
@@ -333,8 +337,7 @@ class StreamMakerTest extends TestCase
     
     public function test_groupBy()
     {
-        $streams = $this->stream->groupBy(Discriminators::evenOdd());
-        self::assertSame(['odd', 'even'], $streams->classifiers());
+        self::assertSame(['odd', 'even'], $this->stream->groupBy(Discriminators::evenOdd())->classifiers());
     }
     
     public function test_isNotEmpty()
@@ -436,6 +439,7 @@ class StreamMakerTest extends TestCase
         $actual = $this->stream->append('doubled', static function (int $v) {
             return 2 * $v;
         })->toArray();
+        
         self::assertSame([
             [0 => 1, 'doubled' => 2],
             [1 => 2, 'doubled' => 4],
@@ -446,8 +450,7 @@ class StreamMakerTest extends TestCase
     
     public function test_collect()
     {
-        $result = $this->stream->collect();
-        self::assertSame([1, 2, 3, 4], $result->get());
+        self::assertSame([1, 2, 3, 4], $this->stream->collect()->get());
     }
     
     public function test_collectIn()
@@ -460,7 +463,11 @@ class StreamMakerTest extends TestCase
     
     public function test_aggregate()
     {
-        $result = $this->stream->aggregate([1, 3])->toJsonAssoc();
-        self::assertSame('[{"1":2,"3":4}]', $result);
+        self::assertSame('[{"1":2,"3":4}]', $this->stream->aggregate([1, 3])->toJsonAssoc());
+    }
+    
+    public function test_onlyWith()
+    {
+        self::assertSame('[{"name":"Bob"}]', Stream::from([['name' => 'Bob'],])->onlyWith(['name'])->toJsonAssoc());
     }
 }

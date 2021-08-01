@@ -322,3 +322,9 @@ echo 'collected numbers: ', implode(',', $collector->get()), PHP_EOL;
 
 //aggregate some values
 echo 'aggregate example: ', Stream::from($rowset)->flat()->aggregate(['id', 'age'])->toJsonAssoc(), PHP_EOL;
+
+//only arrays with keys
+echo 'only with keys: ', Stream::from([
+    ['id' => 15, 'name' => 'Agatha'],
+    ['id' => 4, 'name' => null],
+])->onlyWith(['name'])->toJsonAssoc(), PHP_EOL;
