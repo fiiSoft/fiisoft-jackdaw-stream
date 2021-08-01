@@ -478,4 +478,10 @@ class StreamMakerTest extends TestCase
         
         self::assertSame(1, $counter->count());
     }
+    
+    public function test_callMax()
+    {
+        $this->stream->callMax(2, $counter = Consumers::counter())->run();
+        self::assertSame(2, $counter->count());
+    }
 }

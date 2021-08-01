@@ -332,4 +332,8 @@ echo 'only with keys: ', Stream::from([
 //call consumer only once
 echo 'call once: ';
 Stream::from($rowset)->extract('name')->flat()->callOnce(Consumers::printer(Check::VALUE))->run();
+
+//or twice:
+echo 'call twice: ', PHP_EOL;
+Stream::from($rowset)->extract('name')->flat()->callMax(2, Consumers::printer())->run();
 echo PHP_EOL;

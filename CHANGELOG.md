@@ -10,6 +10,7 @@ All important changes to `fiisoft-jackdaw-stream` will be documented in this fil
 - added method StreamApi::aggregate
 - added method StreamApi::onlyWith
 - added method StreamApi::callOnce
+- added method StreamApi::callMax
 - method Result::toString() accepts param `string $separator = ','`
 - many changes in methods of Result: toJson, toJsonAssoc, toArray, toArrayAssoc - they accept default parameters as StreamApi and work different for array-results
 - identical methods from StreamApi and Result moved to ResultCaster 

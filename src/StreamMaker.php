@@ -126,6 +126,14 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function callMax(int $times, $consumer): StreamApi
+    {
+        return $this->make()->callMax($times, $consumer);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function notEmpty(): StreamApi
     {
         return $this->make()->notEmpty();

@@ -320,7 +320,15 @@ final class Stream extends Collaborator implements StreamApi
      */
     public function callOnce($consumer): StreamApi
     {
-        return $this->chainOperation(new SendToMax(1, $consumer));
+        return $this->callMax(1, $consumer);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function callMax(int $times, $consumer): StreamApi
+    {
+        return $this->chainOperation(new SendToMax($times, $consumer));
     }
     
     /**
