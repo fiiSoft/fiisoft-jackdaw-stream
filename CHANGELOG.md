@@ -8,6 +8,7 @@ All important changes to `fiisoft-jackdaw-stream` will be documented in this fil
 - removed method ResultItem::create
 - added method StreamApi::collect
 - added method StreamApi::aggregate
+- added method StreamApi::complete
 - added method StreamApi::onlyWith
 - added method StreamApi::callOnce
 - added method StreamApi::callMax

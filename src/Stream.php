@@ -467,6 +467,14 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function complete($field, $mapper): StreamApi
+    {
+        return $this->map(Mappers::complete($field, $mapper));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function extract($fields, $orElse = null): StreamApi
     {
         return $this->map(Mappers::extract($fields, $orElse));

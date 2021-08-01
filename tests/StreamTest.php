@@ -1540,4 +1540,23 @@ final class StreamTest extends TestCase
         
         self::assertSame(['A', 2, 'B', 4, 'C', 6], $result);
     }
+    
+    public function test_complete()
+    {
+        $rowset = [
+            ['id' => 3, 'name' => 'Ole'],
+            ['id' => 7, 'name' => null],
+            ['id' => 2],
+        ];
+        
+        $result = Stream::from($rowset)->complete('name', 'anonymous')->toArray();
+        
+        $expected = [
+            ['id' => 3, 'name' => 'Ole'],
+            ['id' => 7, 'name' => 'anonymous'],
+            ['id' => 2, 'name' => 'anonymous'],
+        ];
+        
+        self::assertSame($expected, $result);
+    }
 }

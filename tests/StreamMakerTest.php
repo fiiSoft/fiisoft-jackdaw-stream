@@ -499,4 +499,10 @@ class StreamMakerTest extends TestCase
         
         self::assertSame([1, 2, 6, 8], $result);
     }
+    
+    public function test_complete()
+    {
+        $result = Stream::from([['a' => 1], ['a' => null]])->complete('a', 0)->toArray();
+        self::assertSame([['a' => 1], ['a' => 0]], $result);
+    }
 }

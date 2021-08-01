@@ -244,6 +244,13 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function append($field, $mapper): self;
     
     /**
+     * @param string|int $field
+     * @param Mapper|callable|mixed $mapper
+     * @return $this
+     */
+    public function complete($field, $mapper): self;
+    
+    /**
      * @param array|string|int $fields
      * @param mixed|null $orElse
      * @return $this

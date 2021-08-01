@@ -347,6 +347,14 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function complete($field, $mapper): StreamApi
+    {
+        return $this->make()->complete($field, $mapper);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function extract($fields, $orElse = null): StreamApi
     {
         return $this->make()->extract($fields, $orElse);
