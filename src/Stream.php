@@ -31,6 +31,7 @@ use FiiSoft\Jackdaw\Operation\Internal\Iterate;
 use FiiSoft\Jackdaw\Operation\Limit;
 use FiiSoft\Jackdaw\Operation\Map;
 use FiiSoft\Jackdaw\Operation\MapKey;
+use FiiSoft\Jackdaw\Operation\MapWhen;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Reindex;
 use FiiSoft\Jackdaw\Operation\Reverse;
@@ -282,6 +283,14 @@ final class Stream extends Collaborator implements StreamApi
     public function map($mapper): StreamApi
     {
         return $this->chainOperation(new Map($mapper));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function mapWhen($condition, $mapper, $elseMapper = null): StreamApi
+    {
+        return $this->chainOperation(new MapWhen($condition, $mapper, $elseMapper));
     }
     
     /**

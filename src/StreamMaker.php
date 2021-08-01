@@ -206,6 +206,14 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function mapWhen($condition, $mapper, $elseMapper = null): StreamApi
+    {
+        return $this->make()->mapWhen($condition, $mapper, $elseMapper);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function mapKey($mapper): StreamApi
     {
         return $this->make()->mapKey($mapper);

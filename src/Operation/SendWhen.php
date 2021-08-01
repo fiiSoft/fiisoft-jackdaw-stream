@@ -23,7 +23,7 @@ final class SendWhen extends BaseOperation
     private $elseConsumer;
     
     /**
-     * @param Predicate|Filter|callable $condition
+     * @param Condition|Predicate|Filter|callable $condition
      * @param Consumer|callable $consumer
      * @param Consumer|callable|null $elseConsumer
      */

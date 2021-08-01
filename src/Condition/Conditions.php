@@ -8,7 +8,7 @@ use FiiSoft\Jackdaw\Predicate\Predicate;
 final class Conditions
 {
     /**
-     * @param Predicate|Filter|callable $condition
+     * @param Condition|Predicate|Filter|callable $condition
      * @return Condition
      */
     public static function getAdapter($condition): Condition

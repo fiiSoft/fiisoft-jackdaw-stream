@@ -1529,4 +1529,15 @@ final class StreamTest extends TestCase
         self::assertSame(3, $countInts->count());
         self::assertSame(2, $countOthers->count());
     }
+    
+    public function test_mapWhen()
+    {
+        $result = Stream::from(['a', 1, 'b', 2, 'c', 3])
+            ->mapWhen('is_string', 'strtoupper', static function (int $n) {
+                return $n * 2;
+            })
+            ->toArray();
+        
+        self::assertSame(['A', 2, 'B', 4, 'C', 6], $result);
+    }
 }

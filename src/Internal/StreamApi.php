@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Collector\Collector;
 use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
@@ -138,7 +139,7 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function callMax(int $times, $consumer): self;
     
     /**
-     * @param Predicate|Filter|callable $condition
+     * @param Condition|Predicate|Filter|callable $condition
      * @param Consumer|callable $consumer
      * @param Consumer|callable|null $elseConsumer
      * @return $this
@@ -150,6 +151,14 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
      * @return $this
      */
     public function map($mapper): self;
+    
+    /**
+     * @param Condition|Predicate|Filter|callable $condition
+     * @param Mapper|callable $mapper
+     * @param Mapper|callable|null $elseMapper
+     * @return $this
+     */
+    public function mapWhen($condition, $mapper, $elseMapper = null): self;
     
     /**
      * @param Mapper|callable $mapper

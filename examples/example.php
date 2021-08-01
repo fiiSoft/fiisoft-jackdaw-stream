@@ -336,4 +336,9 @@ Stream::from($rowset)->extract('name')->flat()->callOnce(Consumers::printer(Chec
 //or twice:
 echo 'call twice: ', PHP_EOL;
 Stream::from($rowset)->extract('name')->flat()->callMax(2, Consumers::printer())->run();
-echo PHP_EOL;
+
+//example of conditional mapper
+echo 'conditional map: ',
+    Stream::from(['a', 1, 'b', 2, 'c', 3])->mapWhen('is_string', 'strtoupper')->toString(),
+    PHP_EOL;
+

@@ -490,4 +490,13 @@ class StreamMakerTest extends TestCase
         $this->stream->callWhen(Filters::lessOrEqual(2), $counter = Consumers::counter())->run();
         self::assertSame(2, $counter->count());
     }
+    
+    public function test_mapWhen()
+    {
+        $result = $this->stream->mapWhen(Filters::greaterThan(2), static function (int $n) {
+            return $n * 2;
+        })->toArray();
+        
+        self::assertSame([1, 2, 6, 8], $result);
+    }
 }
