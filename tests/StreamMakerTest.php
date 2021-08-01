@@ -484,4 +484,10 @@ class StreamMakerTest extends TestCase
         $this->stream->callMax(2, $counter = Consumers::counter())->run();
         self::assertSame(2, $counter->count());
     }
+    
+    public function test_callWhen()
+    {
+        $this->stream->callWhen(Filters::lessOrEqual(2), $counter = Consumers::counter())->run();
+        self::assertSame(2, $counter->count());
+    }
 }

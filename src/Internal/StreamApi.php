@@ -7,7 +7,6 @@ use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Filter\Filter as FilterStrategy;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Producer\Producer;
@@ -17,7 +16,7 @@ use FiiSoft\Jackdaw\Stream;
 interface StreamApi extends ResultCaster, \IteratorAggregate
 {
     /**
-     * @param FilterStrategy|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      * @param int $mode
      * @return $this
      */
@@ -25,13 +24,13 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     
     /**
      * @param string|int $field
-     * @param FilterStrategy|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      * @return $this
      */
     public function filterBy($field, $filter): self;
     
     /**
-     * @param FilterStrategy|callable $filter
+     * @param Filter|callable $filter
      * @param int $mode
      * @return $this
      */
@@ -137,6 +136,14 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
      * @return $this
      */
     public function callMax(int $times, $consumer): self;
+    
+    /**
+     * @param Predicate|Filter|callable $condition
+     * @param Consumer|callable $consumer
+     * @param Consumer|callable|null $elseConsumer
+     * @return $this
+     */
+    public function callWhen($condition, $consumer, $elseConsumer = null): self;
     
     /**
      * @param Mapper|callable $mapper

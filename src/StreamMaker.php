@@ -134,6 +134,14 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function callWhen($condition, $consumer, $elseConsumer = null): StreamApi
+    {
+        return $this->make()->callWhen($condition, $consumer, $elseConsumer);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function notEmpty(): StreamApi
     {
         return $this->make()->notEmpty();

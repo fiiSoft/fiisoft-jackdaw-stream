@@ -1519,4 +1519,14 @@ final class StreamTest extends TestCase
         self::assertSame(2, $maxTwice->count());
         self::assertSame(3, $all->count());
     }
+    
+    public function test_callWhen()
+    {
+        Stream::from([1, 'a', 2, 'b', 3])
+            ->callWhen('is_int', $countInts = Consumers::counter(), $countOthers = Consumers::counter())
+            ->run();
+        
+        self::assertSame(3, $countInts->count());
+        self::assertSame(2, $countOthers->count());
+    }
 }
