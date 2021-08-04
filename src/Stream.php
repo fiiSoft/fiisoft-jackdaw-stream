@@ -37,8 +37,8 @@ use FiiSoft\Jackdaw\Operation\Reindex;
 use FiiSoft\Jackdaw\Operation\Reverse;
 use FiiSoft\Jackdaw\Operation\Scan;
 use FiiSoft\Jackdaw\Operation\SendTo;
-use FiiSoft\Jackdaw\Operation\SendWhen;
 use FiiSoft\Jackdaw\Operation\SendToMax;
+use FiiSoft\Jackdaw\Operation\SendWhen;
 use FiiSoft\Jackdaw\Operation\Shuffle;
 use FiiSoft\Jackdaw\Operation\Skip;
 use FiiSoft\Jackdaw\Operation\Sort;
@@ -470,6 +470,14 @@ final class Stream extends Collaborator implements StreamApi
     public function complete($field, $mapper): StreamApi
     {
         return $this->map(Mappers::complete($field, $mapper));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function moveTo($field): StreamApi
+    {
+        return $this->map(Mappers::moveTo($field));
     }
     
     /**

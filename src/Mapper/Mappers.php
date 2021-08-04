@@ -142,4 +142,13 @@ final class Mappers
     {
         return new JsonDecode($flags, $associative);
     }
+    
+    /**
+     * @param string|int $field
+     * @return MoveTo
+     */
+    public static function moveTo($field): MoveTo
+    {
+        return new MoveTo($field);
+    }
 }
