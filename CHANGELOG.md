@@ -2,6 +2,10 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 1.2.0 - incompatible changes!
+
+- method Reducer::consume changed, key is passed as second argument
+
 ## 1.1.0 - incompatible changes!
 
 - removed method Result::__toString

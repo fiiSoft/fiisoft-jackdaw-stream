@@ -27,6 +27,6 @@ final class Reduce extends FinalOperation
     
     public function handle(Signal $signal)
     {
-        $this->reducer->consume($signal->item->value);
+        $this->reducer->consume($signal->item->value, $signal->item->key);
     }
 }

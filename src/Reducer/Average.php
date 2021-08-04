@@ -14,9 +14,10 @@ final class Average implements Reducer
     
     /**
      * @param float|int $value
+     * @param string|int|null $key
      * @return void
      */
-    public function consume($value)
+    public function consume($value, $key = null)
     {
         $this->total += $value;
         

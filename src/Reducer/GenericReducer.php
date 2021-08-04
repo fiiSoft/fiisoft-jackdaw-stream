@@ -19,16 +19,16 @@ final class GenericReducer implements Reducer
     /** @var bool */
     private $hasAny = false;
     
+    /** @var int */
+    private $numOfArgs;
+    
     public function __construct(callable $reducer)
     {
-        if (Helper::getNumOfArgs($reducer) !== 2) {
-            throw new \UnexpectedValueException('Reducer have to accept 2 arguments');
-        }
-    
         $this->reducer = $reducer;
+        $this->numOfArgs = Helper::getNumOfArgs($reducer);
     }
     
-    public function consume($value)
+    public function consume($value, $key = null)
     {
         $this->hasAny = true;
         
@@ -37,7 +37,12 @@ final class GenericReducer implements Reducer
             $this->result = $value;
         } else {
             $reduce = $this->reducer;
-            $this->result = $reduce($this->result, $value);
+            switch ($this->numOfArgs) {
+                case 2: $this->result = $reduce($this->result, $value); break;
+                case 3: $this->result = $reduce($this->result, $value, $key); break;
+                default:
+                    throw Helper::wrongNumOfArgsException('Reducer', $this->numOfArgs, 2, 3);
+            }
         }
     }
     

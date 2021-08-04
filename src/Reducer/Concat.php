@@ -20,7 +20,7 @@ final class Concat implements Reducer
         $this->separator = $separator;
     }
     
-    public function consume($value)
+    public function consume($value, $key = null)
     {
         $this->hasAny = true;
         
