@@ -11,9 +11,10 @@ final class Min implements Reducer
     
     /**
      * @param float|int $value
+     * @param string|int|null $key
      * @return void
      */
-    public function consume($value): void
+    public function consume($value, $key = null): void
     {
         if ($this->result === null) {
             $this->result = $value;

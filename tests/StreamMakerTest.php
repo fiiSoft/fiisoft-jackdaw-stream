@@ -452,7 +452,10 @@ class StreamMakerTest extends TestCase
     
     public function test_onlyWith(): void
     {
-        self::assertSame('[{"name":"Bob"}]', Stream::from([['name' => 'Bob'],])->onlyWith(['name'])->toJsonAssoc());
+        self::assertSame(
+            '[{"name":"Bob"}]',
+            StreamMaker::from([['name' => 'Bob']])->onlyWith(['name'])->toJsonAssoc()
+        );
     }
     
     public function test_callOnce(): void
@@ -486,7 +489,17 @@ class StreamMakerTest extends TestCase
     
     public function test_complete(): void
     {
-        $result = Stream::from([['a' => 1], ['a' => null]])->complete('a', 0)->toArray();
+        $result = StreamMaker::from([['a' => 1], ['a' => null]])->complete('a', 0)->toArray();
         self::assertSame([['a' => 1], ['a' => 0]], $result);
+    }
+    
+    public function test_moveTo_creates_array()
+    {
+        self::assertSame([
+            ['num' => 1],
+            ['num' => 2],
+            ['num' => 3],
+            ['num' => 4],
+        ], $this->stream->moveTo('num')->toArray());
     }
 }

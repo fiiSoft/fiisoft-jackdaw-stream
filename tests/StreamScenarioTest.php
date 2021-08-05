@@ -417,4 +417,61 @@ final class StreamScenarioTest extends TestCase
     
         self::assertSame(7, $consumer->get());
     }
+    
+    public function test_scenario_28()
+    {
+        $data = [
+            ['val' => 3],
+            ['val' => 'a'],
+            ['val' => 5],
+            ['val' => null],
+            ['val' => '2'],
+            ['val' => 0],
+            ['val' => 'b'],
+            ['val' => '3'],
+            ['val' => 1],
+        ];
+        
+        $result = Stream::from($data)
+            ->extract('val')
+            ->onlyNumeric()
+            ->castToInt()
+            ->greaterThan(0)
+            ->unique()
+            ->sort()
+            ->toArray();
+            
+        self::assertSame([1, 2, 3, 5], $result);
+    }
+    
+    public function test_scenario_29()
+    {
+        $data = [
+            ['val' => 3],
+            ['val' => 'a'],
+            ['val' => 5],
+            ['val' => null],
+            ['val' => '2'],
+            ['val' => 0],
+            ['val' => 'b'],
+            ['val' => '3'],
+            ['val' => 1],
+        ];
+        
+        $result = Stream::from($data)
+            ->fold([], static function (array $result, array $data) {
+                if (\is_numeric($data['val'])) {
+                    $value = (int) $data['val'];
+                    if ($value > 0) {
+                        $result[$value] = $value;
+                    }
+                }
+                return $result;
+            })
+            ->get();
+            
+        \sort($result, \SORT_REGULAR);
+        
+        self::assertSame([1, 2, 3, 5], $result);
+    }
 }

@@ -205,4 +205,12 @@ final class MappersTest extends TestCase
         self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3, 'name' => null], 0));
         self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3], 0));
     }
+    
+    public function test_MoveTo_creates_array_with_key_from_value()
+    {
+        $mapper = Mappers::moveTo('key');
+        
+        self::assertSame(['key' => 15], $mapper->map(15, 3));
+        self::assertSame(['key' => [2, 3]], $mapper->map([2, 3], 'a'));
+    }
 }

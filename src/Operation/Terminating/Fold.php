@@ -24,12 +24,12 @@ final class Fold extends FinalOperation implements ResultProvider
         $this->reducer = Reducers::getAdapter($reducer);
         $this->reducer->consume($initial);
         
-        parent::__construct($stream, $this->reducer, null);
+        parent::__construct($stream, $this->reducer);
     }
     
     public function handle(Signal $signal): void
     {
-        $this->reducer->consume($signal->item->value);
+        $this->reducer->consume($signal->item->value, $signal->item->key);
     }
     
     public function hasResult(): bool

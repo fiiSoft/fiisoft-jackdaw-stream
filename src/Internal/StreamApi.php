@@ -251,6 +251,12 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function complete($field, $mapper): self;
     
     /**
+     * @param string|int $field
+     * @return $this
+     */
+    public function moveTo($field): self;
+    
+    /**
      * @param array|string|int $fields
      * @param mixed|null $orElse
      * @return $this

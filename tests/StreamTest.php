@@ -1533,4 +1533,9 @@ final class StreamTest extends TestCase
         
         self::assertSame($expected, $result);
     }
+    
+    public function test_moveTo_creates_array()
+    {
+        self::assertSame('[{"num":1},{"num":2}]', Stream::from([1, 2])->moveTo('num')->toJson());
+    }
 }

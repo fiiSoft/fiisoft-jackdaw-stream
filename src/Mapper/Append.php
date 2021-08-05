@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
+use FiiSoft\Jackdaw\Internal\Helper;
+
 final class Append implements Mapper
 {
     private Mapper $mapper;
@@ -15,7 +17,7 @@ final class Append implements Mapper
      */
     public function __construct($field, $mapper)
     {
-        if ($this->isFieldValid($field)) {
+        if (Helper::isFieldValid($field)) {
             $this->field = $field;
         } else {
             throw new \InvalidArgumentException('Invalid param field');
@@ -35,10 +37,5 @@ final class Append implements Mapper
             $key => $value,
             $this->field => $this->mapper->map($value, $key),
         ];
-    }
-    
-    private function isFieldValid($field): bool
-    {
-        return \is_string($field) && $field !== '' || \is_int($field);
     }
 }

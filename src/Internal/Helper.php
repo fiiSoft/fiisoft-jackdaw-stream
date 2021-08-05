@@ -40,4 +40,9 @@ final class Helper
         
         return new \LogicException($message);
     }
+    
+    public static function isFieldValid($field): bool
+    {
+        return \is_string($field) && $field !== '' || \is_int($field);
+    }
 }
