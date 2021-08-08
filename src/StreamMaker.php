@@ -427,9 +427,25 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function best(int $limit, $comparator = null, int $mode = Check::VALUE): StreamApi
+    {
+        return $this->make()->best($limit, $comparator, $mode);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function rsort($comparator = null, int $mode = Check::VALUE): StreamApi
     {
         return $this->make()->rsort($comparator, $mode);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function worst(int $limit, $comparator = null, int $mode = Check::VALUE): StreamApi
+    {
+        return $this->make()->worst($limit, $comparator, $mode);
     }
     
     /**

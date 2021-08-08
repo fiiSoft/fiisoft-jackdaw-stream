@@ -17,7 +17,7 @@ use FiiSoft\Jackdaw\Stream;
 interface StreamApi extends ResultCaster, \IteratorAggregate
 {
     /**
-     * @param Filter|callable|mixed $filter
+     * @param Filter|Predicate|callable|mixed $filter
      * @param int $mode
      * @return $this
      */
@@ -25,13 +25,13 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     
     /**
      * @param string|int $field
-     * @param Filter|callable|mixed $filter
+     * @param Filter|Predicate|callable|mixed $filter
      * @return $this
      */
     public function filterBy($field, $filter): self;
     
     /**
-     * @param Filter|callable $filter
+     * @param Filter|Predicate|callable $filter
      * @param int $mode
      * @return $this
      */
@@ -290,12 +290,13 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     
     /**
      * @param string ...$fields names of fields to sort by, in format "name asc", "salary desc"
+     * @param int $limit last param can be integer, it means how many elements will be passed to stream
      * @return $this
      */
     public function sortBy(...$fields): self;
     
     /**
-     * Normal sorting.
+     * Normal (ascending) sorting.
      *
      * @param Comparator|callable|null $comparator
      * @param int $mode
@@ -304,13 +305,33 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function sort($comparator = null, int $mode = Check::VALUE): self;
     
     /**
-     * Reversed sorting.
+     * Normal sorting with limited number of {$limit} first values passed further to stream.
+     *
+     * @param int $limit
+     * @param Comparator|callable|null $comparator
+     * @param int $mode
+     * @return $this
+     */
+    public function best(int $limit, $comparator = null, int $mode = Check::VALUE): self;
+    
+    /**
+     * Reversed (descending) sorting.
      *
      * @param Comparator|callable|null $comparator
      * @param int $mode
      * @return $this
      */
     public function rsort($comparator = null, int $mode = Check::VALUE): self;
+    
+    /**
+     * Reversed sorting with limited number of {$limit} values passed further to stream.
+     *
+     * @param int $limit
+     * @param Comparator|callable|null $comparator
+     * @param int $mode
+     * @return $this
+     */
+    public function worst(int $limit, $comparator = null, int $mode = Check::VALUE): self;
     
     /**
      * @return $this
@@ -329,14 +350,14 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function feed(StreamPipe $stream): self;
     
     /**
-     * @param Filter|callable $condition
+     * @param Filter|Predicate|callable $condition
      * @param int $mode
      * @return $this
      */
     public function while($condition, int $mode = Check::VALUE): self;
     
     /**
-     * @param Filter|callable $condition
+     * @param Filter|Predicate|callable $condition
      * @param int $mode
      * @return $this
      */
@@ -362,7 +383,7 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     /**
      * Tell if element occurs in stream.
      *
-     * @param Predicate|callable|mixed $value
+     * @param Predicate|Filter|callable|mixed $value
      * @param int $mode
      * @return Result
      */
@@ -405,7 +426,7 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function count(): Result;
     
     /**
-     * @param Predicate|callable|mixed $predicate
+     * @param Predicate|Filter|callable|mixed $predicate
      * @param int $mode
      * @return Result found Item or null when element was not found
      */
@@ -443,7 +464,7 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function collect(): Result;
     
     /**
-     * @param Discriminator|Filter|string|callable $discriminator
+     * @param Discriminator|Condition|Predicate|Filter|string|callable $discriminator
      * @return StreamCollection
      */
     public function groupBy($discriminator): StreamCollection;

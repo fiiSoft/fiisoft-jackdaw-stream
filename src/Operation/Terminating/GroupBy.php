@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
+use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filter;
@@ -9,6 +10,7 @@ use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamCollection;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class GroupBy extends BaseOperation
 {
@@ -22,7 +24,7 @@ final class GroupBy extends BaseOperation
     private $collections = [];
     
     /**
-     * @param Discriminator|Filter|string|callable $discriminator
+     * @param Discriminator|Condition|Predicate|Filter|string|callable $discriminator
      * @param bool $preserveKeys
      */
     public function __construct($discriminator, bool $preserveKeys = false)

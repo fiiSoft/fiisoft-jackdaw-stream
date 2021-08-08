@@ -2,10 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Predicate;
 
+use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Predicate\Adapter\FilterAdapter;
+
 final class Predicates
 {
     /**
-     * @param Predicate|callable|mixed $predicate
+     * @param Predicate|Filter|callable|mixed $predicate
      * @return Predicate
      */
     public static function getAdapter($predicate): Predicate
@@ -16,6 +19,8 @@ final class Predicates
             $adapter = $predicate;
         } elseif (\is_callable($predicate)) {
             $adapter = self::generic($predicate);
+        } elseif ($predicate instanceof Filter) {
+            $adapter = self::filter($predicate);
         } else {
             $adapter = self::value($predicate);
         }
@@ -36,5 +41,10 @@ final class Predicates
     public static function inArray(array $values): InArray
     {
         return new InArray($values);
+    }
+    
+    public static function filter(Filter $filter): FilterAdapter
+    {
+        return new FilterAdapter($filter);
     }
 }

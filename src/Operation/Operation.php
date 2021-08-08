@@ -12,7 +12,15 @@ interface Operation
      */
     public function handle(Signal $signal);
     
-    public function setNext(Operation $next): Operation;
+    public function setNext(Operation $next, bool $direct = false): Operation;
+    
+    /**
+     * @param Operation $prev
+     * @return void
+     */
+    public function setPrev(Operation $prev);
+    
+    public function removeFromChain(): Operation;
     
     /**
      * @param Signal $signal

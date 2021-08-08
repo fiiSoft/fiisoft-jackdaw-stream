@@ -11,27 +11,31 @@ final class Tail extends BaseOperation
     private $buffer;
     
     /** @var int */
-    private $numOfItems;
+    private $length;
     
     /** @var int */
     private $index = 0;
     
-    public function __construct(int $numOfItems)
+    public function __construct(int $length)
     {
-        if ($numOfItems < 0) {
-            throw new \InvalidArgumentException('Invalid param numOfItems');
+        if ($length < 0) {
+            throw new \InvalidArgumentException('Invalid param length');
         }
     
-        $this->numOfItems = $numOfItems;
-        $this->buffer = new \SplFixedArray($numOfItems);
+        $this->length = $length;
+        $this->buffer = new \SplFixedArray($length);
     }
     
     public function handle(Signal $signal)
     {
-        if ($this->numOfItems > 0) {
-            $this->buffer[$this->index] = $signal->item->copy();
+        if ($this->length > 0) {
+            if (isset($this->buffer[$this->index])) {
+                $signal->item->copyTo($this->buffer[$this->index]);
+            } else {
+                $this->buffer[$this->index] = $signal->item->copy();
+            }
             
-            if (++$this->index === $this->numOfItems) {
+            if (++$this->index === $this->length) {
                 $this->index = 0;
             }
         }
@@ -42,7 +46,7 @@ final class Tail extends BaseOperation
         $items = [];
         
         if ($this->buffer->count() > 0) {
-            $count = \min($this->numOfItems, $this->buffer->count());
+            $count = \min($this->length, $this->buffer->count());
             
             for ($i = 0; $i < $count; ++$i) {
                 if ($this->index === $count) {
@@ -56,5 +60,15 @@ final class Tail extends BaseOperation
         }
         
         $signal->restartFrom($this->next, $items);
+    }
+    
+    public function mergeWith(Tail $other)
+    {
+        $this->length = \min($this->length, $other->length);
+    }
+    
+    public function length(): int
+    {
+        return $this->length;
     }
 }

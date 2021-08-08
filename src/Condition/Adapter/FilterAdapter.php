@@ -1,7 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Condition;
+namespace FiiSoft\Jackdaw\Condition\Adapter;
 
+use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Filter\Filter;
 
 final class FilterAdapter implements Condition

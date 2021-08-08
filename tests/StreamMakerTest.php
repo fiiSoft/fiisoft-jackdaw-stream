@@ -518,4 +518,19 @@ class StreamMakerTest extends TestCase
             ['num' => 4],
         ], $this->stream->moveTo('num')->toArray());
     }
+    
+    public function test_tail()
+    {
+        self::assertSame([3, 4], $this->stream->tail(2)->toArray());
+    }
+    
+    public function test_best()
+    {
+        self::assertSame([1, 2], $this->stream->best(2)->toArray());
+    }
+    
+    public function test_worst()
+    {
+        self::assertSame([4, 3], $this->stream->worst(2)->toArray());
+    }
 }
