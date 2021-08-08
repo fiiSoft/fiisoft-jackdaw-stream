@@ -11,17 +11,27 @@ final class Ending implements Operation
     {
         //noop
     }
-    
-    public function setNext(Operation $next): Operation
+
+    public function setNext(Operation $next, bool $direct = false): Operation
     {
         throw new \LogicException('It should never happen (Ending::setNext)');
     }
-    
+
+    public function setPrev(Operation $prev): void
+    {
+        //noop
+    }
+
+    public function removeFromChain(): Operation
+    {
+        throw new \LogicException('It should never happen (Ending::removeFromChain)');
+    }
+
     public function streamingFinished(Signal $signal): void
     {
         //noop
     }
-    
+
     public function isLazy(): bool
     {
         return false;

@@ -93,4 +93,14 @@ final class Sort extends BaseOperation
         
         \usort($this->items, $comparator);
     }
+    
+    public function reverseOrder(): void
+    {
+        $this->reversed = !$this->reversed;
+    }
+    
+    public function createSortLimited(int $limit): SortLimited
+    {
+        return new SortLimited($limit, $this->comparator, $this->mode, $this->reversed);
+    }
 }

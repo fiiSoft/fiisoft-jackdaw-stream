@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Condition;
 
+use FiiSoft\Jackdaw\Condition\Adapter\FilterAdapter;
+use FiiSoft\Jackdaw\Condition\Adapter\PredicateAdapter;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 
@@ -22,11 +24,11 @@ final class Conditions
         }
     
         if ($condition instanceof Filter) {
-            return self::filterAdapter($condition);
+            return self::filter($condition);
         }
     
         if ($condition instanceof Predicate) {
-            return self::predicateAdapter($condition);
+            return self::predicate($condition);
         }
         
         throw new \InvalidArgumentException('Invalid param condition');
@@ -37,12 +39,12 @@ final class Conditions
         return new GenericCondition($condition);
     }
     
-    public static function filterAdapter(Filter $filter): FilterAdapter
+    public static function filter(Filter $filter): FilterAdapter
     {
         return new FilterAdapter($filter);
     }
     
-    public static function predicateAdapter(Predicate $predicate): PredicateAdapter
+    public static function predicate(Predicate $predicate): PredicateAdapter
     {
         return new PredicateAdapter($predicate);
     }

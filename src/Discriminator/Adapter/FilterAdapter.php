@@ -1,7 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Discriminator;
+namespace FiiSoft\Jackdaw\Discriminator\Adapter;
 
+use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 

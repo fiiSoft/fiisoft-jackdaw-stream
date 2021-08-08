@@ -6,6 +6,7 @@ use FiiSoft\Jackdaw\Internal\StreamApi;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\IteratorAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\StreamAdapter;
+use FiiSoft\Jackdaw\Producer\Generator\CollatzGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\RandomInt;
 use FiiSoft\Jackdaw\Producer\Generator\RandomString;
 use FiiSoft\Jackdaw\Producer\Generator\RandomUuid;
@@ -125,5 +126,10 @@ final class Producers
     public static function randomUuid(bool $asHex = true, int $limit = \PHP_INT_MAX): RandomUuid
     {
         return new RandomUuid($asHex, $limit);
+    }
+    
+    public static function collatz(int $startNumber = null): CollatzGenerator
+    {
+        return new CollatzGenerator($startNumber);
     }
 }

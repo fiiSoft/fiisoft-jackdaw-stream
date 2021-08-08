@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class Until extends BaseOperation
 {
@@ -15,7 +16,7 @@ final class Until extends BaseOperation
     private bool $doWhile;
     
     /**
-     * @param Filter|callable|mixed $condition
+     * @param Filter|Predicate|callable|mixed $condition
      * @param int $mode
      * @param bool $doWhile
      */

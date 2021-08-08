@@ -22,7 +22,7 @@ final class Flat extends BaseOperation
             throw new \InvalidArgumentException('Invalid param level');
         }
         
-        $this->maxLevel = $level === 0 ? \PHP_INT_MAX : $level;
+        $this->maxLevel = $level ?: \PHP_INT_MAX;
     }
     
     public function handle(Signal $signal): void
@@ -63,6 +63,15 @@ final class Flat extends BaseOperation
             foreach ($values as $key => $value) {
                 $this->items[] = new Item($key, $value);
             }
+        }
+    }
+    
+    public function mergeWith(Flat $other)
+    {
+        if ($other->maxLevel === \PHP_INT_MAX) {
+            $this->maxLevel = \PHP_INT_MAX;
+        } elseif ($this->maxLevel < \PHP_INT_MAX) {
+            $this->maxLevel += $other->maxLevel;
         }
     }
 }

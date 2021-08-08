@@ -2,6 +2,7 @@
 
 require_once __DIR__.'/../vendor/autoload.php';
 
+use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
@@ -334,3 +335,40 @@ echo 'conditional map: ',
     Stream::from(['a', 1, 'b', 2, 'c', 3])->mapWhen('is_string', 'strtoupper')->toString(),
     PHP_EOL;
 
+//example of best sorting
+$rowset = [
+    ['name' => 'Chris', 'score' => 26],
+    ['name' => 'Joanna', 'score' => 18],
+    ['name' => 'Kate', 'score' => 35],
+    ['name' => 'John', 'score' => 12],
+    ['name' => 'David', 'score' => 42],
+];
+
+echo 'two best players: ', PHP_EOL;
+Stream::from($rowset)
+    ->sortBy('score desc', 'name', 2)
+    ->map(Mappers::concat(' '))
+    ->forEach(Consumers::printer(Check::VALUE));
+
+//or...
+echo 'or...', PHP_EOL;
+Stream::from($rowset)
+    ->best(2, Comparators::sortBy(['score desc', 'name']))
+    ->map(Mappers::concat(' '))
+    ->forEach(Consumers::printer(Check::VALUE));
+
+//or...
+echo 'or...', PHP_EOL;
+Stream::from($rowset)
+    ->sortBy('score desc', 'name')
+    ->limit(2)
+    ->map(Mappers::concat(' '))
+    ->forEach(Consumers::printer(Check::VALUE));
+
+//let's do some fun with Collatz:
+echo 'let\'s play with random Collatz series: ';
+Stream::from(Producers::collatz())
+    ->forEach(static function ($value) {
+        echo $value, ' ';
+    });
+echo PHP_EOL;

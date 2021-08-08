@@ -4,8 +4,9 @@ namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Internal\Limitable;
 
-final class Limit extends BaseOperation
+final class Limit extends BaseOperation implements Limitable
 {
     private int $limit;
     private int $count = 0;
@@ -35,5 +36,15 @@ final class Limit extends BaseOperation
     
             $this->next->handle($signal);
         }
+    }
+    
+    public function applyLimit(int $limit): void
+    {
+        $this->limit = \min($this->limit, $limit);
+    }
+    
+    public function limit(): int
+    {
+        return $this->limit;
     }
 }

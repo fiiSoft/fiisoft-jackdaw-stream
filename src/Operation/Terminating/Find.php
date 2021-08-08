@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\ResultProvider;
@@ -20,7 +21,7 @@ final class Find extends FinalOperation implements ResultProvider
     
     /**
      * @param Stream $stream
-     * @param Predicate|callable|mixed $predicate
+     * @param Predicate|Filter|callable|mixed $predicate
      * @param int $mode
      */
     public function __construct(Stream $stream, $predicate, int $mode = Check::VALUE)

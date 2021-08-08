@@ -493,7 +493,7 @@ class StreamMakerTest extends TestCase
         self::assertSame([['a' => 1], ['a' => 0]], $result);
     }
     
-    public function test_moveTo_creates_array()
+    public function test_moveTo_creates_array(): void
     {
         self::assertSame([
             ['num' => 1],
@@ -501,5 +501,20 @@ class StreamMakerTest extends TestCase
             ['num' => 3],
             ['num' => 4],
         ], $this->stream->moveTo('num')->toArray());
+    }
+    
+    public function test_tail(): void
+    {
+        self::assertSame([3, 4], $this->stream->tail(2)->toArray());
+    }
+    
+    public function test_best(): void
+    {
+        self::assertSame([1, 2], $this->stream->best(2)->toArray());
+    }
+    
+    public function test_worst(): void
+    {
+        self::assertSame([4, 3], $this->stream->worst(2)->toArray());
     }
 }

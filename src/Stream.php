@@ -28,6 +28,7 @@ use FiiSoft\Jackdaw\Operation\Internal\Feed;
 use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Initial;
 use FiiSoft\Jackdaw\Operation\Internal\Iterate;
+use FiiSoft\Jackdaw\Operation\Internal\Limitable;
 use FiiSoft\Jackdaw\Operation\Limit;
 use FiiSoft\Jackdaw\Operation\Map;
 use FiiSoft\Jackdaw\Operation\MapKey;
@@ -42,6 +43,7 @@ use FiiSoft\Jackdaw\Operation\SendWhen;
 use FiiSoft\Jackdaw\Operation\Shuffle;
 use FiiSoft\Jackdaw\Operation\Skip;
 use FiiSoft\Jackdaw\Operation\Sort;
+use FiiSoft\Jackdaw\Operation\SortLimited;
 use FiiSoft\Jackdaw\Operation\Tail;
 use FiiSoft\Jackdaw\Operation\Terminating\Collect;
 use FiiSoft\Jackdaw\Operation\Terminating\Count;
@@ -67,10 +69,9 @@ final class Stream extends Collaborator implements StreamApi
     private Producer $producer;
     private Operation $head;
     private Operation $last;
+    private Signal $signal;
     
     private ?\Generator $producerIterator = null;
-    private ?Signal $signal = null;
-    
     private bool $executed = false;
     
     /** @var Item[] */
@@ -103,8 +104,8 @@ final class Stream extends Collaborator implements StreamApi
         $this->signal = new Signal($this);
         
         $this->head = new Initial();
+        $this->head->setNext(new Ending());
         $this->last = $this->head;
-        $this->last->setNext(new Ending());
     }
     
     public function __clone()
@@ -367,6 +368,11 @@ final class Stream extends Collaborator implements StreamApi
      */
     public function sortBy(...$fields): self
     {
+        if (\count($fields) > 1 && \is_int($fields[\array_key_last($fields)])) {
+            $limit = \array_pop($fields);
+            return $this->best($limit, Comparators::sortBy($fields));
+        }
+        
         return $this->sort(Comparators::sortBy($fields));
     }
     
@@ -381,9 +387,25 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function best(int $limit, $comparator = null, int $mode = Check::VALUE): self
+    {
+        return $this->chainOperation(new SortLimited($limit, $comparator, $mode));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function rsort($comparator = null, int $mode = Check::VALUE): self
     {
         return $this->chainOperation(new Sort($comparator, $mode, true));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function worst(int $limit, $comparator = null, int $mode = Check::VALUE): self
+    {
+        return $this->chainOperation(new SortLimited($limit, $comparator, $mode, true));
     }
     
     /**
@@ -750,10 +772,8 @@ final class Stream extends Collaborator implements StreamApi
         if ($this->executed) {
             throw new \LogicException('Stream can be executed only once!');
         }
-    
-        if ($this->signal === null) {
-            $this->signal = new Signal($this);
-        }
+        
+        $this->head = $this->head->removeFromChain();
     }
     
     protected function continueIteration(bool $once = false): bool
@@ -835,14 +855,87 @@ final class Stream extends Collaborator implements StreamApi
         if ($this->last->isLazy()) {
             throw new \LogicException('You cannot chain next operation to lazy one');
         }
-        
-        $this->last = $this->last->setNext($next);
-        
-        if ($this->head instanceof Initial) {
-            $this->head = $next;
+    
+        if ($this->canAddNext($next)) {
+            $this->last = $this->last->setNext($next);
+        }
+    
+        return $this;
+    }
+    
+    private function canAddNext(Operation $next): bool
+    {
+        if ($next instanceof Limit) {
+            if ($this->last instanceof Limitable) {
+                $this->last->applyLimit($next->limit());
+                return false;
+            }
+            if ($this->last instanceof Sort) {
+                $sortLimited = $this->last->createSortLimited($next->limit());
+                $this->last = $this->last->removeFromChain();
+                $this->chainOperation($sortLimited);
+                return false;
+            }
+            if ($this->last instanceof Reverse) {
+                $this->last = $this->last->removeFromChain();
+                $this->tail($next->limit())->reverse();
+                return false;
+            }
+        } elseif ($next instanceof Skip) {
+            if ($this->last instanceof Skip) {
+                $this->last->mergeWith($next);
+                return false;
+            }
+        } elseif ($next instanceof Reverse) {
+            if ($this->last instanceof Reverse) {
+                $this->last = $this->last->removeFromChain();
+                return false;
+            }
+            if ($this->last instanceof Sort) {
+                $this->last->reverseOrder();
+                return false;
+            }
+        } elseif ($next instanceof Reindex) {
+            if ($this->last instanceof Reindex) {
+                return false;
+            }
+        } elseif ($next instanceof Flip) {
+            if ($this->last instanceof Flip) {
+                $this->last = $this->last->removeFromChain();
+                return false;
+            }
+        } elseif ($next instanceof Shuffle) {
+            if ($this->last instanceof Shuffle) {
+                return false;
+            }
+            if ($this->last instanceof Sort) {
+                $this->last = $this->last->removeFromChain();
+                return true;
+            }
+        } elseif ($next instanceof Tail) {
+            if ($this->last instanceof Tail) {
+                $this->last->mergeWith($next);
+                return false;
+            }
+            if ($this->last instanceof Sort) {
+                $this->last->reverseOrder();
+                $this->limit($next->length())->reverse();
+                return false;
+            }
+            if ($this->last instanceof Limitable) {
+                if ($this->last->limit() > $next->length()) {
+                    $this->skip($this->last->limit() - $next->length());
+                }
+                return false;
+            }
+        } elseif ($next instanceof Flat) {
+            if ($this->last instanceof Flat) {
+                $this->last->mergeWith($next);
+                return false;
+            }
         }
         
-        return $this;
+        return true;
     }
     
     protected function limitReached(Operation $operation): void

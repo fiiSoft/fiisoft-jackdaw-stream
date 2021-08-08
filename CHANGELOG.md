@@ -4,8 +4,12 @@ All important changes to `fiisoft-jackdaw-stream` will be documented in this fil
 
 ## 2.2.0 - incompatible changes!
 
+- method StreamApi::sortBy accepts last integer param as limit
 - method Reducer::consume changed, key is passed as second argument
 - added method StreamApi::moveTo
+- added method StreamApi::best
+- added method StreamApi::worst
+- many other changes
 
 ## 2.1.0 - incompatible changes!
 

@@ -1534,8 +1534,181 @@ final class StreamTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function test_moveTo_creates_array()
+    public function test_moveTo_creates_array(): void
     {
         self::assertSame('[{"num":1},{"num":2}]', Stream::from([1, 2])->moveTo('num')->toJson());
+    }
+    
+    public function test_tail(): void
+    {
+        self::assertSame([4, 5], Stream::from([1, 2, 3, 4, 5])->tail(2)->toArray());
+    }
+    
+    public function test_limit_after_limit(): void
+    {
+        self::assertSame([1, 2], Stream::from([1, 2, 3, 4, 5])->limit(4)->limit(2)->toArray());
+    }
+    
+    public function test_skip_after_skip(): void
+    {
+        self::assertSame([4, 5], Stream::from([1, 2, 3, 4, 5])->skip(1)->skip(2)->toArray());
+    }
+    
+    public function test_reverse_after_reverse(): void
+    {
+        self::assertSame([1, 2], Stream::from([1, 2])->reverse()->reverse()->toArray());
+    }
+    
+    public function test_reindex_after_reindex(): void
+    {
+        self::assertSame([1, 2], Stream::from(['a' => 1, 'b' => 2])->reindex()->reindex()->toArrayAssoc());
+    }
+    
+    public function test_flip_after_flip(): void
+    {
+        self::assertSame(['a' => 1, 'b' => 2], Stream::from(['a' => 1, 'b' => 2])->flip()->flip()->toArrayAssoc());
+    }
+    
+    public function test_shuffle_after_shuffle(): void
+    {
+        self::assertSame(3, Stream::from([1, 2, 3])->shuffle()->shuffle()->count()->get());
+    }
+    
+    public function test_tail_after_tail(): void
+    {
+        self::assertSame([4], Stream::from([1, 2, 3, 4])->tail(3)->tail(1)->toArray());
+    }
+    
+    public function test_flat_after_flat(): void
+    {
+        $expected = [
+            'c' => 1,
+            'd' => 2,
+            'e' => 3,
+            'g' => 4,
+            'j' => 5,
+            'k' => 6,
+            'l' => 7,
+            'n' => 8,
+            'p' => 9,
+            'q' => 10,
+            's' => 11,
+            't' => 12,
+            'u' => 13,
+            'w' => 14,
+            'y' => 15,
+            'z' => 16,
+        ];
+    
+        $data = $this->getDataForFlatTest();
+        
+        self::assertSame($expected, Stream::from($data)->flat()->toArrayAssoc());
+        self::assertSame($expected, Stream::from($data)->flat(1)->flat(1)->flat(1)->toArrayAssoc());
+    }
+    
+    private function getDataForFlatTest(): array
+    {
+        return [
+            [ //first
+                'a' => [
+                    'b' => [
+                        'c' => 1,
+                        'd' => 2,
+                    ],
+                    'e' => 3,
+                    'f' => [
+                        'g' => 4,
+                    ]
+                ],
+                'h' => [
+                    'i' => [
+                        'j' => 5,
+                        'k' => 6,
+                    ],
+                ],
+            ], [ //second
+                'l' => 7,
+            ], [ //third
+                'm' => [
+                    'n' => 8,
+                    'o' => [
+                        'p' => 9,
+                        'q' => 10,
+                    ],
+                    'r' => [
+                        's' => 11,
+                    ],
+                    't' => 12,
+                ],
+                'u' => 13,
+                'v' => [
+                    'w' => 14,
+                    'x' => [
+                        'y' => 15,
+                    ],
+                    'z' => 16,
+                ],
+            ],
+        ];
+    }
+    
+    public function test_best(): void
+    {
+        self::assertSame([1, 2], Stream::from([6, 2, 8, 1, 7, 9, 2, 5, 4])->best(2)->toArray());
+    }
+    
+    public function test_worst(): void
+    {
+        self::assertSame([9, 8], Stream::from([6, 2, 8, 1, 7, 9, 2, 5, 4])->worst(2)->toArray());
+    }
+    
+    public function test_sortBy_limited(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Kate', 'age' => 35],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 7, 'name' => 'Sue', 'age' => 17],
+        ];
+    
+        $actual = Stream::from($rowset)->sortBy('age asc', 'name desc', 'id', 2)->toArray();
+    
+        $expected = [
+            ['id' => 7, 'name' => 'Sue', 'age' => 17],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+        ];
+    
+        self::assertSame($expected, $actual);
+    }
+    
+    public function test_sortBy_with_limit(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Kate', 'age' => 35],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 7, 'name' => 'Sue', 'age' => 17],
+        ];
+    
+        $actual = Stream::from($rowset)->sortBy('age asc', 'name desc', 'id')->limit(2)->toArray();
+    
+        $expected = [
+            ['id' => 7, 'name' => 'Sue', 'age' => 17],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+        ];
+    
+        self::assertSame($expected, $actual);
+    }
+    
+    public function test_sort_with_limit(): void
+    {
+        self::assertSame([1, 2], Stream::from([3, 5, 1, 4, 2])->sort()->limit(2)->toArray());
+    }
+    
+    public function test_best_with_limit(): void
+    {
+        self::assertSame([1, 2], Stream::from([5, 2, 8, 1, 6, 9, 7, 3])->best(4)->limit(2)->toArray());
     }
 }

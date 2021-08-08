@@ -27,4 +27,9 @@ final class Skip extends BaseOperation
             ++$this->count;
         }
     }
+    
+    public function mergeWith(Skip $other): void
+    {
+        $this->offset += $other->offset;
+    }
 }

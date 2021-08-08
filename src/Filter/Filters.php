@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter;
 
+use FiiSoft\Jackdaw\Filter\Adapter\PredicateAdapter;
 use FiiSoft\Jackdaw\Filter\Internal\LengthFactory;
 use FiiSoft\Jackdaw\Filter\Internal\NumberFactory;
 use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual;
@@ -9,11 +10,12 @@ use FiiSoft\Jackdaw\Filter\Number\GreaterThan;
 use FiiSoft\Jackdaw\Filter\Number\LessOrEqual;
 use FiiSoft\Jackdaw\Filter\Number\LessThan;
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class Filters
 {
     /**
-     * @param Filter|callable|mixed $filter
+     * @param Filter|Predicate|callable|mixed $filter
      * @return Filter
      */
     public static function getAdapter($filter): Filter
@@ -37,6 +39,10 @@ final class Filters
         }
     
         if (\is_object($filter)) {
+            if ($filter instanceof Predicate) {
+                return self::predicateAdapter($filter);
+            }
+            
             throw Helper::invalidParamException('filter', $filter);
         }
         
@@ -131,7 +137,7 @@ final class Filters
     
     /**
      * @param string|int $field
-     * @param Filter|callable|mixed $filter
+     * @param Filter|Predicate|callable|mixed $filter
      * @return FilterBy
      */
     public static function filterBy($field, $filter): FilterBy
@@ -147,5 +153,10 @@ final class Filters
     public static function onlyWith($keys, bool $allowNulls = false): OnlyWith
     {
         return new OnlyWith($keys, $allowNulls);
+    }
+    
+    public static function predicateAdapter(Predicate $predicate): PredicateAdapter
+    {
+        return new PredicateAdapter($predicate);
     }
 }
