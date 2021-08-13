@@ -2,6 +2,10 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 1.3.0
+
+- operation Unique rewritten to use strategy
+
 ## 1.2.0 - incompatible changes!
 
 - method StreamApi::sortBy accepts last integer param as limit
