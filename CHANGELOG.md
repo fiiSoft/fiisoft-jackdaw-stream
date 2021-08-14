@@ -2,9 +2,11 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
-## 1.3.0
+## 1.3.0 - incompatible changes!
 
-- operation Unique rewritten to use strategy
+- Unique operation rewritten 
+- Tail operation rewritten 
+- Tail operation no longer accepts 0 as an argument
 
 ## 1.2.0 - incompatible changes!
 

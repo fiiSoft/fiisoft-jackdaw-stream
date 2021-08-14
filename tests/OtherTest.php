@@ -123,4 +123,17 @@ final class OtherTest extends TestCase
             }
         }
     }
+    
+    public function test_how_SplFixedArray_works()
+    {
+        $obj = new \SplFixedArray(15);
+        
+        self::assertSame(15, $obj->count());
+        self::assertSame(15, $obj->getSize());
+        
+        $obj[0] = 'a';
+    
+        self::assertSame(15, $obj->count());
+        self::assertSame(15, $obj->getSize());
+    }
 }

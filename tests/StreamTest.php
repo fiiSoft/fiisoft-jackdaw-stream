@@ -1565,9 +1565,14 @@ final class StreamTest extends TestCase
         self::assertSame('[{"num":1},{"num":2}]', Stream::from([1, 2])->moveTo('num')->toJson());
     }
     
-    public function test_tail()
+    public function test_tail_short()
     {
         self::assertSame([4, 5], Stream::from([1, 2, 3, 4, 5])->tail(2)->toArray());
+    }
+    
+    public function test_tail_long()
+    {
+        self::assertSame([1, 2, 3], Stream::from([1, 2, 3])->tail(6)->toArray());
     }
     
     public function test_limit_after_limit()
