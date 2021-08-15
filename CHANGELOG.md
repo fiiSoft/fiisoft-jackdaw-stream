@@ -4,8 +4,9 @@ All important changes to `fiisoft-jackdaw-stream` will be documented in this fil
 
 ## 1.3.0 - incompatible changes!
 
-- Unique operation rewritten 
-- Tail operation rewritten 
+- operation SortLimited rewritten
+- operation Unique rewritten 
+- operation Tail rewritten
 - Tail operation no longer accepts 0 as an argument
 
 ## 1.2.0 - incompatible changes!
