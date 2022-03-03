@@ -89,7 +89,7 @@ final class StreamCollectionTest extends TestCase
             )
             ->mapWhen(
                 Conditions::keyEquals('words'),
-                static function (array $words): int {
+                static function (array $words): string {
                     return Stream::from($words)
                         ->reduce(static function (string $longest, string $current) {
                             return \strlen($current) > \strlen($longest) ? $current : $longest;
