@@ -5,114 +5,60 @@ namespace FiiSoft\Jackdaw\Operation;
 use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Strategy\Unique\KeyComparator;
+use FiiSoft\Jackdaw\Operation\Strategy\Unique\KeyStandard;
+use FiiSoft\Jackdaw\Operation\Strategy\Unique\Strategy;
+use FiiSoft\Jackdaw\Operation\Strategy\Unique\ValueAndKeyComparator;
+use FiiSoft\Jackdaw\Operation\Strategy\Unique\ValueAndKeyStandard;
+use FiiSoft\Jackdaw\Operation\Strategy\Unique\ValueComparator;
+use FiiSoft\Jackdaw\Operation\Strategy\Unique\ValueOrKeyComparator;
+use FiiSoft\Jackdaw\Operation\Strategy\Unique\ValueOrKeyStandard;
+use FiiSoft\Jackdaw\Operation\Strategy\Unique\ValueStandard;
 
 final class Unique extends BaseOperation
 {
-    private ?Comparator $comparator = null;
-    private int $mode;
-    
-    /** @var Item[] */
-    private array $keysAndValues = [];
-    
-    private array $valuesMap = [];
-    private array $values = [];
+    private Strategy $strategy;
     
     /**
      * @param Comparator|callable|null $comparator
      */
     public function __construct($comparator = null, int $mode = Check::VALUE)
     {
-        $this->comparator = Comparators::getAdapter($comparator);
-        $this->mode = Check::getMode($mode);
+        $this->choseStrategy(Check::getMode($mode), Comparators::getAdapter($comparator));
     }
     
     public function handle(Signal $signal): void
     {
-        switch ($this->mode) {
-            case Check::VALUE:
-                $passed = $this->isUnique($signal->item->value);
-            break;
-            case Check::KEY:
-                $passed = $this->isUnique($signal->item->key);
-            break;
-            case Check::BOTH:
-                $passed = $this->isValueAndKeyUnique($signal->item);
-            break;
-            case Check::ANY:
-                $passed = $this->isValueOrKeyUnique($signal->item);
-            break;
-        }
-        
-        if ($passed) {
+        if ($this->strategy->check($signal->item)) {
             $this->next->handle($signal);
         }
     }
     
-    private function isValueAndKeyUnique(Item $item): bool
+    private function choseStrategy(int $mode, Comparator $comparator = null): void
     {
-        if ($this->comparator === null) {
-            foreach ($this->keysAndValues as $prev) {
-                if ($prev->value === $item->value || $prev->key === $item->key
-                    || $prev->value === $item->key || $prev->key === $item->value
-                ) {
-                    return false;
-                }
-            }
-        } else {
-            foreach ($this->keysAndValues as $prev) {
-                if ($this->comparator->compareAssoc($prev->value, $item->value, $prev->key, $item->key) === 0) {
-                    return false;
-                }
-            }
+        switch ($mode) {
+            case Check::VALUE:
+                $this->strategy = $comparator !== null
+                    ? new ValueComparator($comparator)
+                    : new ValueStandard();
+            break;
+            case Check::KEY:
+                $this->strategy = $comparator !== null
+                    ? new KeyComparator($comparator)
+                    : new KeyStandard();
+            break;
+            case Check::BOTH:
+                $this->strategy = $comparator !== null
+                    ? new ValueAndKeyComparator($comparator)
+                    : new ValueAndKeyStandard();
+            break;
+            case Check::ANY:
+                $this->strategy = $comparator !== null
+                    ? new ValueOrKeyComparator($comparator)
+                    : new ValueOrKeyStandard();
+            break;
         }
-        
-        $this->keysAndValues[] = $item->copy();
-        return true;
-    }
-    
-    private function isValueOrKeyUnique(Item $item): bool
-    {
-        $isValueUnique = $this->isUnique($item->value);
-    
-        if ($isValueUnique && $item->value === $item->key) {
-            return true;
-        }
-    
-        $isKeyUnique = $this->isUnique($item->key);
-        
-        return $isValueUnique || $isKeyUnique;
-    }
-    
-    private function isUnique($value): bool
-    {
-        if ($this->comparator === null) {
-            if (\is_int($value) || \is_string($value)) {
-                if (isset($this->valuesMap[$value])) {
-                    return false;
-                }
-    
-                $this->valuesMap[$value] = true;
-                return true;
-            }
-    
-            if (\in_array($value, $this->values, true)) {
-                return false;
-            }
-    
-            $this->values[] = $value;
-            return true;
-        }
-    
-        foreach ($this->values as $val) {
-            if ($this->comparator->compare($val, $value) === 0) {
-                return false;
-            }
-        }
-    
-        $this->values[] = $value;
-        return true;
     }
 }

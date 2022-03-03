@@ -48,4 +48,15 @@ final class Conditions
     {
         return new PredicateAdapter($predicate);
     }
+    
+    /**
+     * @param string|int $condition
+     * @return Condition
+     */
+    public static function keyEquals($condition): Condition
+    {
+        return self::generic(static function ($_, $key) use ($condition) {
+            return $key === $condition;
+        });
+    }
 }

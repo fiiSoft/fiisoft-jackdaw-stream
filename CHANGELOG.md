@@ -2,6 +2,14 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.3.0 - incompatible changes!
+
+- operation SortLimited rewritten
+- operation Unique rewritten 
+- operation Tail rewritten
+- Tail operation no longer accepts 0 as an argument
+- method stream() added to StreamCollection
+- 
 ## 2.2.0 - incompatible changes!
 
 - method StreamApi::sortBy accepts last integer param as limit

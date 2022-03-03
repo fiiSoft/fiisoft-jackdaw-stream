@@ -4,67 +4,48 @@ namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\State\Tail\BufferNotFull;
+use FiiSoft\Jackdaw\Operation\State\Tail\State;
 
 final class Tail extends BaseOperation
 {
     private \SplFixedArray $buffer;
-    
-    private int $length;
-    private int $index = 0;
+    private State $state;
     
     public function __construct(int $length)
     {
-        if ($length < 0) {
+        if ($length < 1) {
             throw new \InvalidArgumentException('Invalid param length');
         }
     
-        $this->length = $length;
         $this->buffer = new \SplFixedArray($length);
+        $this->state = new BufferNotFull($this, $this->buffer);
     }
     
     public function handle(Signal $signal): void
     {
-        if ($this->length > 0) {
-            if (isset($this->buffer[$this->index])) {
-                $signal->item->copyTo($this->buffer[$this->index]);
-            } else {
-                $this->buffer[$this->index] = $signal->item->copy();
-            }
-            
-            if (++$this->index === $this->length) {
-                $this->index = 0;
-            }
-        }
+        $this->state->hold($signal->item);
     }
     
     public function streamingFinished(Signal $signal): void
     {
-        $items = [];
-        
-        if ($this->buffer->count() > 0) {
-            $count = \min($this->length, $this->buffer->count());
-            
-            for ($i = 0; $i < $count; ++$i) {
-                if ($this->index === $count) {
-                    $this->index = 0;
-                }
-                
-                $items[] = $this->buffer[$this->index++];
-            }
-            
-            $this->buffer->setSize(0);
+        if ($this->state->count() > 0) {
+            $signal->restartFrom($this->next, $this->state->fetchItems());
         }
-        
-        $signal->restartFrom($this->next, $items);
     }
     
     public function mergeWith(Tail $other): void
     {
-        $this->length = \min($this->length, $other->length);
+        $this->state->setLength(\min($this->length(), $other->length()));
     }
     
     public function length(): int
     {
-        return $this->length;
+        return $this->buffer->getSize();
+    }
+    
+    public function transitTo(State $state): void
+    {
+        $this->state = $state;
     }
 }

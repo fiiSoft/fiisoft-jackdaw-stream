@@ -9,6 +9,8 @@ use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Limitable;
+use FiiSoft\Jackdaw\Operation\State\SortLimited\BufferNotFull;
+use FiiSoft\Jackdaw\Operation\State\SortLimited\State;
 use SplHeap;
 use SplMaxHeap;
 use SplMinHeap;
@@ -16,15 +18,14 @@ use SplMinHeap;
 final class SortLimited extends BaseOperation implements Limitable
 {
     private ?Comparator $comparator = null;
-    
-    private bool $reversed;
-    
-    private int $mode;
-    private int $limit;
-    private int $count = 0;
+    private State $state;
     
     /** @var SplHeap<Item> */
     private SplHeap $items;
+    
+    private bool $reversed;
+    private int $mode;
+    private int $limit;
     
     /**
      * @param int $limit
@@ -47,25 +48,29 @@ final class SortLimited extends BaseOperation implements Limitable
         $this->limit = $limit;
         $this->reversed = $reversed;
         
-        $this->items = $this->createHeap();
+        $this->prepareToWork();
     }
     
     public function handle(Signal $signal): void
     {
-        if ($this->count === $this->limit) {
-            if ($this->items->compare($signal->item, $this->items->top()) < 0) {
-                $this->items->extract();
-                $this->items->insert($signal->item->copy());
-            }
-        } else {
-            $this->items->insert($signal->item->copy());
-            ++$this->count;
-        }
+        $this->state->hold($signal->item);
     }
     
     public function streamingFinished(Signal $signal): void
     {
         $signal->restartFrom($this->next, \array_reverse(\iterator_to_array($this->items, false)));
+    }
+    
+    public function reverseOrder(): void
+    {
+        $this->reversed = !$this->reversed;
+        $this->prepareToWork();
+    }
+    
+    private function prepareToWork(): void
+    {
+        $this->items = $this->createHeap();
+        $this->state = new BufferNotFull($this, $this->items, $this->limit);
     }
     
     private function createHeap(): SplHeap
@@ -80,7 +85,7 @@ final class SortLimited extends BaseOperation implements Limitable
                              * @param Item $value2
                              * @return int
                              */
-                            public function compare($value1, $value2) {
+                            public function compare($value1, $value2): int {
                                 return $value2->value <=> $value1->value;
                             }
                         };
@@ -92,7 +97,7 @@ final class SortLimited extends BaseOperation implements Limitable
                          * @param Item $value2
                          * @return int
                          */
-                        public function compare($value1, $value2) {
+                        public function compare($value1, $value2): int {
                             return $value1->value <=> $value2->value;
                         }
                     };
@@ -111,7 +116,7 @@ final class SortLimited extends BaseOperation implements Limitable
                          * @param Item $value2
                          * @return int
                          */
-                        public function compare($value1, $value2) {
+                        public function compare($value1, $value2): int {
                             return $this->comparator->compare($value2->value, $value1->value);
                         }
                     };
@@ -129,7 +134,7 @@ final class SortLimited extends BaseOperation implements Limitable
                      * @param Item $value2
                      * @return int
                      */
-                    public function compare($value1, $value2) {
+                    public function compare($value1, $value2): int {
                         return $this->comparator->compare($value1->value, $value2->value);
                     }
                 };
@@ -143,7 +148,7 @@ final class SortLimited extends BaseOperation implements Limitable
                              * @param Item $value2
                              * @return int
                              */
-                            public function compare($value1, $value2) {
+                            public function compare($value1, $value2): int {
                                 return $value2->key <=> $value1->key;
                             }
                         };
@@ -155,7 +160,7 @@ final class SortLimited extends BaseOperation implements Limitable
                          * @param Item $value2
                          * @return int
                          */
-                        public function compare($value1, $value2) {
+                        public function compare($value1, $value2): int {
                             return $value1->key <=> $value2->key;
                         }
                     };
@@ -174,7 +179,7 @@ final class SortLimited extends BaseOperation implements Limitable
                          * @param Item $value2
                          * @return int
                          */
-                        public function compare($value1, $value2) {
+                        public function compare($value1, $value2): int {
                             return $this->comparator->compare($value2->key, $value1->key);
                         }
                     };
@@ -192,7 +197,7 @@ final class SortLimited extends BaseOperation implements Limitable
                      * @param Item $value2
                      * @return int
                      */
-                    public function compare($value1, $value2) {
+                    public function compare($value1, $value2): int {
                         return $this->comparator->compare($value1->key, $value2->key);
                     }
                 };
@@ -206,7 +211,7 @@ final class SortLimited extends BaseOperation implements Limitable
                              * @param Item $value2
                              * @return int
                              */
-                            public function compare($value1, $value2) {
+                            public function compare($value1, $value2): int {
                                 return $value2->value <=> $value1->value ?: $value2->key <=> $value1->key;
                             }
                         };
@@ -218,7 +223,7 @@ final class SortLimited extends BaseOperation implements Limitable
                          * @param Item $value2
                          * @return int
                          */
-                        public function compare($value1, $value2) {
+                        public function compare($value1, $value2): int {
                             return $value1->value <=> $value2->value ?: $value1->key <=> $value2->key;
                         }
                     };
@@ -237,7 +242,7 @@ final class SortLimited extends BaseOperation implements Limitable
                          * @param Item $value2
                          * @return int
                          */
-                        public function compare($value1, $value2) {
+                        public function compare($value1, $value2): int {
                             return $this->comparator->compareAssoc(
                                 $value2->value, $value1->value, $value2->key, $value1->key
                             );
@@ -257,7 +262,7 @@ final class SortLimited extends BaseOperation implements Limitable
                      * @param Item $value2
                      * @return int
                      */
-                    public function compare($value1, $value2) {
+                    public function compare($value1, $value2): int {
                         return $this->comparator->compareAssoc(
                             $value1->value, $value2->value, $value1->key, $value2->key
                         );
@@ -266,19 +271,19 @@ final class SortLimited extends BaseOperation implements Limitable
         }
     }
     
-    public function reverseOrder(): void
-    {
-        $this->reversed = !$this->reversed;
-        $this->items = $this->createHeap();
-    }
-    
     public function applyLimit(int $limit): void
     {
         $this->limit = \min($this->limit, $limit);
+        $this->state->setLength($this->limit);
     }
     
     public function limit(): int
     {
         return $this->limit;
+    }
+    
+    public function transitTo(State $state): void
+    {
+        $this->state = $state;
     }
 }

@@ -5,7 +5,7 @@
     "keywords": ["streams", "iterators", "generators", "data processing"],
     "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
     "license": "MIT",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "authors": [
         {
             "name": "fiiSoft",

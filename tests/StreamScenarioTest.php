@@ -474,4 +474,14 @@ final class StreamScenarioTest extends TestCase
         
         self::assertSame([1, 2, 3, 5], $result);
     }
+    
+    public function test_scenario_30(): void
+    {
+        self::assertSame([7, 8, 9], Stream::from([5, 3, 8, 1, 3, 7, 6, 9, 0, 2, 4])->sort()->tail(3)->toArray());
+    }
+    
+    public function test_scenarion_31(): void
+    {
+        self::assertSame([6, 5], Stream::from([0, 6, 2, 8, 1, 3, 7, 9, 2, 5, 4])->worst(5)->tail(2)->toArray());
+    }
 }
