@@ -2,7 +2,9 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Condition\Conditions;
 use FiiSoft\Jackdaw\Internal\StreamCollection;
+use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
 
 final class StreamCollectionTest extends TestCase
@@ -75,5 +77,29 @@ final class StreamCollectionTest extends TestCase
                 }
             }
         }
+    }
+    
+    public function test_return_collected_data_as_stream_for_further_processing()
+    {
+        $data = $this->collection
+            ->stream()
+            ->mapWhen(
+                Conditions::keyEquals('numbers'),
+                static function (array $numbers): int {
+                    return \max($numbers);
+                }
+            )
+            ->mapWhen(
+                Conditions::keyEquals('words'),
+                static function (array $words): int {
+                    return Stream::from($words)
+                        ->reduce(static function (string $longest, string $current) {
+                            return \strlen($current) > \strlen($longest) ? $current : $longest;
+                        })
+                        ->get();
+                }
+            )->toArrayAssoc();
+        
+        self::assertSame(['numbers' => 9, 'words' => 'quick'], $data);
     }
 }

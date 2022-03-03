@@ -8,6 +8,7 @@ All important changes to `fiisoft-jackdaw-stream` will be documented in this fil
 - operation Unique rewritten 
 - operation Tail rewritten
 - Tail operation no longer accepts 0 as an argument
+- method stream() added to StreamCollection
 
 ## 1.2.0 - incompatible changes!
 

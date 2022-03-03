@@ -48,6 +48,11 @@ final class StreamCollection implements \Iterator
         return $this->dataCollection;
     }
     
+    public function stream(): StreamApi
+    {
+        return StreamMaker::from($this->dataCollection);
+    }
+    
     /**
      * @param int $flags
      * @return string raw data encoded to JSON
