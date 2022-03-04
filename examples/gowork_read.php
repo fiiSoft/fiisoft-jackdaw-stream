@@ -11,7 +11,7 @@ echo 'best 20 rows: ', PHP_EOL;
 
 $reader = new class (fopen(__DIR__.'/../var/testfile.txt', 'rb')) implements \Iterator {
     private $fp;
-    private $line = null;
+    private $line = false;
     private int $index = 0;
     
     public function __construct($fp) {
@@ -24,11 +24,7 @@ $reader = new class (fopen(__DIR__.'/../var/testfile.txt', 'rb')) implements \It
     
     public function next(): void {
         $this->line = fgets($this->fp);
-        if ($this->line === false) {
-            $this->line = null;
-        } else {
-            ++$this->index;
-        }
+        ++$this->index;
     }
     
     public function key(): int {
@@ -36,11 +32,13 @@ $reader = new class (fopen(__DIR__.'/../var/testfile.txt', 'rb')) implements \It
     }
     
     public function valid(): bool {
-        return $this->line !== null;
+        return $this->line !== false;
     }
     
     public function rewind(): void {
+        fseek($this->fp, 0);
         $this->line = fgets($this->fp);
+        $this->index = 0;
     }
 };
 
