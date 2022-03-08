@@ -15,11 +15,14 @@
     ],
     "require": {
         "php": ">=7.4.0",
-        "ext-json": "*"
+        "ext-json": "*",
+        "ext-mbstring": "*"
     },
     "suggest": {
-        "ext-pdo": "Required to use PDOStatementAdapter as Producer for Stream",
-        "ramsey/uuid": "Required to use RandomUuid generator as Producer for Stream"
+        "ext-pdo": "To use PDOStatementAdapter as Producer for Stream",
+        "ramsey/uuid": "To use RandomUuid generator as Producer for Stream",
+        "symfony/console": "To use Symfony console output as error logger",
+        "psr/log": "To use PsrLogger as error logger"
     },
     "autoload": {
         "psr-4": {
@@ -36,6 +39,8 @@
         "ramsey/uuid": "^4.1",
         "gowork/values": "^0.4.1",
         "flow-php/etl": "1.x@dev",
-        "flow-php/array-dot": "1.x@dev"
+        "flow-php/array-dot": "1.x@dev",
+        "symfony/console": "^5.4",
+        "psr/log": "^1.1"
     }
 }
