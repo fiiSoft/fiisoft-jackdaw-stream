@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Producer\Producers;

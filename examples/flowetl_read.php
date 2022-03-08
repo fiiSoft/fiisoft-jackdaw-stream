@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 use Flow\ETL\DSL\Entry;
 use Flow\ETL\DSL\Transform;
@@ -36,7 +36,7 @@ $etl = ETL::read($extractor)
     ->filter(static fn(Row $row) => $row->valueOf('credits') >= 500000)
     ->filter(static fn(Row $row) => $row->valueOf('scoring') >= 95.0)
     ->filter(static fn(Row $row) => mb_strlen($row->valueOf('name')) === 10)
-    ->rows(Transform::keep('id', 'credits'))
+    ->transform(Transform::keep('id', 'credits'))
     ->sortBy(Sort::desc('credits'), Sort::asc('id'))
 ;
 

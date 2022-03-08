@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 $timeStart = microtime(true);
 $memoryStart = memory_get_usage();
