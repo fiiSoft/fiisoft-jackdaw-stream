@@ -27,9 +27,9 @@ final class Ending implements Operation
         throw new \LogicException('It should never happen (Ending::removeFromChain)');
     }
 
-    public function streamingFinished(Signal $signal): void
+    public function streamingFinished(Signal $signal): bool
     {
-        //noop
+        return false;
     }
 
     public function isLazy(): bool

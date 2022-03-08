@@ -16,11 +16,13 @@ final class Reverse extends BaseOperation
         $this->items[] = $signal->item->copy();
     }
     
-    public function streamingFinished(Signal $signal): void
+    public function streamingFinished(Signal $signal): bool
     {
         $items = \array_reverse($this->items);
         $this->items = [];
         
         $signal->restartFrom($this->next, $items);
+        
+        return true;
     }
 }

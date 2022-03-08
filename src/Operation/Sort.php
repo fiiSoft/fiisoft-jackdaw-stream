@@ -39,13 +39,15 @@ final class Sort extends BaseOperation
         $this->items[] = $signal->item->copy();
     }
     
-    public function streamingFinished(Signal $signal): void
+    public function streamingFinished(Signal $signal): bool
     {
         if (\count($this->items) > 1) {
             $this->sortItems();
         }
         
         $signal->restartFrom($this->next, $this->items);
+        
+        return true;
     }
     
     private function sortItems(): void

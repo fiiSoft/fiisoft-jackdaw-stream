@@ -36,9 +36,9 @@ final class Initial implements Operation
         return $this->next;
     }
     
-    public function streamingFinished(Signal $signal): void
+    public function streamingFinished(Signal $signal): bool
     {
-        $this->next->streamingFinished($signal);
+        return $this->next->streamingFinished($signal);
     }
     
     public function isLazy(): bool

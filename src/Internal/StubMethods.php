@@ -44,4 +44,9 @@ trait StubMethods
         //noop
         return false;
     }
+    
+    protected function finish(): void
+    {
+        //noop
+    }
 }

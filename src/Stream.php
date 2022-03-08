@@ -4,6 +4,8 @@ namespace FiiSoft\Jackdaw;
 
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Handler\ErrorHandler;
+use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\BaseStreamPipe;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Collaborator;
@@ -73,6 +75,15 @@ final class Stream extends Collaborator implements StreamApi
     
     private ?\Generator $producerIterator = null;
     private bool $executed = false;
+    
+    /** @var callable[] */
+    private array $onFinishHandlers = [];
+    
+    /** @var callable[] */
+    private array $onSuccessHandlers = [];
+    
+    /** @var ErrorHandler[] */
+    private array $onErrorHandlers = [];
     
     /** @var Item[] */
     private array $extraItems = [];
@@ -312,9 +323,9 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function call($consumer): self
+    public function call(...$consumers): self
     {
-        return $this->chainOperation(new SendTo($consumer));
+        return $this->chainOperation(new SendTo(...$consumers));
     }
     
     /**
@@ -581,6 +592,56 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function onError($handler, bool $replace = false): self
+    {
+        if (\is_callable($handler)) {
+            $handler = OnError::call($handler);
+        }
+    
+        if ($handler instanceof ErrorHandler) {
+            if ($replace) {
+                $this->onErrorHandlers = [$handler];
+            } else {
+                $this->onErrorHandlers[] = $handler;
+            }
+        } else {
+            throw new \InvalidArgumentException('Invalid param handler');
+        }
+    
+        return $this;
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function onSuccess(callable $handler, bool $replace = false): self
+    {
+        if ($replace) {
+            $this->onSuccessHandlers = [$handler];
+        } else {
+            $this->onSuccessHandlers[] = $handler;
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function onFinish(callable $handler, bool $replace = false): self
+    {
+        if ($replace) {
+            $this->onFinishHandlers[] = $handler;
+        } else {
+            $this->onFinishHandlers = [$handler];
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function toJsonAssoc(int $flags = 0): string
     {
         return $this->toJson($flags, true);
@@ -763,8 +824,23 @@ final class Stream extends Collaborator implements StreamApi
     {
         $this->prepareToRun();
         $this->continueIteration();
+        $this->finish();
+    }
+    
+    protected function finish(): void
+    {
         $this->executed = true;
         $this->finishSubstreems();
+    
+        if (!$this->signal->isError()) {
+            foreach ($this->onSuccessHandlers as $handler) {
+                $handler();
+            }
+        }
+    
+        foreach ($this->onFinishHandlers as $handler) {
+            $handler();
+        }
     }
     
     private function prepareToRun(): void
@@ -778,14 +854,13 @@ final class Stream extends Collaborator implements StreamApi
     
     protected function continueIteration(bool $once = false): bool
     {
-        do {
-            while (!$this->signal->isStopped()) {
+        try {
+            ITERATION_LOOP:
+            if (!$this->signal->isStopped()) {
+                
+                PROCESS_NEXT_ITEM:
                 if ($this->hasNextItem()) {
                     $this->head->handle($this->signal);
-                    
-                    if ($this->signal->isInterrupted()) {
-                        throw new Interruption();
-                    }
                 } elseif (empty($this->stack)) {
                     $this->signal->streamIsEmpty();
                 } else {
@@ -796,10 +871,31 @@ final class Stream extends Collaborator implements StreamApi
                 if ($once) {
                     return true;
                 }
+                
+                goto ITERATION_LOOP;
+            }
+
+            if ($this->head->streamingFinished($this->signal)) {
+                goto PROCESS_NEXT_ITEM;
             }
             
-            $this->head->streamingFinished($this->signal);
-        } while (!$this->signal->isStopped());
+        } catch (Interruption $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            foreach ($this->onErrorHandlers as $handler) {
+                $skip = $handler->handle($e, $this->signal->item->key, $this->signal->item->value);
+                if ($skip === true) {
+                    goto ITERATION_LOOP;
+                }
+
+                if ($skip === false) {
+                    $this->signal->abort();
+                    return false;
+                }
+            }
+            
+            throw $e;
+        }
         
         return false;
     }
@@ -844,10 +940,9 @@ final class Stream extends Collaborator implements StreamApi
      */
     public function getIterator(): \Traversable
     {
-        $iterator = new StreamIterator($this);
-        $this->chainOperation(new Iterate($iterator));
+        $this->chainOperation(new Iterate());
         
-        return $iterator;
+        return new StreamIterator($this, $this->signal->item);
     }
     
     private function chainOperation(Operation $next): self
@@ -930,6 +1025,11 @@ final class Stream extends Collaborator implements StreamApi
             }
         } elseif ($next instanceof Flat) {
             if ($this->last instanceof Flat) {
+                $this->last->mergeWith($next);
+                return false;
+            }
+        } elseif ($next instanceof SendTo) {
+            if ($this->last instanceof SendTo) {
                 $this->last->mergeWith($next);
                 return false;
             }

@@ -9,20 +9,32 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class SendTo extends BaseOperation
 {
-    private Consumer $consumer;
+    /** @var Consumer[] */
+    private array $consumers = [];
     
     /**
-     * @param Consumer|callable $consumer
+     * @param Consumer|callable $consumers
      */
-    public function __construct($consumer)
+    public function __construct(...$consumers)
     {
-        $this->consumer = Consumers::getAdapter($consumer);
+        foreach ($consumers as $consumer) {
+            $this->consumers[] = Consumers::getAdapter($consumer);
+        }
     }
     
     public function handle(Signal $signal): void
     {
-        $this->consumer->consume($signal->item->value, $signal->item->key);
+        foreach ($this->consumers as $consumer) {
+            $consumer->consume($signal->item->value, $signal->item->key);
+        }
     
         $this->next->handle($signal);
+    }
+    
+    public function mergeWith(SendTo $other): void
+    {
+        foreach ($other->consumers as $consumer) {
+            $this->consumers[] = $consumer;
+        }
     }
 }

@@ -2,6 +2,13 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.4.0
+
+- added ErrorHandler and ErrorLogger
+- added methods onError, onSuccess, onFinish to StreamApi
+- some changes to improve performance
+- the version for PHP 7.0 has been dropped and will no longer be maintained
+
 ## 2.3.0 - incompatible changes!
 
 - operation SortLimited rewritten

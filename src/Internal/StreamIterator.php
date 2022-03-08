@@ -13,9 +13,10 @@ final class StreamIterator extends Collaborator implements \Iterator
     
     private bool $isValid = false;
     
-    public function __construct(Stream $stream)
+    public function __construct(Stream $stream, Item $item)
     {
         $this->stream = $stream;
+        $this->item = $item;
     }
     
     public function current()
@@ -34,27 +35,28 @@ final class StreamIterator extends Collaborator implements \Iterator
         try {
             $this->stream->continueIteration();
         } catch (Interruption $e) {
-            //ok
+            $this->isValid = true;
         }
     }
     
     public function valid()
     {
-        return $this->isValid;
+        if ($this->isValid) {
+            return true;
+        }
+        
+        $this->stream->finish();
+        
+        return false;
     }
     
     public function rewind()
     {
+        $this->isValid = false;
         try {
             $this->stream->run();
         } catch (Interruption $e) {
-            //ok
+            $this->isValid = true;
         }
-    }
-    
-    public function setItem(Item $item): void
-    {
-        $this->item = $item;
-        $this->isValid = true;
     }
 }

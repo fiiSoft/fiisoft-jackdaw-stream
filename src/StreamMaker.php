@@ -104,9 +104,9 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function call($consumer): StreamApi
+    public function call(...$consumers): StreamApi
     {
-        return $this->make()->call($consumer);
+        return $this->make()->call(...$consumers);
     }
     
     /**
@@ -488,6 +488,30 @@ final class StreamMaker implements StreamApi
     public function tail(int $numOfItems): StreamApi
     {
         return $this->make()->tail($numOfItems);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function onError($handler, bool $replace = false): StreamApi
+    {
+        return $this->make()->onError($handler, $replace);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function onSuccess(callable $handler, bool $replace = false): StreamApi
+    {
+        return $this->make()->onSuccess($handler, $replace);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function onFinish(callable $handler, bool $replace = false): StreamApi
+    {
+        return $this->make()->onFinish($handler, $replace);
     }
     
     /**

@@ -14,7 +14,11 @@ interface Operation
     
     public function removeFromChain(): Operation;
     
-    public function streamingFinished(Signal $signal): void;
+    /**
+     * @param Signal $signal
+     * @return bool return true to resume stream processing, false otherwise
+     */
+    public function streamingFinished(Signal $signal): bool;
     
     public function isLazy(): bool;
 }

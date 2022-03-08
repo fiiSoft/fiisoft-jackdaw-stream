@@ -16,10 +16,12 @@ final class Shuffle extends BaseOperation
         $this->items[] = $signal->item->copy();
     }
     
-    public function streamingFinished(Signal $signal): void
+    public function streamingFinished(Signal $signal): bool
     {
         \shuffle($this->items);
         
         $signal->restartFrom($this->next, $this->items);
+        
+        return true;
     }
 }

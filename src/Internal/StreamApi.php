@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Handler\ErrorHandler;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Producer\Producer;
@@ -120,10 +121,10 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function limit(int $limit): self;
     
     /**
-     * @param Consumer|callable $consumer
+     * @param Consumer|callable $consumers
      * @return $this
      */
-    public function call($consumer): self;
+    public function call(...$consumers): self;
     
     /**
      * @param Consumer|callable $consumer
@@ -368,6 +369,34 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
      * @return $this
      */
     public function tail(int $numOfItems): self;
+    
+    /**
+     * Register handlers which will be called when error occurs.
+     *
+     * @param ErrorHandler|callable $handler it must return bool or null, see ErrorHandler
+     * @param bool $replace when true then replace all existing handlers, when false then add handler to stack
+     * @return $this
+     */
+    public function onError($handler, bool $replace = false): self;
+    
+    /**
+     * Register handlers which will be called at the end and only when no errors occurred.
+     *
+     * @param callable $handler
+     * @param bool $replace when true then replace all existing handlers, when false then add handler to stack
+     * @return $this
+     */
+    public function onSuccess(callable $handler, bool $replace = false): self;
+    
+    /**
+     * Register handlers which will be called at the end and regardless any errors occurred or not,
+     * but not in the case when uncaught exception has been thrown!
+     *
+     * @param callable $handler
+     * @param bool $replace when true then replace all existing handlers, when false then add handler to stack
+     * @return $this
+     */
+    public function onFinish(callable $handler, bool $replace = false): self;
     
     /**
      * @param Consumer|callable $consumer

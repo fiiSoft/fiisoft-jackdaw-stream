@@ -27,11 +27,13 @@ final class Tail extends BaseOperation
         $this->state->hold($signal->item);
     }
     
-    public function streamingFinished(Signal $signal): void
+    public function streamingFinished(Signal $signal): bool
     {
         if ($this->state->count() > 0) {
             $signal->restartFrom($this->next, $this->state->fetchItems());
         }
+        
+        return true;
     }
     
     public function mergeWith(Tail $other): void

@@ -10,8 +10,8 @@ final class Signal extends Collaborator
     public Item $item;
     
     private bool $isStopped = false;
-    private bool $isInterrupted = false;
     private bool $isEmpty = false;
+    private bool $isError = false;
     private bool $isTerminated = false;
     private bool $isRestarted = false;
     private int $innerLoopLevel = 0;
@@ -29,10 +29,21 @@ final class Signal extends Collaborator
         $this->isStopped = true;
     }
     
+    public function abort(): void
+    {
+        $this->isError = true;
+        $this->terminate();
+    }
+    
     public function terminate(): void
     {
         $this->isStopped = true;
         $this->isTerminated = true;
+    }
+    
+    public function isError(): bool
+    {
+        return $this->isError;
     }
     
     public function isFinished(): bool
@@ -52,21 +63,6 @@ final class Signal extends Collaborator
     public function isStopped(): bool
     {
         return $this->isStopped && $this->innerLoopLevel === 0;
-    }
-    
-    public function interrupt(): void
-    {
-        $this->isInterrupted = true;
-    }
-    
-    public function isInterrupted(): bool
-    {
-        if ($this->isInterrupted) {
-            $this->isInterrupted = false;
-            return true;
-        }
-        
-        return false;
     }
     
     /**
@@ -122,7 +118,11 @@ final class Signal extends Collaborator
     
     protected function processExternalPush(Stream $sender): bool
     {
-        //noop
         return false;
+    }
+    
+    protected function finish(): void
+    {
+        //noop
     }
 }

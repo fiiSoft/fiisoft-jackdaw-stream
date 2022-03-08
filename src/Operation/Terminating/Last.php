@@ -29,13 +29,13 @@ final class Last extends FinalOperation implements ResultProvider
         }
     }
     
-    public function streamingFinished(Signal $signal): void
+    public function streamingFinished(Signal $signal): bool
     {
         if ($this->found) {
             $this->item = $signal->item->copy();
         }
         
-        $this->next->streamingFinished($signal);
+        return $this->next->streamingFinished($signal);
     }
     
     public function hasResult(): bool

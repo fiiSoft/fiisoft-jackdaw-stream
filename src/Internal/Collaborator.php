@@ -23,4 +23,6 @@ abstract class Collaborator extends BaseStreamPipe
     abstract protected function limitReached(Operation $operation): void;
     
     abstract protected function streamIsEmpty(): void;
+    
+    abstract protected function finish(): void;
 }

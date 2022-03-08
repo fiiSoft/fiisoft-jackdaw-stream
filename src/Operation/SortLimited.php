@@ -56,9 +56,11 @@ final class SortLimited extends BaseOperation implements Limitable
         $this->state->hold($signal->item);
     }
     
-    public function streamingFinished(Signal $signal): void
+    public function streamingFinished(Signal $signal): bool
     {
         $signal->restartFrom($this->next, \array_reverse(\iterator_to_array($this->items, false)));
+        
+        return true;
     }
     
     public function reverseOrder(): void

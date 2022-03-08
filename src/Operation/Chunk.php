@@ -47,14 +47,15 @@ final class Chunk extends BaseOperation
         }
     }
     
-    public function streamingFinished(Signal $signal): void
+    public function streamingFinished(Signal $signal): bool
     {
         if (!empty($this->chunked) && $signal->isStreamEmpty()) {
             $signal->resume();
             $this->pass($signal);
-        } else {
-            parent::streamingFinished($signal);
+            return true;
         }
+    
+        return parent::streamingFinished($signal);
     }
     
     private function pass(Signal $signal): void

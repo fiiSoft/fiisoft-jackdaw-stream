@@ -2,10 +2,10 @@
     "name": "fiisoft/jackdaw-stream",
     "type": "library",
     "description": "A funny library to provide stream-like operations on iterable data",
-    "keywords": ["streams", "iterators", "generators", "data processing"],
+    "keywords": ["streams", "iterators", "generators", "data processing", "functional programming", "pipes and filters"],
     "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
     "license": "MIT",
-    "version": "2.3.0",
+    "version": "2.4.0",
     "authors": [
         {
             "name": "fiiSoft",
