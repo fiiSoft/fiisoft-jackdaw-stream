@@ -51,13 +51,23 @@ final class Reducers
         return new Max();
     }
     
-    public static function average(): Average
+    public static function average(?int $roundPrecision = null): Average
     {
-        return new Average();
+        return new Average($roundPrecision);
     }
     
     public static function concat(string $separator = ''): Concat
     {
         return new Concat($separator);
+    }
+    
+    public static function longest(): Longest
+    {
+        return new Longest();
+    }
+    
+    public static function shortest(): Shortest
+    {
+        return new Shortest();
     }
 }

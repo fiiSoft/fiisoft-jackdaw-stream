@@ -2,6 +2,27 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.5.0
+
+Added:
+
+- new consumers to help test and develop this library
+- consumer to write directly to any writable resource (including STDOUT)
+- discriminator which returns key of current element
+- some new filters
+- some new mappers
+- some new reducers
+- some new producers (ability to read text from any readable resource, including STDIN)
+- new methods to Result class to transform result got from stream or call callable when no result is available
+- new type Transformer, to transform data provided by Result
+- new methods to StreamApi: mapField, mapFieldWhen, castToFloat, castToString, castToBool
+
+Also:
+- performance improved
+- some bugs fixed
+- many new tests wrote
+- signature of some StreamApi methods changed
+
 ## 2.4.0
 
 - added ErrorHandler and ErrorLogger

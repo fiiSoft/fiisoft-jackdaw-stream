@@ -10,6 +10,11 @@ abstract class FinalOperation extends BaseOperation
 {
     private LazyResult $result;
     
+    /**
+     * @param Stream $stream
+     * @param ResultProvider $resultProvider
+     * @param callable|mixed|null $orElse
+     */
     public function __construct(Stream $stream, ResultProvider $resultProvider, $orElse = null)
     {
         $this->result = new LazyResult($stream, $resultProvider, $orElse);

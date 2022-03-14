@@ -15,7 +15,7 @@ final class Reduce extends FinalOperation
     /**
      * @param Stream $stream
      * @param Reducer|callable $reducer
-     * @param mixed|null $orElse
+     * @param callable|mixed|null $orElse
      */
     public function __construct(Stream $stream, $reducer, $orElse = null)
     {
@@ -26,6 +26,6 @@ final class Reduce extends FinalOperation
     
     public function handle(Signal $signal): void
     {
-        $this->reducer->consume($signal->item->value, $signal->item->key);
+        $this->reducer->consume($signal->item->value);
     }
 }

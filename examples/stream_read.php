@@ -3,7 +3,6 @@
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
 use FiiSoft\Jackdaw\Stream;
 
 $timeStart = microtime(true);
@@ -13,7 +12,7 @@ require_once  __DIR__ .'/../vendor/autoload.php';
 
 $counter = Consumers::counter();
 
-$stream = Stream::from(new TextFileReader(fopen(__DIR__.'/../var/testfile.txt', 'rb')))
+$stream = Stream::from(fopen(__DIR__.'/../var/testfile.txt', 'rb'))
     ->map(Mappers::jsonDecode())
     ->filterBy('isVerified', true)
     ->filterBy('facebookId', Filters::notNull())

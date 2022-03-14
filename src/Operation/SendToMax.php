@@ -16,7 +16,7 @@ final class SendToMax extends BaseOperation
     
     /**
      * @param int $times how many times consumer can be called
-     * @param Consumer|callable $consumer
+     * @param Consumer|callable|resource $consumer
      */
     public function __construct(int $times, $consumer)
     {

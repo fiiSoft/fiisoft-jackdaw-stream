@@ -25,10 +25,6 @@ abstract class State
         if ($length !== $this->length) {
             $this->length = $length;
             $this->buffer->setSize($this->length);
-            
-            if ($this->index >= $this->length) {
-                $this->index = 0;
-            }
         }
     }
     

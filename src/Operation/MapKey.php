@@ -6,13 +6,14 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class MapKey extends BaseOperation
 {
     private Mapper $mapper;
     
     /**
-     * @param Mapper|callable $mapper
+     * @param Mapper|Reducer|callable|mixed $mapper
      */
     public function __construct($mapper)
     {

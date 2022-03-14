@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Filter\Filter as FilterStrategy;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Filter\Internal\FilterData;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
@@ -35,5 +36,10 @@ final class Filter extends BaseOperation
         ) {
             $this->next->handle($signal);
         }
+    }
+    
+    public function filterData(): FilterData
+    {
+        return new FilterData($this->filterStrategy, $this->negation, $this->mode);
     }
 }

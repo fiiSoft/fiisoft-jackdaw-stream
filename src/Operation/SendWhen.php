@@ -20,8 +20,8 @@ final class SendWhen extends BaseOperation
     
     /**
      * @param Condition|Predicate|Filter|callable $condition
-     * @param Consumer|callable $consumer
-     * @param Consumer|callable|null $elseConsumer
+     * @param Consumer|callable|resource $consumer
+     * @param Consumer|callable|resource|null $elseConsumer
      */
     public function __construct($condition, $consumer, $elseConsumer = null)
     {

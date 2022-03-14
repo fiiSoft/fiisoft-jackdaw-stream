@@ -25,7 +25,8 @@ final class GenericCondition implements Condition
             case 1: return $condition($value);
             case 2: return $condition($value, $key);
             case 0: return $condition();
-            default: throw Helper::wrongNumOfArgsException('Condition', $this->numOfArgs, 1, 2, 0);
+            default:
+                throw Helper::wrongNumOfArgsException('Condition', $this->numOfArgs, 1, 2, 0);
         }
     }
 }

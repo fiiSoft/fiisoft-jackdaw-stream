@@ -13,7 +13,7 @@ final class SendTo extends BaseOperation
     private array $consumers = [];
     
     /**
-     * @param Consumer|callable $consumers
+     * @param Consumer|callable|resource $consumers
      */
     public function __construct(...$consumers)
     {

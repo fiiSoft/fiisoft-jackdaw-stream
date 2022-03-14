@@ -36,7 +36,7 @@ final class Unique extends BaseOperation
         }
     }
     
-    private function choseStrategy(int $mode, Comparator $comparator = null): void
+    private function choseStrategy(int $mode, ?Comparator $comparator = null): void
     {
         switch ($mode) {
             case Check::VALUE:

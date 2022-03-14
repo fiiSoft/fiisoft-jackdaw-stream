@@ -15,11 +15,11 @@ final class Last extends FinalOperation implements ResultProvider
     
     /**
      * @param Stream $stream
-     * @param mixed $default
+     * @param callable|mixed|null $orElse
      */
-    public function __construct(Stream $stream, $default)
+    public function __construct(Stream $stream, $orElse = null)
     {
-        parent::__construct($stream, $this, $default);
+        parent::__construct($stream, $this, $orElse);
     }
     
     public function handle(Signal $signal): void

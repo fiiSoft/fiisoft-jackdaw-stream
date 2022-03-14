@@ -54,7 +54,11 @@ final class Aggregate extends BaseOperation
         }
     
         foreach ($keys as $key) {
-            if (!\is_string($key) && !\is_int($key)) {
+            if (\is_string($key)) {
+                if ($key === '') {
+                    return false;
+                }
+            } elseif (!\is_int($key)) {
                 return false;
             }
         }

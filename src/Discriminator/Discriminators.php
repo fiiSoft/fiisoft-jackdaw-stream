@@ -79,4 +79,9 @@ final class Discriminators
     {
         return new ByField($field, $orElse);
     }
+    
+    public static function byKey(): ByKey
+    {
+        return new ByKey();
+    }
 }

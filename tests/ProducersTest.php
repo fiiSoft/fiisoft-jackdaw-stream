@@ -4,6 +4,8 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Producer\Producers;
+use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
+use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
 use PHPUnit\Framework\TestCase;
 
 final class ProducersTest extends TestCase
@@ -123,5 +125,144 @@ final class ProducersTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         Producers::randomInt(2, 2);
+    }
+    
+    public function test_Collatz_generator_with_known_initial_value_gives_predicable_series_of_numbers(): void
+    {
+        $producer = Producers::collatz(3);
+        $buffer = [];
+    
+        $item = new Item();
+        foreach ($producer->feed($item) as $_) {
+            $buffer[] = $item->value;
+        }
+    
+        self::assertSame([3, 10, 5, 16, 8, 4, 2, 1], $buffer);
+    }
+    
+    public function test_Collatz_generator_with_random_initial_value(): void
+    {
+        $producer = Producers::collatz();
+        $buffer = [];
+    
+        $item = new Item();
+        foreach ($producer->feed($item) as $_) {
+            $buffer[] = $item->value;
+        }
+    
+        $expected = [16, 8, 4, 2, 1];
+    
+        if (\count($buffer) < \count($expected)) {
+            $expected = \array_slice($expected, -\count($buffer));
+        }
+        
+        self::assertSame($expected, \array_slice($buffer, -\count($expected)));
+    }
+    
+    public function test_Collatz_generator_throws_exception_when_initial_number_is_below_one(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param startNumber');
+        
+        Producers::collatz(0);
+    }
+    
+    public function test_RandomUuid_generator_throws_exception_when_limit_is_less_than_zero(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param limit');
+        
+        Producers::randomUuid(true, -1);
+    }
+    
+    public function test_PDOStatement_generator(): void
+    {
+        $stmt = $this->getMockBuilder(\PDOStatement::class)->getMock();
+        $stmt->expects(self::exactly(2))->method('fetch')->willReturnOnConsecutiveCalls(
+            ['id' => 5, 'name' => 'John'],
+            false,
+        );
+        
+        $producer = Producers::getAdapter($stmt);
+        self::assertInstanceOf(PDOStatementAdapter::class, $producer);
+        
+        $item = new Item();
+        $buffer = [];
+    
+        foreach ($producer->feed($item) as $_) {
+            $buffer[] = $item->value;
+        }
+        
+        self::assertSame([['id' => 5, 'name' => 'John']], $buffer);
+    }
+    
+    public function test_create_producer_with_some_object_as_element_of_array(): void
+    {
+        //given
+        $object = new class {
+            public string $field = 'foo';
+        };
+        
+        $item = new Item();
+        $producer = Producers::from([$object]);
+        
+        //when
+        foreach ($producer->feed($item) as $_) {
+            //then
+            self::assertIsObject($item->value);
+            
+            if (isset($item->value->field)) {
+                self::assertSame('foo', $item->value->field);
+            } else {
+                self::fail('Property field is not set in value object');
+            }
+        }
+    }
+    
+    public function test_TextFileReader_throws_exception_when_param_is_not_resource(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param resource');
+        
+        new TextFileReader('this is not file pointer');
+    }
+    
+    public function test_can_read_lines_from_any_readable_resource(): void
+    {
+        $fp = \fopen('php://memory', 'rwb');
+        \fwrite($fp, 'foo'."\n".'bar'."\n");
+        \rewind($fp);
+        
+        $producer = Producers::getAdapter($fp);
+        $item = new Item();
+        $buffer = [];
+    
+        foreach ($producer->feed($item) as $_) {
+            $buffer[] = \trim($item->value);
+        }
+        
+        \fclose($fp);
+        self::assertSame(['foo', 'bar'], $buffer);
+    }
+    
+    public function test_can_close_producer_on_read_finish(): void
+    {
+        $fp = \fopen('php://memory', 'rwb');
+        $producer = Producers::resource($fp, true);
+    
+        $item = new Item();
+        foreach ($producer->feed($item) as $_) {
+            //just iterate
+        }
+        
+        self::assertIsClosedResource($fp);
+    }
+    
+    public function test_resource_reader_throws_exception_when_param_readBytes_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param readBytes');
+    
+        Producers::resource(\fopen('php://memory', 'rwb'), true, 0);
     }
 }

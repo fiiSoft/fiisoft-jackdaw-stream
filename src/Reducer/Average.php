@@ -11,12 +11,18 @@ final class Average implements Reducer
     /** @var float|int */
     private $total = 0;
     
+    private ?int $precision;
+    
+    public function __construct(?int $roundPrecision = null)
+    {
+        $this->precision = $roundPrecision;
+    }
+    
     /**
      * @param float|int $value
-     * @param string|int|null $key
      * @return void
      */
-    public function consume($value, $key = null): void
+    public function consume($value): void
     {
         $this->total += $value;
         
@@ -28,6 +34,10 @@ final class Average implements Reducer
      */
     public function result()
     {
+        if ($this->precision !== null) {
+            return \round($this->total / $this->count, $this->precision);
+        }
+        
         return $this->total / $this->count;
     }
     
@@ -39,5 +49,11 @@ final class Average implements Reducer
     public function getResult(): Item
     {
         return new Item(0, $this->result());
+    }
+    
+    public function reset(): void
+    {
+        $this->count = 0;
+        $this->total = 0;
     }
 }

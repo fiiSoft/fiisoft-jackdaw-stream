@@ -23,6 +23,7 @@ use FiiSoft\Jackdaw\Operation\Chunk;
 use FiiSoft\Jackdaw\Operation\CollectIn;
 use FiiSoft\Jackdaw\Operation\CollectKey;
 use FiiSoft\Jackdaw\Operation\Filter;
+use FiiSoft\Jackdaw\Operation\FilterMany;
 use FiiSoft\Jackdaw\Operation\Flat;
 use FiiSoft\Jackdaw\Operation\Flip;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
@@ -33,7 +34,9 @@ use FiiSoft\Jackdaw\Operation\Internal\Iterate;
 use FiiSoft\Jackdaw\Operation\Internal\Limitable;
 use FiiSoft\Jackdaw\Operation\Limit;
 use FiiSoft\Jackdaw\Operation\Map;
+use FiiSoft\Jackdaw\Operation\MapFieldWhen;
 use FiiSoft\Jackdaw\Operation\MapKey;
+use FiiSoft\Jackdaw\Operation\MapMany;
 use FiiSoft\Jackdaw\Operation\MapWhen;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Reindex;
@@ -94,19 +97,27 @@ final class Stream extends Collaborator implements StreamApi
     /** @var \SplObjectStorage|Stream[] */
     private ?\SplObjectStorage $pushToStreams = null;
     
+    /**
+     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array ...$elements
+     * @return StreamApi
+     */
     public static function of(...$elements): StreamApi
     {
         return self::from(Producers::from($elements));
     }
     
-    public static function empty(): StreamApi
-    {
-        return self::from([]);
-    }
-    
+    /**
+     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array $producer
+     * @return StreamApi
+     */
     public static function from($producer): StreamApi
     {
         return new self(Producers::getAdapter($producer));
+    }
+    
+    public static function empty(): StreamApi
+    {
+        return self::from([]);
     }
     
     private function __construct(Producer $producer)
@@ -283,6 +294,30 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function castToFloat($fields = null): self
+    {
+        return $this->map(Mappers::toFloat($fields));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function castToString($fields = null): self
+    {
+        return $this->map(Mappers::toString($fields));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function castToBool($fields = null): self
+    {
+        return $this->map(Mappers::toBool($fields));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function map($mapper): self
     {
         return $this->chainOperation(new Map($mapper));
@@ -294,6 +329,22 @@ final class Stream extends Collaborator implements StreamApi
     public function mapWhen($condition, $mapper, $elseMapper = null): self
     {
         return $this->chainOperation(new MapWhen($condition, $mapper, $elseMapper));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function mapField($field, $mapper): self
+    {
+        return $this->map(Mappers::mapField($field, $mapper));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function mapFieldWhen($field, $condition, $mapper, $elseMapper = null): self
+    {
+        return $this->chainOperation(new MapFieldWhen($field, $condition, $mapper, $elseMapper));
     }
     
     /**
@@ -631,9 +682,9 @@ final class Stream extends Collaborator implements StreamApi
     public function onFinish(callable $handler, bool $replace = false): self
     {
         if ($replace) {
-            $this->onFinishHandlers[] = $handler;
-        } else {
             $this->onFinishHandlers = [$handler];
+        } else {
+            $this->onFinishHandlers[] = $handler;
         }
         
         return $this;
@@ -789,9 +840,9 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function groupBy($discriminator): StreamCollection
+    public function groupBy($discriminator, bool $preserveKeys = false): StreamCollection
     {
-        $groupBy = new GroupBy($discriminator);
+        $groupBy = new GroupBy($discriminator, $preserveKeys);
         $this->runWith($groupBy);
         
         return $groupBy->result();
@@ -800,9 +851,9 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function forEach($consumer): void
+    public function forEach(...$consumer): void
     {
-        $this->runWith(new SendTo($consumer));
+        $this->runWith(new SendTo(...$consumer));
     }
     
     private function runWith(Operation $operation): void
@@ -960,7 +1011,29 @@ final class Stream extends Collaborator implements StreamApi
     
     private function canAddNext(Operation $next): bool
     {
-        if ($next instanceof Limit) {
+        if ($next instanceof Filter) {
+            if ($this->last instanceof FilterMany) {
+                $this->last->add($next);
+                return false;
+            }
+            if ($this->last instanceof Filter) {
+                $filterMany = new FilterMany($this->last, $next);
+                $this->last = $this->last->removeFromChain();
+                $this->chainOperation($filterMany);
+                return false;
+            }
+        } elseif ($next instanceof Map) {
+            if ($this->last instanceof MapMany) {
+                $this->last->add($next);
+                return false;
+            }
+            if ($this->last instanceof Map) {
+                $mapMany = new MapMany($this->last, $next);
+                $this->last = $this->last->removeFromChain();
+                $this->chainOperation($mapMany);
+                return false;
+            }
+        } elseif ($next instanceof Limit) {
             if ($this->last instanceof Limitable) {
                 $this->last->applyLimit($next->limit());
                 return false;
@@ -1032,6 +1105,11 @@ final class Stream extends Collaborator implements StreamApi
             if ($this->last instanceof SendTo) {
                 $this->last->mergeWith($next);
                 return false;
+            }
+        } elseif ($next instanceof Sort) {
+            if ($this->last instanceof Shuffle) {
+                $this->last = $this->last->removeFromChain();
+                return true;
             }
         }
         

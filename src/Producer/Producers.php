@@ -12,6 +12,7 @@ use FiiSoft\Jackdaw\Producer\Generator\RandomString;
 use FiiSoft\Jackdaw\Producer\Generator\RandomUuid;
 use FiiSoft\Jackdaw\Producer\Generator\SequentialInt;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
+use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
 
 final class Producers
 {
@@ -54,7 +55,7 @@ final class Producers
     }
     
     /**
-     * @param StreamApi|Producer|\Iterator|\PDOStatement|array $producer
+     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array $producer
      * @return Producer
      */
     public static function getAdapter($producer): Producer
@@ -69,6 +70,8 @@ final class Producers
             $adapter = self::fromPDOStatement($producer);
         } elseif ($producer instanceof Producer) {
             $adapter = $producer;
+        } elseif (\is_resource($producer)) {
+            $adapter = self::resource($producer);
         } else {
             throw new \InvalidArgumentException('Invalid param producer');
         }
@@ -131,5 +134,16 @@ final class Producers
     public static function collatz(int $startNumber = null): CollatzGenerator
     {
         return new CollatzGenerator($startNumber);
+    }
+    
+    /**
+     * @param resource $resource it have to be readable
+     * @param bool $closeOnFinish
+     * @param int|null $readByes
+     * @return TextFileReader
+     */
+    public static function resource($resource, bool $closeOnFinish = false, ?int $readByes = null): TextFileReader
+    {
+        return new TextFileReader($resource, $closeOnFinish, $readByes);
     }
 }

@@ -3,6 +3,9 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
 use SplMinHeap;
 
@@ -135,5 +138,28 @@ final class OtherTest extends TestCase
     
         self::assertSame(15, $obj->count());
         self::assertSame(15, $obj->getSize());
+    }
+    
+    public function test_Helper_has_method_to_create_exception_with_message_that_describes_problem(): void
+    {
+        self::assertSame(
+            'Something have to accept 0 arguments, but requires 1',
+            Helper::wrongNumOfArgsException('Something', 1)->getMessage()
+        );
+        
+        self::assertSame(
+            'Something have to accept 0 arguments, but requires 1',
+            Helper::wrongNumOfArgsException('Something', 1, 0)->getMessage()
+        );
+        
+        self::assertSame(
+            'Something have to accept 1 arguments, but requires 0',
+            Helper::wrongNumOfArgsException('Something', 0, 1)->getMessage()
+        );
+        
+        self::assertSame(
+            'Something have to accept 1 or 2 arguments, but requires 0',
+            Helper::wrongNumOfArgsException('Something', 0, 1, 2)->getMessage()
+        );
     }
 }

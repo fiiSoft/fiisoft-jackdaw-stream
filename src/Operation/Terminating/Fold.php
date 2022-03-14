@@ -2,15 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Internal\ResultProvider;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 
-final class Fold extends FinalOperation implements ResultProvider
+final class Fold extends FinalOperation
 {
     private Reducer $reducer;
     
@@ -29,16 +27,6 @@ final class Fold extends FinalOperation implements ResultProvider
     
     public function handle(Signal $signal): void
     {
-        $this->reducer->consume($signal->item->value, $signal->item->key);
-    }
-    
-    public function hasResult(): bool
-    {
-        return true;
-    }
-    
-    public function getResult(): Item
-    {
-        return $this->reducer->getResult();
+        $this->reducer->consume($signal->item->value);
     }
 }

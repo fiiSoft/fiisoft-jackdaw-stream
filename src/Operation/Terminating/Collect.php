@@ -10,7 +10,7 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Collect extends FinalOperation implements ResultProvider
 {
-    private $collected = [];
+    private array $collected = [];
     
     public function __construct(Stream $stream)
     {

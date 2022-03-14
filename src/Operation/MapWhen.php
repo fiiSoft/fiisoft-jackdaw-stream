@@ -10,6 +10,7 @@ use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Predicate\Predicate;
+use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class MapWhen extends BaseOperation
 {
@@ -20,8 +21,8 @@ final class MapWhen extends BaseOperation
     
     /**
      * @param Condition|Predicate|Filter|callable $condition
-     * @param Mapper|callable $mapper
-     * @param Mapper|callable|null $elseMapper
+     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|callable|mixed|null $elseMapper
      */
     public function __construct($condition, $mapper, $elseMapper = null)
     {

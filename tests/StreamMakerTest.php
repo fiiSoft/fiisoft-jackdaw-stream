@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\StreamApi;
 use FiiSoft\Jackdaw\Producer\Generator\SequentialInt;
 use FiiSoft\Jackdaw\Reducer\Reducers;
@@ -516,5 +517,134 @@ class StreamMakerTest extends TestCase
     public function test_worst(): void
     {
         self::assertSame([4, 3], $this->stream->worst(2)->toArray());
+    }
+    
+    public function test_mapField(): void
+    {
+        $result = StreamMaker::from([['a' => 5], ['a' => 2]])
+            ->mapField('a', static fn(int $v): int => $v * 2)
+            ->toArrayAssoc();
+        
+        self::assertSame([['a' => 10], ['a' => 4]], $result);
+    }
+    
+    public function test_mapFieldWhen(): void
+    {
+        $result = StreamMaker::from([['a' => 5, 'b' => 'foo'], ['a' => 2, 'b' => 'bar']])
+            ->mapFieldWhen('a', 'is_int', static fn(int $v): int => $v * 2)
+            ->mapFieldWhen('b', 'is_string', 'strrev')
+            ->toArrayAssoc();
+        
+        self::assertSame([['a' => 10, 'b' => 'oof'], ['a' => 4, 'b' => 'rab']], $result);
+    }
+    
+    public function test_castToFloat(): void
+    {
+        self::assertSame([1.0, 2.0], $this->stream->castToFloat()->limit(2)->toArray());
+    }
+    
+    public function test_castToString(): void
+    {
+        self::assertSame(['1', '2'], $this->stream->castToString()->limit(2)->toArray());
+    }
+    
+    public function test_castToBool(): void
+    {
+        self::assertSame([false, true], StreamMaker::from([0, 1])->castToBool()->toArray());
+    }
+    
+    public function test_onError_with_ErrorHandler(): void
+    {
+        $result = $this->stream->onError(OnError::skip())->callOnce(static function () {
+            throw new \RuntimeException('error');
+        });
+        
+        self::assertSame([2, 3, 4], $result->toArray());
+    }
+    
+    public function test_onError_with_callable(): void
+    {
+        $result = $this->stream->onError(static fn(): bool => true)->callOnce(static function () {
+            throw new \RuntimeException('error');
+        });
+        
+        self::assertSame([2, 3, 4], $result->toArray());
+    }
+    
+    public function test_onError_allows_to_replace_existing_error_handler(): void
+    {
+        $stream = $this->stream->onError(OnError::skip())->onError(OnError::abort(), true);
+        
+        $result = $stream->callOnce(static function () {
+            throw new \RuntimeException('error');
+        });
+    
+        self::assertSame([], $result->toArray());
+    }
+    
+    public function test_onError_throws_exception_when_handler_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param handler');
+        
+        $this->stream->onError('wrong argument');
+    }
+    
+    public function test_onSuccess(): void
+    {
+        $onSuccessHandlerCalled = false;
+        
+        $this->stream->onSuccess(static function () use (&$onSuccessHandlerCalled) {
+            $onSuccessHandlerCalled = true;
+        })->run();
+        
+        self::assertTrue($onSuccessHandlerCalled);
+    }
+    
+    public function test_onSuccess_allows_to_replace_handler(): void
+    {
+        $onSuccessHandlerCalled = 0;
+    
+        $handler = static function () use (&$onSuccessHandlerCalled) {
+            ++$onSuccessHandlerCalled;
+        };
+        
+        $this->stream->onSuccess($handler)->onSuccess($handler, true)->run();
+        
+        self::assertSame(1, $onSuccessHandlerCalled);
+    }
+    
+    public function test_onFinish(): void
+    {
+        $onFinishHandlerCalled = false;
+        
+        $this->stream->onFinish(static function () use (&$onFinishHandlerCalled) {
+            $onFinishHandlerCalled = true;
+        })->run();
+        
+        self::assertTrue($onFinishHandlerCalled);
+    }
+    
+    public function test_onFinish_allows_to_replace_handler(): void
+    {
+        $onFinishHandlerCalled = 0;
+    
+        $handler = static function () use (&$onFinishHandlerCalled) {
+            ++$onFinishHandlerCalled;
+        };
+        
+        $this->stream->onFinish($handler)->onFinish($handler, true)->run();
+        
+        self::assertSame(1, $onFinishHandlerCalled);
+    }
+    
+    public function test_when_ErrorHandler_returns_null_then_exception_is_rethrown(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('error');
+    
+        $this->stream->onError(static fn() => null)->callOnce(static function () {
+            throw new \RuntimeException('error');
+        })->run();
     }
 }

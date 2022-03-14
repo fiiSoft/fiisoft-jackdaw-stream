@@ -8,18 +8,29 @@ use FiiSoft\Jackdaw\Producer\Producer;
 final class TextFileReader implements Producer
 {
     /** @var resource */
-    private $fp;
+    private $resource;
+    
+    private int $readBytes;
+    private bool $closeOnFinish;
     
     /**
-     * @param resource $filePointer
+     * @param resource $resource
      */
-    public function __construct($filePointer)
+    public function __construct($resource, bool $closeOnFinish = false, ?int $readBytes = null)
     {
-        if (!\is_resource($filePointer)) {
-            throw new \InvalidArgumentException('Invalid param filePointer');
+        if (\is_resource($resource)) {
+            $this->resource = $resource;
+        } else {
+            throw new \InvalidArgumentException('Invalid param resource');
+        }
+    
+        if ($readBytes === null || $readBytes >= 1) {
+            $this->readBytes = $readBytes ?? 1024;
+        } else {
+            throw new \InvalidArgumentException('Invalid param readBytes');
         }
         
-        $this->fp = $filePointer;
+        $this->closeOnFinish = $closeOnFinish;
     }
     
     public function feed(Item $item): \Generator
@@ -27,13 +38,17 @@ final class TextFileReader implements Producer
         $lineNumber = 0;
     
         LOOP:
-        $item->value = \fgets($this->fp);
+        $item->value = \fgets($this->resource, $this->readBytes);
         
         if ($item->value !== false) {
             $item->key = $lineNumber++;
             yield;
             
             goto LOOP; //Ohhh I love it so much! It makes me get goosebumps! <3
+        }
+    
+        if ($this->closeOnFinish) {
+            \fclose($this->resource);
         }
     }
 }

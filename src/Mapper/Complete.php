@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class Complete implements Mapper
 {
@@ -13,7 +14,7 @@ final class Complete implements Mapper
     
     /**
      * @param string|int $field
-     * @param Mapper|callable|mixed $mapper
+     * @param Mapper|Reducer|callable|mixed $mapper
      */
     public function __construct($field, $mapper)
     {

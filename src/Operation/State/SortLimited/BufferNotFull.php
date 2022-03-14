@@ -29,19 +29,7 @@ final class BufferNotFull extends State
     
     public function setLength(int $length): void
     {
-        if ($length !== $this->length) {
-            if ($length < $this->count) {
-                do {
-                    $this->buffer->extract();
-                } while (--$this->count > $length);
-            }
-            
-            $this->length = $length;
-    
-            if ($this->count === $this->length) {
-                $this->bufferFull();
-            }
-        }
+        $this->length = $length;
     }
     
     private function bufferFull(): void

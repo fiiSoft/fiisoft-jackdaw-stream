@@ -16,14 +16,13 @@ final class StreamMaker implements StreamApi
     /** @var callable */
     private $factory;
     
+    /**
+     * @param Producer|\Iterator|array|callable ...$elements
+     * @return StreamApi
+     */
     public static function of(...$elements): StreamApi
     {
         return self::from(Producers::from($elements));
-    }
-    
-    public static function empty(): StreamApi
-    {
-        return self::from([]);
     }
     
     /**
@@ -45,6 +44,11 @@ final class StreamMaker implements StreamApi
         }
         
         return new self($callable);
+    }
+    
+    public static function empty(): StreamApi
+    {
+        return self::from([]);
     }
     
     /**
@@ -200,6 +204,22 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function mapField($field, $mapper): StreamApi
+    {
+        return $this->make()->mapField($field, $mapper);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function mapFieldWhen($field, $condition, $mapper, $elseMapper = null): StreamApi
+    {
+        return $this->make()->mapFieldWhen($field, $condition, $mapper, $elseMapper);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function mapWhen($condition, $mapper, $elseMapper = null): StreamApi
     {
         return $this->make()->mapWhen($condition, $mapper, $elseMapper);
@@ -219,6 +239,30 @@ final class StreamMaker implements StreamApi
     public function castToInt($fields = null): StreamApi
     {
         return $this->make()->castToInt($fields);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function castToFloat($fields = null): StreamApi
+    {
+        return $this->make()->castToFloat($fields);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function castToString($fields = null): StreamApi
+    {
+        return $this->make()->castToString($fields);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function castToBool($fields = null): StreamApi
+    {
+        return $this->make()->castToBool($fields);
     }
     
     /**
@@ -517,9 +561,9 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function forEach($consumer): void
+    public function forEach(...$consumer): void
     {
-        $this->make()->forEach($consumer);
+        $this->make()->forEach(...$consumer);
     }
     
     /**
@@ -541,9 +585,9 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function groupBy($discriminator): StreamCollection
+    public function groupBy($discriminator, bool $preserveKeys = false): StreamCollection
     {
-        return $this->make()->groupBy($discriminator);
+        return $this->make()->groupBy($discriminator, $preserveKeys);
     }
     
     public function collect(): Result

@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\Internal\Check;
 use PHPUnit\Framework\TestCase;
 
 final class ConsumersTest extends TestCase
@@ -30,5 +31,130 @@ final class ConsumersTest extends TestCase
         $this->expectException(\LogicException::class);
         
         Consumers::generic(static fn($a,$b,$c) => true)->consume(2, 1);
+    }
+    
+    /**
+     * @dataProvider getDataForTestPrinterConsumerSimplyEchoOutputToStdout
+     *
+     * @param int $mode
+     * @param string $expectedOutput
+     * @return void
+     */
+    public function test_Printer_consumer_simply_echo_output_to_stdout(int $mode, string $expectedOutput): void
+    {
+        $consumer = Consumers::printer($mode);
+        
+        \ob_start();
+        $consumer->consume('aaa', 1);
+        $output = \ob_get_clean();
+        
+        self::assertSame($expectedOutput, $output);
+    }
+    
+    public function getDataForTestPrinterConsumerSimplyEchoOutputToStdout(): array
+    {
+        return [
+            //mode, expected output
+            [Check::VALUE, 'value: aaa'."\n"],
+            [Check::KEY, 'key: 1'."\n"],
+            [Check::BOTH, 'key: 1, value: aaa'."\n"],
+            [Check::ANY, 'key: 1, value: aaa'."\n"],
+        ];
+    }
+    
+    public function test_ResourceWriter_throws_exception_when_param_is_not_resource(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param resource');
+        
+        Consumers::resource('this is not resource');
+    }
+    
+    public function test_ResourceWriter_can_write_value(): void
+    {
+        //given
+        $resource = \fopen('php://memory', 'rb+');
+        $consumer = Consumers::getAdapter($resource);
+        
+        //when
+        $consumer->consume('foo', 1);
+        
+        //then
+        \rewind($resource);
+        self::assertSame('foo', \fgets($resource));
+    }
+    
+    public function test_ResourceWriter_can_write_key(): void
+    {
+        //given
+        $resource = \fopen('php://memory', 'rb+');
+        $consumer = Consumers::resource($resource, Check::KEY);
+        
+        //when
+        $consumer->consume('foo', 1);
+        
+        //then
+        \rewind($resource);
+        self::assertSame('1', \fgets($resource));
+    }
+    
+    public function test_ResourceWriter_can_write_both_key_and_value_in_predefined_way(): void
+    {
+        //given
+        $resource = \fopen('php://memory', 'rb+');
+        $consumer = Consumers::resource($resource, Check::BOTH);
+        
+        //when
+        $consumer->consume('foo', 1);
+        
+        //then
+        \rewind($resource);
+        self::assertSame('1:foo', \fgets($resource));
+    }
+    
+    public function test_Sleeper_throws_exception_when_param_microseconds_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param microseconds');
+        
+        Consumers::usleep(-1);
+    }
+    
+    public function test_Sleeper_can_sleep(): void
+    {
+        $waitTime = 50_000;
+        
+        $start = \microtime(true);
+        Consumers::usleep($waitTime)->consume(1, 1);
+        $stop = \microtime(true);
+        
+        self::assertTrue(($stop - $start) * 1_000_000 >= $waitTime);
+    }
+    
+    public function test_StdoutWriter_allows_to_write_value(): void
+    {
+        \ob_start();
+        Consumers::stdout(false)->consume('foo', 1);
+        $output = \ob_get_clean();
+        
+        self::assertSame('foo', $output);
+    }
+    
+    public function test_StdoutWriter_allows_to_write_key(): void
+    {
+        \ob_start();
+        Consumers::stdout(false, Check::KEY)->consume('foo', 1);
+        $output = \ob_get_clean();
+        
+        self::assertSame('1', $output);
+    }
+    
+    public function test_StdoutWriter_allows_to_write_both_value_and_key_in_predefined_way(): void
+    {
+        \ob_start();
+        Consumers::stdout(false, Check::BOTH)->consume('foo', 1);
+        $output = \ob_get_clean();
+        
+        self::assertSame('1:foo', $output);
     }
 }

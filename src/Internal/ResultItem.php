@@ -3,20 +3,27 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\Transformer\Transformer;
+use FiiSoft\Jackdaw\Transformer\Transformers;
 
 final class ResultItem implements Result
 {
+    private ?Transformer $transformer = null;
+    
     private bool $found = false;
     
     /** @var string|int */
     private $key = null;
     
     /** @var mixed */
-    private $value = null;
+    private $rawValue = null;
     
-    public static function createFound(Item $item): Result
+    /** @var mixed */
+    private $finalValue = null;
+    
+    public static function createFound(Item $item, ?Transformer $transformer = null): Result
     {
-        return new self($item);
+        return new self($item, null, $transformer);
     }
     
     public static function createNotFound($default = null): Result
@@ -24,14 +31,17 @@ final class ResultItem implements Result
         return new self(null, $default);
     }
     
-    private function __construct(?Item $item, $default = null)
+    private function __construct(?Item $item, $default = null, ?Transformer $transformer = null)
     {
         if ($item !== null) {
             $this->found = true;
-            $this->value = $item->value;
+            $this->rawValue = $item->value;
             $this->key = $item->key;
+            $this->transformer = $transformer;
+            
+            $this->prepareResult();
         } else {
-            $this->value = $default;
+            $this->finalValue = \is_callable($default) ? $default() : $default;
         }
     }
     
@@ -56,7 +66,7 @@ final class ResultItem implements Result
      */
     public function key()
     {
-        return $this->found || $this->value !== null ? $this->key ?? 0 : null;
+        return $this->found || $this->finalValue !== null ? $this->key ?? 0 : null;
     }
     
     /**
@@ -64,7 +74,30 @@ final class ResultItem implements Result
      */
     public function get()
     {
-        return $this->value;
+        return $this->finalValue;
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function transform($transformer): Result
+    {
+        $this->transformer = Transformers::getAdapter($transformer);
+        $this->prepareResult();
+        
+        return $this;
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function getOrElse($orElse)
+    {
+        if ($this->found) {
+            return $this->finalValue;
+        }
+    
+        return \is_callable($orElse) ? $orElse() : $orElse;
     }
     
     /**
@@ -72,7 +105,7 @@ final class ResultItem implements Result
      */
     public function tuple(): array
     {
-        return $this->found || $this->value !== null ? [$this->key ?? 0, $this->value] : [];
+        return $this->found || $this->finalValue !== null ? [$this->key ?? 0, $this->finalValue] : [];
     }
     
     /**
@@ -80,7 +113,7 @@ final class ResultItem implements Result
      */
     public function call($consumer): void
     {
-        Consumers::getAdapter($consumer)->consume($this->value, $this->key);
+        Consumers::getAdapter($consumer)->consume($this->finalValue, $this->key);
     }
     
     /**
@@ -88,16 +121,16 @@ final class ResultItem implements Result
      */
     public function toString(string $separator = ','): string
     {
-        if ($this->found || $this->value !== null) {
-            if (\is_array($this->value)) {
-                return \implode($separator, $this->value);
+        if ($this->found || $this->finalValue !== null) {
+            if (\is_array($this->finalValue)) {
+                return \implode($separator, $this->finalValue);
             }
     
-            if ($this->value instanceof \Traversable) {
-                return \implode($separator, \iterator_to_array($this->value, false));
+            if ($this->finalValue instanceof \Traversable) {
+                return \implode($separator, \iterator_to_array($this->finalValue, false));
             }
             
-            return (string) $this->value;
+            return (string) $this->finalValue;
         }
     
         return '';
@@ -108,11 +141,11 @@ final class ResultItem implements Result
      */
     public function toArray(bool $preserveKeys = false): array
     {
-        if ($preserveKeys || \is_iterable($this->value)) {
+        if ($preserveKeys || \is_iterable($this->finalValue)) {
             return $this->toArrayAssoc();
         }
         
-        return $this->found || $this->value !== null ? [$this->value] : [];
+        return $this->found || $this->finalValue !== null ? [$this->finalValue] : [];
     }
     
     /**
@@ -120,7 +153,7 @@ final class ResultItem implements Result
      */
     public function toArrayAssoc(): array
     {
-        return $this->getValue() ?? [];
+        return $this->asArray() ?? [];
     }
     
     /**
@@ -128,11 +161,12 @@ final class ResultItem implements Result
      */
     public function toJson(int $flags = 0, bool $preserveKeys = false): string
     {
-        if ($preserveKeys || \is_iterable($this->value)) {
+        if ($preserveKeys || \is_iterable($this->finalValue)) {
             return $this->toJsonAssoc($flags);
         }
     
-        $data = $this->found || $this->value !== null ? $this->value : null;
+        $data = $this->found || $this->finalValue !== null ? $this->finalValue : null;
+        
         return \json_encode($data, \JSON_THROW_ON_ERROR | $flags);
     }
     
@@ -141,21 +175,21 @@ final class ResultItem implements Result
      */
     public function toJsonAssoc(int $flags = 0): string
     {
-        return \json_encode($this->getValue(), \JSON_THROW_ON_ERROR | $flags);
+        return \json_encode($this->asArray(), \JSON_THROW_ON_ERROR | $flags);
     }
     
-    private function getValue()
+    private function asArray(): ?array
     {
-        if ($this->found || $this->value !== null) {
-            if (\is_array($this->value)) {
-                return $this->value;
+        if ($this->found || $this->finalValue !== null) {
+            if (\is_array($this->finalValue)) {
+                return $this->finalValue;
             }
         
-            if ($this->value instanceof \Traversable) {
-                return \iterator_to_array($this->value);
+            if ($this->finalValue instanceof \Traversable) {
+                return \iterator_to_array($this->finalValue);
             }
         
-            return [$this->key ?? 0 => $this->value];
+            return [$this->key ?? 0 => $this->finalValue];
         }
         
         return null;
@@ -167,5 +201,14 @@ final class ResultItem implements Result
     public function run(): void
     {
         //do noting
+    }
+    
+    private function prepareResult(): void
+    {
+        if ($this->found) {
+            $this->finalValue = $this->transformer !== null
+             ? $this->transformer->transform($this->rawValue, $this->key)
+             : $this->rawValue;
+        }
     }
 }

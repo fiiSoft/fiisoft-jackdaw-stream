@@ -4,6 +4,7 @@ require_once __DIR__.'/../vendor/autoload.php';
 
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Producer\Producers;
@@ -242,6 +243,8 @@ foreach ($source as $item) {
 
 echo PHP_EOL;
 
+echo 'average value of triplets: ', $source->chunk(3)->map(Reducers::average(2))->toString(', '), PHP_EOL;
+
 $stream = StreamMaker::of('a', 'v', 3, 'z');
 echo 'example of while: ', $stream->while('is_string')->map('strtoupper')->toString(), PHP_EOL;
 echo 'example of until: ', $stream->until('is_int')->map('strtoupper')->toString(), PHP_EOL;
@@ -307,11 +310,21 @@ echo 'min value from feed: ', $minValue->get(), PHP_EOL;
 $minValue = Stream::from([8,2,6,1,4])->reduce('min')->get();
 echo 'min value: ', $minValue, PHP_EOL;
 
+//lazy result
+echo 'lazy-evaluated result: ', $source->find(Filters::greaterThan(100))->getOrElse(static fn(): int => -1), PHP_EOL;
+
+//transform result
+echo 'transformed result: ',
+    $source->find(Filters::isInt())->transform(static fn(int $n): int => $n - 100)->get(),
+    PHP_EOL;
+
 //collect feed
 $collector = Stream::empty()->onlyIntegers()->collect();
 Stream::from(['a', 1, 'b', 2])->feed($collector)->onlyStrings()->run();
 
 echo 'collected numbers: ', implode(',', $collector->get()), PHP_EOL;
+
+echo 'sum of collected numbers: ', $collector->transform('array_sum')->get(), PHP_EOL;
 
 //aggregate some values
 echo 'aggregate example: ', Stream::from($rowset)->flat()->aggregate(['id', 'age'])->toJsonAssoc(), PHP_EOL;

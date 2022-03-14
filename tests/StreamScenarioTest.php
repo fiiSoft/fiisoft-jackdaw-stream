@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
+use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
@@ -480,8 +481,54 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([7, 8, 9], Stream::from([5, 3, 8, 1, 3, 7, 6, 9, 0, 2, 4])->sort()->tail(3)->toArray());
     }
     
-    public function test_scenarion_31(): void
+    public function test_scenario_31(): void
     {
         self::assertSame([6, 5], Stream::from([0, 6, 2, 8, 1, 3, 7, 9, 2, 5, 4])->worst(5)->tail(2)->toArray());
+    }
+    
+    public function test_scenario_32(): void
+    {
+        $rowset = [
+            ['id' => 7, 'name' => 'Sue', 'age' => 17, 'sex' => 'female'],
+            ['id' => 2, 'name' => 'Kate', 'age' => 35, 'sex' => 'female'],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26, 'sex' => 'male'],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 30, 'sex' => 'female'],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26, 'sex' => 'male'],
+        ];
+    
+        $actual = Stream::from($rowset)
+            ->filterBy('age', Filters::number()->ge(20))
+            ->filterBy('name', Filters::onlyIn(['Sue', 'Kate', 'Joanna']))
+            ->filterBy('sex', 'female')
+            ->mapField('name', 'strrev')
+            ->mapField('name', 'mb_strtolower')
+            ->mapField('age', 0)
+            ->remove('sex')
+            ->reverse()
+            ->limit(5)
+            ->sortBy('id')
+            ->reverse()
+            ->shuffle()
+            ->sortBy('id desc')
+            ->call(Consumers::counter())
+            ->call(Consumers::counter())
+            ->toArray();
+        
+        $expected = [
+            ['id' => 6, 'name' => 'annaoj', 'age' => 0],
+            ['id' => 2, 'name' => 'etak', 'age' => 0],
+        ];
+        
+        self::assertSame($expected, $actual);
+    }
+    
+    public function test_scenario_33(): void
+    {
+        $data = ['b', 'a', 'c'];
+        $expected = ['c', 'b', 'a'];
+    
+        self::assertSame($expected, Stream::from($data)->sort()->limit(3)->reverse()->toArray());
+        self::assertSame($expected, Stream::from($data)->best(3)->reverse()->toArray());
+        self::assertSame($expected, Stream::from($data)->worst(3)->toArray());
     }
 }

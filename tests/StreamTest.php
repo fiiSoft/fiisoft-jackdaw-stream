@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Consumer\Consumers;
@@ -16,6 +17,7 @@ use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\StreamMaker;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 
 final class StreamTest extends TestCase
 {
@@ -425,19 +427,34 @@ final class StreamTest extends TestCase
     
     public function test_unique_keys(): void
     {
-        //keys in array are always unique, so this is the hack to produce non-unique keys for stream from $producer
-        $keys = ['a', 'b', 'a', 'c', 'a'];
-        $producer = Stream::from([0, 1, 2, 3, 4])->mapKey(static fn(int $value) => $keys[$value]);
+        $keys = ['a', 'b', true, 'a', 'c', true, 'a'];
         
-        self::assertSame([0, 1, 3], Stream::from($producer)->unique(null, Check::KEY)->toArray());
+        self::assertSame(
+            [0 => 'a', 1 => 'b', 2 => true, 4 => 'c'],
+            Stream::from([0, 1, 2, 3, 4, 5, 6])
+                ->mapKey(static fn(int $value) => $keys[$value]) //to produce non-unique keys in stream
+                ->unique(null, Check::KEY)
+                ->flip()
+                ->toArrayAssoc()
+        );
+    }
+    
+    public function test_unique_with_keys_of_other_types(): void
+    {
+        $result = Stream::from([1, 2, 3, 4])
+            ->mapKey(static fn(int $v): string => ($v & 1) === 0 ? 'b' : 'a')
+            ->unique(null, Check::KEY)
+            ->toArrayAssoc();
+        
+        self::assertSame(['a' => 1, 'b' => 2], $result);
     }
     
     public function test_unique_any(): void
     {
-        $inputData = [0 => 'a', 1 => 3, 'b' => 2, 2 => 'a', 3 => 'b', 4 => 'b'];
+        $inputData = [0 => 'a', 1 => 3, 'b' => 2, 2 => 'a', 3 => 'b', 4 => 'b', 5 => true, 6 => true];
         $actual = Stream::from($inputData)->unique(null, Check::ANY)->toArrayAssoc();
         
-        self::assertSame([0 => 'a', 1 => 3, 'b' => 2, 4 => 'b'], $actual);
+        self::assertSame([0 => 'a', 1 => 3, 'b' => 2, 4 => 'b', 5 => true, 6 => true], $actual);
     }
     
     public function test_unique_both(): void
@@ -1047,6 +1064,24 @@ final class StreamTest extends TestCase
         self::assertSame('[]', $grouped->get('other')->toJson());
     }
     
+    public function test_GroupBy_with_preserve_keys(): void
+    {
+        $integers = Stream::from(['y', 5, 'c', 3, 'z', 8])->groupBy('is_int', true);
+        
+        self::assertSame([1 => 5, 3 => 3, 5 => 8], $integers->get(true)->toArrayAssoc());
+        self::assertSame([0 => 'y', 2 => 'c', 4 => 'z'], $integers->get(false)->toArrayAssoc());
+    }
+    
+    public function test_GroupBy_throws_exception_when_classifier_is_invalid(): void
+    {
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessage(
+            'ResultItem returned from discriminator is inappropriate (got object of type stdClass)'
+        );
+        
+        Stream::from([1])->groupBy(static fn($v): object => new stdClass())->toArray();
+    }
+    
     public function test_cloning_is_prohibited(): void
     {
         $this->expectException(\LogicException::class);
@@ -1507,12 +1542,19 @@ final class StreamTest extends TestCase
     public function test_mapWhen(): void
     {
         $result = Stream::from(['a', 1, 'b', 2, 'c', 3])
-            ->mapWhen('is_string', 'strtoupper', static function (int $n) {
-                return $n * 2;
-            })
+            ->mapWhen('is_string', 'strtoupper', static fn(int $n) => $n * 2)
             ->toArray();
         
         self::assertSame(['A', 2, 'B', 4, 'C', 6], $result);
+    }
+    
+    public function test_mapWhen_with_Predicate(): void
+    {
+        $result = Stream::from([1, 2, 3])
+            ->mapWhen(Predicates::inArray([1, 3]), static fn(int $n): int => $n * 2)
+            ->toArray();
+        
+        self::assertSame([2, 2, 6], $result);
     }
     
     public function test_complete(): void
@@ -1715,5 +1757,208 @@ final class StreamTest extends TestCase
     public function test_best_with_limit(): void
     {
         self::assertSame([1, 2], Stream::from([5, 2, 8, 1, 6, 9, 7, 3])->best(4)->limit(2)->toArray());
+    }
+    
+    public function test_MapFieldWhen(): void
+    {
+        $result = Stream::from([['key' => 'foo'], ['key' => 3]])
+            ->mapFieldWhen('key', 'is_string', 'strtoupper', static fn(int $n): int => $n * 2)
+            ->toArray();
+        
+        self::assertSame([['key' => 'FOO'], ['key' => 6]], $result);
+    }
+    
+    public function test_MapFieldWhen_throws_exception_when_value_is_not_array(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Unable to map field key because value is string');
+        
+        Stream::from(['this is not array'])
+            ->mapFieldWhen('key', 'is_string', 'strtoupper')
+            ->run();
+    }
+    
+    public function test_SortLimited_reversed_with_custom_comparator_to_sort_by_value(): void
+    {
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
+            ->worst(3, static fn(string $first, string $second): int => $first <=> $second)
+            ->toArray();
+        
+        self::assertSame(['e', 'd', 'c'], $result);
+    }
+    
+    public function test_SortLimited_with_default_comparator_to_sort_by_key(): void
+    {
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
+            ->best(3, null, Check::KEY)
+            ->toArray();
+        
+        self::assertSame(['d', 'a', 'b'], $result);
+    }
+    
+    public function test_SortLimited_reversed_with_default_comparator_to_sort_by_key(): void
+    {
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
+            ->worst(3, null, Check::KEY)
+            ->toArray();
+        
+        self::assertSame(['e', 'c', 'b'], $result);
+    }
+    
+    public function test_SortLimited_with_custom_comparator_to_sort_by_key(): void
+    {
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
+            ->best(3, static fn(int $first, int $second): int => $first <=> $second, Check::KEY)
+            ->toArray();
+        
+        self::assertSame(['d', 'a', 'b'], $result);
+    }
+    
+    public function test_SortLimited_reversed_with_custom_comparator_to_sort_by_key(): void
+    {
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
+            ->worst(3, static fn(int $first, int $second): int => $first <=> $second, Check::KEY)
+            ->toArray();
+        
+        self::assertSame(['e', 'c', 'b'], $result);
+    }
+    
+    public function test_SortLimited_with_default_comparator_to_sort_by_value_and_key(): void
+    {
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
+            ->best(3, null, Check::BOTH)
+            ->toArray();
+        
+        self::assertSame(['a', 'b', 'c'], $result);
+    }
+    
+    public function test_SortLimited_reversed_with_default_comparator_to_sort_by_value_and_key(): void
+    {
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
+            ->worst(3, null, Check::BOTH)
+            ->toArray();
+        
+        self::assertSame(['e', 'd', 'c'], $result);
+    }
+    
+    public function test_SortLimited_with_custom_comparator_to_sort_by_value_and_key(): void
+    {
+        $comparator = static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k1 <=> $k2;
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])->best(3, $comparator, Check::BOTH)->toArray();
+        
+        self::assertSame(['a', 'b', 'c'], $result);
+    }
+    
+    public function test_SortLimited_reversed_with_custom_comparator_to_sort_by_value_and_key(): void
+    {
+        $comparator = static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k1 <=> $k2;
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])->worst(3, $comparator, Check::BOTH)->toArray();
+        
+        self::assertSame(['e', 'd', 'c'], $result);
+    }
+    
+    public function test_Fold_with_callback(): void
+    {
+        $result = Stream::from([2, 3, 4])
+            ->castToFloat()
+            ->fold(0.5, static fn(float $result, float $value): float => $result * $value)
+            ->get();
+        
+        self::assertSame(12.0, $result);
+    }
+    
+    public function test_HasOnly_to_check_value_or_key(): void
+    {
+        self::assertFalse(Stream::from(['a' => 1, 'b' => 'a'])->hasOnly(['a', 1], Check::ANY)->get());
+        self::assertTrue(Stream::from(['a' => 1, 'b' => 'a'])->hasOnly(['a', 1, 'b'], Check::ANY)->get());
+    }
+    
+    public function test_HasOnly_to_check_value_and_key(): void
+    {
+        self::assertFalse(Stream::from(['a' => 1, 'b' => 'a'])->hasOnly(['a', 1], Check::BOTH)->get());
+        self::assertTrue(Stream::from(['a' => 1, 'b' => 'a'])->hasOnly(['a', 1, 'b'], Check::BOTH)->get());
+    }
+    
+    public function test_HasEvery_to_check_value_or_key(): void
+    {
+        self::assertFalse(Stream::from(['a' => 1, 'b' => 'c'])->hasEvery(['b', 2], Check::ANY)->get());
+        self::assertTrue(Stream::from(['a' => 1, 'b' => 'c'])->hasEvery(['b', 1], Check::ANY)->get());
+    }
+    
+    public function test_HasEvery_to_check_value_and_key(): void
+    {
+        self::assertFalse(Stream::from(['a' => 'b', 'b' => 'a'])->hasEvery(['a', 1], Check::BOTH)->get());
+        self::assertTrue(Stream::from(['a' => 'b', 'b' => 'a'])->hasEvery(['b', 'a'], Check::BOTH)->get());
+    }
+    
+    public function test_feed_another_stream(): void
+    {
+        $collector = Collectors::default();
+        
+        $second = Stream::empty()->limit(2)->collectIn($collector);
+        Stream::from([1, 2, 3, 4, 5])->feed($second)->run();
+        
+        self::assertSame([1, 2], $collector->getArrayCopy());
+    }
+    
+    public function test_Result_allows_to_transform_stream_result_without_affecting_it(): void
+    {
+        $result = Stream::from([1, 2, 3, 4])
+            ->reduce('array_sum')
+            ->transform(static fn(int $sum): int => $sum * 2);
+        
+        self::assertSame(20, $result->get());
+        
+        $result->transform(static fn(int $sum): int => $sum / 2);
+        
+        self::assertSame(5, $result->get());
+    }
+    
+    public function test_Result_allows_to_produce_result_by_callable_when_empty_was_stream(): void
+    {
+        $result = Stream::from([1, 2, 3, 4])
+            ->filter(Filters::number()->ge(10))
+            ->reduce('array_sum')
+            ->transform(static fn(int $sum): int => $sum * 2);
+        
+        self::assertFalse($result->found());
+        self::assertNull($result->get());
+        self::assertSame(5, $result->getOrElse(static fn(): int => 5));
+    }
+    
+    public function test_callable_is_not_executed_when_result_is_available(): void
+    {
+        $result = Stream::from([1, 2, 3, 4])->reduce('array_sum');
+        
+        self::assertTrue($result->found());
+        self::assertSame(10, $result->get());
+        self::assertSame(10, $result->getOrElse(static fn(): int => 5));
+    }
+    
+    public function test_Result_allows_to_cast_iterable_object_to_string(): void
+    {
+        $result = Stream::from([1, 2, 3])
+            ->find(2)
+            ->transform(static fn(int $n): \ArrayObject => new \ArrayObject(\array_fill(0, $n, 'a')));
+            
+        self::assertSame('a,a', $result->toString());
+    }
+    
+    public function test_Result_allows_to_transform_iterable_to_array(): void
+    {
+        $result = Stream::from([1, 2, 3])
+            ->find(2)
+            ->transform(static fn(int $n): \ArrayObject => new \ArrayObject(\array_fill(0, $n, 'a')));
+            
+        self::assertSame(['a', 'a'], $result->toArray());
+    }
+    
+    public function test_feed_other_stream(): void
+    {
+        $collector = Stream::empty()->collect();
+        
+        Stream::from([1, 2, 3, 4])->feed($collector)->run();
+        
+        self::assertSame([1, 2, 3, 4], $collector->toArray());
     }
 }

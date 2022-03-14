@@ -15,7 +15,7 @@ use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 
-interface StreamApi extends ResultCaster, \IteratorAggregate
+interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
 {
     /**
      * @param Filter|Predicate|callable|mixed $filter
@@ -121,42 +121,42 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function limit(int $limit): self;
     
     /**
-     * @param Consumer|callable $consumers
+     * @param Consumer|callable|resource $consumers resource must be writeable
      * @return $this
      */
     public function call(...$consumers): self;
     
     /**
-     * @param Consumer|callable $consumer
+     * @param Consumer|callable|resource $consumer
      * @return $this
      */
     public function callOnce($consumer): self;
     
     /**
      * @param int $times
-     * @param Consumer|callable $consumer
+     * @param Consumer|callable|resource $consumer
      * @return $this
      */
     public function callMax(int $times, $consumer): self;
     
     /**
      * @param Condition|Predicate|Filter|callable $condition
-     * @param Consumer|callable $consumer
-     * @param Consumer|callable|null $elseConsumer
+     * @param Consumer|callable|resource $consumer
+     * @param Consumer|callable|resource|null $elseConsumer
      * @return $this
      */
     public function callWhen($condition, $consumer, $elseConsumer = null): self;
     
     /**
-     * @param Mapper|callable $mapper
+     * @param Mapper|Reducer|callable|mixed $mapper
      * @return $this
      */
     public function map($mapper): self;
     
     /**
      * @param Condition|Predicate|Filter|callable $condition
-     * @param Mapper|callable $mapper
-     * @param Mapper|callable|null $elseMapper
+     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|callable|mixed|null $elseMapper
      * @return $this
      */
     public function mapWhen($condition, $mapper, $elseMapper = null): self;
@@ -168,10 +168,44 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function mapKey($mapper): self;
     
     /**
+     * @param string|int $field
+     * @param Mapper|Reducer|callable|mixed $mapper
+     * @return $this
+     */
+    public function mapField($field, $mapper): self;
+    
+    /**
+     * @param string|int $field
+     * @param Condition|Predicate|Filter|callable $condition
+     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|callable|mixed|null $elseMapper
+     * @return $this
+     */
+    public function mapFieldWhen($field, $condition, $mapper, $elseMapper = null): self;
+    
+    /**
      * @param array|string|int|null
      * @return $this
      */
     public function castToInt($fields = null): self;
+    
+    /**
+     * @param array|string|int|null
+     * @return $this
+     */
+    public function castToFloat($fields = null): self;
+    
+    /**
+     * @param array|string|int|null
+     * @return $this
+     */
+    public function castToString($fields = null): self;
+    
+    /**
+     * @param array|string|int|null
+     * @return $this
+     */
+    public function castToBool($fields = null): self;
     
     /**
      * @param Collector|\ArrayAccess $collector
@@ -187,7 +221,7 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function collectKeys($collector): self;
     
     /**
-     * @param Stream|Producer|\Iterator|array $producer
+     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array $producer
      * @return $this
      */
     public function join($producer): self;
@@ -239,14 +273,14 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     
     /**
      * @param string|int $field
-     * @param Mapper|callable|mixed $mapper
+     * @param Mapper|Reducer|callable|mixed $mapper
      * @return $this
      */
     public function append($field, $mapper): self;
     
     /**
      * @param string|int $field
-     * @param Mapper|callable|mixed $mapper
+     * @param Mapper|Reducer|callable|mixed $mapper
      * @return $this
      */
     public function complete($field, $mapper): self;
@@ -345,7 +379,7 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function shuffle(): self;
     
     /**
-     * @param BaseStreamPipe $stream
+     * @param StreamPipe $stream
      * @return $this
      */
     public function feed(StreamPipe $stream): self;
@@ -399,10 +433,10 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function onFinish(callable $handler, bool $replace = false): self;
     
     /**
-     * @param Consumer|callable $consumer
+     * @param Consumer|callable|resource $consumer
      * @return void
      */
-    public function forEach($consumer): void;
+    public function forEach(...$consumer): void;
     
     /**
      * @return void
@@ -462,20 +496,20 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function find($predicate, int $mode = Check::VALUE): Result;
     
     /**
-     * @param mixed $orElse (null by default)
+     * @param callable|mixed|null $orElse (null by default)
      * @return Result first value or default when stream is empty
      */
     public function first($orElse = null): Result;
     
     /**
-     * @param mixed $orElse (null by default)
+     * @param callable|mixed|null $orElse (null by default)
      * @return Result last value from stream, or default when stream is empty
      */
     public function last($orElse = null): Result;
     
     /**
      * @param Reducer|callable $reducer
-     * @param mixed|null $orElse (default null)
+     * @param callable|mixed|null $orElse (default null)
      * @return Result
      */
     public function reduce($reducer, $orElse = null): Result;
@@ -494,7 +528,8 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     
     /**
      * @param Discriminator|Condition|Predicate|Filter|string|callable $discriminator
+     * @param bool $preserveKeys
      * @return StreamCollection
      */
-    public function groupBy($discriminator): StreamCollection;
+    public function groupBy($discriminator, bool $preserveKeys = false): StreamCollection;
 }

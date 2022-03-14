@@ -27,9 +27,24 @@ final class Filters
         if (\is_callable($filter)) {
             if (\is_string($filter)) {
                 switch ($filter) {
-                    case 'is_int': return self::isInt();
-                    case 'is_numeric': return self::isNumeric();
-                    case 'is_string': return self::isString();
+                    case 'is_int':
+                    case '\is_int':
+                        return self::isInt();
+                    case 'is_numeric':
+                    case '\is_numeric':
+                        return self::isNumeric();
+                    case 'is_string':
+                    case '\is_string':
+                        return self::isString();
+                    case 'is_float':
+                    case '\is_float':
+                        return self::isFloat();
+                    case 'is_null':
+                    case '\is_null':
+                        return self::isNull();
+                    case 'is_bool':
+                    case '\is_bool':
+                        return self::isBool();
                     default:
                         //noop
                 }
@@ -72,6 +87,11 @@ final class Filters
     public static function notNull(): NotNull
     {
         return new NotNull();
+    }
+    
+    public static function isNull(): IsNull
+    {
+        return new IsNull();
     }
     
     public static function onlyIn(array $values): OnlyIn
@@ -133,6 +153,16 @@ final class Filters
     public static function isString(): IsString
     {
         return new IsString();
+    }
+    
+    public static function isBool(): IsBool
+    {
+        return new IsBool();
+    }
+    
+    public static function isFloat(): IsFloat
+    {
+        return new IsFloat();
     }
     
     /**

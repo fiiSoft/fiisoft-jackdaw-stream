@@ -3,17 +3,26 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\Transformer\Transformer;
+use FiiSoft\Jackdaw\Transformer\Transformers;
 
 final class LazyResult extends BaseStreamPipe implements Result
 {
     private Stream $stream;
     private ResultProvider $resultProvider;
     private ?Result $resultItem;
+    private ?Transformer $transformer = null;
+    
     private bool $isExecuted = false;
     
-    /** @var mixed|null */
+    /** @var callable|mixed|null */
     private $orElse;
     
+    /**
+     * @param Stream $stream
+     * @param ResultProvider $resultProvider
+     * @param callable|mixed|null $orElse
+     */
     public function __construct(Stream $stream, ResultProvider $resultProvider, $orElse = null)
     {
         $this->stream = $stream;
@@ -48,6 +57,28 @@ final class LazyResult extends BaseStreamPipe implements Result
     public function get()
     {
         return $this->execute()->get();
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function transform($transformer): Result
+    {
+        $this->transformer = Transformers::getAdapter($transformer);
+    
+        if ($this->isExecuted) {
+            $this->resultItem->transform($this->transformer);
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function getOrElse($orElse)
+    {
+        return $this->execute()->getOrElse($orElse);
     }
     
     /**
@@ -120,7 +151,7 @@ final class LazyResult extends BaseStreamPipe implements Result
             $this->stream->run();
     
             if ($this->resultProvider->hasResult()) {
-                $this->resultItem = ResultItem::createFound($this->resultProvider->getResult());
+                $this->resultItem = ResultItem::createFound($this->resultProvider->getResult(), $this->transformer);
             } else {
                 $this->resultItem = ResultItem::createNotFound($this->orElse);
             }

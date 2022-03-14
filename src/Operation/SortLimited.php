@@ -63,12 +63,6 @@ final class SortLimited extends BaseOperation implements Limitable
         return true;
     }
     
-    public function reverseOrder(): void
-    {
-        $this->reversed = !$this->reversed;
-        $this->prepareToWork();
-    }
-    
     private function prepareToWork(): void
     {
         $this->items = $this->createHeap();

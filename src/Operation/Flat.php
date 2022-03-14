@@ -8,6 +8,8 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Flat extends BaseOperation
 {
+    public const MAX_LEVEL = 1024;
+    
     private int $maxLevel;
     
     /** @var Item[] */
@@ -21,8 +23,12 @@ final class Flat extends BaseOperation
         if ($level < 0) {
             throw new \InvalidArgumentException('Invalid param level');
         }
-        
-        $this->maxLevel = $level ?: \PHP_INT_MAX;
+    
+        if ($level === 0 || $level > self::MAX_LEVEL) {
+            $this->maxLevel = self::MAX_LEVEL;
+        } else {
+            $this->maxLevel = $level;
+        }
     }
     
     public function handle(Signal $signal): void
@@ -66,12 +72,18 @@ final class Flat extends BaseOperation
         }
     }
     
-    public function mergeWith(Flat $other)
+    public function mergeWith(Flat $other): void
     {
-        if ($other->maxLevel === \PHP_INT_MAX) {
-            $this->maxLevel = \PHP_INT_MAX;
-        } elseif ($this->maxLevel < \PHP_INT_MAX) {
+        if ($this->maxLevel < self::MAX_LEVEL) {
             $this->maxLevel += $other->maxLevel;
+            if ($this->maxLevel > self::MAX_LEVEL) {
+                $this->maxLevel = self::MAX_LEVEL;
+            }
         }
+    }
+    
+    public function maxLevel(): int
+    {
+        return $this->maxLevel;
     }
 }

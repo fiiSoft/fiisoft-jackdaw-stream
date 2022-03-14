@@ -2,10 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
+use FiiSoft\Jackdaw\Mapper\Internal\ReducerAdapter;
+use FiiSoft\Jackdaw\Reducer\Reducer;
+
 final class Mappers
 {
     /**
-     * @param Mapper|callable|mixed $mapper
+     * @param Mapper|Reducer|callable|mixed $mapper
      * @return Mapper
      */
     public static function getAdapter($mapper): Mapper
@@ -17,15 +20,33 @@ final class Mappers
         if (\is_callable($mapper)) {
             if (\is_string($mapper)) {
                 switch ($mapper) {
-                    case 'intval': return self::toInt();
-                    case 'strval': return self::toString();
-                    case 'floatval': return self::toFloat();
-                    case 'boolval': return self::toBool();
-                    case 'implode': return self::concat();
-                    case 'explode': return self::split();
-                    case 'array_reverse': return self::reverse();
-                    case 'json_encode': return self::jsonEncode();
-                    case 'json_decode': return self::jsonDecode();
+                    case 'intval':
+                    case '\intval':
+                        return self::toInt();
+                    case 'strval':
+                    case '\strval':
+                        return self::toString();
+                    case 'floatval':
+                    case '\floatval':
+                        return self::toFloat();
+                    case 'boolval':
+                    case '\boolval':
+                        return self::toBool();
+                    case 'implode':
+                    case '\implode':
+                        return self::concat();
+                    case 'explode':
+                    case '\explode':
+                        return self::split();
+                    case 'array_reverse':
+                    case '\array_reverse':
+                        return self::reverse();
+                    case 'json_encode':
+                    case '\json_encode':
+                        return self::jsonEncode();
+                    case 'json_decode':
+                    case '\json_decode':
+                        return self::jsonDecode();
                     default:
                         //noop
                 }
@@ -34,6 +55,10 @@ final class Mappers
             return self::generic($mapper);
         }
     
+        if ($mapper instanceof Reducer) {
+            return new ReducerAdapter($mapper);
+        }
+        
         return self::simple($mapper);
     }
     
@@ -51,9 +76,13 @@ final class Mappers
         return new ToInt($fields);
     }
     
-    public static function toString(): ToString
+    /**
+     * @param array|string|int|null $fields
+     * @return ToString
+     */
+    public static function toString($fields = null): ToString
     {
-        return new ToString();
+        return new ToString($fields);
     }
     
     /**
@@ -65,9 +94,13 @@ final class Mappers
         return new ToFloat($fields);
     }
     
-    public static function toBool(): ToBool
+    /**
+     * @param array|string|int|null $fields
+     * @return ToBool
+     */
+    public static function toBool($fields = null): ToBool
     {
-        return new ToBool();
+        return new ToBool($fields);
     }
     
     public static function concat(string $separator = ''): Concat
@@ -97,7 +130,7 @@ final class Mappers
     
     /**
      * @param string|int $field
-     * @param Mapper|callable|mixed $mapper
+     * @param Mapper|Reducer|callable|mixed $mapper
      * @return Append
      */
     public static function append($field, $mapper): Append
@@ -107,7 +140,7 @@ final class Mappers
     
     /**
      * @param string|int $field
-     * @param Mapper|callable|mixed $mapper
+     * @param Mapper|Reducer|callable|mixed $mapper
      * @return Complete
      */
     public static function complete($field, $mapper): Complete
@@ -150,5 +183,20 @@ final class Mappers
     public static function moveTo($field): MoveTo
     {
         return new MoveTo($field);
+    }
+    
+    /**
+     * @param string|int $field
+     * @param Mapper|Reducer|callable|mixed $mapper
+     * @return MapField
+     */
+    public static function mapField($field, $mapper): MapField
+    {
+        return new MapField($field, self::getAdapter($mapper));
+    }
+    
+    public static function round(int $precision = 2): Round
+    {
+        return new Round($precision);
     }
 }

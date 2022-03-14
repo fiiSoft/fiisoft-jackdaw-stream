@@ -13,10 +13,9 @@ final class Sum implements Reducer
     
     /**
      * @param float|int $value
-     * @param string|int|null $key
      * @return void
      */
-    public function consume($value, $key = null): void
+    public function consume($value): void
     {
         $this->hasAny = true;
         $this->result += $value;
@@ -38,5 +37,11 @@ final class Sum implements Reducer
     public function getResult(): Item
     {
         return new Item(0, $this->result());
+    }
+    
+    public function reset(): void
+    {
+        $this->result = 0;
+        $this->hasAny = false;
     }
 }

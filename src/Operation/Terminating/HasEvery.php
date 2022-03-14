@@ -45,12 +45,11 @@ final class HasEvery extends FinalOperation implements ResultProvider
             if (empty($this->values)) {
                 $this->hasEvery = true;
                 $signal->stop();
-            } else {
-                return false;
+                return true;
             }
         }
         
-        return true;
+        return false;
     }
     
     private function testValueAndKey(Signal $signal): void

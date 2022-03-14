@@ -27,7 +27,7 @@ final class Scan extends BaseOperation
     
     public function handle(Signal $signal): void
     {
-        $this->reducer->consume($this->previous->value, $this->previous->key);
+        $this->reducer->consume($this->previous->value);
         
         $signal->item->copyTo($this->previous);
         $signal->item->value = $this->reducer->result();

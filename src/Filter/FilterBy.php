@@ -18,7 +18,7 @@ final class FilterBy implements Filter
      */
     public function __construct($field, Filter $filter)
     {
-        if (\is_string($field) || \is_int($field)) {
+        if (Helper::isFieldValid($field)) {
             $this->field = $field;
         } else {
             throw new \InvalidArgumentException('Invalid param field');

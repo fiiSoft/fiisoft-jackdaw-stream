@@ -3,36 +3,14 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Internal\CastMapper;
 
-final class ToFloat implements Mapper
+final class ToFloat extends CastMapper
 {
-    private ?array $fields = null;
-    private bool $simple;
-    
-    /**
-     * @param array|string|int|null $fields
-     */
-    public function __construct($fields = null)
-    {
-        if ($fields !== null) {
-            if (\is_array($fields)) {
-                if (empty($fields)) {
-                    throw new \InvalidArgumentException('Param fields is invalid');
-                }
-            
-                $this->fields = $fields;
-            } else {
-                $this->fields = [$fields];
-            }
-        }
-    
-        $this->simple = $this->fields === null;
-    }
-    
     public function map($value, $key)
     {
         if ($this->simple) {
-            if ($value === null || \is_scalar($value)) {
+            if (\is_scalar($value) || $value === null) {
                 return (float) $value;
             }
         

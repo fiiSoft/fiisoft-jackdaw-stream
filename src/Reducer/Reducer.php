@@ -8,13 +8,14 @@ interface Reducer extends ResultProvider
 {
     /**
      * @param mixed $value
-     * @param string|int|null $key
      * @return void
      */
-    public function consume($value, $key = null): void;
+    public function consume($value): void;
     
     /**
      * @return mixed|null
      */
     public function result();
+    
+    public function reset(): void;
 }

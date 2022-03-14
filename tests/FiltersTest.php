@@ -2,9 +2,19 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Collector\ArrayAccess;
+use FiiSoft\Jackdaw\Filter\Adapter\PredicateAdapter;
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Filter\IsBool;
+use FiiSoft\Jackdaw\Filter\IsFloat;
+use FiiSoft\Jackdaw\Filter\IsInt;
+use FiiSoft\Jackdaw\Filter\IsNull;
+use FiiSoft\Jackdaw\Filter\IsNumeric;
+use FiiSoft\Jackdaw\Filter\IsString;
 use FiiSoft\Jackdaw\Filter\Length;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Predicate\Predicates;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
@@ -538,5 +548,284 @@ final class FiltersTest extends TestCase
         $this->expectException(\RuntimeException::class);
         
         Filters::filterBy('id', 'is_int')->isAllowed(['name' => 'Joe'], 1);
+    }
+    
+    public function test_OnlyWith_thros_exception_when_param_keys_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param keys');
+        
+        Filters::onlyWith(false);
+    }
+    
+    public function test_OnlyWith_returns_false_for_each_unrecognizable_argument(): void
+    {
+        $filter = Filters::onlyWith('key');
+        
+        self::assertFalse($filter->isAllowed('aaa', 1));
+    }
+    
+    public function test_OnlyWith_can_handle_ArrayAccess_argument(): void
+    {
+        $withKey = new \ArrayObject(['key' => 1]);
+        $withoutKey = new \ArrayObject(['other' => 1]);
+        
+        $filter = Filters::onlyWith('key', true);
+        
+        self::assertTrue($filter->isAllowed($withKey, 'a'));
+        self::assertFalse($filter->isAllowed($withoutKey, 'a'));
+    }
+    
+    public function test_IsNull_all_variations(): void
+    {
+        $filter = Filters::isNull();
+        
+        self::assertFalse($filter->isAllowed(1, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(1, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 1, Check::BOTH));
+        self::assertFalse($filter->isAllowed(1, 1, Check::ANY));
+        
+        self::assertTrue($filter->isAllowed(null, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(null, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(null, 1, Check::BOTH));
+        self::assertTrue($filter->isAllowed(null, 1, Check::ANY));
+        
+        self::assertFalse($filter->isAllowed(1, null, Check::VALUE));
+        self::assertTrue($filter->isAllowed(1, null, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, null, Check::BOTH));
+        self::assertTrue($filter->isAllowed(1, null, Check::ANY));
+        
+        self::assertTrue($filter->isAllowed(null, null, Check::VALUE));
+        self::assertTrue($filter->isAllowed(null, null, Check::KEY));
+        self::assertTrue($filter->isAllowed(null, null, Check::BOTH));
+        self::assertTrue($filter->isAllowed(null, null, Check::ANY));
+    }
+    
+    public function test_IsNull_throws_exception_when_mode_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param mode');
+    
+        Filters::isNull()->isAllowed(1, 1, 5);
+    }
+    
+    public function test_IsFloat_all_variations(): void
+    {
+        $filter = Filters::isFloat();
+        
+        self::assertFalse($filter->isAllowed(1, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(1, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 1, Check::BOTH));
+        self::assertFalse($filter->isAllowed(1, 1, Check::ANY));
+        
+        self::assertTrue($filter->isAllowed(1.0, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(1.0, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(1.0, 1, Check::BOTH));
+        self::assertTrue($filter->isAllowed(1.0, 1, Check::ANY));
+        
+        self::assertFalse($filter->isAllowed(1, 1.0, Check::VALUE));
+        self::assertTrue($filter->isAllowed(1, 1.0, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 1.0, Check::BOTH));
+        self::assertTrue($filter->isAllowed(1, 1.0, Check::ANY));
+        
+        self::assertTrue($filter->isAllowed(1.0, 1.0, Check::VALUE));
+        self::assertTrue($filter->isAllowed(1.0, 1.0, Check::KEY));
+        self::assertTrue($filter->isAllowed(1.0, 1.0, Check::BOTH));
+        self::assertTrue($filter->isAllowed(1.0, 1.0, Check::ANY));
+    }
+    
+    public function test_IsFloat_throws_exception_when_mode_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param mode');
+    
+        Filters::isFloat()->isAllowed(1.0, 1.0, 5);
+    }
+    
+    public function test_IsBool_all_variations(): void
+    {
+        $filter = Filters::isBool();
+        
+        self::assertFalse($filter->isAllowed(1, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(1, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 1, Check::BOTH));
+        self::assertFalse($filter->isAllowed(1, 1, Check::ANY));
+        
+        self::assertTrue($filter->isAllowed(true, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(true, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(true, 1, Check::BOTH));
+        self::assertTrue($filter->isAllowed(true, 1, Check::ANY));
+        
+        self::assertFalse($filter->isAllowed(1, true, Check::VALUE));
+        self::assertTrue($filter->isAllowed(1, true, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, true, Check::BOTH));
+        self::assertTrue($filter->isAllowed(1, true, Check::ANY));
+        
+        self::assertTrue($filter->isAllowed(true, true, Check::VALUE));
+        self::assertTrue($filter->isAllowed(true, true, Check::KEY));
+        self::assertTrue($filter->isAllowed(true, true, Check::BOTH));
+        self::assertTrue($filter->isAllowed(true, true, Check::ANY));
+    }
+    
+    public function test_IsBool_throws_exception_when_mode_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param mode');
+    
+        Filters::isBool()->isAllowed(true, true, 5);
+    }
+    
+    public function test_getAdapters_can_make_various_filter_adapters(): void
+    {
+        self::assertInstanceOf(IsInt::class, Filters::getAdapter('is_int'));
+        self::assertInstanceOf(IsInt::class, Filters::getAdapter('\is_int'));
+        
+        self::assertInstanceOf(IsNumeric::class, Filters::getAdapter('is_numeric'));
+        self::assertInstanceOf(IsNumeric::class, Filters::getAdapter('\is_numeric'));
+        
+        self::assertInstanceOf(IsString::class, Filters::getAdapter('is_string'));
+        self::assertInstanceOf(IsString::class, Filters::getAdapter('\is_string'));
+        
+        self::assertInstanceOf(IsFloat::class, Filters::getAdapter('is_float'));
+        self::assertInstanceOf(IsFloat::class, Filters::getAdapter('\is_float'));
+        
+        self::assertInstanceOf(IsNull::class, Filters::getAdapter('is_null'));
+        self::assertInstanceOf(IsNull::class, Filters::getAdapter('\is_null'));
+        
+        self::assertInstanceOf(IsBool::class, Filters::getAdapter('is_bool'));
+        self::assertInstanceOf(IsBool::class, Filters::getAdapter('\is_bool'));
+        
+        self::assertInstanceOf(PredicateAdapter::class, Filters::getAdapter(Predicates::inArray([1, 2])));
+    }
+    
+    public function test_it_allows_to_use_any_Predicate_as_Filter(): void
+    {
+        $filter = Filters::getAdapter(Predicates::inArray([1, 2]));
+        
+        self::assertTrue($filter->isAllowed(1, 'a'));
+        self::assertFalse($filter->isAllowed(3, 'a'));
+    }
+    
+    public function test_NumbeFilter_Equal_can_compare_number_and_numeric_type(): void
+    {
+        $filter = Filters::number()->eq(5);
+        
+        self::assertTrue($filter->isAllowed(5, 5, Check::VALUE));
+        self::assertTrue($filter->isAllowed(5, 5, Check::KEY));
+        self::assertTrue($filter->isAllowed(5, 5, Check::BOTH));
+        self::assertTrue($filter->isAllowed(5, 5, Check::ANY));
+        
+        self::assertTrue($filter->isAllowed(5, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(5, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(5, 1, Check::BOTH));
+        self::assertTrue($filter->isAllowed(5, 1, Check::ANY));
+        
+        self::assertFalse($filter->isAllowed(1, 5, Check::VALUE));
+        self::assertTrue($filter->isAllowed(1, 5, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 5, Check::BOTH));
+        self::assertTrue($filter->isAllowed(1, 5, Check::ANY));
+        
+        self::assertFalse($filter->isAllowed(1, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(1, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 1, Check::BOTH));
+        self::assertFalse($filter->isAllowed(1, 1, Check::ANY));
+        
+        self::assertTrue($filter->isAllowed('5', '5', Check::VALUE));
+        self::assertTrue($filter->isAllowed('5', '5', Check::KEY));
+        self::assertTrue($filter->isAllowed('5', '5', Check::BOTH));
+        self::assertTrue($filter->isAllowed('5', '5', Check::ANY));
+        
+        self::assertTrue($filter->isAllowed('5', 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed('5', 1, Check::KEY));
+        self::assertFalse($filter->isAllowed('5', 1, Check::BOTH));
+        self::assertTrue($filter->isAllowed('5', 1, Check::ANY));
+        
+        self::assertFalse($filter->isAllowed(1, '5', Check::VALUE));
+        self::assertTrue($filter->isAllowed(1, '5', Check::KEY));
+        self::assertFalse($filter->isAllowed(1, '5', Check::BOTH));
+        self::assertTrue($filter->isAllowed(1, '5', Check::ANY));
+    }
+    
+    public function test_NumberFilter_Equal_throws_exception_when_tested_value_is_not_a_number(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot compare value which is not a number');
+        
+        Filters::number()->eq(5)->isAllowed(['wrong arg'], 1);
+    }
+    
+    public function test_NumbeFilter_NotEqual_can_compare_number_and_numeric_type(): void
+    {
+        $filter = Filters::number()->ne(1);
+        
+        self::assertTrue($filter->isAllowed(5, 5, Check::VALUE));
+        self::assertTrue($filter->isAllowed(5, 5, Check::KEY));
+        self::assertTrue($filter->isAllowed(5, 5, Check::BOTH));
+        self::assertTrue($filter->isAllowed(5, 5, Check::ANY));
+        
+        self::assertTrue($filter->isAllowed(5, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(5, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(5, 1, Check::BOTH));
+        self::assertTrue($filter->isAllowed(5, 1, Check::ANY));
+        
+        self::assertFalse($filter->isAllowed(1, 5, Check::VALUE));
+        self::assertTrue($filter->isAllowed(1, 5, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 5, Check::BOTH));
+        self::assertTrue($filter->isAllowed(1, 5, Check::ANY));
+        
+        self::assertFalse($filter->isAllowed(1, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(1, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 1, Check::BOTH));
+        self::assertFalse($filter->isAllowed(1, 1, Check::ANY));
+        
+        self::assertTrue($filter->isAllowed('5', '5', Check::VALUE));
+        self::assertTrue($filter->isAllowed('5', '5', Check::KEY));
+        self::assertTrue($filter->isAllowed('5', '5', Check::BOTH));
+        self::assertTrue($filter->isAllowed('5', '5', Check::ANY));
+        
+        self::assertTrue($filter->isAllowed('5', 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed('5', 1, Check::KEY));
+        self::assertFalse($filter->isAllowed('5', 1, Check::BOTH));
+        self::assertTrue($filter->isAllowed('5', 1, Check::ANY));
+        
+        self::assertFalse($filter->isAllowed(1, '5', Check::VALUE));
+        self::assertTrue($filter->isAllowed(1, '5', Check::KEY));
+        self::assertFalse($filter->isAllowed(1, '5', Check::BOTH));
+        self::assertTrue($filter->isAllowed(1, '5', Check::ANY));
+    }
+    
+    public function test_NumberFilter_NotEqual_throws_exception_when_tested_value_is_not_a_number(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot compare value which is not a number');
+        
+        Filters::number()->ne(5)->isAllowed(['wrong arg'], 1);
+    }
+    
+    public function test_NumberFilter_allows_to_test_numbers_in_various_ways(): void
+    {
+        $equal = Filters::number()->eq(5);
+        self::assertTrue($equal->isAllowed(5, 'a'));
+        self::assertFalse($equal->isAllowed(1, 'a'));
+        
+        $notEqual = Filters::number()->ne(5);
+        self::assertFalse($notEqual->isAllowed(5, 'a'));
+        self::assertTrue($notEqual->isAllowed(1, 'a'));
+        
+        $greater = Filters::number()->gt(5);
+        self::assertTrue($greater->isAllowed(6, 'a'));
+        self::assertFalse($greater->isAllowed(5, 'a'));
+        
+        $less = Filters::number()->lt(5);
+        self::assertTrue($less->isAllowed(4, 'a'));
+        self::assertFalse($less->isAllowed(5, 'a'));
+        
+        $greaterEqual = Filters::number()->ge(5);
+        self::assertTrue($greaterEqual->isAllowed(6, 'a'));
+        self::assertTrue($greaterEqual->isAllowed(5, 'a'));
+        
+        $lessEqual = Filters::number()->le(5);
+        self::assertTrue($lessEqual->isAllowed(4, 'a'));
+        self::assertTrue($lessEqual->isAllowed(5, 'a'));
     }
 }

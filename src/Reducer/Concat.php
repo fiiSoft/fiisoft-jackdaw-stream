@@ -6,38 +6,36 @@ use FiiSoft\Jackdaw\Internal\Item;
 
 final class Concat implements Reducer
 {
+    private array $pieces = [];
     private string $separator;
-    private string $result = '';
-    private bool $hasAny = false;
     
     public function __construct(string $separator = '')
     {
         $this->separator = $separator;
     }
     
-    public function consume($value, $key = null): void
+    public function consume($value): void
     {
-        $this->hasAny = true;
-        
-        if ($this->result === '') {
-            $this->result = (string) $value;
-        } else {
-            $this->result .= $this->separator.$value;
-        }
+        $this->pieces[] = (string) $value;
     }
     
-    public function result()
+    public function result(): string
     {
-        return $this->result;
+        return \implode($this->separator, $this->pieces);
     }
     
     public function hasResult(): bool
     {
-        return $this->hasAny;
+        return !empty($this->pieces);
     }
     
     public function getResult(): Item
     {
         return new Item(0, $this->result());
+    }
+    
+    public function reset(): void
+    {
+        $this->pieces = [];
     }
 }

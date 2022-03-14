@@ -16,15 +16,20 @@ final class GenericReducer implements Reducer
     private bool $isFirst = true;
     private bool $hasAny = false;
     
-    private int $numOfArgs;
-    
     public function __construct(callable $reducer)
     {
         $this->reducer = $reducer;
-        $this->numOfArgs = Helper::getNumOfArgs($reducer);
+    
+        $numOfArgs = Helper::getNumOfArgs($reducer);
+        if ($numOfArgs !== 2) {
+            throw Helper::wrongNumOfArgsException('Reducer', $numOfArgs, 2);
+        }
     }
     
-    public function consume($value, $key = null): void
+    /**
+     * @inheritdoc
+     */
+    public function consume($value): void
     {
         $this->hasAny = true;
         
@@ -32,13 +37,7 @@ final class GenericReducer implements Reducer
             $this->isFirst = false;
             $this->result = $value;
         } else {
-            $reduce = $this->reducer;
-            switch ($this->numOfArgs) {
-                case 2: $this->result = $reduce($this->result, $value); break;
-                case 3: $this->result = $reduce($this->result, $value, $key); break;
-                default:
-                    throw Helper::wrongNumOfArgsException('Reducer', $this->numOfArgs, 2, 3);
-            }
+            $this->result = ($this->reducer)($this->result, $value);
         }
     }
     
@@ -55,5 +54,12 @@ final class GenericReducer implements Reducer
     public function getResult(): Item
     {
         return new Item(0, $this->result());
+    }
+    
+    public function reset(): void
+    {
+        $this->isFirst = true;
+        $this->hasAny = false;
+        $this->result = null;
     }
 }
