@@ -3,9 +3,12 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
+use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
 use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
+use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
 
 final class ProducersTest extends TestCase
@@ -264,5 +267,58 @@ final class ProducersTest extends TestCase
         $this->expectExceptionMessage('Invalid param readBytes');
     
         Producers::resource(\fopen('php://memory', 'rwb'), true, 0);
+    }
+    
+    public function test_Tokenizer_can_be_reused(): void
+    {
+        $tokenizer = Producers::tokenizer(' ');
+        
+        $tokenizer->restartWith('This is first string. It uses spaces, dots and commas.');
+        $first = Stream::from($tokenizer)->map('strtolower')->toString(' ');
+        self::assertSame('this is first string. it uses spaces, dots and commas.', $first);
+        
+        $tokenizer->restartWith('This is second string. It uses spaces, dots and commas.', ' .,');
+        $second = Stream::from($tokenizer)->map('strtolower')->toString(' ');
+        self::assertSame('this is second string it uses spaces dots and commas', $second);
+    }
+    
+    public function test_Flattener_throws_exception_when_try_to_increase_level_with_negative_number(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param level, must be greater than 0');
+    
+        Producers::flattener()->increaseLevel(-1);
+    }
+    
+    public function test_ReverseItemsIterator_throws_exception_when_argument_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param items');
+        
+        new ReverseItemsIterator('this is wrong');
+    }
+    
+    public function test_CircularBufferIterator_throws_exception_when_param_buffer_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param buffer');
+        
+        new CircularBufferIterator('wrong buffer', 3, 3);
+    }
+    
+    public function test_CircularBufferIterator_throws_exception_when_param_count_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param count');
+        
+        new CircularBufferIterator([], -1, 3);
+    }
+    
+    public function test_CircularBufferIterator_throws_exception_when_param_index_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param index');
+        
+        new CircularBufferIterator([], 5, 6);
     }
 }

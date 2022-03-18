@@ -1,52 +1,181 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Internal;
 
-use FiiSoft\Jackdaw\Consumer\Consumer;
-use FiiSoft\Jackdaw\Mapper\Mapper;
-use FiiSoft\Jackdaw\Reducer\Reducer;
+use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\Transformer;
+use FiiSoft\Jackdaw\Transformer\Transformers;
 
-interface Result extends StreamPipe, ResultCaster
+final class Result extends StreamPipe implements ResultApi
 {
-    public function run(): void;
+    use StubMethods;
     
-    public function found(): bool;
+    private Stream $stream;
+    private ResultProvider $resultProvider;
+    private ?ResultItem $resultItem;
+    private ?Transformer $transformer = null;
     
-    public function notFound(): bool;
+    private bool $isExecuted = false;
     
-    /**
-     * @return mixed|null
-     */
-    public function get();
-    
-    /**
-     * Register single transformer to perform final opertations on result (when result is available).
-     *
-     * @param Transformer|Mapper|Reducer|callable|null $transformer
-     * @return $this
-     */
-    public function transform($transformer): self;
+    /** @var callable|mixed|null */
+    private $orElse;
     
     /**
-     * @param callable|mixed|null $orElse callable is lazy-evaluated result when nothing was found
-     * @return mixed|null
+     * @param Stream $stream
+     * @param ResultProvider $resultProvider
+     * @param callable|mixed|null $orElse
      */
-    public function getOrElse($orElse);
+    public function __construct(Stream $stream, ResultProvider $resultProvider, $orElse = null)
+    {
+        $this->stream = $stream;
+        $this->resultProvider = $resultProvider;
+        $this->orElse = $orElse;
+    }
+    
+    public function run(): void
+    {
+        $this->execute();
+    }
     
     /**
-     * @return int|string
+     * @inheritDoc
      */
-    public function key();
+    public function found(): bool
+    {
+        return $this->execute()->found();
+    }
     
     /**
-     * @return array with two values: first is key, second is value, both indexed numerically
+     * @inheritDoc
      */
-    public function tuple(): array;
+    public function notFound(): bool
+    {
+        return $this->execute()->notFound();
+    }
     
     /**
-     * @param Consumer|callable|resource $consumer
-     * @return void
+     * @inheritDoc
      */
-    public function call($consumer): void;
+    public function get()
+    {
+        return $this->execute()->get();
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function transform($transformer): self
+    {
+        $this->transformer = Transformers::getAdapter($transformer);
+    
+        if ($this->isExecuted) {
+            $this->resultItem->transform($this->transformer);
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function getOrElse($orElse)
+    {
+        return $this->execute()->getOrElse($orElse);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function key()
+    {
+        return $this->execute()->key();
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function toString(string $separator = ','): string
+    {
+        return $this->execute()->toString($separator);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function toJson(int $flags = 0, bool $preserveKeys = false): string
+    {
+        return $this->execute()->toJson($flags, $preserveKeys);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function toJsonAssoc(int $flags = 0): string
+    {
+        return $this->execute()->toJsonAssoc($flags);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function toArray(bool $preserveKeys = false): array
+    {
+        return $this->execute()->toArray($preserveKeys);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function toArrayAssoc(): array
+    {
+        return $this->execute()->toArrayAssoc();
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function tuple(): array
+    {
+        return $this->execute()->tuple();
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function call($consumer): void
+    {
+        $this->execute()->call($consumer);
+    }
+    
+    private function execute(): ResultItem
+    {
+        if (!$this->isExecuted) {
+            $this->stream->run();
+    
+            if ($this->resultProvider->hasResult()) {
+                $this->resultItem = ResultItem::createFound($this->resultProvider->getResult(), $this->transformer);
+            } else {
+                $this->resultItem = ResultItem::createNotFound($this->orElse);
+            }
+            
+            $this->isExecuted = true;
+        }
+        
+        return $this->resultItem;
+    }
+    
+    protected function processExternalPush(Stream $sender): bool
+    {
+        return $this->stream->processExternalPush($sender);
+    }
+    
+    protected function continueIteration(bool $once = false): bool
+    {
+        return $this->stream->continueIteration($once);
+    }
+    
+    protected function prepareSubstream(): void
+    {
+        $this->stream->prepareSubstream();
+    }
 }

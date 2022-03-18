@@ -2,6 +2,18 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.6.0 - incompatible changes!
+
+- changed first argument of Consumers::stdout
+- renamed method Filters::equal to Filters::same
+- added methods to StreamApi: concat, tokenize, loop
+- added new group of filters to test strings
+- added new filters for integers
+- added new producers: Tokenizer, Flattener
+- huge modifications and refactoring
+- some mechanics redesigned and rewritten
+- performance optimisations
+
 ## 2.5.0
 
 Added:

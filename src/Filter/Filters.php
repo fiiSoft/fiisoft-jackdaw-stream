@@ -5,10 +5,7 @@ namespace FiiSoft\Jackdaw\Filter;
 use FiiSoft\Jackdaw\Filter\Adapter\PredicateAdapter;
 use FiiSoft\Jackdaw\Filter\Internal\LengthFactory;
 use FiiSoft\Jackdaw\Filter\Internal\NumberFactory;
-use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual;
-use FiiSoft\Jackdaw\Filter\Number\GreaterThan;
-use FiiSoft\Jackdaw\Filter\Number\LessOrEqual;
-use FiiSoft\Jackdaw\Filter\Number\LessThan;
+use FiiSoft\Jackdaw\Filter\Internal\StringFactory;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 
@@ -61,7 +58,7 @@ final class Filters
             throw Helper::invalidParamException('filter', $filter);
         }
         
-        return self::equal($filter);
+        return self::same($filter);
     }
     
     public static function generic(callable $filter): GenericFilter
@@ -99,45 +96,45 @@ final class Filters
         return new OnlyIn($values);
     }
     
-    public static function equal($value): Filter
+    public static function same($value): Same
     {
-        return new Equal($value);
+        return new Same($value);
     }
     
     /**
      * @param float|int $value
-     * @return GreaterThan
+     * @return Filter
      */
-    public static function greaterThan($value): GreaterThan
+    public static function greaterThan($value): Filter
     {
-        return new GreaterThan($value);
+        return self::number()->gt($value);
     }
     
     /**
      * @param float|int $value
-     * @return GreaterOrEqual
+     * @return Filter
      */
-    public static function greaterOrEqual($value): GreaterOrEqual
+    public static function greaterOrEqual($value): Filter
     {
-        return new GreaterOrEqual($value);
+        return self::number()->ge($value);
     }
     
     /**
      * @param float|int $value
-     * @return LessThan
+     * @return Filter
      */
-    public static function lessThan($value): LessThan
+    public static function lessThan($value): Filter
     {
-        return new LessThan($value);
+        return self::number()->lt($value);
     }
     
     /**
      * @param float|int $value
-     * @return LessOrEqual
+     * @return Filter
      */
-    public static function lessOrEqual($value): LessOrEqual
+    public static function lessOrEqual($value): Filter
     {
-        return new LessOrEqual($value);
+        return self::number()->le($value);
     }
     
     public static function isInt(): IsInt
@@ -188,5 +185,25 @@ final class Filters
     public static function predicateAdapter(Predicate $predicate): PredicateAdapter
     {
         return new PredicateAdapter($predicate);
+    }
+    
+    public static function string(): StringFactory
+    {
+        return StringFactory::instance();
+    }
+    
+    public static function contains(string $value, bool $ignoreCase = false): Filter
+    {
+        return self::string()->contains($value, $ignoreCase);
+    }
+    
+    public static function startsWith(string $value, bool $ignoreCase = false): Filter
+    {
+        return self::string()->startsWith($value, $ignoreCase);
+    }
+    
+    public static function endsWith(string $value, bool $ignoreCase = false): Filter
+    {
+        return self::string()->endsWith($value, $ignoreCase);
     }
 }

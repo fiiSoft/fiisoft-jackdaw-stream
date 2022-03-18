@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
-use FiiSoft\Jackdaw\Collector\ArrayAccess;
 use FiiSoft\Jackdaw\Filter\Adapter\PredicateAdapter;
-use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Filter\IsBool;
 use FiiSoft\Jackdaw\Filter\IsFloat;
@@ -139,7 +137,7 @@ final class FiltersTest extends TestCase
     
     public function test_Equal_can_compare_both_value_and_key(): void
     {
-        $filter = Filters::equal(5);
+        $filter = Filters::same(5);
         
         self::assertTrue($filter->isAllowed(5, 5, Check::BOTH));
         self::assertFalse($filter->isAllowed(5, 1, Check::BOTH));
@@ -148,7 +146,7 @@ final class FiltersTest extends TestCase
     
     public function test_Equal_can_compare_any_value_or_key(): void
     {
-        $filter = Filters::equal(5);
+        $filter = Filters::same(5);
         
         self::assertTrue($filter->isAllowed(5, 5, Check::ANY));
         self::assertTrue($filter->isAllowed(5, 1, Check::ANY));
@@ -160,7 +158,7 @@ final class FiltersTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         
-        $filter = Filters::equal(5);
+        $filter = Filters::same(5);
         $filter->isAllowed(1, 1, 0);
     }
     
@@ -827,5 +825,255 @@ final class FiltersTest extends TestCase
         $lessEqual = Filters::number()->le(5);
         self::assertTrue($lessEqual->isAllowed(4, 'a'));
         self::assertTrue($lessEqual->isAllowed(5, 'a'));
+    }
+    
+    public function test_Contains_without_ignore_case(): void
+    {
+        $filter = Filters::contains('foo');
+        
+        self::assertTrue($filter->isAllowed('contains foo within', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('contains foo within', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('contains foo within', 'key', Check::BOTH));
+        self::assertTrue($filter->isAllowed('contains foo within', 'key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('contains something else', 'key with foo inside', Check::VALUE));
+        self::assertTrue($filter->isAllowed('contains something else', 'key with foo inside', Check::KEY));
+        self::assertFalse($filter->isAllowed('contains something else', 'key with foo inside', Check::BOTH));
+        self::assertTrue($filter->isAllowed('contains something else', 'key with foo inside', Check::ANY));
+        
+        self::assertTrue($filter->isAllowed('contains foo within', 'key with foo inside', Check::VALUE));
+        self::assertTrue($filter->isAllowed('contains foo within', 'key with foo inside', Check::KEY));
+        self::assertTrue($filter->isAllowed('contains foo within', 'key with foo inside', Check::BOTH));
+        self::assertTrue($filter->isAllowed('contains foo within', 'key with foo inside', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('contains something else', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('contains something else', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('contains something else', 'key', Check::BOTH));
+        self::assertFalse($filter->isAllowed('contains something else', 'key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('contains Foo within', 'key with Foo inside', Check::VALUE));
+        self::assertFalse($filter->isAllowed('contains Foo within', 'key with Foo inside', Check::KEY));
+        self::assertFalse($filter->isAllowed('contains Foo within', 'key with Foo inside', Check::BOTH));
+        self::assertFalse($filter->isAllowed('contains Foo within', 'key with Foo inside', Check::ANY));
+    }
+    
+    public function test_Contains_with_ignore_case(): void
+    {
+        $filter = Filters::contains('foo', true);
+        
+        self::assertTrue($filter->isAllowed('contains Foo within', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('contains Foo within', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('contains Foo within', 'key', Check::BOTH));
+        self::assertTrue($filter->isAllowed('contains Foo within', 'key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('contains something else', 'key with Foo inside', Check::VALUE));
+        self::assertTrue($filter->isAllowed('contains something else', 'key with Foo inside', Check::KEY));
+        self::assertFalse($filter->isAllowed('contains something else', 'key with Foo inside', Check::BOTH));
+        self::assertTrue($filter->isAllowed('contains something else', 'key with Foo inside', Check::ANY));
+        
+        self::assertTrue($filter->isAllowed('contains Foo within', 'key with Foo inside', Check::VALUE));
+        self::assertTrue($filter->isAllowed('contains Foo within', 'key with Foo inside', Check::KEY));
+        self::assertTrue($filter->isAllowed('contains Foo within', 'key with Foo inside', Check::BOTH));
+        self::assertTrue($filter->isAllowed('contains Foo within', 'key with Foo inside', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('contains something else', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('contains something else', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('contains something else', 'key', Check::BOTH));
+        self::assertFalse($filter->isAllowed('contains something else', 'key', Check::ANY));
+    }
+    
+    public function test_StartsWith_without_ignore_case(): void
+    {
+        $filter = Filters::startsWith('foo');
+        
+        self::assertTrue($filter->isAllowed('foo value', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('foo value', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('foo value', 'key', Check::BOTH));
+        self::assertTrue($filter->isAllowed('foo value', 'key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('other value', 'foo key', Check::VALUE));
+        self::assertTrue($filter->isAllowed('other value', 'foo key', Check::KEY));
+        self::assertFalse($filter->isAllowed('other value', 'foo key', Check::BOTH));
+        self::assertTrue($filter->isAllowed('other value', 'foo key', Check::ANY));
+        
+        self::assertTrue($filter->isAllowed('foo value', 'foo key', Check::VALUE));
+        self::assertTrue($filter->isAllowed('foo value', 'foo key', Check::KEY));
+        self::assertTrue($filter->isAllowed('foo value', 'foo key', Check::BOTH));
+        self::assertTrue($filter->isAllowed('foo value', 'foo key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('other value', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('other value', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('other value', 'key', Check::BOTH));
+        self::assertFalse($filter->isAllowed('other value', 'key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('Foo value', 'Foo key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('Foo value', 'Foo key', Check::KEY));
+        self::assertFalse($filter->isAllowed('Foo value', 'Foo key', Check::BOTH));
+        self::assertFalse($filter->isAllowed('Foo value', 'Foo key', Check::ANY));
+    }
+    
+    public function test_StartsWith_with_ignore_case(): void
+    {
+        $filter = Filters::startsWith('foo', true);
+        
+        self::assertTrue($filter->isAllowed('Foo value', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('Foo value', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('Foo value', 'key', Check::BOTH));
+        self::assertTrue($filter->isAllowed('Foo value', 'key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('other value', 'Foo key', Check::VALUE));
+        self::assertTrue($filter->isAllowed('other value', 'Foo key', Check::KEY));
+        self::assertFalse($filter->isAllowed('other value', 'Foo key', Check::BOTH));
+        self::assertTrue($filter->isAllowed('other value', 'Foo key', Check::ANY));
+        
+        self::assertTrue($filter->isAllowed('Foo value', 'Foo key', Check::VALUE));
+        self::assertTrue($filter->isAllowed('Foo value', 'Foo key', Check::KEY));
+        self::assertTrue($filter->isAllowed('Foo value', 'Foo key', Check::BOTH));
+        self::assertTrue($filter->isAllowed('Foo value', 'Foo key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('other value', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('other value', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('other value', 'key', Check::BOTH));
+        self::assertFalse($filter->isAllowed('other value', 'key', Check::ANY));
+    }
+    
+    public function test_EndsWith_without_ignore_case(): void
+    {
+        $filter = Filters::endsWith('foo');
+        
+        self::assertTrue($filter->isAllowed('value foo', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('value foo', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('value foo', 'key', Check::BOTH));
+        self::assertTrue($filter->isAllowed('value foo', 'key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('value other', 'key foo', Check::VALUE));
+        self::assertTrue($filter->isAllowed('value other', 'key foo', Check::KEY));
+        self::assertFalse($filter->isAllowed('value other', 'key foo', Check::BOTH));
+        self::assertTrue($filter->isAllowed('value other', 'key foo', Check::ANY));
+        
+        self::assertTrue($filter->isAllowed('value foo', 'key foo', Check::VALUE));
+        self::assertTrue($filter->isAllowed('value foo', 'key foo', Check::KEY));
+        self::assertTrue($filter->isAllowed('value foo', 'key foo', Check::BOTH));
+        self::assertTrue($filter->isAllowed('value foo', 'key foo', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('value other', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('value other', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('value other', 'key', Check::BOTH));
+        self::assertFalse($filter->isAllowed('value other', 'key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('value Foo', 'key Foo', Check::VALUE));
+        self::assertFalse($filter->isAllowed('value Foo', 'key Foo', Check::KEY));
+        self::assertFalse($filter->isAllowed('value Foo', 'key Foo', Check::BOTH));
+        self::assertFalse($filter->isAllowed('value Foo', 'key Foo', Check::ANY));
+    }
+    
+    public function test_EndsWith_with_ignore_case(): void
+    {
+        $filter = Filters::endsWith('foo', true);
+        
+        self::assertTrue($filter->isAllowed('value Foo', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('value Foo', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('value Foo', 'key', Check::BOTH));
+        self::assertTrue($filter->isAllowed('value Foo', 'key', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('value other', 'key Foo', Check::VALUE));
+        self::assertTrue($filter->isAllowed('value other', 'key Foo', Check::KEY));
+        self::assertFalse($filter->isAllowed('value other', 'key Foo', Check::BOTH));
+        self::assertTrue($filter->isAllowed('value other', 'key Foo', Check::ANY));
+        
+        self::assertTrue($filter->isAllowed('value Foo', 'key Foo', Check::VALUE));
+        self::assertTrue($filter->isAllowed('value Foo', 'key Foo', Check::KEY));
+        self::assertTrue($filter->isAllowed('value Foo', 'key Foo', Check::BOTH));
+        self::assertTrue($filter->isAllowed('value Foo', 'key Foo', Check::ANY));
+        
+        self::assertFalse($filter->isAllowed('value other', 'key', Check::VALUE));
+        self::assertFalse($filter->isAllowed('value other', 'key', Check::KEY));
+        self::assertFalse($filter->isAllowed('value other', 'key', Check::BOTH));
+        self::assertFalse($filter->isAllowed('value other', 'key', Check::ANY));
+    }
+    
+    public function test_every_StringFilter_throws_exception_when_param_mode_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param mode');
+        
+        Filters::contains('foo')->isAllowed('foo', 'key', 5);
+    }
+    
+    public function test_string_filters(): void
+    {
+        self::assertFalse(Filters::string()->contains('very long string')->isAllowed('long', 1));
+        self::assertFalse(Filters::string()->startsWith('very long string')->isAllowed('very long', 1));
+        self::assertFalse(Filters::string()->endsWith('very long string')->isAllowed('long string', 1));
+        
+        self::assertTrue(Filters::string()->contains('long string')->isAllowed('long string', 1));
+        self::assertTrue(Filters::string()->startsWith('long string')->isAllowed('long string', 1));
+        self::assertTrue(Filters::string()->endsWith('long string')->isAllowed('long string', 1));
+    }
+    
+    public function test_IsEven(): void
+    {
+        $filter = Filters::number()->isEven();
+    
+        self::assertTrue($filter->isAllowed(2, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(2, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(2, 1, Check::BOTH));
+        self::assertTrue($filter->isAllowed(2, 1, Check::ANY));
+    
+        self::assertFalse($filter->isAllowed(1, 2, Check::VALUE));
+        self::assertTrue($filter->isAllowed(1, 2, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 2, Check::BOTH));
+        self::assertTrue($filter->isAllowed(1, 2, Check::ANY));
+    
+        self::assertTrue($filter->isAllowed(2, 2, Check::VALUE));
+        self::assertTrue($filter->isAllowed(2, 2, Check::KEY));
+        self::assertTrue($filter->isAllowed(2, 2, Check::BOTH));
+        self::assertTrue($filter->isAllowed(2, 2, Check::ANY));
+    
+        self::assertFalse($filter->isAllowed(1, 1, Check::VALUE));
+        self::assertFalse($filter->isAllowed(1, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 1, Check::BOTH));
+        self::assertFalse($filter->isAllowed(1, 1, Check::ANY));
+    }
+    
+    public function test_IsEven_throws_exception_when_param_mode_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param mode');
+        
+        Filters::number()->isEven()->isAllowed('foo', 'key', 5);
+    }
+    
+    public function test_IsOdd(): void
+    {
+        $filter = Filters::number()->isOdd();
+    
+        self::assertTrue($filter->isAllowed(1, 2, Check::VALUE));
+        self::assertFalse($filter->isAllowed(1, 2, Check::KEY));
+        self::assertFalse($filter->isAllowed(1, 2, Check::BOTH));
+        self::assertTrue($filter->isAllowed(1, 2, Check::ANY));
+    
+        self::assertFalse($filter->isAllowed(2, 1, Check::VALUE));
+        self::assertTrue($filter->isAllowed(2, 1, Check::KEY));
+        self::assertFalse($filter->isAllowed(2, 1, Check::BOTH));
+        self::assertTrue($filter->isAllowed(2, 1, Check::ANY));
+    
+        self::assertTrue($filter->isAllowed(1, 1, Check::VALUE));
+        self::assertTrue($filter->isAllowed(1, 1, Check::KEY));
+        self::assertTrue($filter->isAllowed(1, 1, Check::BOTH));
+        self::assertTrue($filter->isAllowed(1, 1, Check::ANY));
+    
+        self::assertFalse($filter->isAllowed(2, 2, Check::VALUE));
+        self::assertFalse($filter->isAllowed(2, 2, Check::KEY));
+        self::assertFalse($filter->isAllowed(2, 2, Check::BOTH));
+        self::assertFalse($filter->isAllowed(2, 2, Check::ANY));
+    }
+    
+    public function test_IsOdd_throws_exception_when_param_mode_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param mode');
+        
+        Filters::number()->isOdd()->isAllowed('foo', 'key', 5);
     }
 }

@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 
 final class Sort extends BaseOperation
 {
@@ -45,7 +46,7 @@ final class Sort extends BaseOperation
             $this->sortItems();
         }
         
-        $signal->restartFrom($this->next, $this->items);
+        $signal->restartWith(new ForwardItemsIterator($this->items), $this->next);
         
         return true;
     }

@@ -4,6 +4,8 @@ namespace FiiSoft\Jackdaw\Operation\State\Tail;
 
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Operation\Tail;
+use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
+use FiiSoft\Jackdaw\Producer\Producer;
 
 abstract class State
 {
@@ -28,23 +30,9 @@ abstract class State
         }
     }
     
-    /**
-     * @return Item[]
-     */
-    final public function fetchItems(): array
+    final public function bufferIterator(): Producer
     {
-        $items = [];
-        $count = $this->count();
-    
-        for ($i = 0; $i < $count; ++$i) {
-            if ($this->index === $count) {
-                $this->index = 0;
-            }
-        
-            $items[] = $this->buffer[$this->index++];
-        }
-    
-        return $items;
+        return new CircularBufferIterator($this->buffer, $this->count(), $this->index);
     }
     
     abstract public function hold(Item $item): void;

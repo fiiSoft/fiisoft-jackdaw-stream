@@ -6,17 +6,15 @@ use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\ErrorHandler;
 use FiiSoft\Jackdaw\Handler\OnError;
-use FiiSoft\Jackdaw\Internal\BaseStreamPipe;
+use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Collaborator;
 use FiiSoft\Jackdaw\Internal\Interruption;
-use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Result;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamApi;
 use FiiSoft\Jackdaw\Internal\StreamCollection;
 use FiiSoft\Jackdaw\Internal\StreamIterator;
-use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Aggregate;
 use FiiSoft\Jackdaw\Operation\Chunk;
@@ -63,8 +61,10 @@ use FiiSoft\Jackdaw\Operation\Terminating\IsEmpty;
 use FiiSoft\Jackdaw\Operation\Terminating\Last;
 use FiiSoft\Jackdaw\Operation\Terminating\Reduce;
 use FiiSoft\Jackdaw\Operation\Terminating\Until;
+use FiiSoft\Jackdaw\Operation\Tokenize;
 use FiiSoft\Jackdaw\Operation\Unique;
 use FiiSoft\Jackdaw\Predicate\Predicates;
+use FiiSoft\Jackdaw\Producer\Internal\PushProducer;
 use FiiSoft\Jackdaw\Producer\MultiProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
@@ -76,8 +76,19 @@ final class Stream extends Collaborator implements StreamApi
     private Operation $last;
     private Signal $signal;
     
-    private ?\Generator $producerIterator = null;
+    private ?\Generator $currentSource = null;
+    
     private bool $executed = false;
+    private bool $handlePush = true;
+    
+    /** @var Stream[] */
+    private array $pushToStreams = [];
+    
+    /** @var \Generator[]  */
+    private array $sources = [];
+    
+    /** @var Producer[] */
+    private array $producers = [];
     
     /** @var callable[] */
     private array $onFinishHandlers = [];
@@ -88,34 +99,28 @@ final class Stream extends Collaborator implements StreamApi
     /** @var ErrorHandler[] */
     private array $onErrorHandlers = [];
     
-    /** @var Item[] */
-    private array $extraItems = [];
-    
     /** @var Operation[] */
     private array $stack = [];
     
-    /** @var \SplObjectStorage|Stream[] */
-    private ?\SplObjectStorage $pushToStreams = null;
-    
     /**
-     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array ...$elements
-     * @return StreamApi
+     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array|scalar ...$elements
+     * @return self
      */
-    public static function of(...$elements): StreamApi
+    public static function of(...$elements): self
     {
         return self::from(Producers::from($elements));
     }
     
     /**
      * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array $producer
-     * @return StreamApi
+     * @return self
      */
-    public static function from($producer): StreamApi
+    public static function from($producer): self
     {
         return new self(Producers::getAdapter($producer));
     }
     
-    public static function empty(): StreamApi
+    public static function empty(): self
     {
         return self::from([]);
     }
@@ -173,7 +178,7 @@ final class Stream extends Collaborator implements StreamApi
     public function without(array $values, int $mode = Check::VALUE): self
     {
         if (\count($values) === 1) {
-            $filter = Filters::equal($values[\array_key_first($values)]);
+            $filter = Filters::same($values[\array_key_first($values)]);
         } else {
             $filter = Filters::onlyIn($values);
         }
@@ -187,7 +192,7 @@ final class Stream extends Collaborator implements StreamApi
     public function only(array $values, int $mode = Check::VALUE): self
     {
         if (\count($values) === 1) {
-            $filter = Filters::equal($values[\array_key_first($values)]);
+            $filter = Filters::same($values[\array_key_first($values)]);
         } else {
             $filter = Filters::onlyIn($values);
         }
@@ -589,6 +594,22 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function concat(string $separtor = ' '): self
+    {
+        return $this->map(Mappers::concat($separtor));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function tokenize(string $tokens = ' '): self
+    {
+        return $this->chainOperation(new Tokenize($tokens));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function flat(int $level = 0): self
     {
         return $this->chainOperation(new Flat($level));
@@ -607,11 +628,12 @@ final class Stream extends Collaborator implements StreamApi
      */
     public function feed(StreamPipe $stream): self
     {
-        if ($this->pushToStreams === null) {
-            $this->pushToStreams = new \SplObjectStorage();
+        $id = \spl_object_id($stream);
+    
+        if (!isset($this->pushToStreams[$id])) {
+            $stream->prepareSubstream();
+            $this->pushToStreams[$id] = $stream;
         }
-        
-        $this->pushToStreams->attach($stream);
         
         return $this->chainOperation(new Feed($stream));
     }
@@ -878,12 +900,21 @@ final class Stream extends Collaborator implements StreamApi
         $this->finish();
     }
     
+    /**
+     * @inheritdoc
+     */
+    public function loop(): StreamPipe
+    {
+        return $this->feed($this);
+    }
+    
     protected function finish(): void
     {
         $this->executed = true;
         $this->finishSubstreems();
     
-        if (!$this->signal->isError()) {
+        $signal = $this->signal;
+        if (!$signal->isError) {
             foreach ($this->onSuccessHandlers as $handler) {
                 $handler();
             }
@@ -907,7 +938,7 @@ final class Stream extends Collaborator implements StreamApi
     {
         try {
             ITERATION_LOOP:
-            if (!$this->signal->isStopped()) {
+            if ($this->signal->isWorking) {
                 
                 PROCESS_NEXT_ITEM:
                 if ($this->hasNextItem()) {
@@ -915,6 +946,11 @@ final class Stream extends Collaborator implements StreamApi
                 } elseif (empty($this->stack)) {
                     $this->signal->streamIsEmpty();
                 } else {
+                    if (!empty($this->sources)) {
+                        $this->currentSource = \array_pop($this->sources);
+                        $this->producer = \array_pop($this->producers);
+                    }
+                    
                     $this->head = \array_pop($this->stack);
                     $this->signal->resume();
                 }
@@ -953,37 +989,32 @@ final class Stream extends Collaborator implements StreamApi
     
     private function hasNextItem(): bool
     {
-        if (!empty($this->extraItems)) {
-            $nextItem = \array_shift($this->extraItems);
-            $this->signal->item->key = $nextItem->key;
-            $this->signal->item->value = $nextItem->value;
-            return true;
-        }
-        
-        if ($this->signal->isFinished()) {
-            return false;
-        }
-    
-        if ($this->producerIterator === null) {
-            $this->producerIterator = $this->producer->feed($this->signal->item);
+        if ($this->currentSource === null) {
+            $this->currentSource = $this->producer->feed($this->signal->item);
         } else {
-            $this->producerIterator->next();
+            $this->currentSource->next();
         }
     
-        return $this->producerIterator->valid();
+        return $this->currentSource->valid();
     }
     
-    protected function restartFrom(Operation $operation, array $items): void
+    protected function restartWith(Producer $producer, Operation $operation): void
     {
+        $this->currentSource = null;
+        $this->producer = $producer;
         $this->head = $operation;
-        $this->extraItems = empty($this->extraItems) ? $items : \array_merge($this->extraItems, $items);
     }
     
-    protected function continueFrom(Operation $operation, array $items): void
+    protected function continueWith(Producer $producer, Operation $operation): void
     {
+        $this->producers[] = $this->producer;
+        $this->producer = $producer;
+        
+        $this->sources[] = $this->currentSource;
+        $this->currentSource = null;
+        
         $this->stack[] = $this->head;
         $this->head = $operation;
-        $this->extraItems = empty($this->extraItems) ? $items : \array_merge($this->extraItems, $items);
     }
     
     /**
@@ -1122,31 +1153,45 @@ final class Stream extends Collaborator implements StreamApi
         $this->stack = [];
     }
     
-    protected function streamIsEmpty(): void
+    protected function sendTo(StreamPipe $stream): bool
     {
-        $this->extraItems = [];
-    }
-    
-    protected function sendTo(BaseStreamPipe $stream): bool
-    {
-        return $this->pushToStreams->contains($stream) && $stream->processExternalPush($this);
+        return $stream->processExternalPush($this);
     }
     
     protected function processExternalPush(Stream $sender): bool
     {
-        $this->extraItems[] = $sender->signal->item;
+        if ($this->handlePush) {
+            $this->handlePush = false;
+            $this->currentSource->send($sender->signal->item);
     
-        return $this->continueIteration(true);
+            try {
+                return $this->continueIteration(true);
+            } finally {
+                $this->handlePush = true;
+            }
+        }
+    
+        $this->currentSource->send($sender->signal->item);
+        
+        return true;
+    }
+    
+    protected function prepareSubstream(): void
+    {
+        if (! $this->producer instanceof PushProducer) {
+            $this->producer = new PushProducer($this->producer);
+        }
+        
+        $this->currentSource = $this->producer->feed($this->signal->item);
+        $this->currentSource->next();
     }
     
     private function finishSubstreems(): void
     {
-        if ($this->pushToStreams !== null) {
-            while ($this->pushToStreams->count() > 0) {
-                foreach ($this->pushToStreams as $stream) {
-                    if (!$stream->continueIteration(true)) {
-                        $this->pushToStreams->detach($stream);
-                    }
+        while (!empty($this->pushToStreams)) {
+            foreach ($this->pushToStreams as $key => $stream) {
+                if (!$stream->continueIteration(true)) {
+                    unset($this->pushToStreams[$key]);
                 }
             }
         }

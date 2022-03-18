@@ -42,9 +42,9 @@ final class Consumers
         return new Printer($mode);
     }
     
-    public static function stdout(bool $addNewLine = true, int $mode = Check::VALUE): StdoutWriter
+    public static function stdout(string $separator = \PHP_EOL, int $mode = Check::VALUE): StdoutWriter
     {
-        return new StdoutWriter($addNewLine, $mode);
+        return new StdoutWriter($separator, $mode);
     }
     
     /**

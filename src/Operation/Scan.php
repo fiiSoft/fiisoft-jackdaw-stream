@@ -37,8 +37,6 @@ final class Scan extends BaseOperation
     
     public function streamingFinished(Signal $signal): bool
     {
-        //TODO check if it works properly in complex scenarios
-        
         $this->handle($signal);
         
         return $this->next->streamingFinished($signal);

@@ -7,15 +7,21 @@ use FiiSoft\Jackdaw\Producer\Adapter\ArrayAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\IteratorAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\StreamAdapter;
 use FiiSoft\Jackdaw\Producer\Generator\CollatzGenerator;
+use FiiSoft\Jackdaw\Producer\Generator\Flattener;
 use FiiSoft\Jackdaw\Producer\Generator\RandomInt;
 use FiiSoft\Jackdaw\Producer\Generator\RandomString;
 use FiiSoft\Jackdaw\Producer\Generator\RandomUuid;
 use FiiSoft\Jackdaw\Producer\Generator\SequentialInt;
+use FiiSoft\Jackdaw\Producer\Generator\Tokenizer;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
 use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
 
 final class Producers
 {
+    /**
+     * @param array<StreamApi|Producer|\Iterator|\PDOStatement|resource|array|scalar> $elements
+     * @return Producer
+     */
     public static function from(array $elements): Producer
     {
         $index = 0;
@@ -145,5 +151,15 @@ final class Producers
     public static function resource($resource, bool $closeOnFinish = false, ?int $readByes = null): TextFileReader
     {
         return new TextFileReader($resource, $closeOnFinish, $readByes);
+    }
+    
+    public static function tokenizer(string $tokens, string $string = ''): Tokenizer
+    {
+        return new Tokenizer($tokens, $string);
+    }
+    
+    public static function flattener(iterable $iterable = [], int $level = 0): Flattener
+    {
+        return new Flattener($iterable, $level);
     }
 }

@@ -4,6 +4,9 @@ namespace FiiSoft\Jackdaw\Filter\Number;
 
 final class GreaterOrEqual extends NumberFilter
 {
+    /**
+     * @inheritdoc
+     */
     protected function test($value): bool
     {
         if (\is_int($value) || \is_float($value)) {

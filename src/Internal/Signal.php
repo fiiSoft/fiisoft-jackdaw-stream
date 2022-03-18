@@ -3,18 +3,18 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Operation\Operation;
+use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Stream;
 
 final class Signal extends Collaborator
 {
+    use StubMethods;
+    
     public Item $item;
     
-    private bool $isStopped = false;
-    private bool $isEmpty = false;
-    private bool $isError = false;
-    private bool $isTerminated = false;
-    private bool $isRestarted = false;
-    private int $innerLoopLevel = 0;
+    public bool $isWorking = true;
+    public bool $isEmpty = false;
+    public bool $isError = false;
     
     private Stream $stream;
     
@@ -26,7 +26,7 @@ final class Signal extends Collaborator
     
     public function stop(): void
     {
-        $this->isStopped = true;
+        $this->isWorking = false;
     }
     
     public function abort(): void
@@ -37,56 +37,24 @@ final class Signal extends Collaborator
     
     public function terminate(): void
     {
-        $this->isStopped = true;
-        $this->isTerminated = true;
+        $this->isWorking = false;
     }
     
-    public function isError(): bool
+    public function restartWith(Producer $producer, Operation $operation): void
     {
-        return $this->isError;
+        $this->resume();
+        $this->stream->restartWith($producer, $operation);
     }
     
-    public function isFinished(): bool
+    public function continueWith(Producer $producer, Operation $operation): void
     {
-        if ($this->isTerminated) {
-            return true;
-        }
-    
-        if ($this->innerLoopLevel > 0) {
-            --$this->innerLoopLevel;
-            return true;
-        }
-        
-        return $this->isRestarted;
-    }
-    
-    public function isStopped(): bool
-    {
-        return $this->isStopped && $this->innerLoopLevel === 0;
-    }
-    
-    /**
-     * @param Operation $operation
-     * @param Item[] $items
-     */
-    public function restartFrom(Operation $operation, array $items): void
-    {
-        $this->isStopped = false;
-        $this->isRestarted = true;
-        $this->stream->restartFrom($operation, $items);
-    }
-    
-    public function continueFrom(Operation $operation, array $items): void
-    {
-        ++$this->innerLoopLevel;
-        $this->stream->continueFrom($operation, $items);
+        $this->stream->continueWith($producer, $operation);
     }
     
     public function streamIsEmpty(): void
     {
-        $this->isStopped = true;
+        $this->isWorking = false;
         $this->isEmpty = true;
-        $this->stream->streamIsEmpty();
     }
     
     public function limitReached(Operation $operation): void
@@ -95,34 +63,14 @@ final class Signal extends Collaborator
         $this->stream->limitReached($operation);
     }
     
-    public function isStreamEmpty(): bool
-    {
-        return $this->isEmpty;
-    }
-    
     public function resume(): void
     {
-        $this->isStopped = false;
+        $this->isWorking = true;
         $this->isEmpty = false;
     }
     
-    protected function continueIteration(bool $once = false): bool
-    {
-        return false;
-    }
-    
-    public function sendTo(BaseStreamPipe $stream): bool
+    public function sendTo(StreamPipe $stream): bool
     {
         return $this->stream->sendTo($stream);
-    }
-    
-    protected function processExternalPush(Stream $sender): bool
-    {
-        return false;
-    }
-    
-    protected function finish(): void
-    {
-        //noop
     }
 }

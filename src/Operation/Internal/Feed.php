@@ -2,14 +2,14 @@
 
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
-use FiiSoft\Jackdaw\Internal\BaseStreamPipe;
+use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Internal\Signal;
 
 final class Feed extends BaseOperation
 {
-    private ?BaseStreamPipe $stream;
+    private ?StreamPipe $stream;
     
-    public function __construct(BaseStreamPipe $stream)
+    public function __construct(StreamPipe $stream)
     {
         $this->stream = $stream;
     }

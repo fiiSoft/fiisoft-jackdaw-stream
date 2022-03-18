@@ -5,6 +5,7 @@ namespace FiiSoft\Jackdaw\Operation;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 
 final class Shuffle extends BaseOperation
 {
@@ -19,8 +20,7 @@ final class Shuffle extends BaseOperation
     public function streamingFinished(Signal $signal): bool
     {
         \shuffle($this->items);
-        
-        $signal->restartFrom($this->next, $this->items);
+        $signal->restartWith(new ForwardItemsIterator($this->items), $this->next);
         
         return true;
     }

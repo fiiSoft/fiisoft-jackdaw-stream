@@ -204,7 +204,7 @@ echo 'sort tuples: ', Stream::from([[3, 5], [1, 4], [2]])->flat()->limit(6)->sor
 $var1 = [['a', 'b'], ['c', 'd'], ['e', ['f', 'g', ['h', 'i']]], [[['j']]]];
 $var2 = ['a', 'b', 'c', 'd', 'e', 'f'];
 
-$substream = Stream::from($var1)->flat(0)->sort();
+$substream = Stream::from($var1)->flat()->sort();
 $stream = Stream::from($substream);
 
 echo 'substream: ', $stream->limit(10)->toString(), PHP_EOL;
@@ -378,10 +378,46 @@ Stream::from($rowset)
     ->map(Mappers::concat(' '))
     ->forEach(Consumers::printer(Check::VALUE));
 
+//examples of tokenize strings
+echo 'tokenize string by direct use of tokenizer producer: ', PHP_EOL;
+$tokenizer = Producers::tokenizer(' ', 'this is string that will be tokenized');
+Stream::from($tokenizer)->map('strrev')->forEach(Consumers::stdout(', '));
+
+$tokenizer->restartWith('this is another string to tokenize');
+Stream::from($tokenizer)->map('ucfirst')->forEach(STDOUT);
+
+echo PHP_EOL;
+
+echo 'tokenize elements of stream using tokenize method: ', PHP_EOL;
+Stream::from(['this is first string', 'this is second string'])
+    ->tokenize(' ')
+    ->map('ucfirst')
+    ->forEach(Consumers::stdout(', '));
+
+echo PHP_EOL;
+
+echo 'Flat nested arrays by using flattener producer directly: ', PHP_EOL;
+Stream::from(Producers::flattener($rowset))->forEach(Consumers::stdout(', ', Check::BOTH));
+
+echo PHP_EOL, 'and the same using flat method: ', PHP_EOL;
+Stream::from($rowset)->flat()->forEach(Consumers::stdout(', ', Check::BOTH));
+
+echo PHP_EOL;
+
+echo 'Push to non-empty stream: ';
+Stream::from(['foo', 123, 'bar', 456])
+    ->feed(
+        Stream::from(['a', 1, 'b', 2, 'c', 3, 'd'])
+            ->onlyStrings()
+            ->call(Consumers::stdout(' '))
+    )
+    ->onlyIntegers()
+    ->forEach(Consumers::stdout('-'));
+
+echo PHP_EOL;
+
 //let's do some fun with Collatz:
-echo 'let\'s play with random Collatz series: ';
-Stream::from(Producers::collatz())
-    ->forEach(static function ($value) {
-        echo $value, ' ';
-    });
+echo 'let\'s play with random Collatz series: ', PHP_EOL;
+Stream::from(Producers::collatz())->forEach(Consumers::stdout(' '));
+
 echo PHP_EOL;

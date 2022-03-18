@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Filter;
 
 use FiiSoft\Jackdaw\Internal\Check;
 
-final class Equal implements Filter
+final class Same implements Filter
 {
     /** @var mixed */
     private $value;

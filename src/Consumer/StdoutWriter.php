@@ -7,11 +7,11 @@ use FiiSoft\Jackdaw\Internal\Check;
 final class StdoutWriter implements Consumer
 {
     private int $mode;
-    private string $newLine;
+    private string $separator;
     
-    public function __construct(bool $addNewLine = true, int $mode = Check::VALUE)
+    public function __construct(string $separator = \PHP_EOL, int $mode = Check::VALUE)
     {
-        $this->newLine = $addNewLine ? \PHP_EOL : '';
+        $this->separator = $separator;
         $this->mode = Check::getMode($mode);
     }
     
@@ -19,15 +19,15 @@ final class StdoutWriter implements Consumer
     {
         switch ($this->mode) {
             case Check::VALUE:
-                echo $value, $this->newLine;
+                echo $value, $this->separator;
             break;
             
             case Check::KEY:
-                echo $key, $this->newLine;
+                echo $key, $this->separator;
             break;
             
             default:
-                echo $key, ':', $value, $this->newLine;
+                echo $key, ':', $value, $this->separator;
         }
     }
 }

@@ -134,7 +134,7 @@ final class ConsumersTest extends TestCase
     public function test_StdoutWriter_allows_to_write_value(): void
     {
         \ob_start();
-        Consumers::stdout(false)->consume('foo', 1);
+        Consumers::stdout('')->consume('foo', 1);
         $output = \ob_get_clean();
         
         self::assertSame('foo', $output);
@@ -143,7 +143,7 @@ final class ConsumersTest extends TestCase
     public function test_StdoutWriter_allows_to_write_key(): void
     {
         \ob_start();
-        Consumers::stdout(false, Check::KEY)->consume('foo', 1);
+        Consumers::stdout('', Check::KEY)->consume('foo', 1);
         $output = \ob_get_clean();
         
         self::assertSame('1', $output);
@@ -152,7 +152,7 @@ final class ConsumersTest extends TestCase
     public function test_StdoutWriter_allows_to_write_both_value_and_key_in_predefined_way(): void
     {
         \ob_start();
-        Consumers::stdout(false, Check::BOTH)->consume('foo', 1);
+        Consumers::stdout('', Check::BOTH)->consume('foo', 1);
         $output = \ob_get_clean();
         
         self::assertSame('1:foo', $output);

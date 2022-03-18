@@ -15,127 +15,112 @@ use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 
-interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
+interface StreamApi extends ResultCaster, \IteratorAggregate
 {
     /**
      * @param Filter|Predicate|callable|mixed $filter
      * @param int $mode
-     * @return $this
      */
     public function filter($filter, int $mode = Check::VALUE): self;
     
     /**
      * @param string|int $field
      * @param Filter|Predicate|callable|mixed $filter
-     * @return $this
      */
     public function filterBy($field, $filter): self;
     
     /**
      * @param Filter|Predicate|callable $filter
      * @param int $mode
-     * @return $this
      */
     public function omit($filter, int $mode = Check::VALUE): self;
     
     /**
      * @param float|int $value
-     * @return $this
      */
     public function greaterOrEqual($value): self;
     
     /**
      * @param float|int $value
-     * @return $this
      */
     public function greaterThan($value): self;
     
     /**
      * @param float|int $value
-     * @return $this
      */
     public function lessOrEqual($value): self;
     
     /**
      * @param float|int $value
-     * @return $this
      */
     public function lessThan($value): self;
     
     /**
-     * @return $this
+     * Pass only numeric values
      */
     public function onlyNumeric(): self;
     
     /**
-     * @return $this
+     * Pass only integer values
      */
     public function onlyIntegers(): self;
     
     /**
-     * @return $this
+     * Pass only strings
      */
     public function onlyStrings(): self;
     
     /**
      * @param array $values
      * @param int $mode
-     * @return $this
      */
     public function without(array $values, int $mode = Check::VALUE): self;
     
     /**
      * @param array $values
      * @param int $mode
-     * @return $this
      */
     public function only(array $values, int $mode = Check::VALUE): self;
     
     /**
      * @param array|string|int $keys list of keys or single key
      * @param bool $allowNulls
-     * @return $this
      */
     public function onlyWith($keys, bool $allowNulls = false): self;
     
     /**
-     * @return $this
+     * Pass only not-null values
      */
     public function notNull(): self;
     
     /**
-     * @return $this
+     * Pas only not empty values
      */
     public function notEmpty(): self;
     
     /**
      * @param int $offset
-     * @return $this
      */
     public function skip(int $offset): self;
     
     /**
      * @param int $limit
-     * @return $this
      */
     public function limit(int $limit): self;
     
     /**
      * @param Consumer|callable|resource $consumers resource must be writeable
-     * @return $this
      */
     public function call(...$consumers): self;
     
     /**
      * @param Consumer|callable|resource $consumer
-     * @return $this
      */
     public function callOnce($consumer): self;
     
     /**
      * @param int $times
      * @param Consumer|callable|resource $consumer
-     * @return $this
      */
     public function callMax(int $times, $consumer): self;
     
@@ -143,13 +128,11 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      * @param Condition|Predicate|Filter|callable $condition
      * @param Consumer|callable|resource $consumer
      * @param Consumer|callable|resource|null $elseConsumer
-     * @return $this
      */
     public function callWhen($condition, $consumer, $elseConsumer = null): self;
     
     /**
      * @param Mapper|Reducer|callable|mixed $mapper
-     * @return $this
      */
     public function map($mapper): self;
     
@@ -157,20 +140,17 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      * @param Condition|Predicate|Filter|callable $condition
      * @param Mapper|Reducer|callable|mixed $mapper
      * @param Mapper|Reducer|callable|mixed|null $elseMapper
-     * @return $this
      */
     public function mapWhen($condition, $mapper, $elseMapper = null): self;
     
     /**
      * @param Mapper|callable $mapper
-     * @return $this
      */
     public function mapKey($mapper): self;
     
     /**
      * @param string|int $field
      * @param Mapper|Reducer|callable|mixed $mapper
-     * @return $this
      */
     public function mapField($field, $mapper): self;
     
@@ -179,81 +159,70 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      * @param Condition|Predicate|Filter|callable $condition
      * @param Mapper|Reducer|callable|mixed $mapper
      * @param Mapper|Reducer|callable|mixed|null $elseMapper
-     * @return $this
      */
     public function mapFieldWhen($field, $condition, $mapper, $elseMapper = null): self;
     
     /**
      * @param array|string|int|null
-     * @return $this
      */
     public function castToInt($fields = null): self;
     
     /**
      * @param array|string|int|null
-     * @return $this
      */
     public function castToFloat($fields = null): self;
     
     /**
      * @param array|string|int|null
-     * @return $this
      */
     public function castToString($fields = null): self;
     
     /**
      * @param array|string|int|null
-     * @return $this
      */
     public function castToBool($fields = null): self;
     
     /**
      * @param Collector|\ArrayAccess $collector
      * @param bool $preserveKeys (default false)
-     * @return $this
      */
     public function collectIn($collector, bool $preserveKeys = false): self;
     
     /**
      * @param Collector|\ArrayAccess $collector
-     * @return $this
      */
     public function collectKeys($collector): self;
     
     /**
      * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array $producer
-     * @return $this
      */
     public function join($producer): self;
     
     /**
      * @param Comparator|callable|null $comparator
      * @param int $mode
-     * @return $this
      */
     public function unique($comparator = null, int $mode = Check::VALUE): self;
     
     /**
-     * @return $this
+     * Reindex all keys for elements (0, 1, ...)
      */
     public function reindex(): self;
     
     /**
-     * @return $this
+     * Flip values with keys
      */
     public function flip(): self;
     
     /**
      * @param mixed $initial
      * @param Reducer|callable $reducer
-     * @return $this
      */
     public function scan($initial, $reducer): self;
     
     /**
      * @param int $size
      * @param bool $preserveKeys
-     * @return $this
      */
     public function chunk(int $size, bool $preserveKeys = false): self;
     
@@ -261,72 +230,71 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      * It works the same way as chunk($size, true).
      *
      * @param int $size
-     * @return $this
      */
     public function chunkAssoc(int $size): self;
     
     /**
      * @param array $keys
-     * @return $this
      */
     public function aggregate(array $keys): self;
     
     /**
      * @param string|int $field
      * @param Mapper|Reducer|callable|mixed $mapper
-     * @return $this
      */
     public function append($field, $mapper): self;
     
     /**
      * @param string|int $field
      * @param Mapper|Reducer|callable|mixed $mapper
-     * @return $this
      */
     public function complete($field, $mapper): self;
     
     /**
      * @param string|int $field
-     * @return $this
      */
     public function moveTo($field): self;
     
     /**
      * @param array|string|int $fields
      * @param mixed|null $orElse
-     * @return $this
      */
     public function extract($fields, $orElse = null): self;
     
     /**
      * @param array|string|int $fields
-     * @return $this
      */
     public function remove(...$fields): self;
     
     /**
      * @param string $separator
-     * @return $this
      */
     public function split(string $separator = ' '): self;
     
     /**
+     * @param string $separtor
+     */
+    public function concat(string $separtor = ' '): self;
+    
+    /**
+     * @param string $tokens
+     */
+    public function tokenize(string $tokens = ' '): self;
+    
+    /**
      * @param int $level
-     * @return $this
      */
     public function flat(int $level = 0): self;
     
     /**
      * @param Mapper|callable $mapper
      * @param int $level
-     * @return $this
      */
     public function flatMap($mapper, int $level = 0): self;
     
     /**
      * @param string ...$fields names of fields to sort by, in format "name asc", "salary desc"
      * @param int $limit last param can be integer, it means how many elements will be passed to stream
-     * @return $this
      */
     public function sortBy(...$fields): self;
     
@@ -335,7 +303,6 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      *
      * @param Comparator|callable|null $comparator
      * @param int $mode
-     * @return $this
      */
     public function sort($comparator = null, int $mode = Check::VALUE): self;
     
@@ -345,7 +312,6 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      * @param int $limit
      * @param Comparator|callable|null $comparator
      * @param int $mode
-     * @return $this
      */
     public function best(int $limit, $comparator = null, int $mode = Check::VALUE): self;
     
@@ -354,7 +320,6 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      *
      * @param Comparator|callable|null $comparator
      * @param int $mode
-     * @return $this
      */
     public function rsort($comparator = null, int $mode = Check::VALUE): self;
     
@@ -364,43 +329,40 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      * @param int $limit
      * @param Comparator|callable|null $comparator
      * @param int $mode
-     * @return $this
      */
     public function worst(int $limit, $comparator = null, int $mode = Check::VALUE): self;
     
     /**
-     * @return $this
+     * Collect all incoming elements from stream and when there are no more elements,
+     * reverse their order and start streaming again.
      */
     public function reverse(): self;
     
     /**
-     * @return $this
+     * Collect all incoming elements from stream and when there are no more elements,
+     * start streaming them again in randomized order.
      */
     public function shuffle(): self;
     
     /**
-     * @param StreamPipe $stream
-     * @return $this
+     * @param StreamPipe $stream it MUST be empty stream - created by Stream::empty()
      */
     public function feed(StreamPipe $stream): self;
     
     /**
      * @param Filter|Predicate|callable $condition
      * @param int $mode
-     * @return $this
      */
     public function while($condition, int $mode = Check::VALUE): self;
     
     /**
      * @param Filter|Predicate|callable $condition
      * @param int $mode
-     * @return $this
      */
     public function until($condition, int $mode = Check::VALUE): self;
     
     /**
      * @param int $numOfItems number of Nth last elements
-     * @return $this
      */
     public function tail(int $numOfItems): self;
     
@@ -409,7 +371,6 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      *
      * @param ErrorHandler|callable $handler it must return bool or null, see ErrorHandler
      * @param bool $replace when true then replace all existing handlers, when false then add handler to stack
-     * @return $this
      */
     public function onError($handler, bool $replace = false): self;
     
@@ -418,7 +379,6 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      *
      * @param callable $handler
      * @param bool $replace when true then replace all existing handlers, when false then add handler to stack
-     * @return $this
      */
     public function onSuccess(callable $handler, bool $replace = false): self;
     
@@ -428,7 +388,6 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      *
      * @param callable $handler
      * @param bool $replace when true then replace all existing handlers, when false then add handler to stack
-     * @return $this
      */
     public function onFinish(callable $handler, bool $replace = false): self;
     
@@ -442,6 +401,11 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
      * @return void
      */
     public function run(): void;
+    
+    /**
+     * Feed stream recusrively with its own output.
+     */
+    public function loop(): StreamPipe;
     
     /**
      * Tell if element occurs in stream.
@@ -474,21 +438,29 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
     public function hasOnly(array $values, int $mode = Check::VALUE): Result;
     
     /**
+     * Tell if stream is not empty.
+     *
      * @return Result
      */
     public function isNotEmpty(): Result;
     
     /**
+     * Tell if stream is empty.
+     *
      * @return Result
      */
     public function isEmpty(): Result;
     
     /**
+     * Count elements in stream.
+     *
      * @return Result
      */
     public function count(): Result;
     
     /**
+     * Return first element in stream which satisfies given predicate.
+     *
      * @param Predicate|Filter|callable|mixed $predicate
      * @param int $mode
      * @return Result found Item or null when element was not found
@@ -496,12 +468,16 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
     public function find($predicate, int $mode = Check::VALUE): Result;
     
     /**
+     * Return first available element from stream.
+     *
      * @param callable|mixed|null $orElse (null by default)
      * @return Result first value or default when stream is empty
      */
     public function first($orElse = null): Result;
     
     /**
+     * Return last element from stream.
+     *
      * @param callable|mixed|null $orElse (null by default)
      * @return Result last value from stream, or default when stream is empty
      */
@@ -522,6 +498,8 @@ interface StreamApi extends ResultCaster, \IteratorAggregate, StreamPipe
     public function fold($initial, $reducer): Result;
     
     /**
+     * Collect all elements from stream.
+     *
      * @return Result
      */
     public function collect(): Result;

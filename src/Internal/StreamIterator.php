@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Stream;
 
-final class StreamIterator extends Collaborator implements \Iterator
+final class StreamIterator extends StreamPipe implements \Iterator
 {
     use StubMethods;
     

@@ -2,9 +2,12 @@
 
 namespace FiiSoft\Jackdaw\Filter\Internal;
 
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Number\Equal;
 use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual;
 use FiiSoft\Jackdaw\Filter\Number\GreaterThan;
+use FiiSoft\Jackdaw\Filter\Number\IsEven;
+use FiiSoft\Jackdaw\Filter\Number\IsOdd;
 use FiiSoft\Jackdaw\Filter\Number\LessOrEqual;
 use FiiSoft\Jackdaw\Filter\Number\LessThan;
 use FiiSoft\Jackdaw\Filter\Number\NotEqual;
@@ -54,5 +57,15 @@ final class NumberFactory
     public function ge($value): NumberFilter
     {
         return new GreaterOrEqual($value);
+    }
+    
+    public function isEven(): Filter
+    {
+        return new IsEven();
+    }
+    
+    public function isOdd(): Filter
+    {
+        return new IsOdd();
     }
 }

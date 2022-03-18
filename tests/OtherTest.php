@@ -4,10 +4,8 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
-use SplMinHeap;
+use SplHeap;
 
 final class OtherTest extends TestCase
 {
@@ -59,9 +57,9 @@ final class OtherTest extends TestCase
         self::assertFalse($obj->offsetExists('c'));
     }
     
-    public function test_how_SplMinHeap_acts(): void
+    public function test_how_SplHeap_acts(): void
     {
-        $heap = new class extends SplMinHeap {
+        $heap = new class extends SplHeap {
             protected function compare($value1, $value2) {
                 return $value2 <=> $value1;
             }
@@ -75,10 +73,12 @@ final class OtherTest extends TestCase
         self::assertSame([1, 2, 3, 4, 5, 6, 7, 8, 9], \iterator_to_array($heap, false));
         
         self::assertEmpty(\iterator_to_array($heap, false));
-        
-        $heap->rewind();
-        self::assertEmpty(\iterator_to_array($heap, false));
     
+        self::assertSame(0, $heap->count());
+        $heap->rewind();
+        self::assertSame(0, $heap->count());
+        
+        self::assertEmpty(\iterator_to_array($heap, false));
         self::assertFalse($heap->isCorrupted());
         
         foreach ([6,2,8,4,5,9,1,7,3] as $value) {
@@ -102,6 +102,56 @@ final class OtherTest extends TestCase
         
         self::assertSame(1, $heap->extract());
         self::assertSame(8, $heap->count());
+    }
+    
+    public function test_reversed_limited_sort_with_SplHeap(): void
+    {
+        $heap = new class extends SplHeap {
+            public function compare($value2, $value1) {
+                return $value1 <=> $value2;
+            }
+        };
+    
+        foreach (['b', 'a', 'd'] as $value) {
+            $heap->insert($value);
+        }
+    
+        foreach (['c', 'e'] as $value) {
+            if ($heap->compare($value, $heap->top()) < 0) {
+                $heap->extract();
+                $heap->insert($value);
+            }
+        }
+    
+        self::assertSame(3, $heap->count());
+        $result = \array_reverse(\iterator_to_array($heap, false));
+        
+        self::assertSame(['e', 'd', 'c'], $result);
+    }
+    
+    public function test_straight_limited_sort_with_SplHeap(): void
+    {
+        $heap = new class extends SplHeap {
+            public function compare($value1, $value2) {
+                return $value1 <=> $value2;
+            }
+        };
+    
+        foreach (['b', 'a', 'd'] as $value) {
+            $heap->insert($value);
+        }
+    
+        foreach (['c', 'e'] as $value) {
+            if ($heap->compare($value, $heap->top()) < 0) {
+                $heap->extract();
+                $heap->insert($value);
+            }
+        }
+    
+        self::assertSame(3, $heap->count());
+        $result = \array_reverse(\iterator_to_array($heap, false));
+        
+        self::assertSame(['a', 'b', 'c'], $result);
     }
     
     public function test_what_is_type_of_php_int_max_divided_by_small_number(): void

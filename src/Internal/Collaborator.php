@@ -3,26 +3,13 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Operation\Operation;
+use FiiSoft\Jackdaw\Producer\Producer;
 
-abstract class Collaborator extends BaseStreamPipe
+abstract class Collaborator extends StreamPipe
 {
-    /**
-     * @param Operation $operation
-     * @param Item[] $items
-     * @return void
-     */
-    abstract protected function restartFrom(Operation $operation, array $items): void;
+    abstract protected function restartWith(Producer $producer, Operation $operation): void;
     
-    /**
-     * @param Operation $operation
-     * @param Item[] $items
-     * @return void
-     */
-    abstract protected function continueFrom(Operation $operation, array $items): void;
+    abstract protected function continueWith(Producer $producer, Operation $operation): void;
     
     abstract protected function limitReached(Operation $operation): void;
-    
-    abstract protected function streamIsEmpty(): void;
-    
-    abstract protected function finish(): void;
 }

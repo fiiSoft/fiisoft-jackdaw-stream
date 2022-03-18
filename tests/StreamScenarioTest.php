@@ -531,4 +531,44 @@ final class StreamScenarioTest extends TestCase
         self::assertSame($expected, Stream::from($data)->best(3)->reverse()->toArray());
         self::assertSame($expected, Stream::from($data)->worst(3)->toArray());
     }
+    
+    public function test_scenario_34(): void
+    {
+        $rowset = [
+            ['id' => 7, 'name' => 'Sue', 'age' => 17, 'sex' => 'female'],
+            ['id' => 2, 'name' => 'Kate', 'age' => 35, 'sex' => 'female'],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26, 'sex' => 'male'],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 30, 'sex' => 'female'],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26, 'sex' => 'male'],
+        ];
+        
+        $result = Stream::from($rowset)
+            ->filterBy('age', Filters::greaterOrEqual(50))
+            ->tail(2)
+            ->extract('name')
+            ->toArray();
+        
+        self::assertEmpty($result);
+    }
+    
+    public function test_scenario_35(): void
+    {
+        //given
+        $counter = Consumers::counter();
+        
+        $stream = Stream::from($this->rowsetDataset());
+        $stream->filterBy('age', Filters::greaterOrEqual(40));
+        $stream->filterBy('name', Filters::onlyIn(['Chris', 'Mike']));
+        $stream->call($counter);
+        $stream->extract('age');
+        
+        $result = $stream->reduce(Reducers::average(0));
+        
+        //when
+        $result->run();
+        
+        //then
+        self::assertSame(3, $counter->count());
+        self::assertSame(53.0, $result->get());
+    }
 }

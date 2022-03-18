@@ -5,6 +5,7 @@ namespace FiiSoft\Jackdaw\Operation;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 
 final class Reverse extends BaseOperation
 {
@@ -18,10 +19,7 @@ final class Reverse extends BaseOperation
     
     public function streamingFinished(Signal $signal): bool
     {
-        $items = \array_reverse($this->items);
-        $this->items = [];
-        
-        $signal->restartFrom($this->next, $items);
+        $signal->restartWith(new ReverseItemsIterator($this->items), $this->next);
         
         return true;
     }

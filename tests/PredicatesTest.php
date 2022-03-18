@@ -54,14 +54,14 @@ final class PredicatesTest extends TestCase
         return [
             [Predicates::getAdapter(5)],
             [Predicates::getAdapter([5, 6])],
-            [Predicates::getAdapter(Filters::equal(5))],
+            [Predicates::getAdapter(Filters::same(5))],
             [Predicates::getAdapter(static fn(int $value): bool => $value === 5)],
         ];
     }
     
     public function test_Filter_can_be_use_as_Predicate(): void
     {
-        self::assertInstanceOf(FilterAdapter::class, Predicates::getAdapter(Filters::equal(5)));
+        self::assertInstanceOf(FilterAdapter::class, Predicates::getAdapter(Filters::same(5)));
     }
     
     public function test_array_as_InArray_predicate(): void

@@ -2,12 +2,12 @@
 
 namespace FiiSoft\Jackdaw;
 
+use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Result;
 use FiiSoft\Jackdaw\Internal\StreamApi;
 use FiiSoft\Jackdaw\Internal\StreamCollection;
-use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 
@@ -17,26 +17,26 @@ final class StreamMaker implements StreamApi
     private $factory;
     
     /**
-     * @param Producer|\Iterator|array|callable ...$elements
-     * @return StreamApi
+     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array|scalar ...$elements
+     * @return self
      */
-    public static function of(...$elements): StreamApi
+    public static function of(...$elements): self
     {
         return self::from(Producers::from($elements));
     }
     
     /**
-     * @param Producer|\Iterator|array|callable $factory callable MUST return StreamApi
-     * @return StreamApi
+     * @param Producer|\Iterator|array|callable $factory callable MUST return Stream
+     * @return self
      */
-    public static function from($factory): StreamApi
+    public static function from($factory): self
     {
         if (\is_array($factory)) {
-            $callable = static fn() => Stream::from($factory);
+            $callable = static fn(): Stream => Stream::from($factory);
         } elseif ($factory instanceof Producer) {
-            $callable = static fn() => Stream::from(clone $factory);
+            $callable = static fn(): Stream => Stream::from(clone $factory);
         } elseif ($factory instanceof \Iterator) {
-            $callable = static fn() => Stream::from(clone $factory);
+            $callable = static fn(): Stream => Stream::from(clone $factory);
         } elseif (\is_callable($factory)) {
             $callable = $factory;
         } else {
@@ -46,20 +46,20 @@ final class StreamMaker implements StreamApi
         return new self($callable);
     }
     
-    public static function empty(): StreamApi
+    public static function empty(): self
     {
-        return self::from([]);
+        return self::from(static fn(): Stream => Stream::empty());
     }
     
     /**
-     * @param callable $factory this callable MUST return new StreamApi instance every time
+     * @param callable $factory this callable MUST return new Stream instance every time
      */
     public function __construct(callable $factory)
     {
         $this->factory = $factory;
     }
     
-    private function make(): StreamApi
+    private function make(): Stream
     {
         $factory = $this->factory;
         return $factory();
@@ -68,7 +68,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function notNull(): StreamApi
+    public function notNull(): Stream
     {
         return $this->make()->notNull();
     }
@@ -76,7 +76,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function lessOrEqual($value): StreamApi
+    public function lessOrEqual($value): Stream
     {
         return $this->make()->lessOrEqual($value);
     }
@@ -84,7 +84,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function filter($filter, int $mode = Check::VALUE): StreamApi
+    public function filter($filter, int $mode = Check::VALUE): Stream
     {
         return $this->make()->filter($filter, $mode);
     }
@@ -92,7 +92,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function filterBy($field, $filter): StreamApi
+    public function filterBy($field, $filter): Stream
     {
         return $this->make()->filterBy($field, $filter);
     }
@@ -100,7 +100,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function skip(int $offset): StreamApi
+    public function skip(int $offset): Stream
     {
         return $this->make()->skip($offset);
     }
@@ -108,7 +108,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function call(...$consumers): StreamApi
+    public function call(...$consumers): Stream
     {
         return $this->make()->call(...$consumers);
     }
@@ -116,7 +116,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function callOnce($consumer): StreamApi
+    public function callOnce($consumer): Stream
     {
         return $this->make()->callOnce($consumer);
     }
@@ -124,7 +124,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function callMax(int $times, $consumer): StreamApi
+    public function callMax(int $times, $consumer): Stream
     {
         return $this->make()->callMax($times, $consumer);
     }
@@ -132,7 +132,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function callWhen($condition, $consumer, $elseConsumer = null): StreamApi
+    public function callWhen($condition, $consumer, $elseConsumer = null): Stream
     {
         return $this->make()->callWhen($condition, $consumer, $elseConsumer);
     }
@@ -140,7 +140,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function notEmpty(): StreamApi
+    public function notEmpty(): Stream
     {
         return $this->make()->notEmpty();
     }
@@ -148,7 +148,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function without(array $values, int $mode = Check::VALUE): StreamApi
+    public function without(array $values, int $mode = Check::VALUE): Stream
     {
         return $this->make()->without($values, $mode);
     }
@@ -156,7 +156,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function lessThan($value): StreamApi
+    public function lessThan($value): Stream
     {
         return $this->make()->lessThan($value);
     }
@@ -164,7 +164,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function greaterOrEqual($value): StreamApi
+    public function greaterOrEqual($value): Stream
     {
         return $this->make()->greaterOrEqual($value);
     }
@@ -172,7 +172,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function onlyNumeric(): StreamApi
+    public function onlyNumeric(): Stream
     {
         return $this->make()->onlyNumeric();
     }
@@ -180,7 +180,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function onlyIntegers(): StreamApi
+    public function onlyIntegers(): Stream
     {
         return $this->make()->onlyIntegers();
     }
@@ -188,7 +188,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function onlyStrings(): StreamApi
+    public function onlyStrings(): Stream
     {
         return $this->make()->onlyStrings();
     }
@@ -196,7 +196,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function map($mapper): StreamApi
+    public function map($mapper): Stream
     {
         return $this->make()->map($mapper);
     }
@@ -204,7 +204,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function mapField($field, $mapper): StreamApi
+    public function mapField($field, $mapper): Stream
     {
         return $this->make()->mapField($field, $mapper);
     }
@@ -212,7 +212,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function mapFieldWhen($field, $condition, $mapper, $elseMapper = null): StreamApi
+    public function mapFieldWhen($field, $condition, $mapper, $elseMapper = null): Stream
     {
         return $this->make()->mapFieldWhen($field, $condition, $mapper, $elseMapper);
     }
@@ -220,7 +220,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function mapWhen($condition, $mapper, $elseMapper = null): StreamApi
+    public function mapWhen($condition, $mapper, $elseMapper = null): Stream
     {
         return $this->make()->mapWhen($condition, $mapper, $elseMapper);
     }
@@ -228,7 +228,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function mapKey($mapper): StreamApi
+    public function mapKey($mapper): Stream
     {
         return $this->make()->mapKey($mapper);
     }
@@ -236,7 +236,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function castToInt($fields = null): StreamApi
+    public function castToInt($fields = null): Stream
     {
         return $this->make()->castToInt($fields);
     }
@@ -244,7 +244,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function castToFloat($fields = null): StreamApi
+    public function castToFloat($fields = null): Stream
     {
         return $this->make()->castToFloat($fields);
     }
@@ -252,7 +252,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function castToString($fields = null): StreamApi
+    public function castToString($fields = null): Stream
     {
         return $this->make()->castToString($fields);
     }
@@ -260,7 +260,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function castToBool($fields = null): StreamApi
+    public function castToBool($fields = null): Stream
     {
         return $this->make()->castToBool($fields);
     }
@@ -268,7 +268,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function greaterThan($value): StreamApi
+    public function greaterThan($value): Stream
     {
         return $this->make()->greaterThan($value);
     }
@@ -276,7 +276,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function collectIn($collector, bool $preserveKeys = false): StreamApi
+    public function collectIn($collector, bool $preserveKeys = false): Stream
     {
         return $this->make()->collectIn($collector, $preserveKeys);
     }
@@ -284,7 +284,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function collectKeys($collector): StreamApi
+    public function collectKeys($collector): Stream
     {
         return $this->make()->collectKeys($collector);
     }
@@ -292,7 +292,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function onlyWith($keys, bool $allowNulls = false): StreamApi
+    public function onlyWith($keys, bool $allowNulls = false): Stream
     {
         return $this->make()->onlyWith($keys, $allowNulls);
     }
@@ -300,7 +300,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function only(array $values, int $mode = Check::VALUE): StreamApi
+    public function only(array $values, int $mode = Check::VALUE): Stream
     {
         return $this->make()->only($values, $mode);
     }
@@ -308,7 +308,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function omit($filter, int $mode = Check::VALUE): StreamApi
+    public function omit($filter, int $mode = Check::VALUE): Stream
     {
         return $this->make()->omit($filter, $mode);
     }
@@ -316,7 +316,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function limit(int $limit): StreamApi
+    public function limit(int $limit): Stream
     {
         return $this->make()->limit($limit);
     }
@@ -324,7 +324,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function join($producer): StreamApi
+    public function join($producer): Stream
     {
         return $this->make()->join($producer);
     }
@@ -332,7 +332,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function unique($comparator = null, int $mode = Check::VALUE): StreamApi
+    public function unique($comparator = null, int $mode = Check::VALUE): Stream
     {
         return $this->make()->unique($comparator, $mode);
     }
@@ -340,7 +340,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function reindex(): StreamApi
+    public function reindex(): Stream
     {
         return $this->make()->reindex();
     }
@@ -348,7 +348,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function flip(): StreamApi
+    public function flip(): Stream
     {
         return $this->make()->flip();
     }
@@ -356,7 +356,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function chunk(int $size, bool $preserveKeys = false): StreamApi
+    public function chunk(int $size, bool $preserveKeys = false): Stream
     {
         return $this->make()->chunk($size, $preserveKeys);
     }
@@ -364,12 +364,12 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function chunkAssoc(int $size): StreamApi
+    public function chunkAssoc(int $size): Stream
     {
         return $this->make()->chunk($size, true);
     }
     
-    public function aggregate(array $keys): StreamApi
+    public function aggregate(array $keys): Stream
     {
         return $this->make()->aggregate($keys);
     }
@@ -377,7 +377,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function append($field, $mapper): StreamApi
+    public function append($field, $mapper): Stream
     {
         return $this->make()->append($field, $mapper);
     }
@@ -385,7 +385,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function complete($field, $mapper): StreamApi
+    public function complete($field, $mapper): Stream
     {
         return $this->make()->complete($field, $mapper);
     }
@@ -393,7 +393,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function moveTo($field): StreamApi
+    public function moveTo($field): Stream
     {
         return $this->make()->moveTo($field);
     }
@@ -401,7 +401,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function extract($fields, $orElse = null): StreamApi
+    public function extract($fields, $orElse = null): Stream
     {
         return $this->make()->extract($fields, $orElse);
     }
@@ -409,7 +409,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function remove(...$fields): StreamApi
+    public function remove(...$fields): Stream
     {
         return $this->make()->remove(...$fields);
     }
@@ -417,7 +417,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function split(string $separator = ' '): StreamApi
+    public function split(string $separator = ' '): Stream
     {
         return $this->make()->split($separator);
     }
@@ -425,7 +425,23 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function scan($initial, $reducer): StreamApi
+    public function concat(string $separtor = ' '): Stream
+    {
+        return $this->make()->concat($separtor);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function tokenize(string $tokens = ' '): Stream
+    {
+        return $this->make()->tokenize($tokens);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function scan($initial, $reducer): Stream
     {
         return $this->make()->scan($initial, $reducer);
     }
@@ -433,7 +449,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function flat(int $level = 0): StreamApi
+    public function flat(int $level = 0): Stream
     {
         return $this->make()->flat($level);
     }
@@ -441,7 +457,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function flatMap($mapper, int $level = 0): StreamApi
+    public function flatMap($mapper, int $level = 0): Stream
     {
         return $this->make()->flatMap($mapper, $level);
     }
@@ -449,7 +465,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function sortBy(...$fields): StreamApi
+    public function sortBy(...$fields): Stream
     {
         return $this->make()->sortBy(...$fields);
     }
@@ -457,7 +473,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function sort($comparator = null, int $mode = Check::VALUE): StreamApi
+    public function sort($comparator = null, int $mode = Check::VALUE): Stream
     {
         return $this->make()->sort($comparator, $mode);
     }
@@ -465,7 +481,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function best(int $limit, $comparator = null, int $mode = Check::VALUE): StreamApi
+    public function best(int $limit, $comparator = null, int $mode = Check::VALUE): Stream
     {
         return $this->make()->best($limit, $comparator, $mode);
     }
@@ -473,7 +489,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function rsort($comparator = null, int $mode = Check::VALUE): StreamApi
+    public function rsort($comparator = null, int $mode = Check::VALUE): Stream
     {
         return $this->make()->rsort($comparator, $mode);
     }
@@ -481,7 +497,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function worst(int $limit, $comparator = null, int $mode = Check::VALUE): StreamApi
+    public function worst(int $limit, $comparator = null, int $mode = Check::VALUE): Stream
     {
         return $this->make()->worst($limit, $comparator, $mode);
     }
@@ -489,7 +505,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function reverse(): StreamApi
+    public function reverse(): Stream
     {
         return $this->make()->reverse();
     }
@@ -497,7 +513,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function shuffle(): StreamApi
+    public function shuffle(): Stream
     {
         return $this->make()->shuffle();
     }
@@ -505,7 +521,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function feed(StreamPipe $stream): StreamApi
+    public function feed(StreamPipe $stream): Stream
     {
         return $this->make()->feed($stream);
     }
@@ -513,7 +529,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function while($condition, int $mode = Check::VALUE): StreamApi
+    public function while($condition, int $mode = Check::VALUE): Stream
     {
         return $this->make()->while($condition, $mode);
     }
@@ -521,7 +537,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function until($condition, int $mode = Check::VALUE): StreamApi
+    public function until($condition, int $mode = Check::VALUE): Stream
     {
         return $this->make()->until($condition, $mode);
     }
@@ -529,7 +545,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function tail(int $numOfItems): StreamApi
+    public function tail(int $numOfItems): Stream
     {
         return $this->make()->tail($numOfItems);
     }
@@ -537,7 +553,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function onError($handler, bool $replace = false): StreamApi
+    public function onError($handler, bool $replace = false): Stream
     {
         return $this->make()->onError($handler, $replace);
     }
@@ -545,7 +561,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function onSuccess(callable $handler, bool $replace = false): StreamApi
+    public function onSuccess(callable $handler, bool $replace = false): Stream
     {
         return $this->make()->onSuccess($handler, $replace);
     }
@@ -553,7 +569,7 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function onFinish(callable $handler, bool $replace = false): StreamApi
+    public function onFinish(callable $handler, bool $replace = false): Stream
     {
         return $this->make()->onFinish($handler, $replace);
     }
@@ -729,5 +745,13 @@ final class StreamMaker implements StreamApi
     public function run(): void
     {
         $this->make()->run();
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function loop(): StreamPipe
+    {
+        return $this->make()->loop();
     }
 }

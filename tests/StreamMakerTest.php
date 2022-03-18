@@ -8,16 +8,16 @@ use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
-use FiiSoft\Jackdaw\Internal\StreamApi;
 use FiiSoft\Jackdaw\Producer\Generator\SequentialInt;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\StreamMaker;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class StreamMakerTest extends TestCase
 {
-    private StreamApi $stream;
+    private StreamMaker $stream;
     
     protected function setUp(): void
     {
@@ -646,5 +646,32 @@ class StreamMakerTest extends TestCase
         $this->stream->onError(static fn() => null)->callOnce(static function () {
             throw new \RuntimeException('error');
         })->run();
+    }
+    
+    public function test_concat(): void
+    {
+        $stream = StreamMaker::of([[1,2]], [[3,4]]);
+        
+        self::assertSame(['1,2', '3,4'], $stream->concat(',')->toArray());
+        self::assertSame(['1 2', '3 4'], $stream->concat(' ')->toArray());
+    }
+    
+    public function test_tokenize(): void
+    {
+        $result = StreamMaker::from(['first string', 'second string'])->tokenize()->toArray();
+        
+        self::assertSame(['first', 'string', 'second', 'string'], $result);
+    }
+    
+    public function test_loop(): void
+    {
+        $this->expectException(RuntimeException::class);
+        
+        StreamMaker::from([1])
+            ->feed(StreamMaker::from([1])->loop())
+            ->callOnce(static function () {
+                throw new \RuntimeException();
+            })
+            ->run();
     }
 }

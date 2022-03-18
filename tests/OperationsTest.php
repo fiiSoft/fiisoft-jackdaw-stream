@@ -13,7 +13,6 @@ use FiiSoft\Jackdaw\Operation\SendToMax;
 use FiiSoft\Jackdaw\Operation\SortLimited;
 use FiiSoft\Jackdaw\Operation\State\SortLimited\BufferFull;
 use FiiSoft\Jackdaw\Operation\Tail;
-use FiiSoft\Jackdaw\Operation\Terminating\First;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
 use SplMaxHeap;
@@ -62,10 +61,11 @@ final class OperationsTest extends TestCase
     
     public function test_Flat_has_limit_of_levels(): void
     {
-        $flat = new Flat(Flat::MAX_LEVEL - 1);
-        $flat->mergeWith(new Flat());
+        $flat = new Flat();
+        $maxLevel = $flat->maxLevel();
         
-        self::assertSame(Flat::MAX_LEVEL, $flat->maxLevel());
+        $flat->mergeWith(new Flat());
+        self::assertSame($maxLevel, $flat->maxLevel());
     }
     
     public function test_Flat_does_not_pass_signal_when_iterable_is_empty(): void

@@ -4,22 +4,17 @@ namespace FiiSoft\Jackdaw\Producer;
 
 use FiiSoft\Jackdaw\Internal\Item;
 
-final class MultiProducer implements Producer
+class MultiProducer implements Producer
 {
     /** @var Producer[] */
-    private array $producers = [];
+    private array $producers;
     
-    /**
-     * @param Producer ...$producers
-     */
-    public function __construct(...$producers)
+    public function __construct(Producer ...$producers)
     {
-        foreach ($producers as $producer) {
-            $this->addProducer($producer);
-        }
+        $this->producers = $producers;
     }
     
-    public function addProducer(Producer $producer): void
+    final public function addProducer(Producer $producer): void
     {
         $this->producers[] = $producer;
     }

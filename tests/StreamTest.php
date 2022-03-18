@@ -1961,4 +1961,12 @@ final class StreamTest extends TestCase
         
         self::assertSame([1, 2, 3, 4], $collector->toArray());
     }
+    
+    public function test_Tokenize_throws_exception_when_value_is_not_string(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Operation tokenize requires string value, but got integer');
+        
+        Stream::from([1, 2, 3])->tokenize(' ')->run();
+    }
 }

@@ -11,9 +11,8 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Limitable;
 use FiiSoft\Jackdaw\Operation\State\SortLimited\BufferNotFull;
 use FiiSoft\Jackdaw\Operation\State\SortLimited\State;
+use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use SplHeap;
-use SplMaxHeap;
-use SplMinHeap;
 
 final class SortLimited extends BaseOperation implements Limitable
 {
@@ -21,7 +20,7 @@ final class SortLimited extends BaseOperation implements Limitable
     private State $state;
     
     /** @var SplHeap<Item> */
-    private SplHeap $items;
+    private SplHeap $heap;
     
     private bool $reversed;
     private int $mode;
@@ -58,15 +57,15 @@ final class SortLimited extends BaseOperation implements Limitable
     
     public function streamingFinished(Signal $signal): bool
     {
-        $signal->restartFrom($this->next, \array_reverse(\iterator_to_array($this->items, false)));
+        $signal->restartWith(new ReverseItemsIterator(\iterator_to_array($this->heap, false)), $this->next);
         
         return true;
     }
     
     private function prepareToWork(): void
     {
-        $this->items = $this->createHeap();
-        $this->state = new BufferNotFull($this, $this->items, $this->limit);
+        $this->heap = $this->createHeap();
+        $this->state = new BufferNotFull($this, $this->heap, $this->limit);
     }
     
     private function createHeap(): SplHeap
@@ -75,7 +74,7 @@ final class SortLimited extends BaseOperation implements Limitable
             case Check::VALUE:
                 if ($this->comparator === null) {
                     if ($this->reversed) {
-                        return new class extends SplMinHeap {
+                        return new class extends SplHeap {
                             /**
                              * @param Item $value1
                              * @param Item $value2
@@ -87,7 +86,7 @@ final class SortLimited extends BaseOperation implements Limitable
                         };
                     }
     
-                    return new class extends SplMaxHeap {
+                    return new class extends SplHeap {
                         /**
                          * @param Item $value1
                          * @param Item $value2
@@ -100,7 +99,7 @@ final class SortLimited extends BaseOperation implements Limitable
                 }
     
                 if ($this->reversed) {
-                    return new class ($this->comparator) extends SplMinHeap {
+                    return new class ($this->comparator) extends SplHeap {
                         private Comparator $comparator;
         
                         public function __construct(Comparator $comparator) {
@@ -118,7 +117,7 @@ final class SortLimited extends BaseOperation implements Limitable
                     };
                 }
     
-                return new class ($this->comparator) extends SplMaxHeap {
+                return new class ($this->comparator) extends SplHeap {
                     private Comparator $comparator;
         
                     public function __construct(Comparator $comparator) {
@@ -138,7 +137,7 @@ final class SortLimited extends BaseOperation implements Limitable
             case Check::KEY:
                 if ($this->comparator === null) {
                     if ($this->reversed) {
-                        return new class extends SplMinHeap {
+                        return new class extends SplHeap {
                             /**
                              * @param Item $value1
                              * @param Item $value2
@@ -150,7 +149,7 @@ final class SortLimited extends BaseOperation implements Limitable
                         };
                     }
     
-                    return new class extends SplMaxHeap {
+                    return new class extends SplHeap {
                         /**
                          * @param Item $value1
                          * @param Item $value2
@@ -163,7 +162,7 @@ final class SortLimited extends BaseOperation implements Limitable
                 }
     
                 if ($this->reversed) {
-                    return new class ($this->comparator) extends SplMinHeap {
+                    return new class ($this->comparator) extends SplHeap {
                         private Comparator $comparator;
         
                         public function __construct(Comparator $comparator) {
@@ -181,7 +180,7 @@ final class SortLimited extends BaseOperation implements Limitable
                     };
                 }
     
-                return new class ($this->comparator) extends SplMaxHeap {
+                return new class ($this->comparator) extends SplHeap {
                     private Comparator $comparator;
         
                     public function __construct(Comparator $comparator) {
@@ -201,7 +200,7 @@ final class SortLimited extends BaseOperation implements Limitable
             default:
                 if ($this->comparator === null) {
                     if ($this->reversed) {
-                        return new class extends SplMinHeap {
+                        return new class extends SplHeap {
                             /**
                              * @param Item $value1
                              * @param Item $value2
@@ -213,7 +212,7 @@ final class SortLimited extends BaseOperation implements Limitable
                         };
                     }
     
-                    return new class extends SplMaxHeap {
+                    return new class extends SplHeap {
                         /**
                          * @param Item $value1
                          * @param Item $value2
@@ -226,7 +225,7 @@ final class SortLimited extends BaseOperation implements Limitable
                 }
     
                 if ($this->reversed) {
-                    return new class ($this->comparator) extends SplMinHeap {
+                    return new class ($this->comparator) extends SplHeap {
                         private Comparator $comparator;
         
                         public function __construct(Comparator $comparator) {
@@ -246,7 +245,7 @@ final class SortLimited extends BaseOperation implements Limitable
                     };
                 }
     
-                return new class ($this->comparator) extends SplMaxHeap {
+                return new class ($this->comparator) extends SplHeap {
                     private Comparator $comparator;
         
                     public function __construct(Comparator $comparator) {

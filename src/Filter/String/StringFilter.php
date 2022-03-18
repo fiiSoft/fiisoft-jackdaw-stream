@@ -1,25 +1,21 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Filter\Number;
+namespace FiiSoft\Jackdaw\Filter\String;
 
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 
-abstract class NumberFilter implements Filter
+abstract class StringFilter implements Filter
 {
-    /** @var float|int */
-    protected $value;
+    protected string $value;
+    protected int $length;
+    protected bool $ignoreCase;
     
-    /**
-     * @param float|int $value
-     */
-    public function __construct($value)
+    public function __construct(string $value, bool $ignoreCase = false)
     {
-        if (\is_int($value) || \is_float($value)) {
-            $this->value = $value;
-        } else {
-            throw new \InvalidArgumentException('Invalid param value');
-        }
+        $this->value = $value;
+        $this->length = \mb_strlen($value);
+        $this->ignoreCase = $ignoreCase;
     }
     
     public function isAllowed($value, $key, int $mode = Check::VALUE): bool
@@ -38,9 +34,5 @@ abstract class NumberFilter implements Filter
         }
     }
     
-    /**
-     * @param numeric|float|int $value
-     * @return bool
-     */
-    abstract protected function test($value): bool;
+    abstract protected function test(string $value): bool;
 }

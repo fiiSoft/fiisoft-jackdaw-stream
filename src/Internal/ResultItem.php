@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
 
-final class ResultItem implements Result
+final class ResultItem implements ResultApi
 {
     private ?Transformer $transformer = null;
     
@@ -21,12 +21,12 @@ final class ResultItem implements Result
     /** @var mixed */
     private $finalValue = null;
     
-    public static function createFound(Item $item, ?Transformer $transformer = null): Result
+    public static function createFound(Item $item, ?Transformer $transformer = null): self
     {
         return new self($item, null, $transformer);
     }
     
-    public static function createNotFound($default = null): Result
+    public static function createNotFound($default = null): self
     {
         return new self(null, $default);
     }
@@ -80,7 +80,7 @@ final class ResultItem implements Result
     /**
      * @inheritdoc
      */
-    public function transform($transformer): Result
+    public function transform($transformer): self
     {
         $this->transformer = Transformers::getAdapter($transformer);
         $this->prepareResult();

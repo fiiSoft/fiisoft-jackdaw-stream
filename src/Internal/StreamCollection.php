@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\StreamMaker;
 
 final class StreamCollection implements \Iterator
 {
-    /** @var StreamApi[] */
+    /** @var StreamMaker [] */
     private array $streams = [];
     
     private array $dataCollection;
@@ -20,9 +20,8 @@ final class StreamCollection implements \Iterator
     
     /**
      * @param string|int|bool $id remember that bool is casted to int (true=>1, false=>0)!
-     * @return StreamApi
      */
-    public function get($id): StreamApi
+    public function get($id): StreamMaker
     {
         if (\is_bool($id)) {
             $id = (int) $id;
@@ -45,7 +44,7 @@ final class StreamCollection implements \Iterator
         return $this->dataCollection;
     }
     
-    public function stream(): StreamApi
+    public function stream(): StreamMaker
     {
         return StreamMaker::from($this->dataCollection);
     }
@@ -67,7 +66,7 @@ final class StreamCollection implements \Iterator
         return \array_keys($this->dataCollection);
     }
     
-    public function current(): StreamApi
+    public function current(): StreamMaker
     {
         return $this->get(\current($this->keys));
     }
