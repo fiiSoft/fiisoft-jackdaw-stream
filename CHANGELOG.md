@@ -2,6 +2,12 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.7.0
+
+- added methods assert, trim to StreamApi
+- added optional param key to method StreamApi::moveTo
+- added new mappers: tokenize, trim
+
 ## 2.6.0 - incompatible changes!
 
 - changed first argument of Consumers::stdout

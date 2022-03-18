@@ -13,6 +13,7 @@ use FiiSoft\Jackdaw\Mapper\ToBool;
 use FiiSoft\Jackdaw\Mapper\ToFloat;
 use FiiSoft\Jackdaw\Mapper\ToInt;
 use FiiSoft\Jackdaw\Mapper\ToString;
+use FiiSoft\Jackdaw\Mapper\Trim;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use PHPUnit\Framework\TestCase;
 use stdClass;
@@ -264,12 +265,27 @@ final class MappersTest extends TestCase
         self::assertSame(['key' => [2, 3]], $mapper->map([2, 3], 'a'));
     }
     
+    public function test_MoveTo_creates_array_with_value_and_key_moved_to_fields(): void
+    {
+        $mapper = Mappers::moveTo('value', 'key');
+        
+        self::assertSame(['key' => 4, 'value' => 'foo'], $mapper->map('foo', 4));
+    }
+    
     public function test_MoveTo_throws_exception_when_param_field_is_invalid(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid param field');
         
         Mappers::moveTo('');
+    }
+    
+    public function test_MoveTo_throws_exception_when_param_key_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param key');
+    
+        Mappers::moveTo('field', '');
     }
     
     public function test_Round(): void
@@ -319,6 +335,9 @@ final class MappersTest extends TestCase
         
         self::assertInstanceOf(JsonDecode::class, Mappers::getAdapter('json_decode'));
         self::assertInstanceOf(JsonDecode::class, Mappers::getAdapter('\json_decode'));
+        
+        self::assertInstanceOf(Trim::class, Mappers::getAdapter('trim'));
+        self::assertInstanceOf(Trim::class, Mappers::getAdapter('\trim'));
         
         self::assertInstanceOf(ReducerAdapter::class, Mappers::getAdapter(Reducers::max()));
     }
@@ -381,5 +400,28 @@ final class MappersTest extends TestCase
         $this->expectExceptionMessage('Unable to reduce string because it is not iterable');
     
         Mappers::getAdapter(Reducers::max())->map('string', 1);
+    }
+    
+    public function test_Tokenize_changes_string_to_array(): void
+    {
+        $result = Mappers::tokenize(' ')->map(' this is   string to  tokenize  by space ', 1);
+        
+        self::assertSame(['this', 'is', 'string', 'to', 'tokenize', 'by', 'space'], $result);
+    }
+    
+    public function test_Tokenize_throws_exception_when_value_is_not_string(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Value must be a string to tokenize it');
+        
+        Mappers::tokenize()->map(5, 2);
+    }
+    
+    public function test_Trim_trims_strings_and_returns_non_strims_unafected(): void
+    {
+        $mapper = Mappers::trim();
+        
+        self::assertSame('foo', $mapper->map(' foo ', 1));
+        self::assertSame(5, $mapper->map(5, 1));
     }
 }

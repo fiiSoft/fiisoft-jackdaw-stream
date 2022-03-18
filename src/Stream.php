@@ -17,6 +17,7 @@ use FiiSoft\Jackdaw\Internal\StreamCollection;
 use FiiSoft\Jackdaw\Internal\StreamIterator;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Aggregate;
+use FiiSoft\Jackdaw\Operation\Assert;
 use FiiSoft\Jackdaw\Operation\Chunk;
 use FiiSoft\Jackdaw\Operation\CollectIn;
 use FiiSoft\Jackdaw\Operation\CollectKey;
@@ -24,6 +25,7 @@ use FiiSoft\Jackdaw\Operation\Filter;
 use FiiSoft\Jackdaw\Operation\FilterMany;
 use FiiSoft\Jackdaw\Operation\Flat;
 use FiiSoft\Jackdaw\Operation\Flip;
+use FiiSoft\Jackdaw\Operation\Internal\AssertionFailed;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Feed;
 use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
@@ -262,6 +264,22 @@ final class Stream extends Collaborator implements StreamApi
     public function onlyStrings(): self
     {
         return $this->filter(Filters::isString());
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function assert($filter, int $mode = Check::VALUE): self
+    {
+        return $this->chainOperation(new Assert($filter, $mode));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function trim(): self
+    {
+        return $this->map(Mappers::trim());
     }
     
     /**
@@ -558,9 +576,9 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function moveTo($field): self
+    public function moveTo($field, $key = null): self
     {
-        return $this->map(Mappers::moveTo($field));
+        return $this->map(Mappers::moveTo($field, $key));
     }
     
     /**
@@ -966,7 +984,7 @@ final class Stream extends Collaborator implements StreamApi
                 goto PROCESS_NEXT_ITEM;
             }
             
-        } catch (Interruption $e) {
+        } catch (Interruption|AssertionFailed $e) {
             throw $e;
         } catch (\Throwable $e) {
             foreach ($this->onErrorHandlers as $handler) {
@@ -1131,6 +1149,14 @@ final class Stream extends Collaborator implements StreamApi
             if ($this->last instanceof Flat) {
                 $this->last->mergeWith($next);
                 return false;
+            }
+            if ($this->last instanceof Map) {
+                $mapper = $this->last->mapper();
+                if ($mapper instanceof Mapper\Tokenize) {
+                    $this->last = $this->last->removeFromChain();
+                    $this->tokenize($mapper->tokens());
+                    return false;
+                }
             }
         } elseif ($next instanceof SendTo) {
             if ($this->last instanceof SendTo) {

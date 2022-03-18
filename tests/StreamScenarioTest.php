@@ -571,4 +571,26 @@ final class StreamScenarioTest extends TestCase
         self::assertSame(3, $counter->count());
         self::assertSame(53.0, $result->get());
     }
+    
+    public function test_scenario_36(): void
+    {
+        $result = Stream::from(['The quick brown fox', 'jumps over the lazy dog.'])
+            ->map(Mappers::tokenize(' .'))
+            ->flat()
+            ->toString(' ');
+        
+        self::assertSame('The quick brown fox jumps over the lazy dog', $result);
+    }
+    
+    public function test_scenario_37(): void
+    {
+        $result = Stream::from(['The quick brown fox', 'jumps over the lazy dog.'])
+            ->map('mb_strtolower')
+            ->map(Mappers::tokenize(' .'))
+            ->map(Reducers::longest())
+            ->sort('mb_strlen')
+            ->toString(' ');
+        
+        self::assertSame('quick jumps', $result);
+    }
 }

@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
+use FiiSoft\Jackdaw\Operation\Internal\AssertionFailed;
 use FiiSoft\Jackdaw\Producer\Generator\SequentialInt;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
@@ -673,5 +674,18 @@ class StreamMakerTest extends TestCase
                 throw new \RuntimeException();
             })
             ->run();
+    }
+    
+    public function test_trim(): void
+    {
+        self::assertSame('first,second', StreamMaker::from([' first', ' second '])->trim()->toString());
+    }
+    
+    public function test_assert(): void
+    {
+        $this->expectException(AssertionFailed::class);
+        $this->expectExceptionMessage('Element does not satisfy expectations. Mode: 1, value: 3, key: 2');
+        
+        $this->stream->assert(Filters::lessThan(3))->run();
     }
 }

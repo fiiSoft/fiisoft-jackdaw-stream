@@ -47,6 +47,9 @@ final class Mappers
                     case 'json_decode':
                     case '\json_decode':
                         return self::jsonDecode();
+                    case 'trim':
+                    case '\trim':
+                        return self::trim();
                     default:
                         //noop
                 }
@@ -178,11 +181,12 @@ final class Mappers
     
     /**
      * @param string|int $field
+     * @param string|int|null $key
      * @return MoveTo
      */
-    public static function moveTo($field): MoveTo
+    public static function moveTo($field, $key = null): MoveTo
     {
-        return new MoveTo($field);
+        return new MoveTo($field, $key);
     }
     
     /**
@@ -198,5 +202,15 @@ final class Mappers
     public static function round(int $precision = 2): Round
     {
         return new Round($precision);
+    }
+    
+    public static function tokenize(string $tokens = ' '): Tokenize
+    {
+        return new Tokenize($tokens);
+    }
+    
+    public static function trim(string $chars = " \t\n\r\0\x0B"): Trim
+    {
+        return new Trim($chars);
     }
 }

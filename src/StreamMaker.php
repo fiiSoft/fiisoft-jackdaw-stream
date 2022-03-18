@@ -2,12 +2,12 @@
 
 namespace FiiSoft\Jackdaw;
 
-use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Result;
 use FiiSoft\Jackdaw\Internal\StreamApi;
 use FiiSoft\Jackdaw\Internal\StreamCollection;
+use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 
@@ -191,6 +191,22 @@ final class StreamMaker implements StreamApi
     public function onlyStrings(): Stream
     {
         return $this->make()->onlyStrings();
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function assert($filter, int $mode = Check::VALUE): Stream
+    {
+        return $this->make()->assert($filter, $mode);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function trim(): Stream
+    {
+        return $this->make()->trim();
     }
     
     /**
@@ -393,9 +409,9 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function moveTo($field): Stream
+    public function moveTo($field, $key = null): Stream
     {
-        return $this->make()->moveTo($field);
+        return $this->make()->moveTo($field, $key);
     }
     
     /**

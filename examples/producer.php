@@ -17,7 +17,7 @@ $collatz = Stream::empty()
         static fn(int $n): int => $n >> 1,
         static fn(int $n): int => (3 * $n + 1)
     )
-    ->call(Consumers::usleep(125000))
+    ->call(Consumers::usleep(100000))
     ->loop();
 
-Stream::of(mt_rand(1, 100_000))->feed($collatz)->run();
+Stream::of(mt_rand(1, 1_000_000))->feed($collatz)->run();

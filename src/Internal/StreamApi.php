@@ -10,6 +10,7 @@ use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Handler\ErrorHandler;
 use FiiSoft\Jackdaw\Mapper\Mapper;
+use FiiSoft\Jackdaw\Operation\Internal\AssertionFailed;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
@@ -69,6 +70,23 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
      * Pass only strings
      */
     public function onlyStrings(): self;
+    
+    /**
+     * Assert that element in stream satisfies given requirements.
+     * If not, it throws non-catchable exception.
+     *
+     * @param Filter|Predicate|callable|mixed $filter
+     * @param int $mode
+     * @throws AssertionFailed
+     */
+    public function assert($filter, int $mode = Check::VALUE): self;
+    
+    /**
+     * Alias for map('trim').
+     *
+     * @return $this
+     */
+    public function trim(): self;
     
     /**
      * @param array $values
@@ -252,8 +270,9 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     
     /**
      * @param string|int $field
+     * @param string|int|null $key
      */
-    public function moveTo($field): self;
+    public function moveTo($field, $key = null): self;
     
     /**
      * @param array|string|int $fields
