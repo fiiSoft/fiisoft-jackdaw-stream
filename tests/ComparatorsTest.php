@@ -73,11 +73,11 @@ final class ComparatorsTest extends TestCase
         Comparators::sortBy([]);
     }
     
-    public function test_SortBy_throws_exception_when_fields_contains_not_string(): void
+    public function test_SortBy_throws_exception_when_fields_contains_invalid_value(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         
-        Comparators::sortBy([15]);
+        Comparators::sortBy([true]);
     }
     
     public function test_SortBy_compareAssoc_is_not_implemented_and_cannot_be_called(): void

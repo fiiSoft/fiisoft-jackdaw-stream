@@ -2,6 +2,15 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.8.0 - incompatible changes!
+
+- removed param limit from StreamApi::sortBy
+- behaviour of feed streams considerably changed - looped streams are now able to feed themselves with first value from theirs starting producer 
+- method StreamApi::sortBy can now accept integers
+- added optional param fetchMode to Producers::fromPDOStatement
+- added methods: omitBy, rename, remap, extractWhen, removeWhen to StreamApi
+- method StreamApi::loop accepts optional param bool to autostart iteration
+
 ## 2.7.0
 
 - added methods assert, trim to StreamApi

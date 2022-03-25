@@ -31,4 +31,9 @@ final class Map extends BaseOperation
     {
         return $this->mapper;
     }
+    
+    public function mergeWith(Map $other): bool
+    {
+        return $this->mapper->mergeWith($other->mapper);
+    }
 }

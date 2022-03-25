@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Filter\Internal;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\Number\Between;
 use FiiSoft\Jackdaw\Filter\Number\Equal;
 use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual;
 use FiiSoft\Jackdaw\Filter\Number\GreaterThan;
@@ -67,5 +68,14 @@ final class NumberFactory
     public function isOdd(): Filter
     {
         return new IsOdd();
+    }
+    
+    /**
+     * @param float|int $lower
+     * @param float|int $higher
+     */
+    public function between($lower, $higher): Filter
+    {
+        return new Between($lower, $higher);
     }
 }

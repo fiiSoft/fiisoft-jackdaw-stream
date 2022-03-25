@@ -3,9 +3,10 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
-final class Complete implements Mapper
+final class Complete extends BaseMapper
 {
     private Mapper $mapper;
     

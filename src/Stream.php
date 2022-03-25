@@ -15,6 +15,7 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamApi;
 use FiiSoft\Jackdaw\Internal\StreamCollection;
 use FiiSoft\Jackdaw\Internal\StreamIterator;
+use FiiSoft\Jackdaw\Mapper\Internal\ConditionalExtract;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Aggregate;
 use FiiSoft\Jackdaw\Operation\Assert;
@@ -301,6 +302,14 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function omitBy($field, $filter): self
+    {
+        return $this->omit(Filters::filterBy($field, $filter));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function omit($filter, int $mode = Check::VALUE): self
     {
         return $this->chainOperation(new Filter($filter, true, $mode));
@@ -336,6 +345,22 @@ final class Stream extends Collaborator implements StreamApi
     public function castToBool($fields = null): self
     {
         return $this->map(Mappers::toBool($fields));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function rename($before, $after): self
+    {
+        return $this->remap([$before => $after]);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function remap(array $keys): self
+    {
+        return $this->map(Mappers::remap($keys));
     }
     
     /**
@@ -453,11 +478,6 @@ final class Stream extends Collaborator implements StreamApi
      */
     public function sortBy(...$fields): self
     {
-        if (\count($fields) > 1 && \is_int($fields[\array_key_last($fields)])) {
-            $limit = \array_pop($fields);
-            return $this->best($limit, Comparators::sortBy($fields));
-        }
-        
         return $this->sort(Comparators::sortBy($fields));
     }
     
@@ -592,6 +612,14 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function extractWhen($filter, int $mode = Check::VALUE): self
+    {
+        return $this->map(new ConditionalExtract($filter, $mode));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function remove(...$fields): self
     {
         if (\count($fields) === 1 && \is_array($fields[0] ?? null)) {
@@ -599,6 +627,14 @@ final class Stream extends Collaborator implements StreamApi
         }
         
         return $this->map(Mappers::remove($fields));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function removeWhen($filter, int $mode = Check::VALUE): self
+    {
+        return $this->map(new ConditionalExtract($filter, $mode, true));
     }
     
     /**
@@ -921,9 +957,15 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function loop(): StreamPipe
+    public function loop(bool $run = false): StreamPipe
     {
-        return $this->feed($this);
+        $this->feed($this);
+    
+        if ($run) {
+            $this->run();
+        }
+        
+        return $this;
     }
     
     protected function finish(): void
@@ -1077,9 +1119,11 @@ final class Stream extends Collaborator implements StreamApi
                 return false;
             }
             if ($this->last instanceof Map) {
-                $mapMany = new MapMany($this->last, $next);
-                $this->last = $this->last->removeFromChain();
-                $this->chainOperation($mapMany);
+                if (!$this->last->mergeWith($next)) {
+                    $mapMany = new MapMany($this->last, $next);
+                    $this->last = $this->last->removeFromChain();
+                    $this->chainOperation($mapMany);
+                }
                 return false;
             }
         } elseif ($next instanceof Limit) {
@@ -1209,7 +1253,6 @@ final class Stream extends Collaborator implements StreamApi
         }
         
         $this->currentSource = $this->producer->feed($this->signal->item);
-        $this->currentSource->next();
     }
     
     private function finishSubstreems(): void

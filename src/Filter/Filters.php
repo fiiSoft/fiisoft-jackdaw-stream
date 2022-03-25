@@ -6,6 +6,10 @@ use FiiSoft\Jackdaw\Filter\Adapter\PredicateAdapter;
 use FiiSoft\Jackdaw\Filter\Internal\LengthFactory;
 use FiiSoft\Jackdaw\Filter\Internal\NumberFactory;
 use FiiSoft\Jackdaw\Filter\Internal\StringFactory;
+use FiiSoft\Jackdaw\Filter\Logic\FilterAND;
+use FiiSoft\Jackdaw\Filter\Logic\FilterNOT;
+use FiiSoft\Jackdaw\Filter\Logic\FilterOR;
+use FiiSoft\Jackdaw\Filter\Logic\FilterXOR;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 
@@ -52,7 +56,7 @@ final class Filters
     
         if (\is_object($filter)) {
             if ($filter instanceof Predicate) {
-                return self::predicateAdapter($filter);
+                return new PredicateAdapter($filter);
             }
             
             throw Helper::invalidParamException('filter', $filter);
@@ -182,11 +186,6 @@ final class Filters
         return new OnlyWith($keys, $allowNulls);
     }
     
-    public static function predicateAdapter(Predicate $predicate): PredicateAdapter
-    {
-        return new PredicateAdapter($predicate);
-    }
-    
     public static function string(): StringFactory
     {
         return StringFactory::instance();
@@ -205,5 +204,38 @@ final class Filters
     public static function endsWith(string $value, bool $ignoreCase = false): Filter
     {
         return self::string()->endsWith($value, $ignoreCase);
+    }
+    
+    /**
+     * @param Filter|Predicate|callable|mixed ...$filters
+     */
+    public static function AND(...$filters): FilterAND
+    {
+        return new FilterAND($filters);
+    }
+    
+    /**
+     * @param Filter|Predicate|callable|mixed ...$filters
+     */
+    public static function OR(...$filters): FilterOR
+    {
+        return new FilterOR($filters);
+    }
+    
+    /**
+     * @param Filter|Predicate|callable|mixed $first
+     * @param Filter|Predicate|callable|mixed $second
+     */
+    public static function XOR($first, $second): FilterXOR
+    {
+        return new FilterXOR($first, $second);
+    }
+    
+    /**
+     * @param Filter|Predicate|callable|mixed $filter
+     */
+    public static function NOT($filter): FilterNOT
+    {
+        return new FilterNOT($filter);
     }
 }

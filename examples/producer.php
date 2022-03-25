@@ -9,7 +9,7 @@ require_once  __DIR__ .'/../vendor/autoload.php';
 //run this:
 //> php producer.php | php consumer.php
 
-$collatz = Stream::empty()
+Stream::of(mt_rand(1, 1_000_000))
     ->call(Consumers::stdout())
     ->while(Filters::greaterThan(1))
     ->mapWhen(
@@ -18,6 +18,4 @@ $collatz = Stream::empty()
         static fn(int $n): int => (3 * $n + 1)
     )
     ->call(Consumers::usleep(100000))
-    ->loop();
-
-Stream::of(mt_rand(1, 1_000_000))->feed($collatz)->run();
+    ->loop(true);

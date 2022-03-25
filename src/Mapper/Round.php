@@ -3,13 +3,18 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
 
-final class Round implements Mapper
+final class Round extends BaseMapper
 {
     private int $precision;
     
     public function __construct(int $precision = 2)
     {
+        if ($precision < 0 || $precision > 16) {
+            throw new \InvalidArgumentException('Invalid param precision');
+        }
+        
         $this->precision = $precision;
     }
     
@@ -31,5 +36,18 @@ final class Round implements Mapper
         }
         
         throw new \LogicException('Unable to round non-number value '.Helper::typeOfParam($value));
+    }
+    
+    public function mergeWith(Mapper $other): bool
+    {
+        if ($other instanceof self) {
+            if ($other->precision < $this->precision) {
+                $this->precision = $other->precision;
+            }
+            
+            return true;
+        }
+        
+        return false;
     }
 }

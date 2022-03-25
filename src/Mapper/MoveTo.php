@@ -3,8 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
 
-final class MoveTo implements Mapper
+final class MoveTo extends BaseMapper
 {
     /** @var string|int */
     private $field;

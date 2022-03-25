@@ -2,7 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-final class Trim implements Mapper
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+
+final class Trim extends BaseMapper
 {
     private string $chars;
     
@@ -21,5 +23,15 @@ final class Trim implements Mapper
         }
         
         return $value;
+    }
+    
+    public function mergeWith(Mapper $other): bool
+    {
+        if ($other instanceof self) {
+            $this->chars = \implode(\array_unique(\mb_str_split($this->chars.$other->chars), \SORT_REGULAR));
+            return true;
+        }
+        
+        return false;
     }
 }

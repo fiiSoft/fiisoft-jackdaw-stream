@@ -107,9 +107,9 @@ final class Producers
         return new StreamAdapter($stream);
     }
     
-    public static function fromPDOStatement(\PDOStatement $statement): PDOStatementAdapter
+    public static function fromPDOStatement(\PDOStatement $statement, ?int $fetchMode = null): PDOStatementAdapter
     {
-        return new PDOStatementAdapter($statement);
+        return new PDOStatementAdapter($statement, $fetchMode);
     }
     
     public static function randomInt(int $min = 1, int $max = \PHP_INT_MAX, int $limit = \PHP_INT_MAX): RandomInt

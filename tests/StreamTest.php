@@ -337,6 +337,9 @@ final class StreamTest extends TestCase
             public function map($value, $key) {
                 return 2 * $value;
             }
+            public function mergeWith(Mapper $other): bool {
+                return false;
+            }
         };
         
         self::assertSame([2, 4, 6], Stream::from([1, 2, 3])->map($mapper)->toArray());
@@ -1709,26 +1712,6 @@ final class StreamTest extends TestCase
         self::assertSame([9, 8], Stream::from([6, 2, 8, 1, 7, 9, 2, 5, 4])->worst(2)->toArray());
     }
     
-    public function test_sortBy_limited(): void
-    {
-        $rowset = [
-            ['id' => 2, 'name' => 'Kate', 'age' => 35],
-            ['id' => 9, 'name' => 'Chris', 'age' => 26],
-            ['id' => 6, 'name' => 'Joanna', 'age' => 35],
-            ['id' => 5, 'name' => 'Chris', 'age' => 26],
-            ['id' => 7, 'name' => 'Sue', 'age' => 17],
-        ];
-    
-        $actual = Stream::from($rowset)->sortBy('age asc', 'name desc', 'id', 2)->toArray();
-    
-        $expected = [
-            ['id' => 7, 'name' => 'Sue', 'age' => 17],
-            ['id' => 5, 'name' => 'Chris', 'age' => 26],
-        ];
-    
-        self::assertSame($expected, $actual);
-    }
-    
     public function test_sortBy_with_limit(): void
     {
         $rowset = [
@@ -1968,5 +1951,126 @@ final class StreamTest extends TestCase
         $this->expectExceptionMessage('Operation tokenize requires string value, but got integer');
         
         Stream::from([1, 2, 3])->tokenize(' ')->run();
+    }
+    
+    public function test_sortBy_integer_keys(): void
+    {
+        $rowset = [
+            [2, 'Kate', 35],
+            [9, 'Chris', 29],
+            [6, 'Joanna', 35],
+            [5, 'Chris', 26],
+            [7, 'Sue', 17],
+            [3, 'Kate', 22],
+        ];
+    
+        self::assertSame([
+            [5, 'Chris', 26],
+            [9, 'Chris', 29],
+            [6, 'Joanna', 35],
+            [3, 'Kate', 22],
+            [2, 'Kate', 35],
+            [7, 'Sue', 17],
+        ], Stream::from($rowset)->sortBy(1, 2)->toArray());
+    
+        self::assertSame([
+            [5, 'Chris', 26],
+            [9, 'Chris', 29],
+            [6, 'Joanna', 35],
+            [3, 'Kate', 22],
+            [2, 'Kate', 35],
+            [7, 'Sue', 17],
+        ], Stream::from($rowset)->sortBy('1 asc', '2 asc')->toArray());
+    
+        self::assertSame([
+            [9, 'Chris', 29],
+            [5, 'Chris', 26],
+            [6, 'Joanna', 35],
+            [2, 'Kate', 35],
+            [3, 'Kate', 22],
+            [7, 'Sue', 17],
+        ], Stream::from($rowset)->sortBy(1, '2 desc')->toArray());
+    
+        self::assertSame([
+            [7, 'Sue', 17],
+            [2, 'Kate', 35],
+            [3, 'Kate', 22],
+            [6, 'Joanna', 35],
+            [9, 'Chris', 29],
+            [5, 'Chris', 26],
+        ], Stream::from($rowset)->sortBy('1 desc', '2 desc')->toArray());
+    
+        self::assertSame([
+            [5, 'Chris', 26],
+            [9, 'Chris', 29],
+        ], Stream::from($rowset)->sortBy('1 desc', '2 desc')->reverse()->limit(2)->toArray());
+    }
+    
+    public function test_extractWhen(): void
+    {
+        $readings = [
+            [2, 5, -1, 7, 3, -1, 1],
+            [4, null, -1, 5, null, null, 1],
+            [3, 5, null, -1, 5, 4, 3],
+        ];
+        
+        $averages = Stream::from($readings)
+            ->extractWhen(Filters::isInt())
+            ->extractWhen(Filters::greaterThan(-1))
+            ->extractWhen(Filters::lessThan(10))
+            ->map(Reducers::average())
+            ->toArray();
+        
+        self::assertSame([
+            (2 + 5 + 7 + 3 + 1) / 5,
+            (4 + 5 + 1) / 3,
+            (3 + 5 + 5 + 4 + 3) / 5,
+        ], $averages);
+    }
+    
+    public function test_removeWhen(): void
+    {
+        $readings = [
+            [2, 5, -1, 7, 3, -1, 1],
+            [4, null, -1, 5, null, null, 1],
+            [3, 5, null, -1, 5, 4, 3],
+        ];
+    
+        $expected = [
+            (2 + 5 + 7 + 3 + 1) / 5,
+            (4 + 5 + 1) / 3,
+            (3 + 5 + 5 + 4 + 3) / 5,
+        ];
+    
+        self::assertSame($expected, Stream::from($readings)
+            ->removeWhen(Filters::OR(Filters::NOT('is_int'), Filters::lessThan(0), Filters::greaterThan(9)))
+            ->map(Reducers::average())
+            ->toArray());
+    
+        self::assertSame($expected, Stream::from($readings)
+            ->removeWhen(Filters::NOT('is_int'))
+            ->removeWhen(Filters::lessThan(0))
+            ->removeWhen(Filters::greaterThan(9))
+            ->map(Reducers::average())
+            ->toArray());
+    }
+    
+    public function test_extractWhen_throws_exception_when_element_is_not_iterable(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Iterable value is required but got integer');
+        
+        Stream::from([5, 6, 8])->extractWhen('is_string')->run();
+    }
+    
+    public function test_loop_stream_and_run_immediately(): void
+    {
+        Stream::of(1)
+            ->collectIn($collector = Collectors::default())
+            ->map(static fn(int $n): int => $n + 1)
+            ->until(5)
+            ->loop(true);
+        
+        self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
     }
 }

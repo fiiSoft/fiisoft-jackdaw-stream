@@ -3,8 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
 
-final class Extract implements Mapper
+final class Extract extends BaseMapper
 {
     /** @var array|string|int */
     private $fields;

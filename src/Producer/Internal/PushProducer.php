@@ -11,7 +11,7 @@ final class PushProducer extends MultiProducer
     
     public function feed(Item $item): \Generator
     {
-        yield;
+        yield from parent::feed($item);
     
         $this->next = yield;
     

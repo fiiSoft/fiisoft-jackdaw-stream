@@ -100,6 +100,14 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function extractWhen($filter, int $mode = Check::VALUE): Stream
+    {
+        return $this->make()->extractWhen($filter, $mode);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function skip(int $offset): Stream
     {
         return $this->make()->skip($offset);
@@ -207,6 +215,22 @@ final class StreamMaker implements StreamApi
     public function trim(): Stream
     {
         return $this->make()->trim();
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function remap(array $keys): Stream
+    {
+        return $this->make()->remap($keys);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function rename($before, $after): Stream
+    {
+        return $this->make()->rename($before, $after);
     }
     
     /**
@@ -327,6 +351,22 @@ final class StreamMaker implements StreamApi
     public function omit($filter, int $mode = Check::VALUE): Stream
     {
         return $this->make()->omit($filter, $mode);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function omitBy($field, $filter): Stream
+    {
+        return $this->make()->omitBy($field, $filter);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function removeWhen($filter, int $mode = Check::VALUE): Stream
+    {
+        return $this->make()->removeWhen($filter, $mode);
     }
     
     /**
@@ -766,8 +806,8 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function loop(): StreamPipe
+    public function loop(bool $run = false): StreamPipe
     {
-        return $this->make()->loop();
+        return $this->make()->loop($run);
     }
 }

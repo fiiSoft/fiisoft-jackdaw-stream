@@ -106,6 +106,11 @@ final class Mappers
         return new ToBool($fields);
     }
     
+    public static function toArray(bool $appendKey = false): ToArray
+    {
+        return new ToArray($appendKey);
+    }
+    
     public static function concat(string $separator = ''): Concat
     {
         return new Concat($separator);
@@ -212,5 +217,10 @@ final class Mappers
     public static function trim(string $chars = " \t\n\r\0\x0B"): Trim
     {
         return new Trim($chars);
+    }
+    
+    public static function remap(array $keys): Remap
+    {
+        return new Remap($keys);
     }
 }

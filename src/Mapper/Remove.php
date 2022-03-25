@@ -3,8 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
 
-final class Remove implements Mapper
+final class Remove extends BaseMapper
 {
     private array $fields;
     
@@ -26,8 +27,12 @@ final class Remove implements Mapper
             return \array_diff_key($value, $this->fields);
         }
     
-        if ($value instanceof \Traversable) {
-            return \array_diff_key(\iterator_to_array($value), $this->fields);
+        if ($value instanceof \ArrayAccess) {
+            foreach ($this->fields as $field => $_) {
+                unset($value[$field]);
+            }
+            
+            return $value;
         }
     
         throw new \LogicException('Unsupported '.Helper::typeOfParam($value).' as value in Remove mapper');
@@ -36,5 +41,15 @@ final class Remove implements Mapper
     private function isFieldValid($field): bool
     {
         return \is_scalar($field) || (\is_array($field) && !empty($field));
+    }
+    
+    public function mergeWith(Mapper $other): bool
+    {
+        if ($other instanceof self) {
+            $this->fields += $other->fields;
+            return true;
+        }
+        
+        return false;
     }
 }

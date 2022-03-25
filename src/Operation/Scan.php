@@ -11,9 +11,7 @@ use FiiSoft\Jackdaw\Reducer\Reducers;
 final class Scan extends BaseOperation
 {
     private Reducer $reducer;
-    
-    /** @var Item */
-    private $previous;
+    private Item $previous;
     
     /**
      * @param mixed $initial
@@ -29,7 +27,9 @@ final class Scan extends BaseOperation
     {
         $this->reducer->consume($this->previous->value);
         
-        $signal->item->copyTo($this->previous);
+        $this->previous->key = $signal->item->key;
+        $this->previous->value = $signal->item->value;
+        
         $signal->item->value = $this->reducer->result();
     
         $this->next->handle($signal);

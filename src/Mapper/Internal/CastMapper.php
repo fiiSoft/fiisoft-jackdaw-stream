@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Mapper\Internal;
 
 use FiiSoft\Jackdaw\Mapper\Mapper;
 
-abstract class CastMapper implements Mapper
+abstract class CastMapper extends BaseMapper
 {
     protected ?array $fields = null;
     protected bool $simple;
@@ -27,5 +27,15 @@ abstract class CastMapper implements Mapper
         }
         
         $this->simple = $this->fields === null;
+    }
+    
+    final public function mergeWith(Mapper $other): bool
+    {
+        if ($other instanceof $this && $other->simple === $this->simple && $other->fields !== null) {
+            $this->fields = \array_unique(\array_merge($this->fields, $other->fields), \SORT_REGULAR);
+            return true;
+        }
+        
+        return false;
     }
 }

@@ -3,10 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper\Internal;
 
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
-final class ReducerAdapter implements Mapper
+final class ReducerAdapter extends BaseMapper
 {
     private Reducer $reducer;
     
@@ -23,7 +22,7 @@ final class ReducerAdapter implements Mapper
         if (\is_iterable($value)) {
             $this->reducer->reset();
             
-            foreach ($value as $k => $item) {
+            foreach ($value as $item) {
                 $this->reducer->consume($item);
             }
     

@@ -3,8 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
 
-final class Split implements Mapper
+final class Split extends BaseMapper
 {
     private string $separator;
     

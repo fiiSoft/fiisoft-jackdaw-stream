@@ -2,7 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-final class JsonEncode implements Mapper
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+
+final class JsonEncode extends BaseMapper
 {
     private int $flags;
     

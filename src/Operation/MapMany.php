@@ -11,6 +11,8 @@ final class MapMany extends BaseOperation
     /** @var Mapper[] */
     private array $mappers = [];
     
+    private ?Mapper $last = null;
+    
     public function __construct(Map $first, Map $second)
     {
         $this->add($first);
@@ -30,6 +32,11 @@ final class MapMany extends BaseOperation
     
     public function add(Map $other): void
     {
-        $this->mappers[] = $other->mapper();
+        $mapper = $other->mapper();
+        
+        if ($this->last === null || !$this->last->mergeWith($mapper)) {
+            $this->last = $mapper;
+            $this->mappers[] = $mapper;
+        }
     }
 }

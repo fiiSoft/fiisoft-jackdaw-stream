@@ -688,4 +688,50 @@ class StreamMakerTest extends TestCase
         
         $this->stream->assert(Filters::lessThan(3))->run();
     }
+    
+    public function test_rename(): void
+    {
+        $result = StreamMaker::from([['a' => 5, 'b' => 'foo']])
+            ->rename('a', 'aaa')
+            ->rename('b', 'bbb')
+            ->toArray();
+        
+        self::assertSame([['aaa' => 5, 'bbb' => 'foo']], $result);
+    }
+    
+    public function test_remap(): void
+    {
+        $result = StreamMaker::from([['a' => 5, 'b' => 'foo']])
+            ->remap(['a' => 'aaa', 'b' => 'bbb'])
+            ->toArray();
+        
+        self::assertSame([['aaa' => 5, 'bbb' => 'foo']], $result);
+    }
+    
+    public function test_omitBy(): void
+    {
+        $result = StreamMaker::from([['a' => 5, 'b' => 'foo'], ['a' => 3, 'b' => null]])
+            ->omitBy('b', 'is_null')
+            ->toArray();
+        
+        self::assertSame([['a' => 5, 'b' => 'foo']], $result);
+    }
+    
+    public function test_extractWhen(): void
+    {
+        $result = StreamMaker::from([['a' => 5, 'b' => 'foo'], ['a' => 3, 'b' => null]])
+            ->extractWhen('is_int')
+            ->toArray();
+        
+        self::assertSame([['a' => 5], ['a' => 3]], $result);
+    }
+    
+    public function test_removeWhen(): void
+    {
+        $result = StreamMaker::from([['a' => 5, 'b' => 'foo'], ['a' => 3, 'b' => null]])
+            ->removeWhen('is_int')
+            ->toArray();
+        
+        self::assertSame([['b' => 'foo'], ['b' => null]], $result);
+    }
 }

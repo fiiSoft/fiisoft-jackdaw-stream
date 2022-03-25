@@ -2,7 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-final class Tokenize implements Mapper
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+
+final class Tokenize extends BaseMapper
 {
     private string $tokens;
     

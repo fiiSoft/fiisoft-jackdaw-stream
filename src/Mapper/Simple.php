@@ -2,7 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-final class Simple implements Mapper
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+
+final class Simple extends BaseMapper
 {
     /** @var mixed */
     private $value;
@@ -18,5 +20,15 @@ final class Simple implements Mapper
     public function map($value, $key)
     {
         return $this->value;
+    }
+    
+    public function mergeWith(Mapper $other): bool
+    {
+        if ($other instanceof self) {
+            $this->value = $other->value;
+            return true;
+        }
+        
+        return false;
     }
 }

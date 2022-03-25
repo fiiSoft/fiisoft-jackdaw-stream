@@ -31,10 +31,16 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function filterBy($field, $filter): self;
     
     /**
-     * @param Filter|Predicate|callable $filter
+     * @param Filter|Predicate|callable|mixed $filter
      * @param int $mode
      */
     public function omit($filter, int $mode = Check::VALUE): self;
+    
+    /**
+     * @param string|int $field
+     * @param Filter|Predicate|callable|mixed $filter
+     */
+    public function omitBy($field, $filter): self;
     
     /**
      * @param float|int $value
@@ -148,6 +154,23 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
      * @param Consumer|callable|resource|null $elseConsumer
      */
     public function callWhen($condition, $consumer, $elseConsumer = null): self;
+    
+    /**
+     * It works exactly the same way as remap, it is only different syntax to use.
+     * Processed value have to be an array.
+     *
+     * @param string|int $before old name of key
+     * @param string|int $after new name of key
+     */
+    public function rename($before, $after): self;
+    
+    /**
+     * Change names of keys in array-like values.
+     * It requires array (or ArrayAccess) value to work with.
+     *
+     * @param array $keys map names of keys to rename (before => after)
+     */
+    public function remap(array $keys): self;
     
     /**
      * @param Mapper|Reducer|callable|mixed $mapper
@@ -281,9 +304,21 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function extract($fields, $orElse = null): self;
     
     /**
+     * @param Filter|Predicate|callable|mixed $filter
+     * @param int $mode
+     */
+    public function extractWhen($filter, int $mode = Check::VALUE): self;
+    
+    /**
      * @param array|string|int $fields
      */
     public function remove(...$fields): self;
+    
+    /**
+     * @param Filter|Predicate|callable|mixed $filter
+     * @param int $mode
+     */
+    public function removeWhen($filter, int $mode = Check::VALUE): self;
     
     /**
      * @param string $separator
@@ -306,14 +341,13 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function flat(int $level = 0): self;
     
     /**
-     * @param Mapper|callable $mapper
+     * @param Mapper|Reducer|callable|mixed $mapper
      * @param int $level
      */
     public function flatMap($mapper, int $level = 0): self;
     
     /**
-     * @param string ...$fields names of fields to sort by, in format "name asc", "salary desc"
-     * @param int $limit last param can be integer, it means how many elements will be passed to stream
+     * @param string|int ...$fields fields to sort by, e.g. "name asc", "salary desc", 0, 3, "1 asc", "3 desc"
      */
     public function sortBy(...$fields): self;
     
@@ -369,13 +403,13 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function feed(StreamPipe $stream): self;
     
     /**
-     * @param Filter|Predicate|callable $condition
+     * @param Filter|Predicate|callable|mixed $condition
      * @param int $mode
      */
     public function while($condition, int $mode = Check::VALUE): self;
     
     /**
-     * @param Filter|Predicate|callable $condition
+     * @param Filter|Predicate|callable|mixed $condition
      * @param int $mode
      */
     public function until($condition, int $mode = Check::VALUE): self;
@@ -417,14 +451,18 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function forEach(...$consumer): void;
     
     /**
+     * Run stream pipeline.
+     *
      * @return void
      */
     public function run(): void;
     
     /**
-     * Feed stream recusrively with its own output.
+     * Feed stream recursively with its own output.
+     *
+     * @param bool $run when true then run immediately
      */
-    public function loop(): StreamPipe;
+    public function loop(bool $run = false): StreamPipe;
     
     /**
      * Tell if element occurs in stream.

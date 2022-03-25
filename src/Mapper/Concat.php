@@ -2,7 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-final class Concat implements Mapper
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+
+final class Concat extends BaseMapper
 {
     private string $separator;
     

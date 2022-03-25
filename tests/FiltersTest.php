@@ -1076,4 +1076,188 @@ final class FiltersTest extends TestCase
         
         Filters::number()->isOdd()->isAllowed('foo', 'key', 5);
     }
+    
+    public function test_FilterAND_throws_exception_when_list_of_filters_is_empty(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Param filters cannot be empty');
+        
+        Filters::AND();
+    }
+    
+    public function test_FilterOR_throws_exception_when_list_of_filters_is_empty(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Param filters cannot be empty');
+        
+        Filters::OR();
+    }
+    
+    public function test_FilterAND(): void
+    {
+        $filter = Filters::AND(Filters::greaterOrEqual(5), Filters::lessOrEqual(10));
+        
+        self::assertTrue($filter->isAllowed(8, 7));
+        self::assertFalse($filter->isAllowed(11, 7));
+        self::assertFalse($filter->isAllowed(4, 7));
+        
+        self::assertTrue($filter->isAllowed(7, 8, Check::KEY));
+        self::assertFalse($filter->isAllowed(7, 11, Check::KEY));
+        self::assertFalse($filter->isAllowed(7, 4, Check::KEY));
+        
+        self::assertTrue($filter->isAllowed(5, 8, Check::BOTH));
+        self::assertFalse($filter->isAllowed(7, 11, Check::BOTH));
+        self::assertFalse($filter->isAllowed(9, 4, Check::BOTH));
+        self::assertFalse($filter->isAllowed(12, 4, Check::BOTH));
+        self::assertFalse($filter->isAllowed(4, 12, Check::BOTH));
+        
+        self::assertTrue($filter->isAllowed(5, 8, Check::ANY));
+        self::assertTrue($filter->isAllowed(7, 11, Check::ANY));
+        self::assertTrue($filter->isAllowed(4, 9, Check::ANY));
+        self::assertFalse($filter->isAllowed(11, 4, Check::ANY));
+        self::assertFalse($filter->isAllowed(4, 11, Check::ANY));
+    }
+    
+    public function test_FilterOR(): void
+    {
+        $filter = Filters::OR(Filters::lessOrEqual(5), Filters::greaterOrEqual(10));
+        
+        self::assertFalse($filter->isAllowed(8, 7));
+        self::assertTrue($filter->isAllowed(11, 7));
+        self::assertTrue($filter->isAllowed(4, 7));
+        
+        self::assertFalse($filter->isAllowed(7, 8, Check::KEY));
+        self::assertTrue($filter->isAllowed(7, 11, Check::KEY));
+        self::assertTrue($filter->isAllowed(7, 4, Check::KEY));
+        
+        self::assertFalse($filter->isAllowed(5, 8, Check::BOTH));
+        self::assertFalse($filter->isAllowed(7, 11, Check::BOTH));
+        self::assertFalse($filter->isAllowed(9, 4, Check::BOTH));
+        self::assertTrue($filter->isAllowed(12, 4, Check::BOTH));
+        self::assertTrue($filter->isAllowed(4, 12, Check::BOTH));
+        
+        self::assertFalse($filter->isAllowed(7, 8, Check::ANY));
+        self::assertTrue($filter->isAllowed(5, 8, Check::ANY));
+        self::assertTrue($filter->isAllowed(7, 11, Check::ANY));
+        self::assertTrue($filter->isAllowed(4, 9, Check::ANY));
+        self::assertTrue($filter->isAllowed(11, 4, Check::ANY));
+        self::assertTrue($filter->isAllowed(4, 11, Check::ANY));
+    }
+    
+    public function test_FilterNOT(): void
+    {
+        $filter = Filters::NOT(Filters::greaterThan(5));
+        
+        self::assertTrue($filter->isAllowed(5, 0));
+        self::assertFalse($filter->isAllowed(6, 0));
+        
+        self::assertTrue($filter->isAllowed(0, 5, Check::KEY));
+        self::assertFalse($filter->isAllowed(0, 6, Check::KEY));
+        
+        self::assertTrue($filter->isAllowed(7, 5, Check::BOTH));
+        self::assertTrue($filter->isAllowed(0, 5, Check::BOTH));
+        self::assertTrue($filter->isAllowed(7, 0, Check::BOTH));
+        self::assertTrue($filter->isAllowed(0, 6, Check::BOTH));
+        self::assertFalse($filter->isAllowed(8, 8, Check::BOTH));
+        
+        self::assertFalse($filter->isAllowed(7, 5, Check::ANY));
+        self::assertFalse($filter->isAllowed(5, 7, Check::ANY));
+        self::assertFalse($filter->isAllowed(8, 7, Check::ANY));
+        self::assertTrue($filter->isAllowed(4, 3, Check::ANY));
+    }
+    
+    public function test_FilterXOR(): void
+    {
+        $filter = Filters::XOR(Filters::greaterOrEqual(5), Filters::lessOrEqual(10));
+        
+        self::assertTrue($filter->isAllowed(12, 0));
+        self::assertTrue($filter->isAllowed(3, 0));
+        self::assertFalse($filter->isAllowed(7, 0));
+        
+        self::assertTrue($filter->isAllowed(0, 12, Check::KEY));
+        self::assertTrue($filter->isAllowed(0, 3, Check::KEY));
+        self::assertFalse($filter->isAllowed(0, 7, Check::KEY));
+        
+        self::assertTrue($filter->isAllowed(0, 12, Check::BOTH));
+        self::assertTrue($filter->isAllowed(12, 0, Check::BOTH));
+        self::assertTrue($filter->isAllowed(0, 3, Check::BOTH));
+        self::assertTrue($filter->isAllowed(3, 0, Check::BOTH));
+        self::assertFalse($filter->isAllowed(0, 7, Check::BOTH));
+        self::assertFalse($filter->isAllowed(7, 0, Check::BOTH));
+        self::assertFalse($filter->isAllowed(8, 7, Check::BOTH));
+        self::assertFalse($filter->isAllowed(7, 8, Check::BOTH));
+    }
+    
+    public function test_Between(): void
+    {
+        $filter = Filters::number()->between(5, 10);
+        
+        self::assertTrue($filter->isAllowed(8, 7));
+        self::assertFalse($filter->isAllowed(11, 7));
+        self::assertFalse($filter->isAllowed(4, 7));
+    
+        self::assertTrue($filter->isAllowed(7, 8, Check::KEY));
+        self::assertFalse($filter->isAllowed(7, 11, Check::KEY));
+        self::assertFalse($filter->isAllowed(7, 4, Check::KEY));
+    
+        self::assertTrue($filter->isAllowed(5, 8, Check::BOTH));
+        self::assertFalse($filter->isAllowed(7, 11, Check::BOTH));
+        self::assertFalse($filter->isAllowed(9, 4, Check::BOTH));
+        self::assertFalse($filter->isAllowed(12, 4, Check::BOTH));
+        self::assertFalse($filter->isAllowed(4, 12, Check::BOTH));
+    
+        self::assertTrue($filter->isAllowed(5, 8, Check::ANY));
+        self::assertTrue($filter->isAllowed(7, 11, Check::ANY));
+        self::assertTrue($filter->isAllowed(4, 9, Check::ANY));
+        self::assertFalse($filter->isAllowed(11, 4, Check::ANY));
+        self::assertFalse($filter->isAllowed(4, 11, Check::ANY));
+    }
+    
+    public function test_Between_throws_exception_when_param_lower_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param lower');
+        
+        Filters::number()->between('a', 4);
+    }
+    
+    public function test_Between_throws_exception_when_param_higher_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param higher');
+        
+        Filters::number()->between(4, 'a');
+    }
+    
+    public function test_Between_throws_exception_when_param_lower_is_greater_then_higher(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Lower number is greater from higher number');
+        
+        Filters::number()->between(4, 2);
+    }
+    
+    public function test_Between_throws_exception_when_param_mode_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param mode');
+        
+        Filters::number()->between(2, 2)->isAllowed(5, 2, 0);
+    }
+    
+    public function test_Between_allows_to_compare_numeric_values_as_well(): void
+    {
+        $filter = Filters::number()->between(1, 10);
+        
+        self::assertTrue($filter->isAllowed('5', '12'));
+        self::assertFalse($filter->isAllowed('5', '12', Check::KEY));
+    }
+    
+    public function test_Between_throws_exception_when_value_to_compare_is_not_a_number(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot compare value which is not a number');
+        
+        Filters::number()->between(1, 3)->isAllowed('this is not a number', 1);
+    }
 }

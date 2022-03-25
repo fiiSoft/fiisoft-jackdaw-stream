@@ -8,7 +8,7 @@ final class SortBy implements Comparator
     private array $fields = [];
     
     /**
-     * @param string[] $fields format: "id asc", "name desc"
+     * @param string[]|int[] $fields format: "id asc", "name desc"
      */
     public function __construct(array $fields)
     {
@@ -56,9 +56,14 @@ final class SortBy implements Comparator
                     $this->fields[$field] = $direction === 'asc';
                     continue;
                 }
+            } elseif (\is_int($field)) {
+                $this->fields[$field] = true;
+                continue;
             }
             
-            throw new \InvalidArgumentException('Each element of array fields have to be a non empty string');
+            throw new \InvalidArgumentException(
+                'Each element of array fields have to be a non empty string or integer'
+            );
         }
     }
     

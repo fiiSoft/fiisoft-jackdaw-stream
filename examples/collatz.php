@@ -8,7 +8,7 @@ require_once  __DIR__ .'/../vendor/autoload.php';
 
 echo 'Produce Collatz series using recursive feed of stream with values produced by its self:', PHP_EOL;
 
-$collatz = Stream::empty()
+Stream::of(mt_rand(1, 100_000))
     ->call(Consumers::stdout(', '))
     ->while(Filters::greaterThan(1))
     ->mapWhen(
@@ -16,8 +16,6 @@ $collatz = Stream::empty()
         static fn(int $n): int => $n >> 1,
         static fn(int $n): int => (3 * $n + 1)
     )
-    ->loop();
-
-Stream::of(mt_rand(1, 100_000))->feed($collatz)->run();
+    ->loop(true);
 
 echo PHP_EOL;

@@ -3,8 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
 
-final class Reverse implements Mapper
+final class Reverse extends BaseMapper
 {
     public function map($value, $key)
     {

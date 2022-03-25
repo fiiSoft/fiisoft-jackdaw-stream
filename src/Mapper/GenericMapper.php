@@ -3,8 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
 
-final class GenericMapper implements Mapper
+final class GenericMapper extends BaseMapper
 {
     /** @var callable */
     private $mapper;

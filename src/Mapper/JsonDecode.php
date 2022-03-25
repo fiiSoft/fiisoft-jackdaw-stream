@@ -3,8 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
 
-final class JsonDecode implements Mapper
+final class JsonDecode extends BaseMapper
 {
     private bool $associative;
     private int $flags;

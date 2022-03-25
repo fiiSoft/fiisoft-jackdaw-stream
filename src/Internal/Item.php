@@ -20,10 +20,4 @@ class Item
     {
         return new self($this->key, $this->value);
     }
-    
-    public function copyTo(Item $item)
-    {
-        $item->key = $this->key;
-        $item->value = $this->value;
-    }
 }

@@ -416,6 +416,10 @@ Stream::from(['foo', 123, 'bar', 456])
 
 echo PHP_EOL;
 
+echo 'Left only string values in arrays: ',
+    Stream::from($rowset)->extractWhen('is_string')->notEmpty()->toJson(),
+    PHP_EOL;
+
 //let's do some fun with Collatz:
 echo 'let\'s play with random Collatz series: ', PHP_EOL;
 Stream::from(Producers::collatz())->forEach(Consumers::stdout(' '));

@@ -34,7 +34,7 @@ final class Comparators
     }
     
     /**
-     * @param string[] $fields
+     * @param string[]|int[] $fields
      * @return SortBy
      */
     public static function sortBy(array $fields): SortBy

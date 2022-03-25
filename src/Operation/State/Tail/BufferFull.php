@@ -6,9 +6,14 @@ use FiiSoft\Jackdaw\Internal\Item;
 
 final class BufferFull extends State
 {
+    private Item $current;
+    
     public function hold(Item $item): void
     {
-        $item->copyTo($this->buffer[$this->index]);
+        $this->current = $this->buffer[$this->index];
+        
+        $this->current->key = $item->key;
+        $this->current->value = $item->value;
     
         if (++$this->index === $this->length) {
             $this->index = 0;

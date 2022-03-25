@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use ArrayObject;
 use FiiSoft\Jackdaw\Mapper\Concat;
 use FiiSoft\Jackdaw\Mapper\Internal\ReducerAdapter;
 use FiiSoft\Jackdaw\Mapper\JsonDecode;
@@ -131,9 +132,10 @@ final class MappersTest extends TestCase
     public function test_Remove_from_Traversable(): void
     {
         $mapper = Mappers::remove('id');
-    
+        
         $value = new \ArrayObject(['id' => 1, 'name' => 'Joe']);
-        self::assertSame(['name' => 'Joe'], $mapper->map($value, 1));
+        
+        self::assertEquals(new \ArrayObject(['name' => 'Joe']), $mapper->map($value, 1));
     }
     
     public function test_Remove_throws_exception_on_invalid_argument(): void
@@ -423,5 +425,170 @@ final class MappersTest extends TestCase
         
         self::assertSame('foo', $mapper->map(' foo ', 1));
         self::assertSame(5, $mapper->map(5, 1));
+    }
+    
+    public function test_Remap_throws_exception_when_param_keys_is_empty(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param keys');
+        
+        Mappers::remap([]);
+    }
+    
+    public function test_Remap_throws_exception_when_param_keys_contains_invalid_key(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid element in param keys');
+        
+        Mappers::remap(['' => 'foo']);
+    }
+    
+    public function test_Remap_throws_exception_when_param_keys_contains_invalid_value(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid element in param keys');
+        
+        Mappers::remap(['foo' => '']);
+    }
+    
+    public function test_Remap_throws_exception_when_value_to_map_is_not_array(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Unable to remap keys in value which is not an array');
+        
+        Mappers::remap(['foo' => 'bar'])->map(5, 1);
+    }
+    
+    public function test_Remap_can_merge_with_other_Remap_mapper(): void
+    {
+        $first = Mappers::remap([2 => 'foo']);
+        $second = Mappers::remap(['foo' => 'bar']);
+        
+        self::assertTrue($first->mergeWith($second));
+        
+        self::assertSame(['bar' => 'hello'], $first->map([2 => 'hello'], 1));
+    }
+    
+    public function test_mappers_cannot_merge_with_incompatible_mappers(): void
+    {
+        self::assertFalse(Mappers::remap(['foo' => 'bar'])->mergeWith(Mappers::concat()));
+        self::assertFalse(Mappers::remove('foo')->mergeWith(Mappers::concat()));
+        self::assertFalse(Mappers::round()->mergeWith(Mappers::concat()));
+        self::assertFalse(Mappers::trim()->mergeWith(Mappers::concat()));
+        self::assertFalse(Mappers::simple('foo')->mergeWith(Mappers::concat()));
+        self::assertFalse(Mappers::toBool()->mergeWith(Mappers::concat()));
+    }
+    
+    public function test_Remove_can_merge_with_other_Remove_mapper(): void
+    {
+        $first = Mappers::remove('foo');
+        $second = Mappers::remove('bar');
+        
+        self::assertTrue($first->mergeWith($second));
+        
+        self::assertSame(['zoe' => 3], $first->map(['foo' => 1, 'bar' => 2, 'zoe' => 3], 1));
+    }
+    
+    public function test_Round_throws_exception_when_param_precision_is_too_low(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param precision');
+        
+        Mappers::round(-1);
+    }
+    
+    public function test_Round_throws_exception_when_param_precision_is_too_high(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param precision');
+        
+        Mappers::round(17);
+    }
+    
+    public function test_Round_can_merge_with_other_Round_mapper(): void
+    {
+        $first = Mappers::round(5);
+        $second = Mappers::round(3);
+        
+        self::assertTrue($first->mergeWith($second));
+        
+        self::assertSame(4.286, $first->map(4.286356, 1));
+    }
+    
+    public function test_Simple_can_merge_with_other_Simple_mapper(): void
+    {
+        $first = Mappers::simple('foo');
+        $second = Mappers::simple('bar');
+        
+        self::assertTrue($first->mergeWith($second));
+        
+        self::assertSame('bar', $first->map('zoe', 1));
+    }
+    
+    public function test_Trim_can_merge_with_other_Trim_mapper(): void
+    {
+        $first = Mappers::trim('.');
+        $second = Mappers::trim(',');
+    
+        self::assertTrue($first->mergeWith($second));
+    
+        self::assertSame('foo', $first->map(',.foo,.', 1));
+    }
+    
+    public function test_ToBool_can_merge_with_other_ToBool_mapper(): void
+    {
+        $first = Mappers::toBool('foo');
+        $second = Mappers::toBool('bar');
+    
+        self::assertTrue($first->mergeWith($second));
+    
+        self::assertSame(['foo' => true, 'bar' => false], $first->map(['foo' => 1, 'bar' => 0], 1));
+    }
+    
+    public function test_ToInt_can_merge_with_other_ToInt_mapper(): void
+    {
+        $first = Mappers::toInt('foo');
+        $second = Mappers::toInt('bar');
+    
+        self::assertTrue($first->mergeWith($second));
+    
+        self::assertSame(['foo' => 1, 'bar' => 2], $first->map(['foo' => 1.0, 'bar' => 2.0], 1));
+    }
+    
+    public function test_ToFloat_can_merge_with_other_ToFloat_mapper(): void
+    {
+        $first = Mappers::toFloat('foo');
+        $second = Mappers::toFloat('bar');
+    
+        self::assertTrue($first->mergeWith($second));
+    
+        self::assertSame(['foo' => 1.0, 'bar' => 0.0], $first->map(['foo' => 1, 'bar' => 0], 1));
+    }
+    
+    public function test_ToString_can_merge_with_other_ToString_mapper(): void
+    {
+        $first = Mappers::toString('foo');
+        $second = Mappers::toString('bar');
+    
+        self::assertTrue($first->mergeWith($second));
+    
+        self::assertSame(['foo' => '1', 'bar' => '0'], $first->map(['foo' => 1, 'bar' => 0], 1));
+    }
+    
+    public function test_ToArray_changes_every_argument_into_array(): void
+    {
+        $withoutKey = Mappers::toArray();
+        
+        self::assertSame(['a'], $withoutKey->map('a', 1));
+        self::assertSame([4], $withoutKey->map(4, 1));
+        self::assertSame(['foo' => 'bar'], $withoutKey->map(['foo' => 'bar'], 1));
+        self::assertSame(['foo' => 'bar'], $withoutKey->map(new ArrayObject(['foo' => 'bar']), 1));
+        
+        $withKey = Mappers::toArray(true);
+        
+        self::assertSame([1 => 'a'], $withKey->map('a', 1));
+        self::assertSame([1 => 4], $withKey->map(4, 1));
+        self::assertSame(['foo' => 'bar'], $withKey->map(['foo' => 'bar'], 1));
+        self::assertSame(['foo' => 'bar'], $withKey->map(new ArrayObject(['foo' => 'bar']), 1));
     }
 }

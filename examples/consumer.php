@@ -5,7 +5,7 @@ use FiiSoft\Jackdaw\Stream;
 require_once  __DIR__ .'/../vendor/autoload.php';
 
 Stream::from(STDIN)
-    ->map('trim')
+    ->trim()
     ->castToInt()
     ->greaterThan(0)
     ->mapKey(static fn(int $n): int => ($n % 3 === 0 ? 2 : 0) | ($n % 5 === 0 ? 1 : 0))
