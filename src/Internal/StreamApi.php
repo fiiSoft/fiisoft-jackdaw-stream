@@ -235,9 +235,9 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function collectKeys($collector): self;
     
     /**
-     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array $producer
+     * @param StreamApi|Producer|Result|\Iterator|\PDOStatement|resource|array ...$producers
      */
-    public function join($producer): self;
+    public function join(...$producers): self;
     
     /**
      * @param Comparator|callable|null $comparator
@@ -418,6 +418,14 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
      * @param int $numOfItems number of Nth last elements
      */
     public function tail(int $numOfItems): self;
+    
+    /**
+     * It works similar to chunk, but it gathers all elements until stream is empty,
+     * and then passes whole array as argument for next step.
+     *
+     * @param bool $preserveKeys
+     */
+    public function gather(bool $preserveKeys = false): self;
     
     /**
      * Register handlers which will be called when error occurs.

@@ -2,6 +2,12 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.9.0
+
+- Result can be use as Producer for Stream
+- method StreamApi::join can accept many arguments at once
+- added method StreamApi::gather
+
 ## 2.8.0 - incompatible changes!
 
 - removed param limit from StreamApi::sortBy

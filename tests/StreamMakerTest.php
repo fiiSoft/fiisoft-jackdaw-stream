@@ -734,4 +734,29 @@ class StreamMakerTest extends TestCase
         
         self::assertSame([['b' => 'foo'], ['b' => null]], $result);
     }
+    
+    public function test_create_from_Result(): void
+    {
+        $sum = $this->stream->reduce('array_sum');
+        
+        self::assertSame([10], StreamMaker::from($sum)->toArray());
+        self::assertSame([10], StreamMaker::from($sum)->toArray());
+        
+        self::assertSame([10], StreamMaker::of($sum)->toArray());
+        self::assertSame([10], StreamMaker::of($sum)->toArray());
+        
+        self::assertSame([10], StreamMaker::empty()->join($sum)->toArray());
+        self::assertSame([10], StreamMaker::empty()->join($sum)->toArray());
+    }
+    
+    public function test_gather(): void
+    {
+        $result = null;
+        
+        $this->stream->gather()->call(static function (array $all) use (&$result) {
+            $result = $all;
+        })->run();
+        
+        self::assertSame([1,2,3,4], $result);
+    }
 }

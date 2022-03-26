@@ -26,6 +26,7 @@ use FiiSoft\Jackdaw\Operation\Filter;
 use FiiSoft\Jackdaw\Operation\FilterMany;
 use FiiSoft\Jackdaw\Operation\Flat;
 use FiiSoft\Jackdaw\Operation\Flip;
+use FiiSoft\Jackdaw\Operation\Gather;
 use FiiSoft\Jackdaw\Operation\Internal\AssertionFailed;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Feed;
@@ -106,7 +107,7 @@ final class Stream extends Collaborator implements StreamApi
     private array $stack = [];
     
     /**
-     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array|scalar ...$elements
+     * @param StreamApi|Producer|Result|\Iterator|\PDOStatement|resource|array|scalar ...$elements
      * @return self
      */
     public static function of(...$elements): self
@@ -115,7 +116,7 @@ final class Stream extends Collaborator implements StreamApi
     }
     
     /**
-     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array $producer
+     * @param StreamApi|Producer|Result|\Iterator|\PDOStatement|resource|array $producer
      * @return self
      */
     public static function from($producer): self
@@ -454,12 +455,14 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function join($producer): self
+    public function join(...$producers): self
     {
         if ($this->producer instanceof MultiProducer) {
-            $this->producer->addProducer(Producers::getAdapter($producer));
+            foreach ($producers as $producer) {
+                $this->producer->addProducer(Producers::getAdapter($producer));
+            }
         } else {
-            $this->producer = Producers::multiSourced($this->producer, $producer);
+            $this->producer = Producers::multiSourced($this->producer, ...$producers);
         }
         
         return $this;
@@ -714,6 +717,14 @@ final class Stream extends Collaborator implements StreamApi
     public function tail(int $numOfItems): self
     {
         return $this->chainOperation(new Tail($numOfItems));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function gather(bool $preserveKeys = false): self
+    {
+        return $this->chainOperation(new Gather($preserveKeys));
     }
     
     /**
@@ -1171,7 +1182,6 @@ final class Stream extends Collaborator implements StreamApi
             }
             if ($this->last instanceof Sort) {
                 $this->last = $this->last->removeFromChain();
-                return true;
             }
         } elseif ($next instanceof Tail) {
             if ($this->last instanceof Tail) {
@@ -1202,6 +1212,19 @@ final class Stream extends Collaborator implements StreamApi
                     return false;
                 }
             }
+            if ($this->last instanceof Gather) {
+                $preserveKeys = $this->last->preserveKeys();
+                $this->last = $this->last->removeFromChain();
+                if (!$preserveKeys) {
+                    $this->reindex();
+                }
+                if ($next->isLevel(1)) {
+                    return false;
+                }
+                if (!$next->isLevel(0)) {
+                    $next->decreaseLevel();
+                }
+            }
         } elseif ($next instanceof SendTo) {
             if ($this->last instanceof SendTo) {
                 $this->last->mergeWith($next);
@@ -1210,7 +1233,11 @@ final class Stream extends Collaborator implements StreamApi
         } elseif ($next instanceof Sort) {
             if ($this->last instanceof Shuffle) {
                 $this->last = $this->last->removeFromChain();
-                return true;
+            }
+        } elseif ($next instanceof Gather) {
+            if ($this->last instanceof Reindex) {
+                $this->last = $this->last->removeFromChain();
+                $next->reindexKeys();
             }
         }
         

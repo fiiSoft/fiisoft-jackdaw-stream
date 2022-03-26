@@ -17,7 +17,7 @@ final class StreamMaker implements StreamApi
     private $factory;
     
     /**
-     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array|scalar ...$elements
+     * @param StreamApi|Producer|Result|\Iterator|\PDOStatement|resource|array|scalar ...$elements
      * @return self
      */
     public static function of(...$elements): self
@@ -26,7 +26,7 @@ final class StreamMaker implements StreamApi
     }
     
     /**
-     * @param Producer|\Iterator|array|callable $factory callable MUST return Stream
+     * @param Producer|\Iterator|Result|array|callable $factory callable MUST return Stream
      * @return self
      */
     public static function from($factory): self
@@ -35,6 +35,8 @@ final class StreamMaker implements StreamApi
             $callable = static fn(): Stream => Stream::from($factory);
         } elseif ($factory instanceof Producer) {
             $callable = static fn(): Stream => Stream::from(clone $factory);
+        } elseif ($factory instanceof Result) {
+            $callable = static fn(): Stream => Stream::from($factory);
         } elseif ($factory instanceof \Iterator) {
             $callable = static fn(): Stream => Stream::from(clone $factory);
         } elseif (\is_callable($factory)) {
@@ -380,9 +382,9 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function join($producer): Stream
+    public function join(...$producers): Stream
     {
-        return $this->make()->join($producer);
+        return $this->make()->join(...$producers);
     }
     
     /**
@@ -604,6 +606,14 @@ final class StreamMaker implements StreamApi
     public function tail(int $numOfItems): Stream
     {
         return $this->make()->tail($numOfItems);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function gather(bool $preserveKeys = false): Stream
+    {
+        return $this->make()->gather($preserveKeys);
     }
     
     /**

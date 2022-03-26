@@ -321,4 +321,20 @@ final class ProducersTest extends TestCase
         
         new CircularBufferIterator([], 5, 6);
     }
+    
+    public function test_Flattener_prevents_decrease_level_when_it_is_0(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot decrease level');
+        
+        Producers::flattener([], 0)->decreaseLevel();
+    }
+    
+    public function test_Flattener_prevents_decrease_level_when_it_is_1(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot decrease level');
+        
+        Producers::flattener([], 1)->decreaseLevel();
+    }
 }

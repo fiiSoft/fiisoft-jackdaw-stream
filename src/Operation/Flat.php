@@ -38,4 +38,14 @@ final class Flat extends BaseOperation
     {
         return $this->flattener->maxLevel();
     }
+    
+    public function isLevel(int $level): bool
+    {
+        return $this->flattener->isLevel($level);
+    }
+    
+    public function decreaseLevel(): void
+    {
+        $this->flattener->decreaseLevel();
+    }
 }

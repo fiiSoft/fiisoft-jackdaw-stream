@@ -2,9 +2,11 @@
 
 namespace FiiSoft\Jackdaw\Producer;
 
+use FiiSoft\Jackdaw\Internal\Result;
 use FiiSoft\Jackdaw\Internal\StreamApi;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\IteratorAdapter;
+use FiiSoft\Jackdaw\Producer\Adapter\ResultAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\StreamAdapter;
 use FiiSoft\Jackdaw\Producer\Generator\CollatzGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;
@@ -19,7 +21,7 @@ use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
 final class Producers
 {
     /**
-     * @param array<StreamApi|Producer|\Iterator|\PDOStatement|resource|array|scalar> $elements
+     * @param array<StreamApi|Producer|Result|\Iterator|\PDOStatement|resource|array|scalar> $elements
      * @return Producer
      */
     public static function from(array $elements): Producer
@@ -32,6 +34,7 @@ final class Producers
             if (\is_object($item)) {
                 if ($item instanceof \Iterator
                     || $item instanceof StreamApi
+                    || $item instanceof Result
                     || $item instanceof Producer
                     || $item instanceof \PDOStatement
                 ) {
@@ -61,7 +64,7 @@ final class Producers
     }
     
     /**
-     * @param StreamApi|Producer|\Iterator|\PDOStatement|resource|array $producer
+     * @param StreamApi|Producer|Result|\Iterator|\PDOStatement|resource|array $producer
      * @return Producer
      */
     public static function getAdapter($producer): Producer
@@ -72,6 +75,8 @@ final class Producers
             $adapter = self::fromIterator($producer);
         } elseif ($producer instanceof StreamApi) {
             $adapter = self::fromStream($producer);
+        } elseif ($producer instanceof Result) {
+            $adapter = self::fromResult($producer);
         } elseif ($producer instanceof \PDOStatement) {
             $adapter = self::fromPDOStatement($producer);
         } elseif ($producer instanceof Producer) {
@@ -105,6 +110,11 @@ final class Producers
     public static function fromStream(StreamApi $stream): StreamAdapter
     {
         return new StreamAdapter($stream);
+    }
+    
+    public static function fromResult(Result $result): ResultAdapter
+    {
+        return new ResultAdapter($result);
     }
     
     public static function fromPDOStatement(\PDOStatement $statement, ?int $fetchMode = null): PDOStatementAdapter

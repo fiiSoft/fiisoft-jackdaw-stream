@@ -2073,4 +2073,132 @@ final class StreamTest extends TestCase
         
         self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
     }
+    
+    public function test_concat(): void
+    {
+        self::assertSame('abc', Stream::from(['a', 'b', 'c'])->reduce('implode')->get());
+    }
+    
+    public function test_each_gather_makes_nested_array(): void
+    {
+        $stream = StreamMaker::from([1, 2, 3, 4]);
+    
+        //1 gather
+        $result = null;
+        $stream->gather()->call(static function (array $all) use (&$result) {
+            $result = $all;
+        })->run();
+        
+        self::assertSame([1,2,3,4], $result);
+    
+        //2 gathers
+        $result = null;
+        $stream->gather()->gather()->call(static function (array $all) use (&$result) {
+            $result = $all;
+        })->run();
+        
+        self::assertSame([[1,2,3,4]], $result);
+    
+        //3 gathers
+        $result = null;
+        $stream->gather()->gather()->gather()->call(static function (array $all) use (&$result) {
+            $result = $all;
+        })->run();
+        
+        self::assertSame([[[1,2,3,4]]], $result);
+    }
+    
+    public function test_gather_with_preserve_keys(): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+    
+        $result = null;
+        $stream->gather(true)->call(static function (array $all) use (&$result) {
+            $result = $all;
+        })->run();
+     
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4], $result);
+    }
+    
+    public function test_gather_with_reindex(): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+    
+        $result = null;
+        $stream->reindex()->gather(true)->call(static function (array $all) use (&$result) {
+            $result = $all;
+        })->run();
+     
+        self::assertSame([1, 2, 3, 4], $result);
+    }
+    
+    public function test_gather_with_keys_preserve_and_flat_level_1(): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+        
+        $collector = Collectors::default();
+        $stream->gather(true)->flat(1)->collectIn($collector, true)->run();
+        
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4], $collector->getArrayCopy());
+    }
+    
+    public function test_gather_with_keys_preserve_and_flat_level_full(): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+        
+        $collector = Collectors::default();
+        $stream->gather(true)->flat()->collectIn($collector, true)->run();
+        
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4], $collector->getArrayCopy());
+    }
+    
+    public function test_gather_with_keys_preserve_and_flat_level_limited(): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+        
+        $collector = Collectors::default();
+        $stream->gather(true)->flat(3)->collectIn($collector, true)->run();
+        
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4], $collector->getArrayCopy());
+    }
+    
+    public function test_gather_without_keys_and_flat_level_1(): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+        
+        $collector = Collectors::default();
+        $stream->gather()->flat(1)->collectIn($collector, true)->run();
+        
+        self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
+    }
+    
+    public function test_gather_without_keys_and_flat_level_full(): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+        
+        $collector = Collectors::default();
+        $stream->gather()->flat()->collectIn($collector, true)->run();
+        
+        self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
+    }
+    
+    public function test_gather_without_keys_and_flat_level_limited(): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+        
+        $collector = Collectors::default();
+        $stream->gather()->flat(3)->collectIn($collector, true)->run();
+        
+        self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
+    }
+    
+    public function test_gather_do_not_push_any_data_when_stream_is_terminated(): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+        
+        $collector = Collectors::default();
+        $stream->while(Filters::lessThan(3))->gather()->collectIn($collector)->run();
+        
+        self::assertSame([], $collector->getArrayCopy());
+    }
 }

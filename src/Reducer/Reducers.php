@@ -17,9 +17,18 @@ final class Reducers
         if (\is_callable($reducer)) {
             if (\is_string($reducer)) {
                 switch ($reducer) {
-                    case 'min': return self::min();
-                    case 'max': return self::max();
-                    case 'array_sum': return self::sum();
+                    case 'min':
+                    case '\min':
+                        return self::min();
+                    case 'max':
+                    case '\max':
+                        return self::max();
+                    case 'array_sum':
+                    case '\array_sum':
+                        return self::sum();
+                    case 'implode':
+                    case '\implode':
+                        return self::concat();
                     default:
                         //noop
                 }

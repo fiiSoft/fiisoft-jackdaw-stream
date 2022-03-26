@@ -7,7 +7,7 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 final class Flattener implements Producer
 {
-    public const MAX_LEVEL = 256;
+    public const MAX_LEVEL = 128;
     
     private iterable $iterable = [];
     private int $maxLevel;
@@ -81,8 +81,22 @@ final class Flattener implements Producer
         $this->maxLevel = \min($this->maxLevel + $level, self::MAX_LEVEL);
     }
     
+    public function decreaseLevel(): void
+    {
+        if ($this->isLevel(0) || $this->isLevel(1)) {
+            throw new \LogicException('Cannot decrease level');
+        }
+        
+        --$this->maxLevel;
+    }
+    
     public function maxLevel(): int
     {
         return $this->maxLevel;
+    }
+    
+    public function isLevel(int $level): bool
+    {
+        return $level === 0 ? $this->maxLevel === self::MAX_LEVEL : $level === $this->maxLevel;
     }
 }

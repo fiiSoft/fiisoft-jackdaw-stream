@@ -593,4 +593,33 @@ final class StreamScenarioTest extends TestCase
         
         self::assertSame('quick jumps', $result);
     }
+    
+    public function test_scenario_38(): void
+    {
+        $rowset = [
+            ['id' => 7, 'name' => 'Sue', 'age' => 17, 'sex' => 'female'],
+            ['id' => 2, 'name' => 'Kate', 'age' => 35, 'sex' => 'female'],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26, 'sex' => 'male'],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 30, 'sex' => 'female'],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26, 'sex' => 'male'],
+        ];
+        
+        $womenAge = Stream::from($rowset)
+            ->filterBy('sex', 'female')
+            ->extract('age')
+            ->collect();
+        
+        $average = Stream::from($womenAge)->reduce(Reducers::average());
+        self::assertSame((17 + 35 + 30) / 3, $average->get());
+        
+        $menAge = Stream::from($rowset)
+            ->filterBy('sex', 'male')
+            ->extract('age')
+            ->collect();
+        
+        self::assertSame((26 + 26) / 2, Stream::of($menAge)->reduce(Reducers::average())->get());
+        
+        $totalAge = Stream::empty()->join($womenAge, $menAge)->reduce(Reducers::sum());
+        self::assertSame(17 + 35 + 26 + 30 + 26, $totalAge->get());
+    }
 }
