@@ -622,4 +622,39 @@ final class StreamScenarioTest extends TestCase
         $totalAge = Stream::empty()->join($womenAge, $menAge)->reduce(Reducers::sum());
         self::assertSame(17 + 35 + 26 + 30 + 26, $totalAge->get());
     }
+    
+    public function test_scenario_39(): void
+    {
+        $buffer = Collectors::default();
+        
+        Stream::from(['foo', 123, 'bar', 456])
+            ->feed(
+                Stream::empty()
+                    ->onlyStrings()
+                    ->collectIn($buffer)
+            )
+            ->onlyIntegers()
+            ->collectIn($buffer)
+            ->run();
+        
+        self::assertSame(['foo', 123, 'bar', 456], $buffer->getArrayCopy());
+    }
+    
+    public function test_scenario_40(): void
+    {
+        $buffer = Collectors::default();
+    
+        Stream::from(['foo', 123, 'bar', 456])
+            ->feed(
+                Stream::from(['z', 5, 'd'])
+                    ->join(['a', 7, 'c'])
+                    ->onlyStrings()
+                    ->collectIn($buffer)
+            )
+            ->onlyIntegers()
+            ->collectIn($buffer)
+            ->run();
+    
+        self::assertSame(['foo', 123, 'bar', 456, 'z', 'd', 'a', 'c'], $buffer->getArrayCopy());
+    }
 }

@@ -290,14 +290,6 @@ final class ProducersTest extends TestCase
         Producers::flattener()->increaseLevel(-1);
     }
     
-    public function test_ReverseItemsIterator_throws_exception_when_argument_is_invalid(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param items');
-        
-        new ReverseItemsIterator('this is wrong');
-    }
-    
     public function test_CircularBufferIterator_throws_exception_when_param_buffer_is_invalid(): void
     {
         $this->expectException(\InvalidArgumentException::class);

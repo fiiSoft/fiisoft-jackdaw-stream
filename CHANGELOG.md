@@ -2,6 +2,10 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.10.0
+
+- optional parameters added to StreamApi methods reindex and shuffle
+
 ## 2.9.0
 
 - Result can be use as Producer for Stream

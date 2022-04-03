@@ -816,6 +816,129 @@ final class StreamTest extends TestCase
         self::assertSame([0, 1, 3, 6, 10], Stream::from([1, 2, 3, 4])->scan(0, Reducers::sum())->toArray());
     }
     
+    public function test_scan_empty(): void
+    {
+        $result = Stream::from([])->scan(0, Reducers::sum())->toArray();
+        
+        self::assertSame([0], $result);
+    }
+    
+    public function test_scan_with_while(): void
+    {
+        $stream = StreamMaker::from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        
+        self::assertSame(
+            [0, 1, 3, 6, 10],
+            $stream->while(Filters::lessOrEqual(4), Check::KEY)
+                ->scan(0, Reducers::sum())
+                ->toArray()
+        );
+        
+        self::assertSame(
+            [0, 1, 3, 6, 10],
+            $stream->while(Filters::lessOrEqual(5), Check::VALUE)
+                ->scan(0, Reducers::sum())
+                ->toArray()
+        );
+    }
+    
+    public function test_scan_with_until(): void
+    {
+        $stream = StreamMaker::from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    
+        self::assertSame(
+            [0, 1, 3, 6, 10],
+            $stream->until(Filters::greaterThan(4), Check::KEY)
+                ->scan(0, Reducers::sum())
+                ->toArray()
+        );
+    
+        self::assertSame(
+            [0, 1, 3, 6, 10],
+            $stream->until(Filters::greaterThan(5), Check::VALUE)
+                ->scan(0, Reducers::sum())
+                ->toArray()
+        );
+    }
+    
+    public function test_scan_with_filter(): void
+    {
+        $stream = StreamMaker::from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    
+        self::assertSame(
+            [0, 1, 3, 6, 10, 15],
+            $stream->filter(Filters::lessOrEqual(4), Check::KEY)
+                ->scan(0, Reducers::sum())
+                ->toArray()
+        );
+    
+        self::assertSame(
+            [0, 1, 3, 6, 10, 15],
+            $stream->filter(Filters::lessOrEqual(5), Check::VALUE)
+                ->scan(0, Reducers::sum())
+                ->toArray()
+        );
+    }
+    
+    public function test_scan_with_omit(): void
+    {
+        $stream = StreamMaker::from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    
+        self::assertSame(
+            [0, 1, 3, 6, 10, 15],
+            $stream->omit(Filters::greaterThan(4), Check::KEY)
+                ->scan(0, Reducers::sum())
+                ->toArray()
+        );
+    
+        self::assertSame(
+            [0, 1, 3, 6, 10, 15],
+            $stream->omit(Filters::greaterThan(5), Check::VALUE)
+                ->scan(0, Reducers::sum())
+                ->toArray()
+        );
+    }
+    
+    public function test_scan_with_limit(): void
+    {
+        $stream = StreamMaker::from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    
+        self::assertSame(
+            [0, 1, 3, 6, 10],
+            $stream->scan(0, Reducers::sum())
+                ->limit(5)
+                ->toArray()
+        );
+    
+        self::assertSame(
+            [0, 1, 3, 6, 10, 15],
+            $stream
+                ->limit(5)
+                ->scan(0, Reducers::sum())
+                ->toArray()
+        );
+    }
+    
+    public function test_scan_with_skip(): void
+    {
+        $stream = StreamMaker::from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    
+        self::assertSame(
+            [15, 21, 28, 36, 45],
+            $stream->scan(0, Reducers::sum())
+                ->skip(5)
+                ->toArray()
+        );
+    
+        self::assertSame(
+            [0, 6, 13, 21, 30],
+            $stream
+                ->skip(5)
+                ->scan(0, Reducers::sum())
+                ->toArray()
+        );
+    }
+    
     public function test_flat_level_default(): void
     {
         $stream = Stream::from([
@@ -2068,10 +2191,10 @@ final class StreamTest extends TestCase
         Stream::of(1)
             ->collectIn($collector = Collectors::default())
             ->map(static fn(int $n): int => $n + 1)
-            ->until(5)
+            ->until(500)
             ->loop(true);
         
-        self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
+        self::assertSame(\range(1, 499), $collector->getArrayCopy());
     }
     
     public function test_concat(): void

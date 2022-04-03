@@ -2,7 +2,6 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Reducer\Reducer;
@@ -11,7 +10,9 @@ use FiiSoft\Jackdaw\Reducer\Reducers;
 final class Scan extends BaseOperation
 {
     private Reducer $reducer;
-    private Item $previous;
+    
+    /** @var mixed */
+    private $previous;
     
     /**
      * @param mixed $initial
@@ -20,15 +21,13 @@ final class Scan extends BaseOperation
     public function __construct($initial, $reducer)
     {
         $this->reducer = Reducers::getAdapter($reducer);
-        $this->previous = new Item(null, $initial);
+        $this->previous = $initial;
     }
     
     public function handle(Signal $signal): void
     {
-        $this->reducer->consume($this->previous->value);
-        
-        $this->previous->key = $signal->item->key;
-        $this->previous->value = $signal->item->value;
+        $this->reducer->consume($this->previous);
+        $this->previous = $signal->item->value;
         
         $signal->item->value = $this->reducer->result();
     
@@ -37,7 +36,9 @@ final class Scan extends BaseOperation
     
     public function streamingFinished(Signal $signal): bool
     {
-        $this->handle($signal);
+        if ($signal->isEmpty) {
+            $this->handle($signal);
+        }
         
         return $this->next->streamingFinished($signal);
     }

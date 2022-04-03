@@ -19,7 +19,12 @@ final class Reverse extends BaseOperation
     
     public function streamingFinished(Signal $signal): bool
     {
+        if (empty($this->items)) {
+            return $this->next->streamingFinished($signal);
+        }
+        
         $signal->restartWith(new ReverseItemsIterator($this->items), $this->next);
+        $this->items = [];
         
         return true;
     }

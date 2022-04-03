@@ -32,11 +32,6 @@ final class Signal extends Collaborator
     public function abort(): void
     {
         $this->isError = true;
-        $this->terminate();
-    }
-    
-    public function terminate(): void
-    {
         $this->isWorking = false;
     }
     

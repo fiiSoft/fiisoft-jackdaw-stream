@@ -13,7 +13,7 @@ final class ForwardItemsIterator implements Producer
     /**
      * @param Item[] $items
      */
-    public function __construct(iterable $items)
+    public function __construct(iterable $items = [])
     {
         $this->items = $items;
     }
@@ -28,5 +28,12 @@ final class ForwardItemsIterator implements Producer
         }
         
         $this->items = [];
+    }
+    
+    public function with(iterable $items): self
+    {
+        $this->items = $items;
+        
+        return $this;
     }
 }

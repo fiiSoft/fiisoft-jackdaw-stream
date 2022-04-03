@@ -57,6 +57,10 @@ final class SortLimited extends BaseOperation implements Limitable
     
     public function streamingFinished(Signal $signal): bool
     {
+        if ($this->heap->isEmpty()) {
+            return parent::streamingFinished($signal);
+        }
+        
         $signal->restartWith(new ReverseItemsIterator(\iterator_to_array($this->heap, false)), $this->next);
         
         return true;

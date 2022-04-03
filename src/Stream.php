@@ -84,6 +84,7 @@ final class Stream extends Collaborator implements StreamApi
     
     private bool $executed = false;
     private bool $handlePush = true;
+    private bool $isLoop = false;
     
     /** @var Stream[] */
     private array $pushToStreams = [];
@@ -527,17 +528,17 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function shuffle(): self
+    public function shuffle(?int $chunkSize = null): self
     {
-        return $this->chainOperation(new Shuffle());
+        return $this->chainOperation(new Shuffle($chunkSize));
     }
     
     /**
      * @inheritdoc
      */
-    public function reindex(): self
+    public function reindex(int $start = 0, int $step = 1): self
     {
-        return $this->chainOperation(new Reindex());
+        return $this->chainOperation(new Reindex($start, $step));
     }
     
     /**
@@ -970,6 +971,7 @@ final class Stream extends Collaborator implements StreamApi
      */
     public function loop(bool $run = false): StreamPipe
     {
+        $this->isLoop = true;
         $this->feed($this);
     
         if ($run) {
@@ -1277,9 +1279,13 @@ final class Stream extends Collaborator implements StreamApi
     {
         if (! $this->producer instanceof PushProducer) {
             $this->producer = new PushProducer($this->producer);
+            if ($this->isLoop) {
+                $this->currentSource = $this->producer->seed($this->signal->item);
+            } else {
+                $this->currentSource = $this->producer->feed($this->signal->item);
+                $this->head = $this->head->removeFromChain();
+            }
         }
-        
-        $this->currentSource = $this->producer->feed($this->signal->item);
     }
     
     private function finishSubstreems(): void

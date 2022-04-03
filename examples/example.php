@@ -233,10 +233,9 @@ echo 'example of usin flatMap: ', Stream::from(['the quick brown fox jumps'])
     ->reindex()
     ->toJson(), PHP_EOL;
 
-echo 'how to send data from one stream to another', PHP_EOL;
+echo 'iterate over stream: ';
 
 $source = StreamMaker::from([9, 4, 2, 7, 3, 5, 9, 3, 6, 1, 2, 1, 5, 7, 3, 4, 9, 7, 8]);
-
 foreach ($source as $item) {
     echo $item, ',';
 }
@@ -272,6 +271,7 @@ echo 'remove id from rows: ', Stream::from($rowset)->remove('id')->toJson(), PHP
 echo 'remove id and age from rows: ', Stream::from($rowset)->remove(['id', 'age'])->toJson(), PHP_EOL;
 
 //that stuff is fuckin crazy
+echo 'how to send data from one stream to another', PHP_EOL;
 
 $target = Stream::empty()->limit(5)->chunk(2)->map('array_sum')->call(function (int $sum) {
     echo 'sum of pair: ', $sum, PHP_EOL;
@@ -358,13 +358,6 @@ $rowset = [
 ];
 
 echo 'two best players: ', PHP_EOL;
-Stream::from($rowset)
-    ->sortBy('score desc', 'name', 2)
-    ->map(Mappers::concat(' '))
-    ->forEach(Consumers::printer(Check::VALUE));
-
-//or...
-echo 'or...', PHP_EOL;
 Stream::from($rowset)
     ->best(2, Comparators::sortBy(['score desc', 'name']))
     ->map(Mappers::concat(' '))

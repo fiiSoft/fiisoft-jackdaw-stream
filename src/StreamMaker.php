@@ -398,9 +398,9 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function reindex(): Stream
+    public function reindex(int $start = 0, int $step = 1): Stream
     {
-        return $this->make()->reindex();
+        return $this->make()->reindex($start, $step);
     }
     
     /**
@@ -571,9 +571,9 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function shuffle(): Stream
+    public function shuffle(?int $chunkSize = null): Stream
     {
-        return $this->make()->shuffle();
+        return $this->make()->shuffle($chunkSize);
     }
     
     /**

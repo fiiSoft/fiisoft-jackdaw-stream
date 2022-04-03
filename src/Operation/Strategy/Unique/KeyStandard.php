@@ -6,27 +6,27 @@ use FiiSoft\Jackdaw\Internal\Item;
 
 final class KeyStandard implements Strategy
 {
-    private array $valuesMap = [];
-    private array $values = [];
+    private array $keysMap = [];
+    private array $keys = [];
     
     public function check(Item $item): bool
     {
-        $value = $item->key;
+        $key = $item->key;
         
-        if (\is_int($value) || \is_string($value)) {
-            if (isset($this->valuesMap[$value])) {
+        if (\is_int($key) || \is_string($key)) {
+            if (isset($this->keysMap[$key])) {
                 return false;
             }
             
-            $this->valuesMap[$value] = true;
+            $this->keysMap[$key] = true;
             return true;
         }
         
-        if (\in_array($value, $this->values, true)) {
+        if (\in_array($key, $this->keys, true)) {
             return false;
         }
         
-        $this->values[] = $value;
+        $this->keys[] = $key;
         
         return true;
     }

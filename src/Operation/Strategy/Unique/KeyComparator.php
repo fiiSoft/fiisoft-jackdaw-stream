@@ -8,7 +8,7 @@ use FiiSoft\Jackdaw\Internal\Item;
 final class KeyComparator implements Strategy
 {
     private Comparator $comparator;
-    private array $values = [];
+    private array $keys = [];
     
     public function __construct(Comparator $comparator)
     {
@@ -17,15 +17,13 @@ final class KeyComparator implements Strategy
     
     public function check(Item $item): bool
     {
-        $value = $item->key;
-        
-        foreach ($this->values as $val) {
-            if ($this->comparator->compare($val, $value) === 0) {
+        foreach ($this->keys as $key) {
+            if ($this->comparator->compare($key, $item->key) === 0) {
                 return false;
             }
         }
         
-        $this->values[] = $value;
+        $this->keys[] = $item->key;
         
         return true;
     }

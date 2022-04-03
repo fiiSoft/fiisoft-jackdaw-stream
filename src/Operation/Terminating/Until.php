@@ -30,7 +30,7 @@ final class Until extends BaseOperation
     public function handle(Signal $signal): void
     {
         if ($this->doWhile XOR $this->filter->isAllowed($signal->item->value, $signal->item->key, $this->mode)) {
-            $signal->terminate();
+            $signal->stop();
         } else {
             $this->next->handle($signal);
         }

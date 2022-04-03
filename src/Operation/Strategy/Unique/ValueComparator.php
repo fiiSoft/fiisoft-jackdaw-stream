@@ -17,15 +17,13 @@ final class ValueComparator implements Strategy
     
     public function check(Item $item): bool
     {
-        $value = $item->value;
-        
         foreach ($this->values as $val) {
-            if ($this->comparator->compare($val, $value) === 0) {
+            if ($this->comparator->compare($val, $item->value) === 0) {
                 return false;
             }
         }
     
-        $this->values[] = $value;
+        $this->values[] = $item->value;
         
         return true;
     }

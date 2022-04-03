@@ -246,9 +246,13 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function unique($comparator = null, int $mode = Check::VALUE): self;
     
     /**
-     * Reindex all keys for elements (0, 1, ...)
+     * Reindex all keys for elements (0, 1, ...).
+     * Optionally, it can start from different value and with different step (step cannot be 0).
+     *
+     * @param int $start initial value
+     * @param int $step change value
      */
-    public function reindex(): self;
+    public function reindex(int $start = 0, int $step = 1): self;
     
     /**
      * Flip values with keys
@@ -394,8 +398,10 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     /**
      * Collect all incoming elements from stream and when there are no more elements,
      * start streaming them again in randomized order.
+     *
+     * @param int|null $chunkSize when > 1 it collects and shuffles chunks of data
      */
-    public function shuffle(): self;
+    public function shuffle(?int $chunkSize = null): self;
     
     /**
      * @param StreamPipe $stream it MUST be empty stream - created by Stream::empty()

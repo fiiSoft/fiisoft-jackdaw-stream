@@ -7,14 +7,18 @@ use FiiSoft\Jackdaw\Producer\MultiProducer;
 
 final class PushProducer extends MultiProducer
 {
-    private ?Item $next;
+    private ?Item $next = null;
+    
+    public function seed(Item $item): \Generator
+    {
+        yield from parent::feed($item);
+        yield from $this->feed($item);
+    }
     
     public function feed(Item $item): \Generator
     {
-        yield from parent::feed($item);
-    
         $this->next = yield;
-    
+        
         while ($this->next !== null) {
             $item->key = $this->next->key;
             $item->value = $this->next->value;

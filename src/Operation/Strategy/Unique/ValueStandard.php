@@ -11,23 +11,21 @@ final class ValueStandard implements Strategy
     
     public function check(Item $item): bool
     {
-        $value = $item->value;
-        
-        if (\is_int($value) || \is_string($value)) {
-            if (isset($this->valuesMap[$value])) {
+        if (\is_int($item->value) || \is_string($item->value)) {
+            if (isset($this->valuesMap[$item->value])) {
                 return false;
             }
         
-            $this->valuesMap[$value] = true;
+            $this->valuesMap[$item->value] = true;
             return true;
         }
     
-        if (\in_array($value, $this->values, true)) {
+        if (\in_array($item->value, $this->values, true)) {
             return false;
         }
     
-        $this->values[] = $value;
-        
+        $this->values[] = $item->value;
+    
         return true;
     }
 }
