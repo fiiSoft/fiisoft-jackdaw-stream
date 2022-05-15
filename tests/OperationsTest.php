@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Aggregate;
 use FiiSoft\Jackdaw\Operation\Flat;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
+use FiiSoft\Jackdaw\Operation\Internal\FeedMany;
 use FiiSoft\Jackdaw\Operation\Internal\Initial;
 use FiiSoft\Jackdaw\Operation\MapFieldWhen;
 use FiiSoft\Jackdaw\Operation\SendToMax;
@@ -137,5 +138,13 @@ final class OperationsTest extends TestCase
     
         $operation = new Initial();
         $operation->setPrev(new Ending());
+    }
+    
+    public function test_FeedMany_throws_exception_when_no_streams_are_provided(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('FeedMany requires at least one stream');
+        
+        new FeedMany();
     }
 }

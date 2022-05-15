@@ -1243,6 +1243,39 @@ final class StreamTest extends TestCase
         self::assertSame([1, 2, 3, 4], $buffer->getArrayCopy());
     }
     
+    public function test_feed_another_stream(): void
+    {
+        $collector = Collectors::default();
+        
+        $second = Stream::empty()->limit(2)->collectIn($collector);
+        Stream::from([1, 2, 3, 4, 5])->feed($second)->run();
+        
+        self::assertSame([1, 2], $collector->getArrayCopy());
+    }
+    
+    public function test_feed_many_streams(): void
+    {
+        $stream = Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4]);
+        
+        $first = Stream::empty()->onlyIntegers()->collect();
+        $second = Stream::empty()->onlyStrings()->collect();
+        $third = Stream::empty()->while(false)->collect();
+        
+        $stream->feed($first, $second)->feed($third)
+            ->chunk(2)
+            ->concat('');
+        
+        self::assertSame('a1,b2,c3,d4', $stream->toString());
+        
+        self::assertSame([1, 2, 3, 4], $first->toArray());
+        self::assertSame(['a', 'b', 'c', 'd'], $second->toArray());
+        
+        self::assertSame([1 => 1, 3 => 2, 5 => 3, 7 => 4], $first->toArrayAssoc());
+        self::assertSame([0 => 'a', 2 => 'b', 4 => 'c', 6 => 'd'], $second->toArrayAssoc());
+        
+        self::assertSame('', $third->toString());
+    }
+    
     public function test_stream_cannot_be_executed_more_than_onece(): void
     {
         $this->expectException(\LogicException::class);
@@ -1997,16 +2030,6 @@ final class StreamTest extends TestCase
         self::assertTrue(Stream::from(['a' => 'b', 'b' => 'a'])->hasEvery(['b', 'a'], Check::BOTH)->get());
     }
     
-    public function test_feed_another_stream(): void
-    {
-        $collector = Collectors::default();
-        
-        $second = Stream::empty()->limit(2)->collectIn($collector);
-        Stream::from([1, 2, 3, 4, 5])->feed($second)->run();
-        
-        self::assertSame([1, 2], $collector->getArrayCopy());
-    }
-    
     public function test_Result_allows_to_transform_stream_result_without_affecting_it(): void
     {
         $result = Stream::from([1, 2, 3, 4])
@@ -2315,13 +2338,95 @@ final class StreamTest extends TestCase
         self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
     }
     
-    public function test_gather_do_not_push_any_data_when_stream_is_terminated(): void
+    public function test_gather_pushes_collected_data_to_next_operation_when_stream_is_terminated(): void
     {
         $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
         
         $collector = Collectors::default();
-        $stream->while(Filters::lessThan(3))->gather()->collectIn($collector)->run();
+        $stream->while(Filters::lessThan(3))->gather(true)->collectIn($collector)->run();
         
-        self::assertSame([], $collector->getArrayCopy());
+        self::assertSame([['a' => 1, 'b' => 2]], $collector->getArrayCopy());
+    }
+    
+    public function test_collect_while(): void
+    {
+        self::assertSame(
+            [1, 2],
+            Stream::from([1, 2, 3, 4])->limit(2)->collectWhile(Filters::lessThan(3))->toArray()
+        );
+    }
+    
+    public function test_collect_until(): void
+    {
+        self::assertSame(
+            [1, 2],
+            Stream::from([1, 2, 3, 4])->limit(2)->collectUntil(Filters::greaterThan(2))->toArray()
+        );
+    }
+    
+    public function test_make_tuple(): void
+    {
+        self::assertSame(
+            '[[0,1],[1,2]]',
+            Stream::from([1, 2, 3, 4])->limit(2)->makeTuple()->toJson()
+        );
+        
+        self::assertSame(
+            '[[0,1],[1,2]]',
+            Stream::from([1, 2, 3, 4])->makeTuple()->limit(2)->toJson()
+        );
+    
+        self::assertSame(
+            '[{"key":1,"value":2},{"key":2,"value":3}]',
+            Stream::from([1, 2, 3, 4])->skip(1)->makeTuple(true)->limit(2)->toJson()
+        );
+    }
+    
+    public function test_gather_on_empty_stream(): void
+    {
+        self::assertSame('', Stream::empty()->gather()->toString());
+    }
+    
+    public function test_reindex_throws_exception_when_step_is_zero(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param step');
+        
+        Stream::from([1, 2])->reindex(0, 0)->run();
+    }
+    
+    public function test_reverse_on_empty_stream(): void
+    {
+        self::assertSame('', Stream::empty()->reverse()->toString());
+    }
+    
+    public function test_shuffle_on_empty_stream(): void
+    {
+        self::assertSame('', Stream::empty()->shuffle()->toString());
+    }
+    
+    public function test_shuffle_chunked_values(): void
+    {
+        $data = \range(1, 1000);
+        $chunkSize = 100;
+    
+        $result = Stream::from($data)->shuffle($chunkSize)->toArray();
+    
+        for ($i = 0; $i < 1000; $i += $chunkSize) {
+            self::assertNotSame(\array_slice($data, $i, $chunkSize), \array_slice($result, $i, $chunkSize));
+        }
+    }
+    
+    public function test_shuffle_throws_exception_when_chunk_size_is_less_than_1(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param chunkSize');
+        
+        Stream::from([1, 2])->shuffle(0)->run();
+    }
+    
+    public function test_SortLimited_on_empty_stream(): void
+    {
+        self::assertSame('', Stream::empty()->best(10)->toString());
     }
 }

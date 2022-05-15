@@ -30,6 +30,7 @@ use FiiSoft\Jackdaw\Operation\Gather;
 use FiiSoft\Jackdaw\Operation\Internal\AssertionFailed;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Feed;
+use FiiSoft\Jackdaw\Operation\Internal\FeedMany;
 use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Initial;
 use FiiSoft\Jackdaw\Operation\Internal\Iterate;
@@ -66,6 +67,7 @@ use FiiSoft\Jackdaw\Operation\Terminating\Last;
 use FiiSoft\Jackdaw\Operation\Terminating\Reduce;
 use FiiSoft\Jackdaw\Operation\Terminating\Until;
 use FiiSoft\Jackdaw\Operation\Tokenize;
+use FiiSoft\Jackdaw\Operation\Tuple;
 use FiiSoft\Jackdaw\Operation\Unique;
 use FiiSoft\Jackdaw\Predicate\Predicates;
 use FiiSoft\Jackdaw\Producer\Internal\PushProducer;
@@ -684,16 +686,22 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
-    public function feed(StreamPipe $stream): self
+    public function feed(StreamPipe ...$streams): self
     {
-        $id = \spl_object_id($stream);
+        foreach ($streams as $stream) {
+            $id = \spl_object_id($stream);
     
-        if (!isset($this->pushToStreams[$id])) {
-            $stream->prepareSubstream();
-            $this->pushToStreams[$id] = $stream;
+            if (!isset($this->pushToStreams[$id])) {
+                $stream->prepareSubstream();
+                $this->pushToStreams[$id] = $stream;
+            }
         }
-        
-        return $this->chainOperation(new Feed($stream));
+    
+        if (\count($streams) === 1) {
+            return $this->chainOperation(new Feed($streams[0]));
+        }
+    
+        return $this->chainOperation(new FeedMany(...$streams));
     }
     
     /**
@@ -726,6 +734,30 @@ final class Stream extends Collaborator implements StreamApi
     public function gather(bool $preserveKeys = false): self
     {
         return $this->chainOperation(new Gather($preserveKeys));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function gatherWhile($condition, int $mode = Check::VALUE, bool $preserveKeys = false): self
+    {
+        return $this->while($condition, $mode)->gather($preserveKeys);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function gatherUntil($condition, int $mode = Check::VALUE, bool $preserveKeys = false): self
+    {
+        return $this->until($condition, $mode)->gather($preserveKeys);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function makeTuple(bool $assoc = false): self
+    {
+        return $this->chainOperation(new Tuple($assoc));
     }
     
     /**
@@ -827,6 +859,22 @@ final class Stream extends Collaborator implements StreamApi
     public function collect(): Result
     {
         return $this->runLast(new Collect($this));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function collectWhile($condition, int $mode = Check::VALUE): Result
+    {
+        return $this->while($condition, $mode)->collect();
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function collectUntil($condition, int $mode = Check::VALUE): Result
+    {
+        return $this->until($condition, $mode)->collect();
     }
     
     /**
@@ -1133,7 +1181,7 @@ final class Stream extends Collaborator implements StreamApi
             }
             if ($this->last instanceof Map) {
                 if (!$this->last->mergeWith($next)) {
-                    $mapMany = new MapMany($this->last, $next);
+                    $mapMany = $this->last->createMapMany($next);
                     $this->last = $this->last->removeFromChain();
                     $this->chainOperation($mapMany);
                 }
@@ -1240,6 +1288,17 @@ final class Stream extends Collaborator implements StreamApi
             if ($this->last instanceof Reindex) {
                 $this->last = $this->last->removeFromChain();
                 $next->reindexKeys();
+            }
+        } elseif ($next instanceof Feed) {
+            if ($this->last instanceof FeedMany) {
+                $this->last->add($next);
+                return false;
+            }
+            if ($this->last instanceof Feed) {
+                $feedMany = $this->last->createFeedMany($next);
+                $this->last = $this->last->removeFromChain();
+                $this->chainOperation($feedMany);
+                return false;
             }
         }
         

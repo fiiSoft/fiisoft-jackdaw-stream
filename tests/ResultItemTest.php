@@ -84,9 +84,9 @@ final class ResultItemTest extends TestCase
         $item = ResultItem::createFound(new Item(0, ['a' => 1, 'b' => 2, 'c' => 3]));
         
         self::assertSame('1,2,3', $item->toString());
-        self::assertSame('{"a":1,"b":2,"c":3}', $item->toJson());
+        self::assertSame('[1,2,3]', $item->toJson());
         self::assertSame('{"a":1,"b":2,"c":3}', $item->toJsonAssoc());
-        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3], $item->toArray());
+        self::assertSame([1, 2, 3], $item->toArray());
         self::assertSame(['a' => 1, 'b' => 2, 'c' => 3], $item->toArrayAssoc());
     }
 }

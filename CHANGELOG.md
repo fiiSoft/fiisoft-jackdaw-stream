@@ -2,6 +2,16 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.11.0 - incompatible changes!
+
+- method StreamApi::feed can now accept many streams at once
+- added operations collectWhile and collectUntil
+- added operations gatherWhile and gatherUntil
+- added operation makeTuple 
+- added mapper Shuffle to shuffle arrays and strings
+- behaviour of Result modified for methods toArray and toJson
+- changed in how operation Gather works 
+
 ## 2.10.0
 
 - optional parameters added to StreamApi methods reindex and shuffle

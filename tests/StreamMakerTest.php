@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
+use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Operation\Internal\AssertionFailed;
 use FiiSoft\Jackdaw\Producer\Generator\SequentialInt;
 use FiiSoft\Jackdaw\Reducer\Reducers;
@@ -758,5 +759,40 @@ class StreamMakerTest extends TestCase
         })->run();
         
         self::assertSame([1,2,3,4], $result);
+    }
+    
+    public function test_collect_while(): void
+    {
+        self::assertSame([1, 2], $this->stream->collectWhile(Filters::lessThan(3))->toArray());
+    }
+    
+    public function test_collect_until(): void
+    {
+        self::assertSame([1, 2], $this->stream->collectUntil(Filters::greaterThan(2))->toArray());
+    }
+    
+    public function test_make_tuple(): void
+    {
+        self::assertSame(
+            '[[0,1],[1,2],[2,3],[3,4]]',
+            $this->stream->makeTuple()->toJson()
+        );
+        
+        self::assertSame(
+            '[{"key":0,"value":1},{"key":1,"value":2},{"key":2,"value":3},{"key":3,"value":4}]',
+            $this->stream->makeTuple(true)->toJson()
+        );
+    }
+    
+    public function test_gather_while(): void
+    {
+        self::assertSame('[[1,2]]', $this->stream->gatherWhile(Filters::lessThan(3))->toJson());
+        self::assertSame('[[1,2]]', $this->stream->gatherWhile(Filters::lessThan(3), Check::VALUE, true)->toJson());
+    }
+    
+    public function test_gather_until(): void
+    {
+        self::assertSame('[[1,2]]', $this->stream->gatherUntil(Filters::greaterThan(2))->toJson());
+        self::assertSame('[[1,2]]', $this->stream->gatherUntil(Filters::greaterThan(2), Check::VALUE, true)->toJson());
     }
 }

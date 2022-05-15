@@ -404,9 +404,9 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function shuffle(?int $chunkSize = null): self;
     
     /**
-     * @param StreamPipe $stream it MUST be empty stream - created by Stream::empty()
+     * @param StreamPipe ...$streams (or streems)
      */
-    public function feed(StreamPipe $stream): self;
+    public function feed(StreamPipe ...$streams): self;
     
     /**
      * @param Filter|Predicate|callable|mixed $condition
@@ -432,6 +432,37 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
      * @param bool $preserveKeys
      */
     public function gather(bool $preserveKeys = false): self;
+    
+    /**
+     * It collects elements in array as long as they meet given condition.
+     * With first element which does not meet condition, gathering values is aborted
+     * and array of collected elements is passed to next step.
+     * Any other elements from the stream will be ignored (they will never be read).
+     *
+     *
+     * @param Filter|Predicate|callable|mixed $condition
+     * @param int $mode
+     * @param bool $preserveKeys
+     */
+    public function gatherWhile($condition, int $mode = Check::VALUE, bool $preserveKeys = false): self;
+    
+    /**
+     * It collects elements in array until first element which does not meet given condition,
+     * in which case gathering of values is aborted and array of collected elements is passed to next step.
+     * Any other elements from the stream will be ignored (they will never be read).
+     *
+     * @param Filter|Predicate|callable|mixed $condition
+     * @param int $mode
+     * @param bool $preserveKeys
+     */
+    public function gatherUntil($condition, int $mode = Check::VALUE, bool $preserveKeys = false): self;
+    
+    /**
+     * Replace value of current element with its [key, value].
+     * When param $assoc is true then it creates pair ['key' => key, 'value' => value].
+     * In both cases, real key of element is reindexed starting from 0 (like in reindex() operation).
+     */
+    public function makeTuple(bool $assoc = false): self;
     
     /**
      * Register handlers which will be called when error occurs.
@@ -574,6 +605,22 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
      * @return Result
      */
     public function collect(): Result;
+    
+    /**
+     * Collect data as long as condition is true and finish processing when it is not.
+     *
+     * @param Filter|Predicate|callable|mixed $condition
+     * @param int $mode
+     */
+    public function collectWhile($condition, int $mode = Check::VALUE): Result;
+    
+    /**
+     * Collect data until condition is met and then finish processing.
+     *
+     * @param Filter|Predicate|callable|mixed $condition
+     * @param int $mode
+     */
+    public function collectUntil($condition, int $mode = Check::VALUE): Result;
     
     /**
      * @param Discriminator|Condition|Predicate|Filter|string|callable $discriminator

@@ -36,4 +36,9 @@ final class Map extends BaseOperation
     {
         return $this->mapper->mergeWith($other->mapper);
     }
+    
+    public function createMapMany(Map $next): MapMany
+    {
+        return new MapMany($this, $next);
+    }
 }

@@ -22,4 +22,14 @@ final class Feed extends BaseOperation
         
         $this->next->handle($signal);
     }
+    
+    public function createFeedMany(Feed $next): FeedMany
+    {
+        return new FeedMany($this->stream, $next->stream);
+    }
+    
+    public function stream(): StreamPipe
+    {
+        return $this->stream;
+    }
 }

@@ -27,7 +27,7 @@ final class Gather extends BaseOperation
     
     public function streamingFinished(Signal $signal): bool
     {
-        if ($signal->isEmpty && !empty($this->data)) {
+        if (!empty($this->data)) {
             
             $data = $this->data;
             $this->data = [];

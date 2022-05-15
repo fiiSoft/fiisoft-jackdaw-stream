@@ -579,9 +579,9 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
-    public function feed(StreamPipe $stream): Stream
+    public function feed(StreamPipe ...$streams): Stream
     {
-        return $this->make()->feed($stream);
+        return $this->make()->feed(...$streams);
     }
     
     /**
@@ -614,6 +614,30 @@ final class StreamMaker implements StreamApi
     public function gather(bool $preserveKeys = false): Stream
     {
         return $this->make()->gather($preserveKeys);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function gatherWhile($condition, int $mode = Check::VALUE, bool $preserveKeys = false): Stream
+    {
+        return $this->make()->gatherWhile($condition, $mode, $preserveKeys);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function gatherUntil($condition, int $mode = Check::VALUE, bool $preserveKeys = false): Stream
+    {
+        return $this->make()->gatherUntil($condition, $mode, $preserveKeys);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function makeTuple(bool $assoc = false): Stream
+    {
+        return $this->make()->makeTuple($assoc);
     }
     
     /**
@@ -672,9 +696,28 @@ final class StreamMaker implements StreamApi
         return $this->make()->groupBy($discriminator, $preserveKeys);
     }
     
+    /**
+     * @inheritdoc
+     */
     public function collect(): Result
     {
         return $this->make()->collect();
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function collectWhile($condition, int $mode = Check::VALUE): Result
+    {
+        return $this->make()->collectWhile($condition, $mode);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function collectUntil($condition, int $mode = Check::VALUE): Result
+    {
+        return $this->make()->collectUntil($condition, $mode);
     }
     
     /**

@@ -591,4 +591,26 @@ final class MappersTest extends TestCase
         self::assertSame(['foo' => 'bar'], $withKey->map(['foo' => 'bar'], 1));
         self::assertSame(['foo' => 'bar'], $withKey->map(new ArrayObject(['foo' => 'bar']), 1));
     }
+    
+    public function test_Shuffle_can_mix_elements_in_arrays(): void
+    {
+        $array = \range(1, 1000);
+        
+        self::assertNotSame($array, Mappers::shuffle()->map($array, 0));
+    }
+    
+    public function test_Shuffle_can_mix_chars_in_strings(): void
+    {
+        $string = \str_repeat(\implode(\range('a', 'z')), 10);
+        
+        self::assertNotSame($string, Mappers::shuffle()->map($string, 0));
+    }
+    
+    public function test_Shuffle_can_transform_iterator_into_array_with_mixed_elements(): void
+    {
+        $array = \range(1, 1000);
+        $iterator = new \ArrayIterator($array);
+        
+        self::assertNotSame($array, Mappers::getAdapter('\shuffle')->map($iterator, 0));
+    }
 }

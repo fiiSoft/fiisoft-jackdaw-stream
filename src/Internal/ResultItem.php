@@ -141,11 +141,7 @@ final class ResultItem implements ResultApi
      */
     public function toArray(bool $preserveKeys = false): array
     {
-        if ($preserveKeys || \is_iterable($this->finalValue)) {
-            return $this->toArrayAssoc();
-        }
-        
-        return $this->found || $this->finalValue !== null ? [$this->finalValue] : [];
+        return $this->asArray($preserveKeys) ?? [];
     }
     
     /**
@@ -161,12 +157,12 @@ final class ResultItem implements ResultApi
      */
     public function toJson(int $flags = 0, bool $preserveKeys = false): string
     {
-        if ($preserveKeys || \is_iterable($this->finalValue)) {
-            return $this->toJsonAssoc($flags);
+        if (\is_iterable($this->finalValue)) {
+            $data = $this->asArray($preserveKeys);
+        } else {
+            $data = $this->found || $this->finalValue !== null ? $this->finalValue : null;
         }
-    
-        $data = $this->found || $this->finalValue !== null ? $this->finalValue : null;
-        
+
         return \json_encode($data, \JSON_THROW_ON_ERROR | $flags);
     }
     
@@ -178,18 +174,22 @@ final class ResultItem implements ResultApi
         return \json_encode($this->asArray(), \JSON_THROW_ON_ERROR | $flags);
     }
     
-    private function asArray(): ?array
+    private function asArray(bool $preserveKeys = true): ?array
     {
         if ($this->found || $this->finalValue !== null) {
             if (\is_array($this->finalValue)) {
-                return $this->finalValue;
+                return $preserveKeys ? $this->finalValue : \array_values($this->finalValue);
             }
         
             if ($this->finalValue instanceof \Traversable) {
-                return \iterator_to_array($this->finalValue);
+                return \iterator_to_array($this->finalValue, $preserveKeys);
             }
-        
-            return [$this->key ?? 0 => $this->finalValue];
+    
+            if ($preserveKeys) {
+                return [$this->key ?? 0 => $this->finalValue];
+            }
+            
+            return [$this->finalValue];
         }
         
         return null;

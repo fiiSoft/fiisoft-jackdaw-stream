@@ -50,6 +50,11 @@ final class Mappers
                     case 'trim':
                     case '\trim':
                         return self::trim();
+                    case 'shuffle':
+                    case '\shuffle':
+                    case 'str_shuffle':
+                    case '\str_shuffle':
+                        return self::shuffle();
                     default:
                         //noop
                 }
@@ -119,6 +124,11 @@ final class Mappers
     public static function split(string $separator = ' '): Split
     {
         return new Split($separator);
+    }
+    
+    public static function shuffle(): Shuffle
+    {
+        return new Shuffle();
     }
     
     public static function reverse(): Reverse
