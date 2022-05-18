@@ -3,12 +3,13 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\StreamMaker;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
 
 final class ResultItem implements ResultApi
 {
-    private ?Transformer $transformer = null;
+    private ?StreamMaker $stream = null;
     
     private bool $found = false;
     
@@ -37,9 +38,8 @@ final class ResultItem implements ResultApi
             $this->found = true;
             $this->rawValue = $item->value;
             $this->key = $item->key;
-            $this->transformer = $transformer;
             
-            $this->prepareResult();
+            $this->transform($transformer);
         } else {
             $this->finalValue = \is_callable($default) ? $default() : $default;
         }
@@ -82,9 +82,16 @@ final class ResultItem implements ResultApi
      */
     public function transform($transformer): self
     {
-        $this->transformer = Transformers::getAdapter($transformer);
-        $this->prepareResult();
+        $transformer = Transformers::getAdapter($transformer);
         
+        if ($this->found) {
+            $this->finalValue = $transformer !== null
+                ? $transformer->transform($this->rawValue, $this->key)
+                : $this->rawValue;
+        }
+        
+        $this->stream = null;
+    
         return $this;
     }
     
@@ -174,6 +181,34 @@ final class ResultItem implements ResultApi
         return \json_encode($this->asArray(), \JSON_THROW_ON_ERROR | $flags);
     }
     
+    /**
+     * @inheritdoc
+     */
+    public function stream(): StreamMaker
+    {
+        if ($this->stream === null) {
+            $this->stream = StreamMaker::from($this->toArrayAssoc());
+        }
+        
+        return $this->stream;
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function count(): int
+    {
+        if ($this->finalValue !== null) {
+            if (\is_countable($this->finalValue)) {
+                return \count($this->finalValue);
+            }
+            
+            return 1;
+        }
+        
+        return 0;
+    }
+    
     private function asArray(bool $preserveKeys = true): ?array
     {
         if ($this->found || $this->finalValue !== null) {
@@ -201,14 +236,5 @@ final class ResultItem implements ResultApi
     public function run(): void
     {
         //do noting
-    }
-    
-    private function prepareResult(): void
-    {
-        if ($this->found) {
-            $this->finalValue = $this->transformer !== null
-             ? $this->transformer->transform($this->rawValue, $this->key)
-             : $this->rawValue;
-        }
     }
 }

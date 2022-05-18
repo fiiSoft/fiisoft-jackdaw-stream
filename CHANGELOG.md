@@ -2,6 +2,11 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.12.0
+
+- method stream added to ResultApi
+- ResultApi extends \Countable
+
 ## 2.11.0 - incompatible changes!
 
 - method StreamApi::feed can now accept many streams at once

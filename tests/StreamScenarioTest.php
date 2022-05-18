@@ -657,4 +657,34 @@ final class StreamScenarioTest extends TestCase
     
         self::assertSame(['foo', 123, 'bar', 456, 'z', 'd', 'a', 'c'], $buffer->getArrayCopy());
     }
+    
+    public function test_scenario_41(): void
+    {
+        $rowset = [
+            ['id' => 7, 'name' => 'Sue', 'age' => 17, 'sex' => 'female'],
+            ['id' => 2, 'name' => 'Kate', 'age' => 35, 'sex' => 'female'],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26, 'sex' => 'male'],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 30, 'sex' => 'female'],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26, 'sex' => 'male'],
+        ];
+        
+        $adultsWomen = Stream::from($rowset)
+            ->filterBy('age', Filters::greaterOrEqual(18))
+            ->filterBy('sex', 'female')
+            ->collect();
+        
+        self::assertTrue($adultsWomen->found());
+        self::assertCount(2, $adultsWomen);
+        
+        self::assertSame(
+            [
+                1 => ['id' => 2, 'name' => 'Kate', 'age' => 35, 'sex' => 'female'],
+                3 => ['id' => 6, 'name' => 'Joanna', 'age' => 30, 'sex' => 'female'],
+            ],
+            $adultsWomen->toArrayAssoc()
+        );
+        
+        $names = $adultsWomen->stream()->extract('name')->collect();
+        self::assertSame('["Kate","Joanna"]', $names->toJson());
+    }
 }

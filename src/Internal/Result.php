@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\StreamMaker;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
 
@@ -145,6 +146,22 @@ final class Result extends StreamPipe implements ResultApi
     public function call($consumer): void
     {
         $this->execute()->call($consumer);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function stream(): StreamMaker
+    {
+        return $this->execute()->stream();
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function count(): int
+    {
+        return $this->execute()->count();
     }
     
     private function execute(): ResultItem

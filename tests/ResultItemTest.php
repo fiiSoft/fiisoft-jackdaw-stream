@@ -89,4 +89,45 @@ final class ResultItemTest extends TestCase
         self::assertSame([1, 2, 3], $item->toArray());
         self::assertSame(['a' => 1, 'b' => 2, 'c' => 3], $item->toArrayAssoc());
     }
+    
+    public function test_stream_from_non_iterable_item_returns_stream_with_one_element(): void
+    {
+        $item = ResultItem::createFound(new Item(5, 'foo'));
+        
+        self::assertSame('"foo"', $item->toJson());
+        self::assertSame('{"5":"foo"}', $item->toJsonAssoc());
+        
+        self::assertSame(1, $item->stream()->count()->get());
+        self::assertSame([5 => 'foo'], $item->stream()->toArrayAssoc());
+    }
+    
+    public function test_result_with_non_iterable_item_contains_1_element(): void
+    {
+        $item = ResultItem::createFound(new Item(5, 'foo'));
+    
+        self::assertCount(1, $item);
+        self::assertSame(1, $item->count());
+    }
+    
+    public function test_item_not_found_contains_1_element_when_default_value_was_provided(): void
+    {
+        $item = ResultItem::createNotFound('foo');
+        
+        self::assertCount(1, $item);
+        self::assertSame(1, $item->count());
+        self::assertSame('foo', $item->get());
+        
+        self::assertSame(['foo'], $item->stream()->toArray());
+    }
+    
+    public function test_item_not_found_contains_0_elements_when_default_value_was_not_provided(): void
+    {
+        $item = ResultItem::createNotFound();
+        
+        self::assertCount(0, $item);
+        self::assertSame(0, $item->count());
+        self::assertNull($item->get());
+        
+        self::assertEmpty($item->stream()->toArray());
+    }
 }

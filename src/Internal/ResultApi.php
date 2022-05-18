@@ -5,9 +5,10 @@ namespace FiiSoft\Jackdaw\Internal;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Reducer\Reducer;
+use FiiSoft\Jackdaw\StreamMaker;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 
-interface ResultApi extends ResultCaster
+interface ResultApi extends ResultCaster, \Countable
 {
     public function run(): void;
     
@@ -49,4 +50,12 @@ interface ResultApi extends ResultCaster
      * @return void
      */
     public function call($consumer): void;
+    
+    /**
+     * Use values collected in result as stream.
+     * Because result holds computed values, created Stream is reusable.
+     *
+     * @return StreamMaker
+     */
+    public function stream(): StreamMaker;
 }
