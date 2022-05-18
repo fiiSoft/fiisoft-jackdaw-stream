@@ -3,12 +3,12 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
 /**
  * Made purely for fun. Enjoy!
  */
-final class CollatzGenerator implements Producer
+final class CollatzGenerator extends BaseProducer
 {
     private ?int $startNumber = null;
     private int $count = 0;

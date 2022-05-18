@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
-final class Tokenizer implements Producer
+final class Tokenizer extends BaseProducer
 {
     private string $string;
     private string $tokens;

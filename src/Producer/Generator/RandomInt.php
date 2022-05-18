@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
-final class RandomInt implements Producer
+final class RandomInt extends BaseProducer
 {
     private int $min;
     private int $max;

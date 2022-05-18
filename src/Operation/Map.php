@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class Map extends BaseOperation
@@ -14,7 +15,7 @@ final class Map extends BaseOperation
     private Mapper $mapper;
     
     /**
-     * @param Mapper|Reducer|Filter|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|callable|mixed $mapper
      */
     public function __construct($mapper)
     {

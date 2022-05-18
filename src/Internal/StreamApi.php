@@ -172,7 +172,7 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function remap(array $keys): self;
     
     /**
-     * @param Mapper|Reducer|Filter|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|callable|mixed $mapper
      */
     public function map($mapper): self;
     

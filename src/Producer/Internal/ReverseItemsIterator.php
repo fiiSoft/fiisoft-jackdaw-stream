@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Internal;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
-final class ReverseItemsIterator implements Producer
+final class ReverseItemsIterator extends BaseProducer
 {
     /** @var Item[] */
     private array $items;

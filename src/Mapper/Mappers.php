@@ -4,13 +4,15 @@ namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Mapper\Internal\FilterAdapter;
+use FiiSoft\Jackdaw\Mapper\Internal\PredicateAdapter;
 use FiiSoft\Jackdaw\Mapper\Internal\ReducerAdapter;
+use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class Mappers
 {
     /**
-     * @param Mapper|Reducer|Filter|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|callable|mixed $mapper
      * @return Mapper
      */
     public static function getAdapter($mapper): Mapper
@@ -71,6 +73,10 @@ final class Mappers
     
         if ($mapper instanceof Filter) {
             return new FilterAdapter($mapper);
+        }
+    
+        if ($mapper instanceof Predicate) {
+            return new PredicateAdapter($mapper);
         }
         
         return self::simple($mapper);

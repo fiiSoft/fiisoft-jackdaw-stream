@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
-final class RandomString implements Producer
+final class RandomString extends BaseProducer
 {
     private const DEFAULT_CHARSET = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890';
     

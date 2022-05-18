@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Producer;
 
 use FiiSoft\Jackdaw\Internal\Item;
 
-class MultiProducer implements Producer
+class MultiProducer extends BaseProducer
 {
     /** @var Producer[] */
     private array $producers = [];

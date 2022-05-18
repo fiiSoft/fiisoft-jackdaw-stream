@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
-final class SequentialInt implements Producer
+final class SequentialInt extends BaseProducer
 {
     private int $start;
     private int $step;

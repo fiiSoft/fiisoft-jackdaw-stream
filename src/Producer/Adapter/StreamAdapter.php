@@ -4,9 +4,9 @@ namespace FiiSoft\Jackdaw\Producer\Adapter;
 
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\StreamApi;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
-final class StreamAdapter implements Producer
+final class StreamAdapter extends BaseProducer
 {
     private StreamApi $stream;
     

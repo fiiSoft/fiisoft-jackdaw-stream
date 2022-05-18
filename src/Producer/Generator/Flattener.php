@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
-final class Flattener implements Producer
+final class Flattener extends BaseProducer
 {
     public const MAX_LEVEL = 128;
     

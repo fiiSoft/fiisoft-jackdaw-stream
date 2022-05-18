@@ -16,6 +16,7 @@ use FiiSoft\Jackdaw\Mapper\ToFloat;
 use FiiSoft\Jackdaw\Mapper\ToInt;
 use FiiSoft\Jackdaw\Mapper\ToString;
 use FiiSoft\Jackdaw\Mapper\Trim;
+use FiiSoft\Jackdaw\Predicate\Predicates;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use PHPUnit\Framework\TestCase;
 use stdClass;
@@ -615,7 +616,7 @@ final class MappersTest extends TestCase
         self::assertNotSame($array, Mappers::getAdapter('\shuffle')->map($iterator, 0));
     }
     
-    public function test_Filter_used_as_mapper_throws_exception_when_mapped_value_is_int_iterable(): void
+    public function test_Filter_used_as_mapper_throws_exception_when_mapped_value_is_not_iterable(): void
     {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Unable to map integer using Filter because it is not iterable');
@@ -628,5 +629,20 @@ final class MappersTest extends TestCase
         $data = ['a', 1, 'b', 2, 'c', 3];
         
         self::assertSame([1 => 1, 3 => 2, 5 => 3], Mappers::getAdapter(Filters::isInt())->map($data, 1));
+    }
+    
+    public function test_Predicate_used_as_mapper_throws_exception_when_mapped_value_is_not_iterable(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Unable to map integer using Predicate because it is not iterable');
+        
+        Mappers::getAdapter(Predicates::value('foo'))->map(15, 1);
+    }
+    
+    public function test_Predicate_used_as_mapper_allows_to_remove_elements_in_arrays(): void
+    {
+        $data = ['a', 1, 'b', 2, 'c', 3];
+        
+        self::assertSame([1 => 1, 3 => 2, 5 => 3], Mappers::getAdapter(Predicates::inArray([1, 2, 3]))->map($data, 1));
     }
 }

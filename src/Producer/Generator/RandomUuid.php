@@ -3,10 +3,10 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 use Ramsey\Uuid\Uuid;
 
-final class RandomUuid implements Producer
+final class RandomUuid extends BaseProducer
 {
     private int $count = 0;
     private int $limit;

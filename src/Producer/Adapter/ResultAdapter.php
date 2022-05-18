@@ -4,9 +4,9 @@ namespace FiiSoft\Jackdaw\Producer\Adapter;
 
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Result;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
-final class ResultAdapter implements Producer
+final class ResultAdapter extends BaseProducer
 {
     private Result $result;
     

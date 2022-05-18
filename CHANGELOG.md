@@ -2,6 +2,11 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.14.0
+
+- added method Producer::stream() so now every Prodcer can return Stream directly
+- operation map can use Predicate in similar way like Filter
+
 ## 2.13.0
 
 - added possibility to transform iterable values by Filter passed to operation map

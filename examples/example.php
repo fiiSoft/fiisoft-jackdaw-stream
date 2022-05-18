@@ -45,7 +45,7 @@ echo 'last: ', Stream::from(['a', 5, 'b', 3, 'c'])->filter('is_int')->last(0)->g
 
 echo 'only a,b,c: ', Stream::from(['a', 5, 'b', 3, 'c'])->only(['a', 'b', 'c'])->toString(), PHP_EOL;
 
-echo 'some random numbers: ', Stream::from(Producers::randomInt(10, 99))->limit(5)->toJson(), PHP_EOL;
+echo 'some random numbers: ', Producers::randomInt(10, 99)->stream()->limit(5)->toJson(), PHP_EOL;
 
 echo 'join: ', Stream::from(['a', 'b', 'c'])->join([1, 2, 3])->skip(2)->limit(2)->toJson(), PHP_EOL;
 
@@ -390,7 +390,7 @@ Stream::from(['this is first string', 'this is second string'])
 echo PHP_EOL;
 
 echo 'Flat nested arrays by using flattener producer directly: ', PHP_EOL;
-Stream::from(Producers::flattener($rowset))->forEach(Consumers::stdout(', ', Check::BOTH));
+Producers::flattener($rowset)->stream()->forEach(Consumers::stdout(', ', Check::BOTH));
 
 echo PHP_EOL, 'and the same using flat method: ', PHP_EOL;
 Stream::from($rowset)->flat()->forEach(Consumers::stdout(', ', Check::BOTH));
@@ -415,6 +415,6 @@ echo 'Left only string values in arrays: ',
 
 //let's do some fun with Collatz:
 echo 'let\'s play with random Collatz series: ', PHP_EOL;
-Stream::from(Producers::collatz())->forEach(Consumers::stdout(' '));
+Producers::collatz()->stream()->forEach(Consumers::stdout(' '));
 
 echo PHP_EOL;

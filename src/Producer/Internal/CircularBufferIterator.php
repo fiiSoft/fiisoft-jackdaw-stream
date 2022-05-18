@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Internal;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
-final class CircularBufferIterator implements Producer
+final class CircularBufferIterator extends BaseProducer
 {
     /** @var \ArrayAccess|array|Item[] */
     private $buffer;

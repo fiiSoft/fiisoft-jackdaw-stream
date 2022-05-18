@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Adapter;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\BaseProducer;
 
-final class IteratorAdapter implements Producer
+final class IteratorAdapter extends BaseProducer
 {
     private \Iterator $iterator;
     

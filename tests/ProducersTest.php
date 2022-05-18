@@ -329,4 +329,9 @@ final class ProducersTest extends TestCase
         
         Producers::flattener([], 1)->decreaseLevel();
     }
+    
+    public function test_Producer_can_create_Stream_to_iterate_over_values_produced_by_itself(): void
+    {
+        self::assertSame('A,B,C', Producers::getAdapter(['a', 'b', 'c'])->stream()->map('\strtoupper')->toString());
+    }
 }
