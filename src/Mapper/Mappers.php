@@ -2,13 +2,15 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
+use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Mapper\Internal\FilterAdapter;
 use FiiSoft\Jackdaw\Mapper\Internal\ReducerAdapter;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class Mappers
 {
     /**
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|Filter|callable|mixed $mapper
      * @return Mapper
      */
     public static function getAdapter($mapper): Mapper
@@ -65,6 +67,10 @@ final class Mappers
     
         if ($mapper instanceof Reducer) {
             return new ReducerAdapter($mapper);
+        }
+    
+        if ($mapper instanceof Filter) {
+            return new FilterAdapter($mapper);
         }
         
         return self::simple($mapper);

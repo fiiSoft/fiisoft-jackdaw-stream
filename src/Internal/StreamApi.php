@@ -14,7 +14,6 @@ use FiiSoft\Jackdaw\Operation\Internal\AssertionFailed;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
-use FiiSoft\Jackdaw\Stream;
 
 interface StreamApi extends ResultCaster, \IteratorAggregate
 {
@@ -173,7 +172,7 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function remap(array $keys): self;
     
     /**
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|Filter|callable|mixed $mapper
      */
     public function map($mapper): self;
     

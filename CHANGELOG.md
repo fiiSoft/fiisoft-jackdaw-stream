@@ -2,6 +2,10 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.13.0
+
+- added possibility to transform iterable values by Filter passed to operation map
+
 ## 2.12.0
 
 - method stream added to ResultApi

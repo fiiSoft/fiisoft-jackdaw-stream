@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
@@ -13,7 +14,7 @@ final class Map extends BaseOperation
     private Mapper $mapper;
     
     /**
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|Filter|callable|mixed $mapper
      */
     public function __construct($mapper)
     {

@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use ArrayObject;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Mapper\Concat;
 use FiiSoft\Jackdaw\Mapper\Internal\ReducerAdapter;
 use FiiSoft\Jackdaw\Mapper\JsonDecode;
@@ -612,5 +613,20 @@ final class MappersTest extends TestCase
         $iterator = new \ArrayIterator($array);
         
         self::assertNotSame($array, Mappers::getAdapter('\shuffle')->map($iterator, 0));
+    }
+    
+    public function test_Filter_used_as_mapper_throws_exception_when_mapped_value_is_int_iterable(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Unable to map integer using Filter because it is not iterable');
+        
+        Mappers::getAdapter(Filters::string()->contains('foo'))->map(15, 1);
+    }
+    
+    public function test_Filter_used_as_mapper_allows_to_remove_elements_in_arrays(): void
+    {
+        $data = ['a', 1, 'b', 2, 'c', 3];
+        
+        self::assertSame([1 => 1, 3 => 2, 5 => 3], Mappers::getAdapter(Filters::isInt())->map($data, 1));
     }
 }

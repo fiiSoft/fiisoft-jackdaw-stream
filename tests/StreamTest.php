@@ -2201,6 +2201,27 @@ final class StreamTest extends TestCase
             ->toArray());
     }
     
+    public function test_map_row_using_Filter_to_remove_invalid_values_from_them(): void
+    {
+        $readings = [
+            [2, 5, -1, 7, 3, -1, 1],
+            [4, null, -1, 5, null, null, 1],
+            [3, 5, null, -1, 5, 4, 3],
+        ];
+        
+        $expected = [
+            (2 + 5 + 7 + 3 + 1) / 5,
+            (4 + 5 + 1) / 3,
+            (3 + 5 + 5 + 4 + 3) / 5,
+        ];
+        
+        self::assertSame($expected, Stream::from($readings)
+            ->map(Filters::AND('\is_int', Filters::greaterOrEqual(0), Filters::lessOrEqual(9)))
+            ->map(Reducers::average())
+            ->toArray()
+        );
+    }
+    
     public function test_extractWhen_throws_exception_when_element_is_not_iterable(): void
     {
         $this->expectException(\LogicException::class);
