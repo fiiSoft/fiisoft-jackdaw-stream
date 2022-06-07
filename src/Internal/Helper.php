@@ -9,6 +9,20 @@ final class Helper
         return (new \ReflectionFunction($callable))->getNumberOfRequiredParameters();
     }
     
+    public static function isDeclaredReturnTypeArray(callable $callable): bool
+    {
+        $refl = new \ReflectionFunction($callable);
+        
+        if ($refl->hasReturnType()) {
+            $returnType = $refl->getReturnType();
+            if ($returnType instanceof \ReflectionType) {
+                return $returnType->getName() === 'array';
+            }
+        }
+        
+        return false;
+    }
+    
     public static function invalidParamException(string $name, $param): \InvalidArgumentException
     {
         return new \InvalidArgumentException(
@@ -39,6 +53,25 @@ final class Helper
         $message .= ' arguments, but requires '.$current;
         
         return new \LogicException($message);
+    }
+    
+    public static function areFieldsValid($fields): bool
+    {
+        if (\is_array($fields)) {
+            if (empty($fields)) {
+                return false;
+            }
+        
+            foreach ($fields as $field) {
+                if (!self::isFieldValid($field)) {
+                    return false;
+                }
+            }
+        
+            return true;
+        }
+    
+        return self::isFieldValid($fields);
     }
     
     public static function isFieldValid($field): bool

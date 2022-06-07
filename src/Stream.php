@@ -16,7 +16,9 @@ use FiiSoft\Jackdaw\Internal\StreamApi;
 use FiiSoft\Jackdaw\Internal\StreamCollection;
 use FiiSoft\Jackdaw\Internal\StreamIterator;
 use FiiSoft\Jackdaw\Mapper\Internal\ConditionalExtract;
+use FiiSoft\Jackdaw\Mapper\Key;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Mapper\Value;
 use FiiSoft\Jackdaw\Operation\Aggregate;
 use FiiSoft\Jackdaw\Operation\Assert;
 use FiiSoft\Jackdaw\Operation\Chunk;
@@ -39,6 +41,7 @@ use FiiSoft\Jackdaw\Operation\Limit;
 use FiiSoft\Jackdaw\Operation\Map;
 use FiiSoft\Jackdaw\Operation\MapFieldWhen;
 use FiiSoft\Jackdaw\Operation\MapKey;
+use FiiSoft\Jackdaw\Operation\MapKeyValue;
 use FiiSoft\Jackdaw\Operation\MapMany;
 use FiiSoft\Jackdaw\Operation\MapWhen;
 use FiiSoft\Jackdaw\Operation\Operation;
@@ -410,6 +413,14 @@ final class Stream extends Collaborator implements StreamApi
     /**
      * @inheritdoc
      */
+    public function mapKV(callable $keyValueMapper): self
+    {
+        return $this->chainOperation(new MapKeyValue($keyValueMapper));
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function collectIn($collector, bool $preserveKeys = false): self
     {
         return $this->chainOperation(new CollectIn($collector, $preserveKeys));
@@ -541,6 +552,22 @@ final class Stream extends Collaborator implements StreamApi
     public function reindex(int $start = 0, int $step = 1): self
     {
         return $this->chainOperation(new Reindex($start, $step));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function reindexBy($field, bool $move = false): self
+    {
+        $keyExtractor = Mappers::fieldValue($field);
+    
+        if ($move) {
+            return $this->mapKV(static fn($value, $key): array => [
+                $keyExtractor->map($value, $key) => Mappers::remove($field)
+            ]);
+        }
+        
+        return $this->mapKey($keyExtractor);
     }
     
     /**
@@ -1175,6 +1202,12 @@ final class Stream extends Collaborator implements StreamApi
                 return false;
             }
         } elseif ($next instanceof Map) {
+            if ($next->mapper() instanceof Value) {
+                return false;
+            }
+            if ($this->last instanceof MapKey) {
+                return !($this->last->mapper() instanceof Value && $next->mapper() instanceof Key);
+            }
             if ($this->last instanceof MapMany) {
                 $this->last->add($next);
                 return false;
@@ -1299,6 +1332,16 @@ final class Stream extends Collaborator implements StreamApi
                 $this->last = $this->last->removeFromChain();
                 $this->chainOperation($feedMany);
                 return false;
+            }
+        } elseif ($next instanceof MapKey) {
+            if ($next->mapper() instanceof Key) {
+                return false;
+            }
+            if ($this->last instanceof Map) {
+                return !($this->last->mapper() instanceof Key && $next->mapper() instanceof Value);
+            }
+            if ($this->last instanceof MapKey) {
+                return !$this->last->mergeWith($next);
             }
         }
         

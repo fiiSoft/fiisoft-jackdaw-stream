@@ -21,8 +21,8 @@ final class Extract extends BaseMapper
      */
     public function __construct($fields, $orElse = null)
     {
-        if (!$this->isParamFieldsValid($fields)) {
-            throw new \InvalidArgumentException('Invalid param field');
+        if (!Helper::areFieldsValid($fields)) {
+            throw new \InvalidArgumentException('Invalid param fields');
         }
         
         $this->fields = $fields;
@@ -47,10 +47,5 @@ final class Extract extends BaseMapper
         }
     
         throw new \LogicException('It is impossible to extract field(s) from '.Helper::typeOfParam($value));
-    }
-    
-    private function isParamFieldsValid($fields): bool
-    {
-        return \is_scalar($fields) || (\is_array($fields) && !empty($fields));
     }
 }

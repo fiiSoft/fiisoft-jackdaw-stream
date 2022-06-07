@@ -4,12 +4,15 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Aggregate;
 use FiiSoft\Jackdaw\Operation\Flat;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\FeedMany;
 use FiiSoft\Jackdaw\Operation\Internal\Initial;
 use FiiSoft\Jackdaw\Operation\MapFieldWhen;
+use FiiSoft\Jackdaw\Operation\MapKey;
+use FiiSoft\Jackdaw\Operation\MapKeyValue;
 use FiiSoft\Jackdaw\Operation\SendToMax;
 use FiiSoft\Jackdaw\Operation\SortLimited;
 use FiiSoft\Jackdaw\Operation\State\SortLimited\BufferFull;
@@ -146,5 +149,59 @@ final class OperationsTest extends TestCase
         $this->expectExceptionMessage('FeedMany requires at least one stream');
         
         new FeedMany();
+    }
+    
+    public function test_MapKey_can_merge_Value_with_FieldValue(): void
+    {
+        $first = new MapKey(Mappers::value());
+        $second = new MapKey(Mappers::fieldValue('foo'));
+        
+        self::assertTrue($first->mergeWith($second));
+        self::assertFalse($first->mergeWith(new MapKey(Mappers::simple('bar'))));
+    }
+    
+    public function test_MapKey_can_merge_FieldValue_with_Value(): void
+    {
+        $first = new MapKey(Mappers::fieldValue('foo'));
+        $second = new MapKey(Mappers::value());
+        
+        self::assertTrue($first->mergeWith($second));
+    }
+    
+    public function test_MapKeyValue_throws_exception_when_number_of_arguments_accepted_by_mapper_is_invalid(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('KeyValue mapper have to accept 0, 1 or 2 arguments, but requires 3');
+        
+        new MapKeyValue(static fn($a, $b, $c): bool => true);
+    }
+    
+    /**
+     * @dataProvider getDataForTestMapKeyValueThrowsExceptionWhenDeclaredTypeOfValueOfMapperIsNotArray
+     */
+    public function test_MapKeyValue_throws_exception_when_return_type_of_mapper_is_not_array(callable $mapper): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('KeyValue mapper must have declared array as its return type');
+        
+        new MapKeyValue($mapper);
+    }
+    
+    public function getDataForTestMapKeyValueThrowsExceptionWhenDeclaredTypeOfValueOfMapperIsNotArray(): \Generator
+    {
+        $mappers = [
+            static fn(): bool => true,
+            static function (): string {
+                return 'wrong';
+            },
+            static fn() => [],
+            static function () {
+                return [];
+            }
+        ];
+    
+        foreach ($mappers as $mapper) {
+            yield [$mapper];
+        }
     }
 }

@@ -395,6 +395,11 @@ Producers::flattener($rowset)->stream()->forEach(Consumers::stdout(', ', Check::
 echo PHP_EOL, 'and the same using flat method: ', PHP_EOL;
 Stream::from($rowset)->flat()->forEach(Consumers::stdout(', ', Check::BOTH));
 
+echo PHP_EOL, "Let's map key and value at the same time: ",
+    Stream::from([['id' => 2, 'name' => 'Kate', 'age' => 35], ['id' => 9, 'name' => 'Chris', 'age' => 26]])
+        ->mapKV(static fn(array $row): array => [$row['id'] => Mappers::extract('name')])
+        ->toJsonAssoc();
+
 echo PHP_EOL;
 
 echo 'Push to non-empty stream: ';

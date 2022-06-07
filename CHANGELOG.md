@@ -2,6 +2,14 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.15.0
+
+- added method StreamApi::reindexBy
+- added two special mappers Key and Value
+- added special map operation StreamApi::mapKV
+
+[//]: # (- added method StreamApi::moveFieldToKey)
+
 ## 2.14.0
 
 - added method Producer::stream() so now every Prodcer can return Stream directly

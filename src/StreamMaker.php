@@ -278,6 +278,14 @@ final class StreamMaker implements StreamApi
     /**
      * @inheritdoc
      */
+    public function mapKV(callable $keyValueMapper): Stream
+    {
+        return $this->make()->mapKV($keyValueMapper);
+    }
+    
+    /**
+     * @inheritdoc
+     */
     public function castToInt($fields = null): Stream
     {
         return $this->make()->castToInt($fields);
@@ -401,6 +409,14 @@ final class StreamMaker implements StreamApi
     public function reindex(int $start = 0, int $step = 1): Stream
     {
         return $this->make()->reindex($start, $step);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function reindexBy($field, bool $move = false): Stream
+    {
+        return $this->make()->reindexBy($field, $move);
     }
     
     /**

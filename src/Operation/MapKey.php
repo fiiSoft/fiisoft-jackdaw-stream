@@ -3,8 +3,10 @@
 namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Mapper\FieldValue;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Mapper\Value;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
@@ -25,5 +27,26 @@ final class MapKey extends BaseOperation
         $signal->item->key = $this->mapper->map($signal->item->value, $signal->item->key);
     
         $this->next->handle($signal);
+    }
+    
+    /**
+     * @param MapKey $other
+     * @return bool when mapper from other MapKey has been merged
+     */
+    public function mergeWith(MapKey $other): bool
+    {
+        if ($this->mapper instanceof Value && $other->mapper instanceof FieldValue
+            || $this->mapper instanceof FieldValue && $other->mapper instanceof Value
+        ) {
+            $this->mapper = $other->mapper;
+            return true;
+        }
+        
+        return $this->mapper->mergeWith($other->mapper);
+    }
+    
+    public function mapper(): Mapper
+    {
+        return $this->mapper;
     }
 }

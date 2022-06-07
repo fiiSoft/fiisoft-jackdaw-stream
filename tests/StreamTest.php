@@ -2450,4 +2450,84 @@ final class StreamTest extends TestCase
     {
         self::assertSame('', Stream::empty()->best(10)->toString());
     }
+    
+    public function test_reindexBy_many_field_use_last_one(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Kate', 'age' => 35],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26],
+        ];
+        
+        $result = Stream::from($rowset)
+            ->reindexBy('name')
+            ->reindexBy('id')
+            ->extract(['name', 'age'])
+            ->toArrayAssoc();
+        
+        $expected = [
+            2 => ['name' => 'Kate', 'age' => 35],
+            9 => ['name' => 'Chris', 'age' => 26],
+        ];
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_mapKey_will_not_use_mapper_Key_and_map_will_not_use_mapper_Value(): void
+    {
+        self::assertSame(
+            ['a', 'b', 'c'],
+            Stream::from(['a', 'b', 'c'])->map(Mappers::value())->mapKey(Mappers::key())->toArrayAssoc()
+        );
+    }
+    
+    public function test_map_key_to_value_and_then_value_to_key_is_optimized(): void
+    {
+        self::assertSame(
+            [0, 1, 2],
+            Stream::from(['a', 'b', 'c'])->map(Mappers::key())->mapKey(Mappers::value())->toArrayAssoc()
+        );
+    }
+    
+    /**
+     * @dataProvider getDataForTestMapKeyValueThrowsExcetionWhenResultOfMapperIsNotValid
+     */
+    public function test_MapKeyValue_throws_excetion_when_result_of_mapper_is_not_valid($mapper): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Result returned from KeyValue mapper is invalid');
+        
+        Stream::from(['a', 'b', 'c'])->mapKV($mapper)->run();
+    }
+    
+    public function getDataForTestMapKeyValueThrowsExcetionWhenResultOfMapperIsNotValid(): \Generator
+    {
+        $mappers = [
+            static fn(): array => [], //empty array
+            static fn($value): array => ['a', 'b'], //too many elements
+            static fn($value, $key): array => [$key => $value, 'something'], //too many elements
+        ];
+    
+        foreach ($mappers as $mapper) {
+            yield [$mapper];
+        }
+    }
+    
+    public function test_MapKeyValue_can_use_Mapper_to_compute_value(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Kate', 'age' => 35],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26],
+        ];
+        
+        $result = Stream::from($rowset)
+            ->reindexBy('id', true)
+            ->toArrayAssoc();
+        
+        $expected = [
+            2 => ['name' => 'Kate', 'age' => 35],
+            9 => ['name' => 'Chris', 'age' => 26],
+        ];
+        
+        self::assertSame($expected, $result);
+    }
 }

@@ -14,8 +14,8 @@ final class Remove extends BaseMapper
      */
     public function __construct($fields)
     {
-        if (!$this->isFieldValid($fields)) {
-            throw new \InvalidArgumentException('Invalid param field');
+        if (!Helper::areFieldsValid($fields)) {
+            throw new \InvalidArgumentException('Invalid param fields');
         }
     
         $this->fields = \array_flip(\is_array($fields) ? $fields : [$fields]);
@@ -36,11 +36,6 @@ final class Remove extends BaseMapper
         }
     
         throw new \LogicException('Unsupported '.Helper::typeOfParam($value).' as value in Remove mapper');
-    }
-    
-    private function isFieldValid($field): bool
-    {
-        return \is_scalar($field) || (\is_array($field) && !empty($field));
     }
     
     public function mergeWith(Mapper $other): bool

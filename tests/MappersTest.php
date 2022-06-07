@@ -30,11 +30,31 @@ final class MappersTest extends TestCase
         Mappers::concat()->map('string', 1);
     }
     
-    public function test_Extract_throws_exception_on_invalid_param(): void
+    /**
+     * @dataProvider getDataForTestExtractThrowsExceptionOnInvalidParam
+     */
+    public function test_Extract_throws_exception_on_invalid_param($fields): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param fields');
         
-        Mappers::extract([]);
+        Mappers::extract($fields);
+    }
+    
+    public function getDataForTestExtractThrowsExceptionOnInvalidParam(): \Generator
+    {
+        $fields = [
+            [],
+            '',
+            true,
+            [''],
+            [[]],
+            [false],
+        ];
+    
+        foreach ($fields as $field) {
+            yield [$field];
+        }
     }
     
     public function test_Extract_throws_exception_on_invalid_argument(): void
@@ -68,7 +88,7 @@ final class MappersTest extends TestCase
         self::assertSame('[{"a":1,"b":2}]', Mappers::jsonEncode()->map([['a' => 1, 'b' => 2]], 1));
     }
     
-    public function test_toString_can_map_simple_value_and_also_fileds_in_arrays(): void
+    public function test_toString_can_map_simple_value_and_also_fields_in_arrays(): void
     {
         self::assertSame('15', Mappers::toString()->map(15, 1));
         self::assertSame(['field' => '5'], Mappers::toString(['field'])->map(['field' => 5], 1));
@@ -90,7 +110,7 @@ final class MappersTest extends TestCase
         Mappers::toString(['field'])->map(5, 1);
     }
     
-    public function test_toBool_can_map_simple_value_and_also_fileds_in_arrays(): void
+    public function test_toBool_can_map_simple_value_and_also_fields_in_arrays(): void
     {
         self::assertTrue(Mappers::toBool()->map(15, 1));
         self::assertSame(['field' => true], Mappers::toBool(['field'])->map(['field' => 5], 1));
@@ -644,5 +664,64 @@ final class MappersTest extends TestCase
         $data = ['a', 1, 'b', 2, 'c', 3];
         
         self::assertSame([1 => 1, 3 => 2, 5 => 3], Mappers::getAdapter(Predicates::inArray([1, 2, 3]))->map($data, 1));
+    }
+    
+    public function test_FieldValue_throws_exception_when_param_field_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param field');
+        
+        Mappers::fieldValue(false);
+    }
+    
+    public function test_FieldValue_throws_exception_when_mapped_value_is_not_array(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('It is impossible to extract field foo from int');
+        
+        $mapper = Mappers::fieldValue('foo');
+        $mapper->map(5, 2);
+    }
+    
+    public function test_FieldValue_throws_exception_when_value_of_field_is_null(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Cannot extract value of field foo');
+    
+        $mapper = Mappers::fieldValue('foo');
+        $mapper->map(['bar' => 3], 2);
+    }
+    
+    public function test_FieldValue_allows_to_merge_only_with_other_FieldValue_mapper(): void
+    {
+        $first = Mappers::fieldValue('foo');
+        $second = Mappers::fieldValue('bar');
+        
+        self::assertTrue($first->mergeWith($second));
+        self::assertFalse($first->mergeWith(Mappers::simple('zoo')));
+        
+        self::assertSame(2, $first->map(['foo' => 1, 'bar' => 2], 0));
+    }
+    
+    public function test_Value_simply_returns_value(): void
+    {
+        self::assertSame('foo', Mappers::value()->map('foo', 1));
+    }
+    
+    public function test_Key_simply_returns_key(): void
+    {
+        self::assertSame(1, Mappers::key()->map('foo', 1));
+    }
+    
+    public function test_Value_can_merge_only_with_other_Value(): void
+    {
+        self::assertTrue(Mappers::value()->mergeWith(Mappers::value()));
+        self::assertFalse(Mappers::value()->mergeWith(Mappers::key()));
+    }
+    
+    public function test_Key_can_merge_only_with_other_Key(): void
+    {
+        self::assertTrue(Mappers::key()->mergeWith(Mappers::key()));
+        self::assertFalse(Mappers::key()->mergeWith(Mappers::value()));
     }
 }

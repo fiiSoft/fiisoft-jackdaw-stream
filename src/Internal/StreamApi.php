@@ -203,6 +203,17 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function mapFieldWhen($field, $condition, $mapper, $elseMapper = null): self;
     
     /**
+     * This is specialized map operation which maps both key and value at the same time.
+     * Callable $factory can accept zero, one (value) or two (value, key) params and MUST return array
+     * with exactly one element - new pair of [key => value] passed to next step in stream.
+     *
+     * Value in this pair can be instance of Mapper and it will be used to compute real value of next element.
+     *
+     * @param callable $keyValueMapper
+     */
+    public function mapKV(callable $keyValueMapper): self;
+    
+    /**
      * @param array|string|int|null
      */
     public function castToInt($fields = null): self;
@@ -252,6 +263,14 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
      * @param int $step change value
      */
     public function reindex(int $start = 0, int $step = 1): self;
+    
+    /**
+     * Reindex keys with values from field of arrays.
+     *
+     * @param string|int $field
+     * @param bool $move when true then field will be removed from value
+     */
+    public function reindexBy($field, bool $move = false): self;
     
     /**
      * Flip values with keys

@@ -245,4 +245,23 @@ final class Mappers
     {
         return new Remap($keys);
     }
+    
+    /**
+     * @param string|int $field
+     * @return FieldValue
+     */
+    public static function fieldValue($field): FieldValue
+    {
+        return new FieldValue($field);
+    }
+    
+    public static function value(): Value
+    {
+        return new Value();
+    }
+    
+    public static function key(): Key
+    {
+        return new Key();
+    }
 }

@@ -795,4 +795,36 @@ class StreamMakerTest extends TestCase
         self::assertSame('[[1,2]]', $this->stream->gatherUntil(Filters::greaterThan(2))->toJson());
         self::assertSame('[[1,2]]', $this->stream->gatherUntil(Filters::greaterThan(2), Check::VALUE, true)->toJson());
     }
+    
+    public function test_reindexBy(): void
+    {
+        $result = StreamMaker::from([['a' => 5, 'b' => 'foo'], ['a' => 3, 'b' => 'bar']])
+            ->reindexBy('a')
+            ->extract('b')
+            ->toArrayAssoc();
+        
+        self::assertSame([5 => 'foo', 3 => 'bar'], $result);
+    }
+    
+    public function test_mapKeyValue(): void
+    {
+        $result = StreamMaker::from([['id' => 5, 'name' => 'John'], ['id' => 3, 'name' => 'Susan']])
+            ->mapKV(static fn(array $row): array => [$row['id'] => $row['name']])
+            ->mapKV(static fn(string $name, int $id): array => [$name => $id]) //this is equivalent of flip()
+            ->toArrayAssoc();
+    
+        self::assertSame(['John' => 5, 'Susan' => 3], $result);
+    }
+    
+    public function test_reindexBy_field_and_remove_field_from_element(): void
+    {
+        $result = StreamMaker::from([['id' => 5, 'name' => 'John'], ['id' => 3, 'name' => 'Susan']])
+            ->reindexBy('id', true)
+            ->toArrayAssoc();
+    
+        self::assertSame([
+            5 => ['name' => 'John'],
+            3 => ['name' => 'Susan'],
+        ], $result);
+    }
 }
