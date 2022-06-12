@@ -4,6 +4,7 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
@@ -686,5 +687,130 @@ final class StreamScenarioTest extends TestCase
         
         $names = $adultsWomen->stream()->extract('name')->collect();
         self::assertSame('["Kate","Joanna"]', $names->toJson());
+    }
+    
+    public function test_scenario_42(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 35],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 7, 'name' => 'Sue', 'age' => 17],
+        ];
+        
+        $avgAgeByName = Stream::from($rowset)
+            ->sortBy('name')
+            ->chunkBy('name')
+            ->map(static fn(array $rows): array => \array_column($rows, 'age'))
+            ->map(Reducers::average())
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'Chris' => (26 + 26) / 2,
+            'Joanna' => 35,
+            'Sue' => (35 + 17) / 2,
+        ], $avgAgeByName);
+    }
+    
+    public function test_scenario_43(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 35],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 7, 'name' => 'Sue', 'age' => 17],
+        ];
+    
+        $avgAgeByName = Stream::from($rowset)
+            ->mapKV(static fn(array $row): array => [$row['name'] => $row['age']])
+            ->groupBy(Discriminators::byKey())
+            ->stream()
+            ->map(Reducers::average())
+            ->sort(null, Check::KEY)
+            ->toArrayAssoc();
+    
+        self::assertSame([
+            'Chris' => (26 + 26) / 2,
+            'Joanna' => 35,
+            'Sue' => (35 + 17) / 2,
+        ], $avgAgeByName);
+    }
+    
+    public function test_scenario_44(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 35],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 7, 'name' => 'Sue', 'age' => 17],
+        ];
+    
+        $countByName = Stream::from($rowset)
+            ->extract('name')
+            ->groupBy(Discriminators::byValue())
+            ->stream()
+            ->map(Reducers::count())
+            ->toArrayAssoc();
+    
+        self::assertSame([
+            'Sue' => 2,
+            'Chris' => 2,
+            'Joanna' => 1,
+        ], $countByName);
+    }
+    
+    public function test_scenario_45(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 35],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 7, 'name' => 'Sue', 'age' => 17],
+        ];
+    
+        $countByName = [];
+        
+        Stream::from($rowset)
+            ->mapKey(Mappers::fieldValue('name'))
+            ->call(static function ($_, string $name) use (&$countByName) {
+                $countByName[$name] = ($countByName[$name] ?? 0) + 1;
+            })
+            ->run();
+    
+        self::assertSame([
+            'Sue' => 2,
+            'Chris' => 2,
+            'Joanna' => 1,
+        ], $countByName);
+    }
+    
+    public function test_scenario_46(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 35],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 35],
+            ['id' => 5, 'name' => 'Chris', 'age' => 26],
+            ['id' => 7, 'name' => 'Sue', 'age' => 17],
+        ];
+    
+        $countByName = [];
+        
+        $stream = Stream::from($rowset)
+            ->extract('name')
+            ->mapKV(static function (string $name) use (&$countByName): array {
+                $countByName[$name] = ($countByName[$name] ?? 0) + 1;
+                return [$name => $countByName[$name]];
+            });
+    
+        self::assertSame([
+            'Sue' => 2,
+            'Chris' => 2,
+            'Joanna' => 1,
+        ], $stream->toArrayAssoc());
     }
 }

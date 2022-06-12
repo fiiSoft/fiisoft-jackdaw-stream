@@ -2,6 +2,13 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.16.0
+
+- added method StreamApi::chunkBy
+- added method StreamApi::accumulate
+- added method StreamApi::separateBy
+- added reducer Count
+
 ## 2.15.0
 
 - added method StreamApi::reindexBy

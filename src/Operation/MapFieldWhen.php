@@ -9,6 +9,7 @@ use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Mapper\Value;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Reducer\Reducer;
@@ -42,6 +43,9 @@ final class MapFieldWhen extends BaseOperation
     
         if ($elseMapper !== null) {
             $this->elseMapper = Mappers::getAdapter($elseMapper);
+            if ($this->elseMapper instanceof Value) {
+                $this->elseMapper = null;
+            }
         }
     }
     
@@ -67,5 +71,10 @@ final class MapFieldWhen extends BaseOperation
         }
     
         $this->next->handle($signal);
+    }
+    
+    public function isBarren(): bool
+    {
+        return $this->elseMapper === null && $this->mapper instanceof Value;
     }
 }

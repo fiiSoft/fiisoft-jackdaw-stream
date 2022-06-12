@@ -14,20 +14,21 @@ final class Discriminators
 {
     /**
      * @param Discriminator|Condition|Predicate|Filter|string|callable $discriminator
+     * @param int $mode
      * @return Discriminator
      */
-    public static function getAdapter($discriminator): Discriminator
+    public static function getAdapter($discriminator, int $mode = Check::VALUE): Discriminator
     {
         if (\is_callable($discriminator)) {
             return self::generic($discriminator);
         }
     
         if ($discriminator instanceof Filter) {
-            return self::filter($discriminator);
+            return self::filter($discriminator, $mode);
         }
     
         if ($discriminator instanceof Predicate) {
-            return self::predicate($discriminator);
+            return self::predicate($discriminator, $mode);
         }
     
         if ($discriminator instanceof Condition) {
@@ -55,9 +56,9 @@ final class Discriminators
         return new FilterAdapter($filter, $mode);
     }
     
-    public static function predicate(Predicate $predicate): PredicateAdapter
+    public static function predicate(Predicate $predicate, int $mode = Check::VALUE): PredicateAdapter
     {
-        return new PredicateAdapter($predicate);
+        return new PredicateAdapter($predicate, $mode);
     }
     
     public static function condition(Condition $condition): ConditionAdapter
@@ -83,5 +84,10 @@ final class Discriminators
     public static function byKey(): ByKey
     {
         return new ByKey();
+    }
+    
+    public static function byValue(): ByValue
+    {
+        return new ByValue();
     }
 }

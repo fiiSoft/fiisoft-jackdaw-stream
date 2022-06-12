@@ -212,4 +212,16 @@ final class OtherTest extends TestCase
             Helper::wrongNumOfArgsException('Something', 0, 1, 2)->getMessage()
         );
     }
+    
+    public function test_use_count_as_callback_in_array_map(): void
+    {
+        $data = [
+            ['a', 'c', 's'],
+            ['g', 'j'],
+            ['j', 'w', 'c', 'g'],
+        ];
+    
+        self::assertSame([3, 2, 4], \array_map('count', $data));
+        self::assertSame([3, 2, 4], \array_map('\count', $data));
+    }
 }

@@ -297,6 +297,25 @@ interface StreamApi extends ResultCaster, \IteratorAggregate
     public function chunkAssoc(int $size): self;
     
     /**
+     * @param Discriminator|Condition|Predicate|Filter|string|callable $discriminator
+     */
+    public function chunkBy($discriminator, bool $preserveKeys = false): self;
+    
+    /**
+     * @param Filter|Predicate|callable|mixed $filter
+     * @param int $mode
+     * @param bool $preserveKeys
+     */
+    public function accumulate($filter, int $mode = Check::VALUE, bool $preserveKeys = false): self;
+    
+    /**
+     * @param Filter|Predicate|callable|mixed $filter
+     * @param int $mode
+     * @param bool $preserveKeys
+     */
+    public function separateBy($filter, int $mode = Check::VALUE, bool $preserveKeys = false): self;
+    
+    /**
      * @param array $keys
      */
     public function aggregate(array $keys): self;

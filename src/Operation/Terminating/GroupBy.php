@@ -37,21 +37,16 @@ final class GroupBy extends BaseOperation
     
         if (\is_bool($classifier)) {
             $classifier = (int) $classifier;
-            $isOk = true;
-        } else {
-            $isOk = \is_string($classifier) || \is_int($classifier);
+        } elseif (!\is_string($classifier) && !\is_int($classifier)) {
+            throw new \UnexpectedValueException(
+                'Value returned from discriminator is inappropriate (got '.Helper::typeOfParam($classifier).')'
+            );
         }
         
-        if ($isOk) {
-            if ($this->preserveKeys) {
-                $this->collections[$classifier][$item->key] = $item->value;
-            } else {
-                $this->collections[$classifier][] = $item->value;
-            }
+        if ($this->preserveKeys) {
+            $this->collections[$classifier][$item->key] = $item->value;
         } else {
-            throw new \UnexpectedValueException(
-                'ResultItem returned from discriminator is inappropriate (got '.Helper::typeOfParam($classifier).')'
-            );
+            $this->collections[$classifier][] = $item->value;
         }
     }
  

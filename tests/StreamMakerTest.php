@@ -827,4 +827,19 @@ class StreamMakerTest extends TestCase
             3 => ['name' => 'Susan'],
         ], $result);
     }
+    
+    public function test_chunkBy(): void
+    {
+        self::assertSame([[1, 2], [3, 4]], $this->stream->chunkBy(Filters::lessOrEqual(2))->toArray());
+    }
+    
+    public function test_accumulate(): void
+    {
+        self::assertSame([[1, 2]], $this->stream->accumulate(Filters::lessThan(3))->toArray());
+    }
+    
+    public function test_separate(): void
+    {
+        self::assertSame([[3, 4]], $this->stream->separateBy(Filters::lessThan(3))->toArray());
+    }
 }

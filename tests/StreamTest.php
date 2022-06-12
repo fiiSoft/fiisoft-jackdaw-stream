@@ -1202,7 +1202,7 @@ final class StreamTest extends TestCase
     {
         $this->expectException(\UnexpectedValueException::class);
         $this->expectExceptionMessage(
-            'ResultItem returned from discriminator is inappropriate (got object of type stdClass)'
+            'Value returned from discriminator is inappropriate (got object of type stdClass)'
         );
         
         Stream::from([1])->groupBy(static fn($v): object => new stdClass())->toArray();
@@ -2529,5 +2529,116 @@ final class StreamTest extends TestCase
         ];
         
         self::assertSame($expected, $result);
+    }
+    
+    public function test_chunkBy_throws_exception_when_value_returned_from_discriminator_is_invalid(): void
+    {
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessage(
+            'Unsupported value was returned from discriminator (got object of type stdClass)'
+        );
+    
+        Stream::from([1])->chunkBy(static fn($v): object => new stdClass())->run();
+    }
+    
+    public function test_chunkBy_can_preserve_keys_of_elements_in_stream(): void
+    {
+        $data = ['a', 'e', 12, 'b', 'd', 8, 9, 6, 'c'];
+        $result = Stream::from($data)->chunkBy('is_string', true)->toArray();
+        
+        $expected = [
+            [0 => 'a', 1 => 'e'],
+            [2 => 12],
+            [3 => 'b', 4 => 'd'],
+            [5 => 8, 6 => 9, 7 => 6],
+            [8 => 'c'],
+        ];
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_reduce_operation_can_also_count_number_of_elements_in_stream(): void
+    {
+        $data = ['a', 'b', 'c', 'd', 'e'];
+        
+        self::assertSame(5, Stream::from($data)->reduce('count')->get());
+        self::assertSame(5, Stream::from($data)->reduce('\count')->get());
+        self::assertSame(5, Stream::from($data)->reduce(Reducers::count())->get());
+    }
+    
+    public function test_accumulate_can_preserve_keys(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+        ];
+        
+        $underage = Stream::from($rowset)
+            ->reindexBy('id', true)
+            ->accumulate(Filters::filterBy('age', Filters::lessOrEqual(18)), Check::VALUE, true)
+            ->toArray();
+    
+        $expected = [
+            [
+                9 => ['name' => 'Chris', 'age' => 17],
+                6 => ['name' => 'Joanna', 'age' => 15],
+            ], [
+                7 => ['name' => 'Sue', 'age' => 18],
+            ],
+        ];
+        
+        self::assertSame($expected, $underage);
+    }
+    
+    public function test_separate_can_preserve_keys(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+        ];
+        
+        $adults = Stream::from($rowset)
+            ->reindexBy('id', true)
+            ->separateBy(Filters::filterBy('age', Filters::lessOrEqual(18)), Check::VALUE, true)
+            ->toArray();
+    
+        $expected = [
+            [
+                2 => ['name' => 'Sue', 'age' => 22],
+            ], [
+                5 => ['name' => 'Chris', 'age' => 24],
+            ],
+        ];
+        
+        self::assertSame($expected, $adults);
+    }
+    
+    public function test_mapWhen_with_value_as_mapper_has_no_effect(): void
+    {
+        $result = Stream::from(['a', 'b'])
+            ->mapWhen('is_string', Mappers::value(), Mappers::value())
+            ->toArray();
+        
+        self::assertSame(['a', 'b'], $result);
+    }
+    
+    public function test_mapFieldWhen_with_value_as_mapper_has_no_effect(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+        ];
+        
+        $result = Stream::from($rowset)
+            ->mapFieldWhen('name', 'is_string', Mappers::value(), Mappers::value())
+            ->toArray();
+        
+        self::assertSame($rowset, $result);
     }
 }

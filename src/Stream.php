@@ -6,7 +6,6 @@ use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\ErrorHandler;
 use FiiSoft\Jackdaw\Handler\OnError;
-use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Collaborator;
 use FiiSoft\Jackdaw\Internal\Interruption;
@@ -15,13 +14,16 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamApi;
 use FiiSoft\Jackdaw\Internal\StreamCollection;
 use FiiSoft\Jackdaw\Internal\StreamIterator;
+use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Mapper\Internal\ConditionalExtract;
 use FiiSoft\Jackdaw\Mapper\Key;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Mapper\Value;
+use FiiSoft\Jackdaw\Operation\Accumulate;
 use FiiSoft\Jackdaw\Operation\Aggregate;
 use FiiSoft\Jackdaw\Operation\Assert;
 use FiiSoft\Jackdaw\Operation\Chunk;
+use FiiSoft\Jackdaw\Operation\ChunkBy;
 use FiiSoft\Jackdaw\Operation\CollectIn;
 use FiiSoft\Jackdaw\Operation\CollectKey;
 use FiiSoft\Jackdaw\Operation\Filter;
@@ -600,6 +602,30 @@ final class Stream extends Collaborator implements StreamApi
     public function chunk(int $size, bool $preserveKeys = false): self
     {
         return $this->chainOperation(new Chunk($size, $preserveKeys));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function chunkBy($discriminator, bool $preserveKeys = false): self
+    {
+        return $this->chainOperation(new ChunkBy($discriminator, $preserveKeys));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function accumulate($filter, int $mode = Check::VALUE, bool $preserveKeys = false): self
+    {
+        return $this->chainOperation(new Accumulate($filter, $mode, $preserveKeys));
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function separateBy($filter, int $mode = Check::VALUE, bool $preserveKeys = false): self
+    {
+        return $this->chainOperation(new Accumulate($filter, $mode, $preserveKeys, true));
     }
     
     /**
@@ -1343,6 +1369,10 @@ final class Stream extends Collaborator implements StreamApi
             if ($this->last instanceof MapKey) {
                 return !$this->last->mergeWith($next);
             }
+        } elseif ($next instanceof MapWhen) {
+            return !$next->isBarren();
+        } elseif ($next instanceof MapFieldWhen) {
+            return !$next->isBarren();
         }
         
         return true;

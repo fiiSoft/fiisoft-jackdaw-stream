@@ -43,7 +43,13 @@ final class Chunk extends BaseOperation
         }
     
         if (++$this->count === $this->size) {
-            $this->pass($signal);
+            $item->key = $this->index++;
+            $item->value = $this->chunked;
+    
+            $this->count = 0;
+            $this->chunked = [];
+    
+            $this->next->handle($signal);
         }
     }
     
@@ -51,21 +57,18 @@ final class Chunk extends BaseOperation
     {
         if ($signal->isEmpty && !empty($this->chunked)) {
             $signal->resume();
-            $this->pass($signal);
+            
+            $signal->item->key = $this->index++;
+            $signal->item->value = $this->chunked;
+            
+            $this->count = 0;
+            $this->chunked = [];
+            
+            $this->next->handle($signal);
+            
             return true;
         }
     
         return parent::streamingFinished($signal);
-    }
-    
-    private function pass(Signal $signal): void
-    {
-        $signal->item->key = $this->index++;
-        $signal->item->value = $this->chunked;
-        
-        $this->count = 0;
-        $this->chunked = [];
-        
-        $this->next->handle($signal);
     }
 }

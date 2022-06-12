@@ -14,7 +14,7 @@ final class FilterAdapter implements Discriminator
     public function __construct(Filter $filter, int $mode = Check::VALUE)
     {
         $this->filter = $filter;
-        $this->mode = $mode;
+        $this->mode = Check::getMode($mode);
     }
     
     public function classify($value, $key)

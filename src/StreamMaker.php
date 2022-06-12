@@ -443,6 +443,30 @@ final class StreamMaker implements StreamApi
         return $this->make()->chunk($size, true);
     }
     
+    /**
+     * @inheritdoc
+     */
+    public function chunkBy($discriminator, bool $preserveKeys = false): Stream
+    {
+        return $this->make()->chunkBy($discriminator, $preserveKeys);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function accumulate($filter, int $mode = Check::VALUE, bool $preserveKeys = false): Stream
+    {
+        return $this->make()->accumulate($filter, $mode, $preserveKeys);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function separateBy($filter, int $mode = Check::VALUE, bool $preserveKeys = false): Stream
+    {
+        return $this->make()->separateBy($filter, $mode, $preserveKeys);
+    }
+    
     public function aggregate(array $keys): Stream
     {
         return $this->make()->aggregate($keys);

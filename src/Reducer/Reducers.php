@@ -29,6 +29,9 @@ final class Reducers
                     case 'implode':
                     case '\implode':
                         return self::concat();
+                    case 'count':
+                    case '\count':
+                        return self::count();
                     default:
                         //noop
                 }
@@ -78,5 +81,10 @@ final class Reducers
     public static function shortest(): Shortest
     {
         return new Shortest();
+    }
+    
+    public static function count(): Count
+    {
+        return new Count();
     }
 }

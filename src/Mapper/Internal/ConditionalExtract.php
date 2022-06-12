@@ -23,7 +23,7 @@ final class ConditionalExtract extends BaseMapper
     public function __construct($filter, int $mode = Check::VALUE, bool $negate = false)
     {
         $this->filter = Filters::getAdapter($filter);
-        $this->mode = $mode;
+        $this->mode = Check::getMode($mode);
         $this->negate = $negate;
     }
     
