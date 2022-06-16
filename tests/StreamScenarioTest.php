@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\StreamMaker;
@@ -812,5 +813,19 @@ final class StreamScenarioTest extends TestCase
             'Chris' => 2,
             'Joanna' => 1,
         ], $stream->toArrayAssoc());
+    }
+    
+    public function test_scenario_47(): void
+    {
+        $queue = Producers::queue([5,'b',4]);
+        
+        $result = Stream::from($queue)
+            ->filter(static fn($v): bool => \is_int($v) || $v === \strtolower($v))
+            ->mapWhen('is_int', static fn(int $v): int => $v - 2, 'strtoupper')
+            ->filter(static fn($v): bool => \is_string($v) || $v > 0)
+            ->call($queue)
+            ->toArray();
+        
+        self::assertSame([3, 'B', 2, 1], $result);
     }
 }

@@ -334,4 +334,68 @@ final class ProducersTest extends TestCase
     {
         self::assertSame('A,B,C', Producers::getAdapter(['a', 'b', 'c'])->stream()->map('\strtoupper')->toString());
     }
+    
+    public function test_Queue_producer(): void
+    {
+        $item = new Item();
+        
+        $producer = Producers::queue();
+        $producer->appendMany(['a', 'b', 'c']); //0:a,1:b,2:c
+        
+        $generator = $producer->feed($item);
+        $generator->valid(); //1:b,2:c
+    
+        self::assertSame(0, $item->key);
+        self::assertSame('a', $item->value);
+    
+        $generator->next(); //2:c
+        self::assertSame(1, $item->key);
+        self::assertSame('b', $item->value);
+        
+        $producer->append('d'); //2:c,n:d
+    
+        $generator->next(); //n:d
+        self::assertSame(2, $item->key);
+        self::assertSame('c', $item->value);
+        
+        $producer->append('e'); //n:d,n:e
+    
+        $generator->next(); //n:e
+        self::assertSame(0, $item->key);
+        self::assertSame('d', $item->value);
+    
+        $producer->prependMany(['f', 'g']); //0:f,1:g,n:e
+        
+        $generator->next(); //1:g,n:e
+        self::assertSame(0, $item->key);
+        self::assertSame('f', $item->value);
+        
+        $producer->prependMany(['h', 'i'], true); //1:i,0:h,1:g,n:e
+        
+        $generator->next(); //0:h,1:g,n:e
+        self::assertSame(1, $item->key);
+        self::assertSame('i', $item->value);
+        
+        $producer->appendMany(['j', 'k']); //0:h,1:g,n:e,0:j,1:k
+        
+        $generator->next(); //1:g,n:e,0:j,1:k
+        self::assertSame(0, $item->key);
+        self::assertSame('h', $item->value);
+        
+        $generator->next(); //n:e,0:j,1:k
+        self::assertSame(1, $item->key);
+        self::assertSame('g', $item->value);
+        
+        $generator->next(); //0:j,1:k
+        self::assertSame(1, $item->key);
+        self::assertSame('e', $item->value);
+        
+        $generator->next(); //1:k
+        self::assertSame(0, $item->key);
+        self::assertSame('j', $item->value);
+        
+        $generator->next(); //empty
+        self::assertSame(1, $item->key);
+        self::assertSame('k', $item->value);
+    }
 }

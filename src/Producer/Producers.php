@@ -172,4 +172,9 @@ final class Producers
     {
         return new Flattener($iterable, $level);
     }
+    
+    public static function queue(array $elements = []): QueueProducer
+    {
+        return new QueueProducer($elements);
+    }
 }

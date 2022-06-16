@@ -2,6 +2,10 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 2.17.0
+
+- added QueueProducer
+
 ## 2.16.0
 
 - added method StreamApi::chunkBy
