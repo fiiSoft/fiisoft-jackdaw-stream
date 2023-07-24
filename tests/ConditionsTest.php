@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Condition\Conditions;
+use FiiSoft\Jackdaw\Filter\Filters;
 use PHPUnit\Framework\TestCase;
 
 final class ConditionsTest extends TestCase
@@ -28,5 +29,13 @@ final class ConditionsTest extends TestCase
         
         $condition = Conditions::getAdapter(static fn($a, $b, $c): bool => true);
         $condition->isTrueFor('any', 'any');
+    }
+    
+    public function test_any_Filter_can_be_use_as_Condition(): void
+    {
+        $condition = Conditions::getAdapter(Filters::isInt());
+        
+        self::assertTrue($condition->isTrueFor(15, 1));
+        self::assertFalse($condition->isTrueFor('b', 2));
     }
 }

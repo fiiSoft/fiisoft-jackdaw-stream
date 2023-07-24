@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Comparator;
 
-final class SortBy implements Comparator
+final class FieldsComparator implements Comparator
 {
     /** @var string[] */
     private array $fields = [];
@@ -20,7 +20,7 @@ final class SortBy implements Comparator
         if (!\is_array($value1) && !$value1 instanceof \ArrayAccess
             || !\is_array($value2) && !$value2 instanceof \ArrayAccess
         ) {
-            throw new \LogicException('SortBy comparator can compare only arrays');
+            throw new \LogicException('FieldsComparator comparator can compare only arrays');
         }
     
         foreach ($this->fields as $field => $sortAsc) {

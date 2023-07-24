@@ -11,10 +11,13 @@ final class Transformers
 {
     /**
      * @param Transformer|Mapper|Reducer|callable|null $transformer
-     * @return Transformer|null
      */
     public static function getAdapter($transformer): ?Transformer
     {
+        if ($transformer === null) {
+            return null;
+        }
+        
         if ($transformer instanceof Transformer) {
             return $transformer;
         }
@@ -29,10 +32,6 @@ final class Transformers
     
         if (\is_callable($transformer)) {
             return new GenericTransformer($transformer);
-        }
-        
-        if ($transformer === null) {
-            return null;
         }
         
         throw new \InvalidArgumentException('Invalid param transformer');

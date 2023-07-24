@@ -17,7 +17,6 @@ final class Filters
 {
     /**
      * @param Filter|Predicate|callable|mixed $filter
-     * @return Filter
      */
     public static function getAdapter($filter): Filter
     {
@@ -65,7 +64,7 @@ final class Filters
         return self::same($filter);
     }
     
-    public static function generic(callable $filter): GenericFilter
+    public static function generic(callable $filter): Filter
     {
         return new GenericFilter($filter);
     }
@@ -80,34 +79,33 @@ final class Filters
         return NumberFactory::instance();
     }
     
-    public static function notEmpty(): NotEmpty
+    public static function notEmpty(): Filter
     {
         return new NotEmpty();
     }
     
-    public static function notNull(): NotNull
+    public static function notNull(): Filter
     {
         return new NotNull();
     }
     
-    public static function isNull(): IsNull
+    public static function isNull(): Filter
     {
         return new IsNull();
     }
     
-    public static function onlyIn(array $values): OnlyIn
+    public static function onlyIn(array $values): Filter
     {
         return new OnlyIn($values);
     }
     
-    public static function same($value): Same
+    public static function same($value): Filter
     {
         return new Same($value);
     }
     
     /**
      * @param float|int $value
-     * @return Filter
      */
     public static function greaterThan($value): Filter
     {
@@ -116,7 +114,6 @@ final class Filters
     
     /**
      * @param float|int $value
-     * @return Filter
      */
     public static function greaterOrEqual($value): Filter
     {
@@ -125,7 +122,6 @@ final class Filters
     
     /**
      * @param float|int $value
-     * @return Filter
      */
     public static function lessThan($value): Filter
     {
@@ -134,34 +130,33 @@ final class Filters
     
     /**
      * @param float|int $value
-     * @return Filter
      */
     public static function lessOrEqual($value): Filter
     {
         return self::number()->le($value);
     }
     
-    public static function isInt(): IsInt
+    public static function isInt(): Filter
     {
         return new IsInt();
     }
     
-    public static function isNumeric(): IsNumeric
+    public static function isNumeric(): Filter
     {
         return new IsNumeric();
     }
     
-    public static function isString(): IsString
+    public static function isString(): Filter
     {
         return new IsString();
     }
     
-    public static function isBool(): IsBool
+    public static function isBool(): Filter
     {
         return new IsBool();
     }
     
-    public static function isFloat(): IsFloat
+    public static function isFloat(): Filter
     {
         return new IsFloat();
     }
@@ -169,9 +164,8 @@ final class Filters
     /**
      * @param string|int $field
      * @param Filter|Predicate|callable|mixed $filter
-     * @return FilterBy
      */
-    public static function filterBy($field, $filter): FilterBy
+    public static function filterBy($field, $filter): Filter
     {
         return new FilterBy($field, self::getAdapter($filter));
     }
@@ -179,9 +173,8 @@ final class Filters
     /**
      * @param array|string|int $keys
      * @param bool $allowNulls
-     * @return OnlyWith
      */
-    public static function onlyWith($keys, bool $allowNulls = false): OnlyWith
+    public static function onlyWith($keys, bool $allowNulls = false): Filter
     {
         return new OnlyWith($keys, $allowNulls);
     }
@@ -209,7 +202,7 @@ final class Filters
     /**
      * @param Filter|Predicate|callable|mixed ...$filters
      */
-    public static function AND(...$filters): FilterAND
+    public static function AND(...$filters): Filter
     {
         return new FilterAND($filters);
     }
@@ -217,7 +210,7 @@ final class Filters
     /**
      * @param Filter|Predicate|callable|mixed ...$filters
      */
-    public static function OR(...$filters): FilterOR
+    public static function OR(...$filters): Filter
     {
         return new FilterOR($filters);
     }
@@ -226,7 +219,7 @@ final class Filters
      * @param Filter|Predicate|callable|mixed $first
      * @param Filter|Predicate|callable|mixed $second
      */
-    public static function XOR($first, $second): FilterXOR
+    public static function XOR($first, $second): Filter
     {
         return new FilterXOR($first, $second);
     }
@@ -234,7 +227,7 @@ final class Filters
     /**
      * @param Filter|Predicate|callable|mixed $filter
      */
-    public static function NOT($filter): FilterNOT
+    public static function NOT($filter): Filter
     {
         return new FilterNOT($filter);
     }

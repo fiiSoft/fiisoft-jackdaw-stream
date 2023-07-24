@@ -8,9 +8,10 @@ use FiiSoft\Jackdaw\Filter\Internal\FilterData;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Internal\FilterSingle;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 
-final class Filter extends BaseOperation
+final class Filter extends BaseOperation implements FilterSingle
 {
     private FilterStrategy $filterStrategy;
     

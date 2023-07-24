@@ -5,7 +5,6 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 use PHPUnit\Framework\TestCase;
-use SplHeap;
 
 final class OtherTest extends TestCase
 {
@@ -59,7 +58,7 @@ final class OtherTest extends TestCase
     
     public function test_how_SplHeap_acts(): void
     {
-        $heap = new class extends SplHeap {
+        $heap = new class extends \SplHeap {
             protected function compare($value1, $value2) {
                 return $value2 <=> $value1;
             }
@@ -106,7 +105,7 @@ final class OtherTest extends TestCase
     
     public function test_reversed_limited_sort_with_SplHeap(): void
     {
-        $heap = new class extends SplHeap {
+        $heap = new class extends \SplHeap {
             public function compare($value2, $value1) {
                 return $value1 <=> $value2;
             }
@@ -131,7 +130,7 @@ final class OtherTest extends TestCase
     
     public function test_straight_limited_sort_with_SplHeap(): void
     {
-        $heap = new class extends SplHeap {
+        $heap = new class extends \SplHeap {
             public function compare($value1, $value2) {
                 return $value1 <=> $value2;
             }
@@ -216,12 +215,24 @@ final class OtherTest extends TestCase
     public function test_use_count_as_callback_in_array_map(): void
     {
         $data = [
-            ['a', 'c', 's'],
-            ['g', 'j'],
-            ['j', 'w', 'c', 'g'],
+            'x' => ['a', 'c', 's'],
+            'y' => ['g', 'j'],
+            'z' => ['j', 'w', 'c', 'g'],
         ];
+        
+        $expected = ['x' => 3, 'y' => 2, 'z' => 4];
+        self::assertSame($expected, \array_map('count', $data));
+        self::assertSame($expected, \array_map('\count', $data));
+    }
     
-        self::assertSame([3, 2, 4], \array_map('count', $data));
-        self::assertSame([3, 2, 4], \array_map('\count', $data));
+    public function test_compare_letter_a_with_digit_0_using_spaceship_operator(): void
+    {
+        if (\version_compare(\PHP_VERSION, '8.0.0') === -1) {
+            // :(
+            self::assertSame(0, 'a' <=> 0);
+        } else {
+            // :)
+            self::assertSame(1, 'a' <=> 0);
+        }
     }
 }

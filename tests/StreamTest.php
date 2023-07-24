@@ -9,15 +9,18 @@ use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Mapper\Mapper;
+use FiiSoft\Jackdaw\Internal\SignalHandler;
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Operation\Internal\LastOperation;
 use FiiSoft\Jackdaw\Predicate\Predicates;
+use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\StreamMaker;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 final class StreamTest extends TestCase
 {
@@ -333,12 +336,9 @@ final class StreamTest extends TestCase
     
     public function test_map_can_accept_Mapper_isntance(): void
     {
-        $mapper = new class implements Mapper {
+        $mapper = new class extends BaseMapper {
             public function map($value, $key) {
                 return 2 * $value;
-            }
-            public function mergeWith(Mapper $other): bool {
-                return false;
             }
         };
         
@@ -353,7 +353,7 @@ final class StreamTest extends TestCase
         $buffer = new \ArrayObject();
         
         //when
-        $stream->collectIn($buffer)->run();
+        $stream->collectIn($buffer, true)->run();
         
         //then
         self::assertSame(\array_values($array), $buffer->getArrayCopy());
@@ -367,7 +367,7 @@ final class StreamTest extends TestCase
         $buffer = new \ArrayObject();
         
         //when
-        $stream->collectIn($buffer, true)->run();
+        $stream->collectIn($buffer)->run();
         
         //then
         self::assertSame($array, $buffer->getArrayCopy());
@@ -416,6 +416,35 @@ final class StreamTest extends TestCase
             ['key' => 'a', 'value' => 1],
             ['key' => 'b', 'value' => 2],
         ], $consumer->data);
+    }
+    
+    public function test_fork(): void
+    {
+        $data = [5,2,7,9,2,3,1,0,8,23,1,14,23,13,7,34,2,8,1,22,1,0,78,4,6,2,3];
+        
+        $stream = Stream::from($data)
+            ->lessOrEqual(20)
+            ->fork(
+                Filters::number()->isEven(),
+                Stream::empty()->unique()->collect(true)
+            );
+        
+        $expected = [
+            [5,7,9,3,1,13],
+            [2,0,8,14,4,6],
+        ];
+        
+        self::assertSame($expected, $stream->toArray());
+    }
+    
+    public function test_fork_throws_exception_on_invalid_type_of_prototype(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only ForkCollaborator prototype is supported');
+        
+        $prototype = $this->getMockForAbstractClass(LastOperation::class);
+        
+        Stream::empty()->fork('is_string', $prototype);
     }
     
     public function test_join_can_accept_another_source_of_data_for_stream(): void
@@ -569,42 +598,59 @@ final class StreamTest extends TestCase
     
     public function test_get_first_value(): void
     {
-        self::assertSame(4, Stream::from([4, 5])->first('a')->get());
+        self::assertSame(4, Stream::from([4, 5])->first()->get());
     }
     
     public function test_get_first_key(): void
     {
-        self::assertSame(0, Stream::from([4, 5])->first('a')->key());
+        self::assertSame(0, Stream::from([4, 5])->first()->key());
     }
     
     public function test_get_default_first_element_if_stream_empty(): void
     {
-        self::assertSame('a', Stream::empty()->first('a')->get());
+        self::assertNull(Stream::empty()->first()->get());
+        self::assertSame('a', Stream::empty()->first()->getOrElse('a'));
+        self::assertSame('a', Stream::empty()->firstOrElse('a')->get());
+    }
+    
+    public function test_getOrElse_replaces_firstOrElse(): void
+    {
+        self::assertSame('b', Stream::empty()->firstOrElse('a')->getOrElse('b'));
     }
     
     public function test_get_first_element(): void
     {
-        self::assertSame([0, 4], Stream::from([4, 5])->first('a')->tuple());
+        self::assertSame([0, 4], Stream::from([4, 5])->first()->tuple());
     }
     
     public function test_get_last_value(): void
     {
-        self::assertSame(5, Stream::from([4, 5])->last('a')->get());
+        self::assertSame(5, Stream::from([4, 5])->last()->get());
+        self::assertSame(5, Stream::from([4, 5])->lastOrElse('a')->get());
     }
     
     public function test_get_last_key(): void
     {
-        self::assertSame(1, Stream::from([4, 5])->last('a')->key());
+        self::assertSame(1, Stream::from([4, 5])->last()->key());
+        self::assertSame(1, Stream::from([4, 5])->lastOrElse('a')->key());
     }
     
     public function test_get_last_element(): void
     {
-        self::assertSame([1, 5], Stream::from([4, 5])->last('a')->tuple());
+        self::assertSame([1, 5], Stream::from([4, 5])->last()->tuple());
+        self::assertSame([1, 5], Stream::from([4, 5])->lastOrElse('a')->tuple());
     }
     
     public function test_get_default_last_element_if_stream_empty(): void
     {
-        self::assertSame('a', Stream::empty()->last('a')->get());
+        self::assertNull(Stream::empty()->last()->get());
+        self::assertSame('a', Stream::empty()->last()->getOrElse('a'));
+        self::assertSame('a', Stream::empty()->lastOrElse('a')->get());
+    }
+    
+    public function test_getOrElse_replaces_lastOrElse(): void
+    {
+        self::assertSame('b', Stream::empty()->lastOrElse('a')->getOrElse('b'));
     }
     
     public function test_forEach(): void
@@ -684,12 +730,6 @@ final class StreamTest extends TestCase
         self::assertTrue(Stream::from(['1', 2, '3'])->hasEvery(['1', '3'])->get());
     }
     
-    public function test_hasOnly(): void
-    {
-        self::assertFalse(Stream::from([3, 1, 2, 1, 3, 2, 4, 1, 2, 3])->hasOnly([1, 2, 3])->get());
-        self::assertTrue(Stream::from([3, 1, 2, 1, 3, 2, 1, 2, 3])->hasOnly([1, 2, 3])->get());
-    }
-    
     public function test_has_key(): void
     {
         self::assertFalse(Stream::from(['a', 'b', 'c'])->has(4, Check::KEY)->get());
@@ -708,12 +748,6 @@ final class StreamTest extends TestCase
         self::assertTrue(Stream::from(['1', 2, '3'])->hasAny([1, 2], Check::KEY)->get());
     }
     
-    public function test_hasOnly_key(): void
-    {
-        self::assertFalse(Stream::from([3, 1, 2, 1,])->hasOnly([0, 1, 2], Check::KEY)->get());
-        self::assertTrue(Stream::from([3, 1, 2])->hasOnly([0, 1, 2], Check::KEY)->get());
-    }
-    
     public function test_collectKeys(): void
     {
         //given
@@ -722,7 +756,7 @@ final class StreamTest extends TestCase
         $buffer = new \ArrayObject();
     
         //when
-        $stream->collectKeys($buffer)->run();
+        $stream->collectKeysIn($buffer)->run();
     
         //then
         self::assertSame(\array_keys($array), $buffer->getArrayCopy());
@@ -785,7 +819,7 @@ final class StreamTest extends TestCase
         self::assertSame(10, Stream::from([1, 1, 1])->fold(7, Reducers::sum())->get());
     }
     
-    public function test_chunk_by_default_reindex_keys(): void
+    public function test_chunk_can_reindex_keys(): void
     {
         $inputData = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6, 'g' => 7, 'h' => 8];
         
@@ -795,7 +829,7 @@ final class StreamTest extends TestCase
             [7, 8],
         ];
         
-        self::assertSame($expected, Stream::from($inputData)->chunk(3)->toArray());
+        self::assertSame($expected, Stream::from($inputData)->chunk(3, true)->toArray());
     }
     
     public function test_chunk_assoc_preserve_keys(): void
@@ -829,14 +863,14 @@ final class StreamTest extends TestCase
         
         self::assertSame(
             [0, 1, 3, 6, 10],
-            $stream->while(Filters::lessOrEqual(4), Check::KEY)
+            $stream->start()->while(Filters::lessOrEqual(4), Check::KEY)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
         
         self::assertSame(
             [0, 1, 3, 6, 10],
-            $stream->while(Filters::lessOrEqual(5), Check::VALUE)
+            $stream->start()->while(Filters::lessOrEqual(5), Check::VALUE)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
@@ -848,14 +882,14 @@ final class StreamTest extends TestCase
     
         self::assertSame(
             [0, 1, 3, 6, 10],
-            $stream->until(Filters::greaterThan(4), Check::KEY)
+            $stream->start()->until(Filters::greaterThan(4), Check::KEY)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
     
         self::assertSame(
             [0, 1, 3, 6, 10],
-            $stream->until(Filters::greaterThan(5), Check::VALUE)
+            $stream->start()->until(Filters::greaterThan(5), Check::VALUE)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
@@ -867,14 +901,14 @@ final class StreamTest extends TestCase
     
         self::assertSame(
             [0, 1, 3, 6, 10, 15],
-            $stream->filter(Filters::lessOrEqual(4), Check::KEY)
+            $stream->start()->filter(Filters::lessOrEqual(4), Check::KEY)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
     
         self::assertSame(
             [0, 1, 3, 6, 10, 15],
-            $stream->filter(Filters::lessOrEqual(5), Check::VALUE)
+            $stream->start()->filter(Filters::lessOrEqual(5), Check::VALUE)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
@@ -886,14 +920,14 @@ final class StreamTest extends TestCase
     
         self::assertSame(
             [0, 1, 3, 6, 10, 15],
-            $stream->omit(Filters::greaterThan(4), Check::KEY)
+            $stream->start()->omit(Filters::greaterThan(4), Check::KEY)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
     
         self::assertSame(
             [0, 1, 3, 6, 10, 15],
-            $stream->omit(Filters::greaterThan(5), Check::VALUE)
+            $stream->start()->omit(Filters::greaterThan(5), Check::VALUE)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
@@ -905,14 +939,14 @@ final class StreamTest extends TestCase
     
         self::assertSame(
             [0, 1, 3, 6, 10],
-            $stream->scan(0, Reducers::sum())
+            $stream->start()->scan(0, Reducers::sum())
                 ->limit(5)
                 ->toArray()
         );
     
         self::assertSame(
             [0, 1, 3, 6, 10, 15],
-            $stream
+            $stream->start()
                 ->limit(5)
                 ->scan(0, Reducers::sum())
                 ->toArray()
@@ -925,14 +959,15 @@ final class StreamTest extends TestCase
     
         self::assertSame(
             [15, 21, 28, 36, 45],
-            $stream->scan(0, Reducers::sum())
+            $stream->start()
+                ->scan(0, Reducers::sum())
                 ->skip(5)
                 ->toArray()
         );
     
         self::assertSame(
             [0, 6, 13, 21, 30],
-            $stream
+            $stream->start()
                 ->skip(5)
                 ->scan(0, Reducers::sum())
                 ->toArray()
@@ -1168,8 +1203,11 @@ final class StreamTest extends TestCase
     {
         $streams = Stream::from(['y', 5, 'c', 3, 'z', 2])->groupBy(static fn($v) => \is_int($v) && $v > 5);
         
-        self::assertTrue($streams->get(true)->isEmpty()->get());
-        self::assertSame(6, $streams->get(false)->count()->get());
+        self::assertTrue($streams->get(true)->notFound());
+        self::assertFalse($streams->get(true)->found());
+        
+        self::assertTrue($streams->get(false)->found());
+        self::assertSame(6, $streams->get(false)->count());
     }
     
     public function test_groupBy_for_many_groups(): void
@@ -1192,7 +1230,7 @@ final class StreamTest extends TestCase
     
     public function test_GroupBy_with_preserve_keys(): void
     {
-        $integers = Stream::from(['y', 5, 'c', 3, 'z', 8])->groupBy('is_int', true);
+        $integers = Stream::from(['y', 5, 'c', 3, 'z', 8])->groupBy('is_int');
         
         self::assertSame([1 => 5, 3 => 3, 5 => 8], $integers->get(true)->toArrayAssoc());
         self::assertSame([0 => 'y', 2 => 'c', 4 => 'z'], $integers->get(false)->toArrayAssoc());
@@ -1205,14 +1243,18 @@ final class StreamTest extends TestCase
             'Value returned from discriminator is inappropriate (got object of type stdClass)'
         );
         
-        Stream::from([1])->groupBy(static fn($v): object => new stdClass())->toArray();
+        Stream::from([1])->groupBy(static fn($v): object => new \stdClass())->toArray();
     }
     
     public function test_cloning_is_prohibited(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectException(\Error::class);
         
-        clone Stream::empty();
+        /* @var $stream \ArrayObject */
+        $stream = Stream::empty();
+        
+        $other = clone $stream;
+        $other->exchangeArray([]);
     }
     
     public function test_without_with_one_value(): void
@@ -1250,7 +1292,7 @@ final class StreamTest extends TestCase
         $second = Stream::empty()->limit(2)->collectIn($collector);
         Stream::from([1, 2, 3, 4, 5])->feed($second)->run();
         
-        self::assertSame([1, 2], $collector->getArrayCopy());
+        self::assertSame([1, 2], $collector->getData());
     }
     
     public function test_feed_many_streams(): void
@@ -1274,6 +1316,54 @@ final class StreamTest extends TestCase
         self::assertSame([0 => 'a', 2 => 'b', 4 => 'c', 6 => 'd'], $second->toArrayAssoc());
         
         self::assertSame('', $third->toString());
+    }
+    
+    public function test_feed_operation(): void
+    {
+        $collector = Stream::of(['a', 'b'], Producers::sequentialInt(10, -1, 2))
+            ->join(['foo', 'bar'])
+            ->join(Producers::tokenizer(' ', 'the quick'))
+            ->collect(true);
+        
+        $stream = Stream::from([1, 2])->join([7, 8])->feed($collector);
+        $stream->run();
+        
+        self::assertSame(
+            [1, 2, 7, 8, 'a', 'b', 10, 9, 'foo', 'bar', 'the', 'quick'],
+            $collector->get()
+        );
+    }
+    
+    public function test_feed_stream_itself(): void
+    {
+        $stream = Stream::of(1);
+        
+        $stream
+            ->limit(3)
+            ->reindex()
+            ->collectIn($collector = Collectors::default())
+            ->map(fn(int $v): int => $v + 1)
+            ->feed($stream);
+        
+        $stream->run();
+        
+        self::assertSame([1, 2, 3], $collector->getData());
+    }
+    
+    public function test_feed_throws_exception_on_empty_argument(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Empty arguments');
+        
+        Stream::empty()->feed();
+    }
+    
+    public function test_feed_throws_exception_on_invalid_argument(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only StrimPipe is supported');
+        
+        Stream::empty()->feed(new class implements SignalHandler {});
     }
     
     public function test_stream_cannot_be_executed_more_than_onece(): void
@@ -1433,7 +1523,7 @@ final class StreamTest extends TestCase
     
     public function test_remove_with_single_field(): void
     {
-        $stream = StreamMaker::from([
+        $stream = Stream::from([
             ['id' => 4, 'name' => 'Joe', 'age' => 25],
         ]);
         
@@ -1442,7 +1532,7 @@ final class StreamTest extends TestCase
     
     public function test_remove_with_single_field_as_array(): void
     {
-        $stream = StreamMaker::from([
+        $stream = Stream::from([
             ['id' => 4, 'name' => 'Joe', 'age' => 25],
         ]);
         
@@ -1451,7 +1541,7 @@ final class StreamTest extends TestCase
     
     public function test_remove_with_two_fields(): void
     {
-        $stream = StreamMaker::from([
+        $stream = Stream::from([
             ['id' => 4, 'name' => 'Joe', 'age' => 25],
         ]);
         
@@ -1460,7 +1550,7 @@ final class StreamTest extends TestCase
     
     public function test_remove_with_two_fields_as_array(): void
     {
-        $stream = StreamMaker::from([
+        $stream = Stream::from([
             ['id' => 4, 'name' => 'Joe', 'age' => 25],
         ]);
         
@@ -1517,7 +1607,7 @@ final class StreamTest extends TestCase
     
     public function test_last_default(): void
     {
-        $item = Stream::empty()->last('d');
+        $item = Stream::empty()->lastOrElse('d');
         
         self::assertFalse($item->found());
         self::assertTrue($item->notFound());
@@ -2006,16 +2096,34 @@ final class StreamTest extends TestCase
         self::assertSame(12.0, $result);
     }
     
+    public function test_hasOnly(): void
+    {
+        self::assertFalse(Stream::from([3, 1, 2, 1, 3, 2, 4, 1, 2, 3])->hasOnly([1, 2, 3])->get());
+        self::assertTrue(Stream::from([3, 1, 2, 1, 3, 2, 1, 2, 3])->hasOnly([1, 2, 3])->get());
+    }
+    
+    public function test_hasOnly_key(): void
+    {
+        self::assertFalse(Stream::from([3, 1, 2, 1,])->hasOnly([0, 1, 2], Check::KEY)->get());
+        self::assertTrue(Stream::from([3, 1, 2])->hasOnly([0, 1, 2], Check::KEY)->get());
+    }
+    
     public function test_HasOnly_to_check_value_or_key(): void
     {
-        self::assertFalse(Stream::from(['a' => 1, 'b' => 'a'])->hasOnly(['a', 1], Check::ANY)->get());
-        self::assertTrue(Stream::from(['a' => 1, 'b' => 'a'])->hasOnly(['a', 1, 'b'], Check::ANY)->get());
+        $data = ['a' => 1, 'b' => 'a', 'c' => 1, 'd' => 2];
+        
+        self::assertFalse(Stream::from($data)->hasOnly(['a', 1], Check::ANY)->get());
+        self::assertTrue(Stream::from($data)->hasOnly(['a', 1, 2], Check::ANY)->get());
+        self::assertTrue(Stream::from($data)->hasOnly(['a', 1, 'd'], Check::ANY)->get());
     }
     
     public function test_HasOnly_to_check_value_and_key(): void
     {
-        self::assertFalse(Stream::from(['a' => 1, 'b' => 'a'])->hasOnly(['a', 1], Check::BOTH)->get());
-        self::assertTrue(Stream::from(['a' => 1, 'b' => 'a'])->hasOnly(['a', 1, 'b'], Check::BOTH)->get());
+        $data = ['a' => 1, 'b' => 'a', 'c' => 1, 'd' => 2];
+        
+        self::assertFalse(Stream::from($data)->hasOnly(['a', 1], Check::BOTH)->get());
+        self::assertFalse(Stream::from($data)->hasOnly(['a', 'b', 'c', 'd', 1], Check::BOTH)->get());
+        self::assertTrue(Stream::from($data)->hasOnly(['a', 'b', 'c', 'd', 1, 2], Check::BOTH)->get());
     }
     
     public function test_HasEvery_to_check_value_or_key(): void
@@ -2082,21 +2190,45 @@ final class StreamTest extends TestCase
         self::assertSame(['a', 'a'], $result->toArray());
     }
     
-    public function test_feed_other_stream(): void
-    {
-        $collector = Stream::empty()->collect();
-        
-        Stream::from([1, 2, 3, 4])->feed($collector)->run();
-        
-        self::assertSame([1, 2, 3, 4], $collector->toArray());
-    }
-    
     public function test_Tokenize_throws_exception_when_value_is_not_string(): void
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Operation tokenize requires string value, but got integer');
         
         Stream::from([1, 2, 3])->tokenize(' ')->run();
+    }
+    
+    public function test_Tokenize(): void
+    {
+        $data = ['ala bama', 'okla homa'];
+        $expected = ['ala', 'bama', 'okla', 'homa'];
+        
+        //1
+        self::assertSame($expected, Stream::from($data)->tokenize()->toArray());
+        self::assertSame($expected, Stream::from($data)->tokenize()->reindex()->toArrayAssoc());
+        
+        //2
+        Stream::from($data)
+            ->tokenize()
+            ->collectIn($collector = Collectors::default())
+            ->run();
+            
+        self::assertSame($expected, $collector->getData());
+        
+        //3
+        $tokens = Stream::from($data)->tokenize()->collect(true);
+        $tokens->run();
+        
+        self::assertSame($expected, $tokens->get());
+        self::assertSame($expected, $tokens->toArray());
+        self::assertSame($expected, $tokens->toArrayAssoc());
+        
+        //4
+        $tokens = Stream::from($data)->tokenize()->reindex()->collect();
+        
+        self::assertSame($expected, $tokens->get());
+        self::assertSame($expected, $tokens->toArray());
+        self::assertSame($expected, $tokens->toArrayAssoc());
     }
     
     public function test_sortBy_integer_keys(): void
@@ -2230,15 +2362,40 @@ final class StreamTest extends TestCase
         Stream::from([5, 6, 8])->extractWhen('is_string')->run();
     }
     
-    public function test_loop_stream_and_run_immediately(): void
+    public function test_loop_with_limit(): void
     {
         Stream::of(1)
+            ->reindex()
             ->collectIn($collector = Collectors::default())
+            ->limit(3)
             ->map(static fn(int $n): int => $n + 1)
-            ->until(500)
             ->loop(true);
         
-        self::assertSame(\range(1, 499), $collector->getArrayCopy());
+        self::assertSame(\range(1, 3), $collector->getData());
+    }
+    
+    public function test_loop_with_until(): void
+    {
+        Stream::of(1)
+            ->collectIn($collector = Collectors::default(), true)
+            ->map(static fn(int $n): int => $n + 1)
+            ->until(4)
+            ->loop(true);
+        
+        self::assertSame(\range(1, 3), $collector->getData());
+    }
+    
+    public function test_loop_with_filter(): void
+    {
+        $stream = Stream::of(1, 3, Producers::sequentialInt(4, 1, 1))
+            ->collectIn($collector = Collectors::default(), true)
+            ->map(static fn($n) => $n * 2)
+            ->lessThan(10)
+            ->loop();
+
+        $stream->run();
+
+        self::assertSame([1, 2, 4, 8, 3, 6, 4, 8], $collector->getData());
     }
     
     public function test_concat(): void
@@ -2252,7 +2409,7 @@ final class StreamTest extends TestCase
     
         //1 gather
         $result = null;
-        $stream->gather()->call(static function (array $all) use (&$result) {
+        $stream->start()->gather()->call(static function (array $all) use (&$result) {
             $result = $all;
         })->run();
         
@@ -2260,7 +2417,7 @@ final class StreamTest extends TestCase
     
         //2 gathers
         $result = null;
-        $stream->gather()->gather()->call(static function (array $all) use (&$result) {
+        $stream->start()->gather()->gather()->call(static function (array $all) use (&$result) {
             $result = $all;
         })->run();
         
@@ -2268,7 +2425,7 @@ final class StreamTest extends TestCase
     
         //3 gathers
         $result = null;
-        $stream->gather()->gather()->gather()->call(static function (array $all) use (&$result) {
+        $stream->start()->gather()->gather()->gather()->call(static function (array $all) use (&$result) {
             $result = $all;
         })->run();
         
@@ -2280,7 +2437,7 @@ final class StreamTest extends TestCase
         $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
     
         $result = null;
-        $stream->gather(true)->call(static function (array $all) use (&$result) {
+        $stream->gather()->call(static function (array $all) use (&$result) {
             $result = $all;
         })->run();
      
@@ -2304,9 +2461,9 @@ final class StreamTest extends TestCase
         $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
         
         $collector = Collectors::default();
-        $stream->gather(true)->flat(1)->collectIn($collector, true)->run();
+        $stream->gather()->flat(1)->collectIn($collector)->run();
         
-        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4], $collector->getArrayCopy());
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4], $collector->getData());
     }
     
     public function test_gather_with_keys_preserve_and_flat_level_full(): void
@@ -2314,9 +2471,9 @@ final class StreamTest extends TestCase
         $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
         
         $collector = Collectors::default();
-        $stream->gather(true)->flat()->collectIn($collector, true)->run();
+        $stream->gather()->flat()->collectIn($collector)->run();
         
-        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4], $collector->getArrayCopy());
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4], $collector->getData());
     }
     
     public function test_gather_with_keys_preserve_and_flat_level_limited(): void
@@ -2324,39 +2481,39 @@ final class StreamTest extends TestCase
         $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
         
         $collector = Collectors::default();
-        $stream->gather(true)->flat(3)->collectIn($collector, true)->run();
+        $stream->gather()->flat(3)->collectIn($collector)->run();
         
-        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4], $collector->getArrayCopy());
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4], $collector->getData());
     }
     
-    public function test_gather_without_keys_and_flat_level_1(): void
+    public function test_gather_with_reindex_and_flat_level_1(): void
     {
         $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
         
         $collector = Collectors::default();
-        $stream->gather()->flat(1)->collectIn($collector, true)->run();
+        $stream->gather(true)->flat(1)->collectIn($collector)->run();
         
-        self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
+        self::assertSame([1, 2, 3, 4], $collector->getData());
     }
     
-    public function test_gather_without_keys_and_flat_level_full(): void
+    public function test_gather_with_reindex_and_flat_level_full(): void
     {
         $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
         
         $collector = Collectors::default();
-        $stream->gather()->flat()->collectIn($collector, true)->run();
+        $stream->gather(true)->flat()->collectIn($collector)->run();
         
-        self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
+        self::assertSame([1, 2, 3, 4], $collector->getData());
     }
     
-    public function test_gather_without_keys_and_flat_level_limited(): void
+    public function test_gather_with_reindex_and_flat_level_limited(): void
     {
         $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
         
         $collector = Collectors::default();
-        $stream->gather()->flat(3)->collectIn($collector, true)->run();
+        $stream->gather(true)->flat(3)->collectIn($collector)->run();
         
-        self::assertSame([1, 2, 3, 4], $collector->getArrayCopy());
+        self::assertSame([1, 2, 3, 4], $collector->getData());
     }
     
     public function test_gather_pushes_collected_data_to_next_operation_when_stream_is_terminated(): void
@@ -2364,16 +2521,16 @@ final class StreamTest extends TestCase
         $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
         
         $collector = Collectors::default();
-        $stream->while(Filters::lessThan(3))->gather(true)->collectIn($collector)->run();
+        $stream->while(Filters::lessThan(3))->gather()->collectIn($collector)->run();
         
-        self::assertSame([['a' => 1, 'b' => 2]], $collector->getArrayCopy());
+        self::assertSame([['a' => 1, 'b' => 2]], $collector->getData());
     }
     
     public function test_collect_while(): void
     {
         self::assertSame(
             [1, 2],
-            Stream::from([1, 2, 3, 4])->limit(2)->collectWhile(Filters::lessThan(3))->toArray()
+            Stream::from([1, 2, 3, 4])->collectWhile(Filters::lessThan(3))->toArray()
         );
     }
     
@@ -2381,7 +2538,7 @@ final class StreamTest extends TestCase
     {
         self::assertSame(
             [1, 2],
-            Stream::from([1, 2, 3, 4])->limit(2)->collectUntil(Filters::greaterThan(2))->toArray()
+            Stream::from([1, 2, 3, 4])->collectUntil(Filters::greaterThan(2))->toArray()
         );
     }
     
@@ -2538,13 +2695,13 @@ final class StreamTest extends TestCase
             'Unsupported value was returned from discriminator (got object of type stdClass)'
         );
     
-        Stream::from([1])->chunkBy(static fn($v): object => new stdClass())->run();
+        Stream::from([1])->chunkBy(static fn($v): object => new \stdClass())->run();
     }
     
     public function test_chunkBy_can_preserve_keys_of_elements_in_stream(): void
     {
         $data = ['a', 'e', 12, 'b', 'd', 8, 9, 6, 'c'];
-        $result = Stream::from($data)->chunkBy('is_string', true)->toArray();
+        $result = Stream::from($data)->chunkBy('is_string')->toArray();
         
         $expected = [
             [0 => 'a', 1 => 'e'],
@@ -2552,6 +2709,22 @@ final class StreamTest extends TestCase
             [3 => 'b', 4 => 'd'],
             [5 => 8, 6 => 9, 7 => 6],
             [8 => 'c'],
+        ];
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_chunkBy_can_reindex_keys_of_elements_in_stream(): void
+    {
+        $data = ['a', 'e', 12, 'b', 'd', 8, 9, 6, 'c'];
+        $result = Stream::from($data)->chunkBy('is_string', true)->toArray();
+        
+        $expected = [
+            ['a', 'e'],
+            [12],
+            ['b', 'd'],
+            [8, 9, 6],
+            ['c'],
         ];
         
         self::assertSame($expected, $result);
@@ -2566,31 +2739,36 @@ final class StreamTest extends TestCase
         self::assertSame(5, Stream::from($data)->reduce(Reducers::count())->get());
     }
     
+    public function test_accumulate_can_reindex_keys(): void
+    {
+        $stream = Stream::from([5,8,2,1,4,2,6,3,7,2,8,4,1,4,5,6,2,3,7])
+            ->accumulate(Filters::number()->isEven(), true, Check::VALUE);
+        
+        $expected = [
+            [8,2],
+            [4,2,6],
+            [2,8,4],
+            [4],
+            [6,2],
+        ];
+        
+        self::assertSame($expected, $stream->toArray());
+    }
+    
     public function test_accumulate_can_preserve_keys(): void
     {
-        $rowset = [
-            ['id' => 2, 'name' => 'Sue', 'age' => 22],
-            ['id' => 9, 'name' => 'Chris', 'age' => 17],
-            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
-            ['id' => 5, 'name' => 'Chris', 'age' => 24],
-            ['id' => 7, 'name' => 'Sue', 'age' => 18],
-        ];
+        $stream = Stream::from([5,8,2,1,4,2,6,3,7,2,8,4,1,4,5,6,2,3,7])
+            ->accumulate(Filters::number()->isEven());
         
-        $underage = Stream::from($rowset)
-            ->reindexBy('id', true)
-            ->accumulate(Filters::filterBy('age', Filters::lessOrEqual(18)), Check::VALUE, true)
-            ->toArray();
-    
         $expected = [
-            [
-                9 => ['name' => 'Chris', 'age' => 17],
-                6 => ['name' => 'Joanna', 'age' => 15],
-            ], [
-                7 => ['name' => 'Sue', 'age' => 18],
-            ],
+            [1 => 8, 2],
+            [4 => 4, 2, 6],
+            [9 => 2, 8, 4],
+            [13 => 4],
+            [15 => 6, 2],
         ];
         
-        self::assertSame($expected, $underage);
+        self::assertSame($expected, $stream->toArray());
     }
     
     public function test_separate_can_preserve_keys(): void
@@ -2605,7 +2783,7 @@ final class StreamTest extends TestCase
         
         $adults = Stream::from($rowset)
             ->reindexBy('id', true)
-            ->separateBy(Filters::filterBy('age', Filters::lessOrEqual(18)), Check::VALUE, true)
+            ->separateBy(Filters::filterBy('age', Filters::lessOrEqual(18)))
             ->toArray();
     
         $expected = [
@@ -2640,5 +2818,24 @@ final class StreamTest extends TestCase
             ->toArray();
         
         self::assertSame($rowset, $result);
+        
+        Stream::from($rowset)->filter('is_int')->limit(4)->first()->get();
+    }
+    
+    public function test_stream_can_abort_processing_silently_on_error(): void
+    {
+        $counter = 0;
+        
+        $data = Stream::from([1, 5, 2, 7, 9, 2, 4, 7, 8, 3, 2])
+            ->onError(OnError::abort())
+            ->call(function () use (&$counter) {
+                if ($counter++ === 3) {
+                    throw new \RuntimeException();
+                }
+            })
+            ->collect()
+            ->get();
+        
+        self::assertSame([1, 5, 2], $data);
     }
 }

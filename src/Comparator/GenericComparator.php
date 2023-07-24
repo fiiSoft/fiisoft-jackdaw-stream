@@ -39,13 +39,12 @@ final class GenericComparator implements Comparator
     
     public function compareAssoc($value1, $value2, $key1, $key2): int
     {
-        if ($this->numOfArgs === 4) {
-            $compare = $this->comparator;
-            return $compare($value1, $value2, $key1, $key2);
+        $compare = $this->comparator;
+        
+        if ($this->numOfArgs === 2) {
+            return $compare($value1, $value2) ?: $compare($key1, $key2);
         }
-    
-        throw new \LogicException(
-            'Cannot compare two values associative with keys because comparator can accept only two arguments'
-        );
+        
+        return $compare($value1, $value2, $key1, $key2);
     }
 }

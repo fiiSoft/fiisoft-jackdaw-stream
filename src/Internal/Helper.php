@@ -23,6 +23,9 @@ final class Helper
         return false;
     }
     
+    /**
+     * @param mixed $param
+     */
     public static function invalidParamException(string $name, $param): \InvalidArgumentException
     {
         return new \InvalidArgumentException(

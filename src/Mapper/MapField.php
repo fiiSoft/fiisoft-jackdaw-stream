@@ -14,7 +14,6 @@ final class MapField extends BaseMapper
     
     /**
      * @param string|int $field
-     * @param Mapper $mapper
      */
     public function __construct($field, Mapper $mapper)
     {

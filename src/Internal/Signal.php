@@ -8,8 +8,6 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Signal extends Collaborator
 {
-    use StubMethods;
-    
     public Item $item;
     
     public bool $isWorking = true;
@@ -46,10 +44,14 @@ final class Signal extends Collaborator
         $this->stream->continueWith($producer, $operation);
     }
     
-    public function streamIsEmpty(): void
+    public function continueFrom(Operation $operation): void
     {
-        $this->isWorking = false;
-        $this->isEmpty = true;
+        $this->stream->continueFrom($operation);
+    }
+    
+    public function forget(Operation $operation): void
+    {
+        $this->stream->forget($operation);
     }
     
     public function limitReached(Operation $operation): void
@@ -58,14 +60,15 @@ final class Signal extends Collaborator
         $this->stream->limitReached($operation);
     }
     
+    public function streamIsEmpty(): void
+    {
+        $this->isWorking = false;
+        $this->isEmpty = true;
+    }
+    
     public function resume(): void
     {
         $this->isWorking = true;
         $this->isEmpty = false;
-    }
-    
-    public function sendTo(StreamPipe $stream): bool
-    {
-        return $this->stream->sendTo($stream);
     }
 }

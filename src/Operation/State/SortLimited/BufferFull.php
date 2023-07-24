@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Operation\State\SortLimited;
 
 use FiiSoft\Jackdaw\Internal\Item;
 
-final class BufferFull extends State
+final class BufferFull extends HeapBuffer
 {
     private Item $top;
     

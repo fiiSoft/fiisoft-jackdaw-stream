@@ -3,17 +3,17 @@
 namespace FiiSoft\Jackdaw\Producer\Internal;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\BaseProducer;
+use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
 
-final class ForwardItemsIterator extends BaseProducer
+final class ForwardItemsIterator extends CountableProducer
 {
     /** @var Item[] */
-    private iterable $items;
+    private array $items;
     
     /**
      * @param Item[] $items
      */
-    public function __construct(iterable $items = [])
+    public function __construct(array $items = [])
     {
         $this->items = $items;
     }
@@ -30,10 +30,26 @@ final class ForwardItemsIterator extends BaseProducer
         $this->items = [];
     }
     
-    public function with(iterable $items): self
+    public function with(array $items): self
     {
         $this->items = $items;
         
         return $this;
+    }
+    
+    public function count(): int
+    {
+        return \count($this->items);
+    }
+    
+    public function getLast(): ?Item
+    {
+        if (empty($this->items)) {
+            return null;
+        }
+        
+        $last = \array_key_last($this->items);
+        
+        return $this->items[$last]->copy();
     }
 }

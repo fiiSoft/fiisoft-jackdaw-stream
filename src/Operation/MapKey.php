@@ -2,12 +2,14 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\FieldValue;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Mapper\Value;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class MapKey extends BaseOperation
@@ -15,7 +17,7 @@ final class MapKey extends BaseOperation
     private Mapper $mapper;
     
     /**
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|callable|mixed $mapper
      */
     public function __construct($mapper)
     {

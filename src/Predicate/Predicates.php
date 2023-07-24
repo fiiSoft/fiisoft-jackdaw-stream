@@ -9,7 +9,6 @@ final class Predicates
 {
     /**
      * @param Predicate|Filter|callable|mixed $predicate
-     * @return Predicate
      */
     public static function getAdapter($predicate): Predicate
     {
@@ -28,22 +27,22 @@ final class Predicates
         return $adapter;
     }
     
-    public static function generic(callable $predicate): GenericPredicate
+    public static function generic(callable $predicate): Predicate
     {
         return new GenericPredicate($predicate);
     }
     
-    public static function value($value): Value
+    public static function value($value): Predicate
     {
         return new Value($value);
     }
     
-    public static function inArray(array $values): InArray
+    public static function inArray(array $values): Predicate
     {
         return new InArray($values);
     }
     
-    public static function filter(Filter $filter): FilterAdapter
+    public static function filter(Filter $filter): Predicate
     {
         return new FilterAdapter($filter);
     }

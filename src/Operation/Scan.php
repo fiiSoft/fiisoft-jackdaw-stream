@@ -40,6 +40,13 @@ final class Scan extends BaseOperation
             $this->handle($signal);
         }
         
-        return $this->next->streamingFinished($signal);
+        return parent::streamingFinished($signal);
+    }
+    
+    protected function __clone()
+    {
+        $this->reducer = clone $this->reducer;
+        
+        parent::__clone();
     }
 }

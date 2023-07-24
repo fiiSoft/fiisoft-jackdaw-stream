@@ -8,13 +8,14 @@ use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class ChunkBy extends BaseOperation
 {
     private Discriminator $discriminator;
-    private bool $preserveKeys;
+    private bool $reindex;
     
     /** @var string|int|null */
     private $previous = null;
@@ -22,13 +23,12 @@ final class ChunkBy extends BaseOperation
     private array $chunked = [];
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|string|callable $discriminator
-     * @param bool $preserveKeys
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|string|int $discriminator
      */
-    public function __construct($discriminator, bool $preserveKeys = false)
+    public function __construct($discriminator, bool $reindex = false)
     {
         $this->discriminator = Discriminators::getAdapter($discriminator);
-        $this->preserveKeys = $preserveKeys;
+        $this->reindex = $reindex;
     }
     
     public function handle(Signal $signal): void
@@ -46,27 +46,27 @@ final class ChunkBy extends BaseOperation
         }
     
         if ($this->previous === $classifier) {
-            if ($this->preserveKeys) {
-                $this->chunked[$item->key] = $item->value;
-            } else {
+            if ($this->reindex) {
                 $this->chunked[] = $item->value;
+            } else {
+                $this->chunked[$item->key] = $item->value;
             }
         } elseif ($this->previous === null) {
             $this->previous = $classifier;
             
-            if ($this->preserveKeys) {
-                $this->chunked[$item->key] = $item->value;
-            } else {
+            if ($this->reindex) {
                 $this->chunked[] = $item->value;
+            } else {
+                $this->chunked[$item->key] = $item->value;
             }
         } else {
             $chunked = $this->chunked;
             $this->chunked = [];
     
-            if ($this->preserveKeys) {
-                $this->chunked[$item->key] = $item->value;
-            } else {
+            if ($this->reindex) {
                 $this->chunked[] = $item->value;
+            } else {
+                $this->chunked[$item->key] = $item->value;
             }
             
             $item->value = $chunked;

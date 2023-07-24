@@ -3,24 +3,14 @@
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Internal\ResultProvider;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
-use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\Operation\Internal\SimpleFinalOperation;
+use FiiSoft\Jackdaw\Producer\Producer;
 
-final class Last extends FinalOperation implements ResultProvider
+final class Last extends SimpleFinalOperation
 {
     private ?Item $item = null;
     private bool $found = false;
-    
-    /**
-     * @param Stream $stream
-     * @param callable|mixed|null $orElse
-     */
-    public function __construct(Stream $stream, $orElse = null)
-    {
-        parent::__construct($stream, $this, $orElse);
-    }
     
     public function handle(Signal $signal): void
     {
@@ -46,5 +36,55 @@ final class Last extends FinalOperation implements ResultProvider
     public function getResult(): Item
     {
         return $this->item;
+    }
+    
+    protected function __clone()
+    {
+        parent::__clone();
+        
+        $this->item = null;
+    }
+    
+    public function collectDataFromProducer(Producer $producer, Signal $signal, bool $reindexed): bool
+    {
+        $last = $producer->getLast();
+        if ($last !== null) {
+            $this->found = true;
+            $signal->item->key = $last->key;
+            $signal->item->value = $last->value;
+        } else {
+            foreach ($producer->feed($signal->item) as $_) {
+                //just iterate to the last element
+                $this->found = true;
+            }
+        }
+        
+        return $this->streamingFinished($signal);
+    }
+    
+    public function acceptSimpleData(array $data, Signal $signal, bool $reindexed): bool
+    {
+        if (!empty($data)) {
+            $this->found = true;
+            
+            $last = \array_key_last($data);
+            $signal->item->key = $last;
+            $signal->item->value = $data[$last];
+        }
+        
+        return $this->streamingFinished($signal);
+    }
+    
+    public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
+    {
+        if (!empty($items)) {
+            $this->found = true;
+            
+            $last = $items[\array_key_last($items)];
+            $signal->item->key = $last->key;
+            $signal->item->value = $last->value;
+        }
+        
+        return $this->streamingFinished($signal);
     }
 }

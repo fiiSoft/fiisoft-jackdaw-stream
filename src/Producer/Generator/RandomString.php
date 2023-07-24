@@ -3,17 +3,14 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\BaseProducer;
+use FiiSoft\Jackdaw\Producer\Tech\LimitedProducer;
 
-final class RandomString extends BaseProducer
+final class RandomString extends LimitedProducer
 {
     private const DEFAULT_CHARSET = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890';
     
     private int $minLength;
     private int $maxLength;
-    
-    private int $count = 0;
-    private int $limit;
     
     /** @var string[] */
     private array $chars = [];
@@ -24,24 +21,23 @@ final class RandomString extends BaseProducer
         int $limit = \PHP_INT_MAX,
         ?string $charset = null
     ) {
+        parent::__construct($limit);
+        
         if ($maxLength !== null && $maxLength < $minLength) {
             throw new \InvalidArgumentException('Max length cannot be less than min length');
         }
     
-        if ($limit < 0) {
-            throw new \InvalidArgumentException('Invalid param limit');
-        }
-    
         $this->minLength = $minLength;
         $this->maxLength = $maxLength ?? $minLength;
-        $this->limit = $limit;
         
         $this->chars = \str_split($charset ?: self::DEFAULT_CHARSET);
     }
     
     public function feed(Item $item): \Generator
     {
-        while ($this->count !== $this->limit) {
+        $count = 0;
+        
+        while ($count !== $this->limit) {
     
             $length = $this->minLength === $this->maxLength
                 ? $this->minLength
@@ -49,10 +45,15 @@ final class RandomString extends BaseProducer
             
             \shuffle($this->chars);
             
-            $item->key = $this->count++;
+            $item->key = $count++;
             $item->value = \implode(\array_slice($this->chars, 0, $length));
             
             yield;
         }
+    }
+    
+    public function getLast(): ?Item
+    {
+        return null;
     }
 }

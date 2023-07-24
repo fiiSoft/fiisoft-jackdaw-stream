@@ -48,4 +48,11 @@ final class Flat extends BaseOperation
     {
         $this->flattener->decreaseLevel();
     }
+    
+    protected function __clone()
+    {
+        $this->flattener = clone $this->flattener;
+        
+        parent::__clone();
+    }
 }

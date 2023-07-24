@@ -23,6 +23,7 @@ final class Skip extends BaseOperation
     {
         if ($this->count === $this->offset) {
             $this->next->handle($signal);
+            $signal->forget($this);
         } else {
             ++$this->count;
         }

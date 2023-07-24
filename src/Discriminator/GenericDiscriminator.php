@@ -24,8 +24,9 @@ final class GenericDiscriminator implements Discriminator
         switch ($this->numOfArgs) {
             case 1: return $classify($value);
             case 2: return $classify($value, $key);
+            case 0: return $classify();
             default:
-                throw Helper::wrongNumOfArgsException('Classifier', $this->numOfArgs, 1, 2);
+                throw Helper::wrongNumOfArgsException('Classifier', $this->numOfArgs, 1, 2, 0);
         }
     }
 }

@@ -33,6 +33,8 @@ final class SendToMax extends BaseOperation
         if ($this->count < $this->times) {
             ++$this->count;
             $this->consumer->consume($signal->item->value, $signal->item->key);
+        } else {
+            $signal->forget($this);
         }
         
         $this->next->handle($signal);

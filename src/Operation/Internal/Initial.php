@@ -2,16 +2,30 @@
 
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
+use FiiSoft\Jackdaw\Internal\ProtectedCloning;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Operation;
+use FiiSoft\Jackdaw\Stream;
 
-final class Initial implements Operation
+final class Initial extends ProtectedCloning implements Operation
 {
     private ?Operation $next = null;
+    
+    public function __construct()
+    {
+        $this->setNext(new Ending());
+    }
     
     public function handle(Signal $signal): void
     {
         $this->next->handle($signal);
+    }
+    
+    public function assignStream(Stream $stream): void
+    {
+        if ($this->next !== null) {
+            $this->next->assignStream($stream);
+        }
     }
     
     public function setNext(Operation $next, bool $direct = false): Operation
@@ -31,6 +45,21 @@ final class Initial implements Operation
         throw new \LogicException('It should never happen (Inital::setPrev)');
     }
     
+    public function prepend(Operation $operation): void
+    {
+        throw new \LogicException('It should never happen (Inital::prepend)');
+    }
+    
+    public function getNext(): ?Operation
+    {
+        return $this->next;
+    }
+    
+    public function getLast(): Operation
+    {
+        return $this->next !== null ? $this->next->getLast() : $this;
+    }
+    
     public function removeFromChain(): Operation
     {
         return $this->next;
@@ -41,8 +70,11 @@ final class Initial implements Operation
         return $this->next->streamingFinished($signal);
     }
     
-    public function isLazy(): bool
+    protected function __clone()
     {
-        return false;
+        if ($this->next !== null) {
+            $this->next = clone $this->next;
+            $this->next->setPrev($this);
+        }
     }
 }

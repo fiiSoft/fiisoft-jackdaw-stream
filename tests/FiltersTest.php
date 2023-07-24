@@ -4,6 +4,7 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Filter\Adapter\PredicateAdapter;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Filter\Internal\NumberFactory;
 use FiiSoft\Jackdaw\Filter\IsBool;
 use FiiSoft\Jackdaw\Filter\IsFloat;
 use FiiSoft\Jackdaw\Filter\IsInt;
@@ -14,7 +15,6 @@ use FiiSoft\Jackdaw\Filter\Length;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Predicate\Predicates;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 final class FiltersTest extends TestCase
 {
@@ -166,7 +166,7 @@ final class FiltersTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         
-        Filters::getAdapter(new stdClass());
+        Filters::getAdapter(new \stdClass());
     }
     
     public function test_GenericFilter_can_call_callable_without_arguments(): void
@@ -181,7 +181,7 @@ final class FiltersTest extends TestCase
         $key = null;
         $mode = null;
         
-        $filter = Filters::generic(function ($_value, $_key, $_mode) use (&$value, &$key, &$mode) {
+        $filter = Filters::generic(static function ($_value, $_key, $_mode) use (&$value, &$key, &$mode) {
             $value = $_value;
             $key = $_key;
             $mode = $_mode;
@@ -1259,5 +1259,14 @@ final class FiltersTest extends TestCase
         $this->expectExceptionMessage('Cannot compare value which is not a number');
         
         Filters::number()->between(1, 3)->isAllowed('this is not a number', 1);
+    }
+    
+    public function test_number_filter_instance_returns_singleton(): void
+    {
+        //force null in this static field because it's already set
+        $refl = new \ReflectionClass(NumberFactory::class);
+        $refl->setStaticPropertyValue('instance', null);
+        
+        self::assertSame(Filters::number(), Filters::number());
     }
 }

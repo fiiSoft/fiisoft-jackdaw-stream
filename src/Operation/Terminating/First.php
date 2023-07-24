@@ -3,23 +3,13 @@
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Internal\ResultProvider;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
-use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\Operation\Internal\SimpleFinalOperation;
+use FiiSoft\Jackdaw\Producer\Producer;
 
-final class First extends FinalOperation implements ResultProvider
+final class First extends SimpleFinalOperation
 {
     private ?Item $item = null;
-    
-    /**
-     * @param Stream $stream
-     * @param callable|mixed|null $orElse
-     */
-    public function __construct(Stream $stream, $orElse = null)
-    {
-        parent::__construct($stream, $this, $orElse);
-    }
     
     public function handle(Signal $signal): void
     {
@@ -36,5 +26,57 @@ final class First extends FinalOperation implements ResultProvider
     public function getResult(): Item
     {
         return $this->item;
+    }
+    
+    protected function __clone()
+    {
+        parent::__clone();
+        
+        $this->item = null;
+    }
+    
+    public function collectDataFromProducer(Producer $producer, Signal $signal, bool $reindexed): bool
+    {
+        $item = $signal->item;
+        
+        foreach ($producer->feed($item) as $_) {
+            $this->item = $item->copy();
+            $signal->stop();
+            break;
+        }
+        
+        return $this->streamingFinished($signal);
+    }
+    
+    public function acceptSimpleData(array $data, Signal $signal, bool $reindexed): bool
+    {
+        $item = $signal->item;
+        
+        foreach ($data as $item->key => $item->value) {
+            $this->item = $item->copy();
+            $signal->stop();
+            break;
+        }
+        
+        return $this->streamingFinished($signal);
+    }
+    
+    /**
+     * @param bool $reindexed
+     * @param Item[] $items
+     */
+    public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
+    {
+        foreach ($items as $item) {
+            $this->item = $item->copy();
+            $signal->stop();
+            
+            $signal->item->key = $item->key;
+            $signal->item->value = $item->value;
+            
+            break;
+        }
+        
+        return $this->streamingFinished($signal);
     }
 }

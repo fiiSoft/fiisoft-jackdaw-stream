@@ -3,32 +3,99 @@
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Internal\ResultProvider;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
+use FiiSoft\Jackdaw\Operation\Internal\SimpleFinalOperation;
+use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Stream;
 
-final class Collect extends FinalOperation implements ResultProvider
+final class Collect extends SimpleFinalOperation
 {
     private array $collected = [];
     
-    public function __construct(Stream $stream)
+    private bool $reindex;
+    
+    public function __construct(Stream $stream, bool $reindex = false)
     {
-        parent::__construct($stream, $this);
+        $this->reindex = $reindex;
+        
+        parent::__construct($stream);
     }
     
     public function handle(Signal $signal): void
     {
-        $this->collected[$signal->item->key] = $signal->item->value;
+        if ($this->reindex) {
+            $this->collected[] = $signal->item->value;
+        } else {
+            $this->collected[$signal->item->key] = $signal->item->value;
+        }
     }
     
     public function hasResult(): bool
     {
-        return !empty($this->collected);
+        return true;
     }
     
     public function getResult(): Item
     {
         return new Item(0, $this->collected);
+    }
+    
+    public function collectDataFromProducer(Producer $producer, Signal $signal, bool $reindexed): bool
+    {
+        $item = $signal->item;
+        
+        if ($this->reindex) {
+            foreach ($producer->feed($item) as $_) {
+                $this->collected[] = $item->value;
+            }
+        } else {
+            foreach ($producer->feed($item) as $_) {
+                $this->collected[$item->key] = $item->value;
+            }
+        }
+        
+        return $this->streamingFinished($signal);
+    }
+    
+    public function acceptSimpleData(array $data, Signal $signal, bool $reindexed): bool
+    {
+        if ($reindexed || !$this->reindex) {
+            $this->collected = $data;
+        } else {
+            $this->collected = \array_values($data);
+        }
+        
+        if (!empty($data)) {
+            $last = \array_key_last($data);
+            $signal->item->key = $last;
+            $signal->item->value = $data[$last];
+        }
+        
+        return $this->streamingFinished($signal);
+    }
+    
+    /**
+     * @param Item[] $items
+     * @param Signal $signal
+     * @param bool $reindexed
+     */
+    public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
+    {
+        if ($this->reindex) {
+            foreach ($items as $item) {
+                $this->collected[] = $item->value;
+            }
+        } else {
+            foreach ($items as $item) {
+                $this->collected[$item->key] = $item->value;
+            }
+        }
+        
+        if (isset($item)) {
+            $signal->item->key = $item->key;
+            $signal->item->value = $item->value;
+        }
+        
+        return $this->streamingFinished($signal);
     }
 }

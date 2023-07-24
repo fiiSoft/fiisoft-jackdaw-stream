@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Resource;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\BaseProducer;
+use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
 
-final class TextFileReader extends BaseProducer
+final class TextFileReader extends NonCountableProducer
 {
     /** @var resource */
     private $resource;

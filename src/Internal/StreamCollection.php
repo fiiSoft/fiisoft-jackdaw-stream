@@ -2,12 +2,12 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
-use FiiSoft\Jackdaw\StreamMaker;
+use FiiSoft\Jackdaw\Stream;
 
 final class StreamCollection implements \Iterator
 {
-    /** @var StreamMaker [] */
-    private array $streams = [];
+    /** @var ResultItem [] */
+    private array $results = [];
     
     private array $dataCollection;
     private array $keys;
@@ -21,7 +21,7 @@ final class StreamCollection implements \Iterator
     /**
      * @param string|int|bool $id remember that bool is casted to int (true=>1, false=>0)!
      */
-    public function get($id): StreamMaker
+    public function get($id): ResultApi
     {
         if (\is_bool($id)) {
             $id = (int) $id;
@@ -29,11 +29,15 @@ final class StreamCollection implements \Iterator
             throw new \InvalidArgumentException('Invalid param stream id');
         }
     
-        if (!isset($this->streams[$id])) {
-            $this->streams[$id] = StreamMaker::from($this->dataCollection[$id] ?? []);
+        if (!isset($this->results[$id])) {
+            if (isset($this->dataCollection[$id])) {
+                $this->results[$id] = ResultItem::createFromData($this->dataCollection[$id], $id);
+            } else {
+                $this->results[$id] = ResultItem::createNotFound([]);
+            }
         }
     
-        return $this->streams[$id];
+        return $this->results[$id];
     }
     
     /**
@@ -44,9 +48,9 @@ final class StreamCollection implements \Iterator
         return $this->dataCollection;
     }
     
-    public function stream(): StreamMaker
+    public function stream(): Stream
     {
-        return StreamMaker::from($this->dataCollection);
+        return Stream::from($this->dataCollection);
     }
     
     /**
@@ -66,7 +70,7 @@ final class StreamCollection implements \Iterator
         return \array_keys($this->dataCollection);
     }
     
-    public function current(): StreamMaker
+    public function current(): ResultApi
     {
         return $this->get(\current($this->keys));
     }

@@ -40,8 +40,6 @@
         "phpunit/phpunit": "^9.5",
         "ramsey/uuid": "^4.1",
         "gowork/values": "^0.4.1",
-        "flow-php/etl": "1.x@dev",
-        "flow-php/array-dot": "1.x@dev",
         "symfony/console": "^5.4",
         "psr/log": "^1.1"
     }

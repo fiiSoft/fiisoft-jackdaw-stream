@@ -71,17 +71,17 @@ final class PredicatesTest extends TestCase
     
     public function test_callable_with_three_arguments_as_GenericPredicate(): void
     {
-        $callable = static fn(int $value, int $key, int $mode): bool => $mode === 1 && $value === 5;
+        $callable = static fn(int $value, int $_, int $mode): bool => $mode === 1 && $value === 5;
         $predicate = Predicates::getAdapter($callable);
         
-        self::assertTrue($predicate->isSatisfiedBy(5, 1, 1));
+        self::assertTrue($predicate->isSatisfiedBy(5, 2, 1));
     }
     
     public function test_callable_without_arguments_as_GenericPredicate(): void
     {
         $predicate = Predicates::getAdapter(static fn(): bool  => true);
         
-        self::assertTrue($predicate->isSatisfiedBy(5, 1, 1));
+        self::assertTrue($predicate->isSatisfiedBy(5, 2, 1));
     }
     
     public function test_GenericPredicate_throws_exception_when_callable_requires_wrong_number_of_arguments(): void

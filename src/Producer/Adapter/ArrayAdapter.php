@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Adapter;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\BaseProducer;
+use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
 
-final class ArrayAdapter extends BaseProducer
+final class ArrayAdapter extends CountableProducer
 {
     private array $source;
     
@@ -19,5 +19,21 @@ final class ArrayAdapter extends BaseProducer
         foreach ($this->source as $item->key => $item->value) {
             yield;
         }
+    }
+    
+    public function count(): int
+    {
+        return \count($this->source);
+    }
+    
+    public function getLast(): ?Item
+    {
+        if (empty($this->source)) {
+            return null;
+        }
+        
+        $last = \array_key_last($this->source);
+        
+        return new Item($last, $this->source[$last]);
     }
 }

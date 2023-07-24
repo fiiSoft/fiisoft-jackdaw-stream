@@ -6,14 +6,15 @@ use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Mapper\Internal\FilterAdapter;
 use FiiSoft\Jackdaw\Mapper\Internal\PredicateAdapter;
 use FiiSoft\Jackdaw\Mapper\Internal\ReducerAdapter;
+use FiiSoft\Jackdaw\Mapper\Internal\RegistryAdapter;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Reducer\Reducer;
+use FiiSoft\Jackdaw\Registry\RegReader;
 
 final class Mappers
 {
     /**
      * @param Mapper|Reducer|Predicate|Filter|callable|mixed $mapper
-     * @return Mapper
      */
     public static function getAdapter($mapper): Mapper
     {
@@ -79,71 +80,71 @@ final class Mappers
             return new PredicateAdapter($mapper);
         }
         
+        if ($mapper instanceof RegReader) {
+            return new RegistryAdapter($mapper);
+        }
+        
         return self::simple($mapper);
     }
     
-    public static function generic(callable $mapper): GenericMapper
+    public static function generic(callable $mapper): Mapper
     {
         return new GenericMapper($mapper);
     }
     
     /**
      * @param array|string|int|null $fields
-     * @return ToInt
      */
-    public static function toInt($fields = null): ToInt
+    public static function toInt($fields = null): Mapper
     {
         return new ToInt($fields);
     }
     
     /**
      * @param array|string|int|null $fields
-     * @return ToString
      */
-    public static function toString($fields = null): ToString
+    public static function toString($fields = null): Mapper
     {
         return new ToString($fields);
     }
     
     /**
      * @param array|string|int|null $fields
-     * @return ToFloat
      */
-    public static function toFloat($fields = null): ToFloat
+    public static function toFloat($fields = null): Mapper
     {
         return new ToFloat($fields);
     }
     
     /**
      * @param array|string|int|null $fields
-     * @return ToBool
      */
-    public static function toBool($fields = null): ToBool
+    public static function toBool($fields = null): Mapper
     {
         return new ToBool($fields);
     }
     
-    public static function toArray(bool $appendKey = false): ToArray
+    public static function toArray(bool $appendKey = false): Mapper
     {
         return new ToArray($appendKey);
     }
     
-    public static function concat(string $separator = ''): Concat
+    public static function concat(string $separator = ''): Mapper
     {
         return new Concat($separator);
     }
     
-    public static function split(string $separator = ' '): Split
+    public static function split(string $separator = ' '): Mapper
     {
         return new Split($separator);
     }
     
-    public static function shuffle(): Shuffle
+    public static function shuffle(): Mapper
     {
         return new Shuffle();
     }
     
-    public static function reverse(): Reverse
+    public static function reverse(): Mapper
     {
         return new Reverse();
     }
@@ -151,9 +152,8 @@ final class Mappers
     /**
      * @param array|string|int $fields
      * @param mixed|null $orElse
-     * @return Extract
      */
-    public static function extract($fields, $orElse = null): Extract
+    public static function extract($fields, $orElse = null): Mapper
     {
         return new Extract($fields, $orElse);
     }
@@ -161,9 +161,8 @@ final class Mappers
     /**
      * @param string|int $field
      * @param Mapper|Reducer|callable|mixed $mapper
-     * @return Append
      */
-    public static function append($field, $mapper): Append
+    public static function append($field, $mapper): Mapper
     {
         return new Append($field, $mapper);
     }
@@ -171,37 +170,34 @@ final class Mappers
     /**
      * @param string|int $field
      * @param Mapper|Reducer|callable|mixed $mapper
-     * @return Complete
      */
-    public static function complete($field, $mapper): Complete
+    public static function complete($field, $mapper): Mapper
     {
         return new Complete($field, $mapper);
     }
     
     /**
      * @param mixed $value
-     * @return Simple
      */
-    public static function simple($value): Simple
+    public static function simple($value): Mapper
     {
         return new Simple($value);
     }
     
     /**
      * @param array|string|int $fields
-     * @return Remove
      */
-    public static function remove($fields): Remove
+    public static function remove($fields): Mapper
     {
         return new Remove($fields);
     }
     
-    public static function jsonEncode(int $flags = 0): JsonEncode
+    public static function jsonEncode(int $flags = 0): Mapper
     {
         return new JsonEncode($flags);
     }
     
-    public static function jsonDecode(int $flags = 0, bool $associative = true): JsonDecode
+    public static function jsonDecode(int $flags = 0, bool $associative = true): Mapper
     {
         return new JsonDecode($flags, $associative);
     }
@@ -209,9 +205,8 @@ final class Mappers
     /**
      * @param string|int $field
      * @param string|int|null $key
-     * @return MoveTo
      */
-    public static function moveTo($field, $key = null): MoveTo
+    public static function moveTo($field, $key = null): Mapper
     {
         return new MoveTo($field, $key);
     }
@@ -219,49 +214,55 @@ final class Mappers
     /**
      * @param string|int $field
      * @param Mapper|Reducer|callable|mixed $mapper
-     * @return MapField
      */
-    public static function mapField($field, $mapper): MapField
+    public static function mapField($field, $mapper): Mapper
     {
         return new MapField($field, self::getAdapter($mapper));
     }
     
-    public static function round(int $precision = 2): Round
+    public static function round(int $precision = 2): Mapper
     {
         return new Round($precision);
     }
     
-    public static function tokenize(string $tokens = ' '): Tokenize
+    public static function tokenize(string $tokens = ' '): Mapper
     {
         return new Tokenize($tokens);
     }
     
-    public static function trim(string $chars = " \t\n\r\0\x0B"): Trim
+    public static function trim(string $chars = " \t\n\r\0\x0B"): Mapper
     {
         return new Trim($chars);
     }
     
-    public static function remap(array $keys): Remap
+    public static function remap(array $keys): Mapper
     {
         return new Remap($keys);
     }
     
     /**
      * @param string|int $field
-     * @return FieldValue
      */
-    public static function fieldValue($field): FieldValue
+    public static function fieldValue($field): Mapper
     {
         return new FieldValue($field);
     }
     
-    public static function value(): Value
+    public static function value(): Mapper
     {
         return new Value();
     }
     
-    public static function key(): Key
+    public static function key(): Mapper
     {
         return new Key();
+    }
+    
+    /**
+     * @param mixed $variable REFERENCE
+     */
+    public static function readFrom(&$variable): Mapper
+    {
+        return new Reference($variable);
     }
 }

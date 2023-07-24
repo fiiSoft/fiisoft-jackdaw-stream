@@ -7,12 +7,12 @@ use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
-final class CollectKey extends BaseOperation
+final class CollectKeyIn extends BaseOperation
 {
     private Collector $collector;
     
     /**
-     * @param Collector|\ArrayAccess $collector
+     * @param Collector|\ArrayAccess|\SplHeap|\SplPriorityQueue $collector
      */
     public function __construct($collector)
     {

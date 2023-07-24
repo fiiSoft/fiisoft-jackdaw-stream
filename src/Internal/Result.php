@@ -3,17 +3,14 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Stream;
-use FiiSoft\Jackdaw\StreamMaker;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
 
-final class Result extends StreamPipe implements ResultApi
+final class Result extends StreamPipe implements ResultApi, Executable
 {
-    use StubMethods;
-    
     private Stream $stream;
     private ResultProvider $resultProvider;
-    private ?ResultItem $resultItem;
+    private ?ResultItem $resultItem = null;
     private ?Transformer $transformer = null;
     
     private bool $isExecuted = false;
@@ -151,7 +148,7 @@ final class Result extends StreamPipe implements ResultApi
     /**
      * @inheritDoc
      */
-    public function stream(): StreamMaker
+    public function stream(): Stream
     {
         return $this->execute()->stream();
     }
@@ -179,20 +176,5 @@ final class Result extends StreamPipe implements ResultApi
         }
         
         return $this->resultItem;
-    }
-    
-    protected function processExternalPush(Stream $sender): bool
-    {
-        return $this->stream->processExternalPush($sender);
-    }
-    
-    protected function continueIteration(bool $once = false): bool
-    {
-        return $this->stream->continueIteration($once);
-    }
-    
-    protected function prepareSubstream(): void
-    {
-        $this->stream->prepareSubstream();
     }
 }

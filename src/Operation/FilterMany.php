@@ -5,13 +5,14 @@ namespace FiiSoft\Jackdaw\Operation;
 use FiiSoft\Jackdaw\Filter\Internal\FilterData;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Internal\FilterSingle;
 
 final class FilterMany extends BaseOperation
 {
     /** @var FilterData[] */
     private array $filters = [];
     
-    public function __construct(Filter $first, Filter $second)
+    public function __construct(FilterSingle $first, FilterSingle $second)
     {
         $this->add($first);
         $this->add($second);
@@ -20,20 +21,24 @@ final class FilterMany extends BaseOperation
     public function handle(Signal $signal): void
     {
         foreach ($this->filters as $filter) {
-            if ($filter->negation === $filter->filter->isAllowed(
-                    $signal->item->value,
-                    $signal->item->key,
-                    $filter->mode
-                )
+            if ($filter->condition === null
+                || $filter->condition->isTrueFor($signal->item->value, $signal->item->key)
             ) {
-                return;
+                if ($filter->negation === $filter->filter->isAllowed(
+                        $signal->item->value,
+                        $signal->item->key,
+                        $filter->mode
+                    )
+                ) {
+                    return;
+                }
             }
         }
         
         $this->next->handle($signal);
     }
     
-    public function add(Filter $filter): void
+    public function add(FilterSingle $filter): void
     {
         $this->filters[] = $filter->filterData();
     }

@@ -4,13 +4,18 @@ namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Internal\DataCollector;
+use FiiSoft\Jackdaw\Operation\Internal\SortingOperation;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
+use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\Producers;
 
-final class Sort extends BaseOperation
+final class Sort extends BaseOperation implements SortingOperation, DataCollector
 {
     private ?Comparator $comparator = null;
     
@@ -43,7 +48,14 @@ final class Sort extends BaseOperation
     public function streamingFinished(Signal $signal): bool
     {
         if (\count($this->items) > 1) {
-            $this->sortItems();
+            $comparator = ItemComparatorFactory::getFor($this->mode, $this->reversed, $this->comparator);
+            \usort($this->items, static fn(Item $first, Item $second): int => $comparator->compare($first, $second));
+        }
+        
+        if ($this->next instanceof DataCollector) {
+            $signal->continueFrom($this->next);
+            
+            return $this->next->acceptCollectedItems($this->items, $signal, false);
         }
         
         $signal->restartWith(new ForwardItemsIterator($this->items), $this->next);
@@ -51,50 +63,66 @@ final class Sort extends BaseOperation
         return true;
     }
     
-    private function sortItems(): void
+    public function collectDataFromProducer(Producer $producer, Signal $signal, bool $reindexed): bool
     {
-        switch ($this->mode) {
-            case Check::VALUE:
-                if ($this->comparator === null) {
-                    $comparator = static function (Item $a, Item $b) {
-                        return $a->value <=> $b->value;
-                    };
-                } else {
-                    $comparator = function (Item $a, Item $b) {
-                        return $this->comparator->compare($a->value, $b->value);
-                    };
-                }
-            break;
-            case Check::KEY:
-                if ($this->comparator === null) {
-                    $comparator = static function (Item $a, Item $b) {
-                        return $a->key <=> $b->key;
-                    };
-                } else {
-                    $comparator = function (Item $a, Item $b) {
-                        return $this->comparator->compare($a->key, $b->key);
-                    };
-                }
-            break;
-            default:
-                if ($this->comparator === null) {
-                    $comparator = static function (Item $a, Item $b) {
-                        return $a->value <=> $b->value ?: $a->key <=> $b->key;
-                    };
-                } else {
-                    $comparator = function (Item $a, Item $b) {
-                        return $this->comparator->compareAssoc($a->value, $b->value, $a->key, $b->key);
-                    };
-                }
+        $item = $signal->item;
+        
+        foreach ($producer->feed($item) as $_) {
+            $this->items[] = $item->copy();
         }
         
-        if ($this->reversed) {
-            $comparator = static function (Item $a, Item $b) use ($comparator) {
-                return $comparator($b, $a);
-            };
+        return $this->streamingFinished($signal);
+    }
+    
+    public function acceptSimpleData(array $data, Signal $signal, bool $reindexed): bool
+    {
+        if (\count($data) > 1) {
+            if ($this->mode === Check::VALUE || $this->mode === Check::KEY) {
+                if ($this->mode === Check::VALUE) {
+                    \uasort($data, $this->createSimpleComparator());
+                } else {
+                    \uksort($data, $this->createSimpleComparator());
+                }
+                
+                if ($this->next instanceof DataCollector) {
+                    $signal->continueFrom($this->next);
+                    
+                    return $this->next->acceptSimpleData($data, $signal, false);
+                }
+            } else {
+                $items = [];
+                foreach ($data as $key => $value) {
+                    $items[] = new Item($key, $value);
+                }
+                
+                return $this->acceptCollectedItems($items, $signal, $reindexed);
+            }
         }
         
-        \usort($this->items, $comparator);
+        $signal->restartWith(Producers::fromArray($data), $this->next);
+        
+        return true;
+    }
+    
+    /**
+     * @param Item[] $items
+     */
+    public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
+    {
+        if (\count($items) > 1) {
+            $comparator = ItemComparatorFactory::getFor($this->mode, $this->reversed, $this->comparator);
+            \usort($items, static fn(Item $first, Item $second): int => $comparator->compare($first, $second));
+        }
+        
+        if ($this->next instanceof DataCollector) {
+            $signal->continueFrom($this->next);
+            
+            return $this->next->acceptCollectedItems($items, $signal, $reindexed);
+        }
+        
+        $signal->restartWith(new ForwardItemsIterator($items), $this->next);
+        
+        return true;
     }
     
     public function reverseOrder(): void
@@ -105,5 +133,22 @@ final class Sort extends BaseOperation
     public function createSortLimited(int $limit): SortLimited
     {
         return new SortLimited($limit, $this->comparator, $this->mode, $this->reversed);
+    }
+    
+    private function createSimpleComparator(): callable
+    {
+        if ($this->comparator === null) {
+            if ($this->reversed) {
+                return static fn($b, $a): int => $a <=> $b;
+            }
+            
+            return static fn($a, $b): int => $a <=> $b;
+        }
+        
+        if ($this->reversed) {
+            return fn($b, $a): int => $this->comparator->compare($a, $b);
+        }
+        
+        return fn($a, $b): int => $this->comparator->compare($a, $b);
     }
 }

@@ -8,7 +8,6 @@ final class Consumers
 {
     /**
      * @param Consumer|callable|resource $consumer
-     * @return Consumer
      */
     public static function getAdapter($consumer): Consumer
     {
@@ -27,7 +26,7 @@ final class Consumers
         throw new \InvalidArgumentException('Invalid param consumer');
     }
     
-    public static function generic(callable $consumer): GenericConsumer
+    public static function generic(callable $consumer): Consumer
     {
         return new GenericConsumer($consumer);
     }
@@ -37,28 +36,51 @@ final class Consumers
         return new Counter();
     }
     
-    public static function printer(int $mode = Check::BOTH): Printer
+    public static function printer(int $mode = Check::BOTH): Consumer
     {
         return new Printer($mode);
     }
     
-    public static function stdout(string $separator = \PHP_EOL, int $mode = Check::VALUE): StdoutWriter
+    public static function stdout(string $separator = \PHP_EOL, int $mode = Check::VALUE): Consumer
     {
         return new StdoutWriter($separator, $mode);
     }
     
     /**
      * @param resource $resource
-     * @param int $mode
-     * @return ResourceWriter
      */
-    public static function resource($resource, int $mode = Check::VALUE): ResourceWriter
+    public static function resource($resource, int $mode = Check::VALUE): Consumer
     {
         return new ResourceWriter($resource, $mode);
     }
     
-    public static function usleep(int $microseconds): Sleeper
+    public static function usleep(int $microseconds): Consumer
     {
         return new Sleeper($microseconds);
+    }
+    
+    /**
+     * @param mixed $value REFERENCE
+     */
+    public static function sendValueTo(&$value): Consumer
+    {
+        return new Reference($value, $_);
+    }
+    
+    /**
+     * @param mixed $key REFERENCE
+     */
+    public static function sendKeyTo(&$key): Consumer
+    {
+        return new Reference($_, $key);
+    }
+    
+    /**
+     * @param mixed $value REFERENCE
+     * @param mixed $key REFERENCE
+     */
+    public static function sendValueKeyTo(&$value, &$key): Consumer
+    {
+        return new Reference($value, $key);
     }
 }

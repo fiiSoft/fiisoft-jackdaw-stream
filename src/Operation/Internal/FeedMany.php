@@ -2,15 +2,15 @@
 
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
+use FiiSoft\Jackdaw\Internal\ForkCollaborator;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Internal\StreamPipe;
 
-final class FeedMany extends BaseOperation
+final class FeedMany extends StreamCollaborator
 {
-    /** @var StreamPipe[] */
+    /** @var ForkCollaborator [] */
     private array $streams;
     
-    public function __construct(StreamPipe ...$streams)
+    public function __construct(ForkCollaborator ...$streams)
     {
         if (empty($streams)) {
             throw new \InvalidArgumentException('FeedMany requires at least one stream');
@@ -22,7 +22,7 @@ final class FeedMany extends BaseOperation
     public function handle(Signal $signal): void
     {
         foreach ($this->streams as $key => $stream) {
-            if (!$signal->sendTo($stream)) {
+            if (!$stream->process($signal)) {
                 unset($this->streams[$key]);
             }
         }
@@ -33,5 +33,10 @@ final class FeedMany extends BaseOperation
     public function add(Feed $next): void
     {
         $this->streams[] = $next->stream();
+    }
+    
+    public function streamingFinished(Signal $signal): bool
+    {
+        return $this->next->streamingFinished($signal);
     }
 }

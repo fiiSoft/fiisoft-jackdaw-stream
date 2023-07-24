@@ -111,4 +111,14 @@ final class OnErrorHandlersTest extends TestCase
             [\fopen('php://memory', 'rb+'), 1, 'Exception: RuntimeException, key: 1, value: resource'],
         ];
     }
+    
+    public function test_OnError_skip_handler(): void
+    {
+        self::assertTrue(OnError::skip()->handle(new \RuntimeException(), 1, 'a'));
+    }
+    
+    public function test_OnError_abort_handler(): void
+    {
+        self::assertFalse(OnError::abort()->handle(new \RuntimeException(), 1, 'a'));
+    }
 }

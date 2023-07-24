@@ -3,15 +3,17 @@
 namespace FiiSoft\Jackdaw\Producer\Internal;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\BaseProducer;
+use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
 
-final class CircularBufferIterator extends BaseProducer
+final class CircularBufferIterator extends CountableProducer
 {
     /** @var \ArrayAccess|array|Item[] */
     private $buffer;
     
     private int $count; //number of elements in buffer
     private int $index; //index of first element
+    
+    private int $initial;
     
     /**
      * @param \ArrayAccess|array|Item[] $buffer
@@ -35,6 +37,8 @@ final class CircularBufferIterator extends BaseProducer
         } else {
             throw new \InvalidArgumentException('Invalid param index '.$index.' with count '.$count);
         }
+        
+        $this->initial = $this->index;
     }
     
     public function feed(Item $item): \Generator
@@ -53,5 +57,26 @@ final class CircularBufferIterator extends BaseProducer
         }
     
         $this->buffer = [];
+        $this->count = 0;
+    }
+    
+    public function count(): int
+    {
+        return \is_countable($this->buffer) ? \count($this->buffer) : $this->count;
+    }
+    
+    public function getLast(): ?Item
+    {
+        if ($this->count === 0) {
+            return null;
+        }
+        
+        $index = $this->initial - 1;
+        
+        if ($index < 0) {
+            $index = $this->count - 1;
+        }
+        
+        return $this->buffer[$index]->copy();
     }
 }

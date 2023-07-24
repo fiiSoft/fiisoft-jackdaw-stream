@@ -12,8 +12,6 @@ final class Conditions
 {
     /**
      * @param Condition|Predicate|Filter|callable $condition
-     * @param int $mode
-     * @return Condition
      */
     public static function getAdapter($condition, int $mode = Check::VALUE): Condition
     {
@@ -36,24 +34,23 @@ final class Conditions
         throw new \InvalidArgumentException('Invalid param condition');
     }
     
-    public static function generic(callable $condition): GenericCondition
+    public static function generic(callable $condition): Condition
     {
         return new GenericCondition($condition);
     }
     
-    public static function filter(Filter $filter, int $mode = Check::VALUE): FilterAdapter
+    public static function filter(Filter $filter, int $mode = Check::VALUE): Condition
     {
         return new FilterAdapter($filter, $mode);
     }
     
-    public static function predicate(Predicate $predicate, int $mode = Check::VALUE): PredicateAdapter
+    public static function predicate(Predicate $predicate, int $mode = Check::VALUE): Condition
     {
         return new PredicateAdapter($predicate, $mode);
     }
     
     /**
      * @param string|int $condition
-     * @return Condition
      */
     public static function keyEquals($condition): Condition
     {

@@ -10,24 +10,24 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 final class CollectIn extends BaseOperation
 {
     private Collector $collector;
-    private bool $preserveKeys;
+    
+    private bool $reindex;
     
     /**
-     * @param Collector|\ArrayAccess $collector
-     * @param bool $preserveKeys
+     * @param Collector|\ArrayAccess|\SplHeap|\SplPriorityQueue $collector
      */
-    public function __construct($collector, bool $preserveKeys = false)
+    public function __construct($collector, ?bool $reindex = null)
     {
         $this->collector = Collectors::getAdapter($collector);
-        $this->preserveKeys = $preserveKeys;
+        $this->reindex = $reindex ?? !$this->collector->canPreserveKeys();
     }
     
     public function handle(Signal $signal): void
     {
-        if ($this->preserveKeys) {
-            $this->collector->set($signal->item->key, $signal->item->value);
-        } else {
+        if ($this->reindex) {
             $this->collector->add($signal->item->value);
+        } else {
+            $this->collector->set($signal->item->key, $signal->item->value);
         }
         
         $this->next->handle($signal);

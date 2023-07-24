@@ -4,8 +4,9 @@ namespace FiiSoft\Jackdaw\Producer;
 
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
 
-final class QueueProducer extends BaseProducer implements Consumer
+final class QueueProducer extends CountableProducer implements Consumer
 {
     /** @var Item[] */
     private array $buffer = [];
@@ -88,5 +89,21 @@ final class QueueProducer extends BaseProducer implements Consumer
     public function consume($value, $key): void
     {
         $this->buffer[] = new Item($key ?? $this->autoKey++, $value);
+    }
+    
+    public function count(): int
+    {
+        return \count($this->buffer);
+    }
+    
+    public function getLast(): ?Item
+    {
+        if (empty($this->buffer)) {
+            return null;
+        }
+        
+        $last = \array_key_last($this->buffer);
+        
+        return $this->buffer[$last]->copy();
     }
 }

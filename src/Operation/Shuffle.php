@@ -5,6 +5,7 @@ namespace FiiSoft\Jackdaw\Operation;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Internal\DataCollector;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 
 final class Shuffle extends BaseOperation
@@ -38,23 +39,43 @@ final class Shuffle extends BaseOperation
             \shuffle($this->items);
             $signal->continueWith($this->iterator->with($this->items), $this->next);
             
-            $this->items = [];
-            $this->count = 0;
+            $this->reset();
         }
     }
     
     public function streamingFinished(Signal $signal): bool
     {
         if (empty($this->items)) {
-            return $this->next->streamingFinished($signal);
+            return parent::streamingFinished($signal);
         }
     
         \shuffle($this->items);
-        $signal->restartWith($this->iterator->with($this->items), $this->next);
-    
-        $this->items = [];
-        $this->count = 0;
+        
+        try {
+            if ($this->next instanceof DataCollector) {
+                $signal->continueFrom($this->next);
+                
+                return $this->next->acceptCollectedItems($this->items, $signal, false);
+            }
+            
+            $signal->restartWith($this->iterator->with($this->items), $this->next);
+        } finally {
+            $this->reset();
+        }
     
         return true;
+    }
+    
+    private function reset(): void
+    {
+        $this->items = [];
+        $this->count = 0;
+    }
+    
+    protected function __clone()
+    {
+        $this->iterator = clone $this->iterator;
+        
+        parent::__clone();
     }
 }

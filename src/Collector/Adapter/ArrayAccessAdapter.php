@@ -1,13 +1,17 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Collector;
+namespace FiiSoft\Jackdaw\Collector\Adapter;
 
-final class ArrayAccess implements Collector
+use FiiSoft\Jackdaw\Collector\BaseCollector;
+
+final class ArrayAccessAdapter extends BaseCollector
 {
     private \ArrayAccess $buffer;
     
-    public function __construct(\ArrayAccess $buffer)
+    public function __construct(\ArrayAccess $buffer, ?bool $allowKeys = true)
     {
+        parent::__construct($allowKeys);
+        
         $this->buffer = $buffer;
     }
 

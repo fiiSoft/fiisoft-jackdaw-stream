@@ -6,7 +6,6 @@ final class Reducers
 {
     /**
      * @param Reducer|callable $reducer
-     * @return Reducer
      */
     public static function getAdapter($reducer): Reducer
     {
@@ -43,47 +42,47 @@ final class Reducers
         throw new \InvalidArgumentException('Invalid param reducer');
     }
     
-    public static function generic(callable $reducer): GenericReducer
+    public static function generic(callable $reducer): Reducer
     {
         return new GenericReducer($reducer);
     }
     
-    public static function sum(): Sum
+    public static function sum(): Reducer
     {
         return new Sum();
     }
     
-    public static function min(): Min
+    public static function min(): Reducer
     {
         return new Min();
     }
     
-    public static function max(): Max
+    public static function max(): Reducer
     {
         return new Max();
     }
     
-    public static function average(?int $roundPrecision = null): Average
+    public static function average(?int $roundPrecision = null): Reducer
     {
         return new Average($roundPrecision);
     }
     
-    public static function concat(string $separator = ''): Concat
+    public static function concat(string $separator = ''): Reducer
     {
         return new Concat($separator);
     }
     
-    public static function longest(): Longest
+    public static function longest(): Reducer
     {
         return new Longest();
     }
     
-    public static function shortest(): Shortest
+    public static function shortest(): Reducer
     {
         return new Shortest();
     }
     
-    public static function count(): Count
+    public static function count(): Reducer
     {
         return new Count();
     }

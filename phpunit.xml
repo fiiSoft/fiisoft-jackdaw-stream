@@ -10,7 +10,10 @@
             <directory suffix=".php">src</directory>
         </include>
         <exclude>
-            <file>src/Internal/StubMethods.php</file>
+            <file>src/Internal/StreamPipe.php</file>
+            <file>src/Internal/ProtectedCloning.php</file>
+            <file>src/Internal/ForkCollaborator.php</file>
+            <file>src/Internal/Collaborator.php</file>
         </exclude>
         <report>
             <html outputDirectory="var/phpunit/html/" lowUpperBound="50" highLowerBound="100"/>

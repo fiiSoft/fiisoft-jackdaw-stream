@@ -13,7 +13,7 @@ final class Accumulate extends BaseOperation
 {
     private Filter $filter;
     
-    private bool $preserveKeys;
+    private bool $reindex;
     private bool $reverse;
     private int $mode;
     
@@ -22,15 +22,12 @@ final class Accumulate extends BaseOperation
     
     /**
      * @param Filter|Predicate|callable|mixed $filter
-     * @param int $mode
-     * @param bool $preserveKeys
-     * @param bool $reverse
      */
-    public function __construct($filter, int $mode = Check::VALUE, bool $preserveKeys = false, bool $reverse = false)
+    public function __construct($filter, int $mode = Check::VALUE, bool $reindex = false, bool $reverse = false)
     {
         $this->filter = Filters::getAdapter($filter);
         $this->mode = Check::getMode($mode);
-        $this->preserveKeys = $preserveKeys;
+        $this->reindex = $reindex;
         $this->reverse = $reverse;
     }
     
@@ -39,10 +36,10 @@ final class Accumulate extends BaseOperation
         $item = $signal->item;
         
         if ($this->reverse XOR $this->filter->isAllowed($item->value, $item->key, $this->mode)) {
-            if ($this->preserveKeys) {
-                $this->data[$item->key] = $item->value;
-            } else {
+            if ($this->reindex) {
                 $this->data[] = $item->value;
+            } else {
+                $this->data[$item->key] = $item->value;
             }
         } elseif (!empty($this->data)) {
             $item->key = $this->index++;

@@ -2,7 +2,6 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
-use ArrayObject;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Mapper\Concat;
 use FiiSoft\Jackdaw\Mapper\Internal\ReducerAdapter;
@@ -19,7 +18,6 @@ use FiiSoft\Jackdaw\Mapper\Trim;
 use FiiSoft\Jackdaw\Predicate\Predicates;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 final class MappersTest extends TestCase
 {
@@ -68,7 +66,12 @@ final class MappersTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        Mappers::generic(static fn() => true)->map('a', 1);
+        Mappers::generic(static fn($a, $b, $c) => true)->map('a', 1);
+    }
+    
+    public function test_GenericMapper_can_call_callable_without_arguments(): void
+    {
+        self::assertSame('foo', Mappers::generic(static fn(): string => 'foo')->map('bar', 1));
     }
     
     public function test_JsonDecode(): void
@@ -164,7 +167,7 @@ final class MappersTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        Mappers::remove('id')->map(new stdClass(), 1);
+        Mappers::remove('id')->map(new \stdClass(), 1);
     }
     
     public function test_Reverse_can_handle_string(): void
@@ -270,15 +273,6 @@ final class MappersTest extends TestCase
     public function test_Simple(): void
     {
         self::assertSame('g', Mappers::simple('g')->map(5, 'a'));
-    }
-    
-    public function test_Append_replaces_only_null_or_missing_keys(): void
-    {
-        $mapper = Mappers::complete('name', 'anonymous');
-        
-        self::assertSame(['id' => 3, 'name' => 'Ole'], $mapper->map(['id' => 3, 'name' => 'Ole'], 0));
-        self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3, 'name' => null], 0));
-        self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3], 0));
     }
     
     public function test_MoveTo_creates_array_with_key_from_value(): void
@@ -390,6 +384,15 @@ final class MappersTest extends TestCase
         Mappers::mapField('key', Mappers::reverse())->map('string value', 1);
     }
     
+    public function test_Complete_replaces_only_null_or_missing_keys(): void
+    {
+        $mapper = Mappers::complete('name', 'anonymous');
+        
+        self::assertSame(['id' => 3, 'name' => 'Ole'], $mapper->map(['id' => 3, 'name' => 'Ole'], 0));
+        self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3, 'name' => null], 0));
+        self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3], 0));
+    }
+    
     public function test_Complete_throws_exception_when_param_field_is_invalid(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -407,7 +410,7 @@ final class MappersTest extends TestCase
     
     public function test_Complete_can_reduce_array_value_to_single_field(): void
     {
-        self::assertSame([1, 2, 3, 'sum' => 6], Mappers::append('sum', Reducers::sum())->map([1, 2, 3], 1));
+        self::assertSame([1, 2, 3, 'sum' => 6], Mappers::complete('sum', Reducers::sum())->map([1, 2, 3], 1));
     }
     
     public function test_Append_throws_exception_when_param_field_is_invalid(): void
@@ -484,11 +487,14 @@ final class MappersTest extends TestCase
     public function test_Remap_can_merge_with_other_Remap_mapper(): void
     {
         $first = Mappers::remap([2 => 'foo']);
-        $second = Mappers::remap(['foo' => 'bar']);
+        $second = Mappers::remap(['foo' => 'bar', 1 => 'moo']);
         
         self::assertTrue($first->mergeWith($second));
         
-        self::assertSame(['bar' => 'hello'], $first->map([2 => 'hello'], 1));
+        self::assertSame(
+            ['bar' => 'hello', 'moo' => 'world'],
+            $first->map([1 => 'world', 2 => 'hello'], 1)
+        );
     }
     
     public function test_mappers_cannot_merge_with_incompatible_mappers(): void
@@ -604,14 +610,14 @@ final class MappersTest extends TestCase
         self::assertSame(['a'], $withoutKey->map('a', 1));
         self::assertSame([4], $withoutKey->map(4, 1));
         self::assertSame(['foo' => 'bar'], $withoutKey->map(['foo' => 'bar'], 1));
-        self::assertSame(['foo' => 'bar'], $withoutKey->map(new ArrayObject(['foo' => 'bar']), 1));
+        self::assertSame(['foo' => 'bar'], $withoutKey->map(new \ArrayObject(['foo' => 'bar']), 1));
         
         $withKey = Mappers::toArray(true);
         
         self::assertSame([1 => 'a'], $withKey->map('a', 1));
         self::assertSame([1 => 4], $withKey->map(4, 1));
         self::assertSame(['foo' => 'bar'], $withKey->map(['foo' => 'bar'], 1));
-        self::assertSame(['foo' => 'bar'], $withKey->map(new ArrayObject(['foo' => 'bar']), 1));
+        self::assertSame(['foo' => 'bar'], $withKey->map(new \ArrayObject(['foo' => 'bar']), 1));
     }
     
     public function test_Shuffle_can_mix_elements_in_arrays(): void

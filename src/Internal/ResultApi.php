@@ -5,13 +5,11 @@ namespace FiiSoft\Jackdaw\Internal;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Reducer\Reducer;
-use FiiSoft\Jackdaw\StreamMaker;
+use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 
 interface ResultApi extends ResultCaster, \Countable
 {
-    public function run(): void;
-    
     public function found(): bool;
     
     public function notFound(): bool;
@@ -25,9 +23,8 @@ interface ResultApi extends ResultCaster, \Countable
      * Register single transformer to perform final opertations on result (when result is available).
      *
      * @param Transformer|Mapper|Reducer|callable|null $transformer
-     * @return $this
      */
-    public function transform($transformer): self;
+    public function transform($transformer): ResultApi;
     
     /**
      * @param callable|mixed|null $orElse callable is lazy-evaluated result when nothing was found
@@ -47,15 +44,12 @@ interface ResultApi extends ResultCaster, \Countable
     
     /**
      * @param Consumer|callable|resource $consumer
-     * @return void
      */
     public function call($consumer): void;
     
     /**
      * Use values collected in result as stream.
-     * Because result holds computed values, created Stream is reusable.
-     *
-     * @return StreamMaker
+     * Because result holds computed values, every call to this method creates new stream.
      */
-    public function stream(): StreamMaker;
+    public function stream(): Stream;
 }

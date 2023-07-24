@@ -1,7 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Producer;
+namespace FiiSoft\Jackdaw\Producer\Tech;
 
+use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Stream;
 
 abstract class BaseProducer implements Producer

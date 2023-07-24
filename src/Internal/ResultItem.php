@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\StreamMaker;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
@@ -24,21 +25,34 @@ final class ResultItem implements ResultApi
     
     public static function createFound(Item $item, ?Transformer $transformer = null): self
     {
-        return new self($item, null, $transformer);
+        return new self(true, $item->value, $item->key, null, $transformer);
     }
     
-    public static function createNotFound($default = null): self
+    /**
+     * @param callable|mixed|null $default
+     * @param string|int|null $id
+     */
+    public static function createNotFound($default = null, $id = null): self
     {
-        return new self(null, $default);
+        return new self(false, null, $id, $default);
     }
     
-    private function __construct(?Item $item, $default = null, ?Transformer $transformer = null)
+    /**
+     * @param mixed $data
+     * @param string|int $id
+     */
+    public static function createFromData($data, $id): self
     {
-        if ($item !== null) {
+        return new self(true, $data, $id);
+    }
+    
+    private function __construct(bool $found, $value, $key, $default = null, ?Transformer $transformer = null)
+    {
+        $this->key = $key;
+        
+        if ($found) {
             $this->found = true;
-            $this->rawValue = $item->value;
-            $this->key = $item->key;
-            
+            $this->rawValue = $value;
             $this->transform($transformer);
         } else {
             $this->finalValue = \is_callable($default) ? $default() : $default;
@@ -184,13 +198,13 @@ final class ResultItem implements ResultApi
     /**
      * @inheritdoc
      */
-    public function stream(): StreamMaker
+    public function stream(): Stream
     {
         if ($this->stream === null) {
             $this->stream = StreamMaker::from($this->toArrayAssoc());
         }
         
-        return $this->stream;
+        return $this->stream->start();
     }
     
     /**
@@ -228,13 +242,5 @@ final class ResultItem implements ResultApi
         }
         
         return null;
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function run(): void
-    {
-        //do noting
     }
 }

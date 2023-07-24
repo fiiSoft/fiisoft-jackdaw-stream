@@ -27,8 +27,10 @@ final class GenericMapper extends BaseMapper
                 return $map($value);
             case 2:
                 return $map($value, $key);
+            case 0:
+                return $map();
             default:
-                throw Helper::wrongNumOfArgsException('Mapper', $this->numOfArgs, 1, 2);
+                throw Helper::wrongNumOfArgsException('Mapper', $this->numOfArgs, 0, 1, 2);
         }
     }
 }

@@ -2,17 +2,20 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
-use FiiSoft\Jackdaw\Stream;
-
-abstract class StreamPipe
+abstract class StreamPipe extends ForkCollaborator
 {
-    abstract protected function prepareSubstream(): void;
+    protected function prepareSubstream(bool $isLoop): void
+    {
+        throw new \BadMethodCallException('Method '.__METHOD__.' should never be called');
+    }
     
-    abstract protected function sendTo(StreamPipe $stream): bool;
+    protected function continueIteration(bool $once = false): bool
+    {
+        throw new \BadMethodCallException('Method '.__METHOD__.' should never be called');
+    }
     
-    abstract protected function processExternalPush(Stream $sender): bool;
-    
-    abstract protected function continueIteration(bool $once = false): bool;
-    
-    abstract protected function finish(): void;
+    protected function finish(): void
+    {
+        throw new \BadMethodCallException('Method '.__METHOD__.' should never be called');
+    }
 }

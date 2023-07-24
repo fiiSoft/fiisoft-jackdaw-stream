@@ -2,16 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
-use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
+use FiiSoft\Jackdaw\Operation\Internal\ReduceFinalOperation;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 
-final class Reduce extends FinalOperation
+final class Reduce extends ReduceFinalOperation
 {
-    private Reducer $reducer;
-    
     /**
      * @param Stream $stream
      * @param Reducer|callable $reducer
@@ -19,13 +16,8 @@ final class Reduce extends FinalOperation
      */
     public function __construct(Stream $stream, $reducer, $orElse = null)
     {
-        $this->reducer = Reducers::getAdapter($reducer);
+        $reducer = Reducers::getAdapter($reducer);
         
-        parent::__construct($stream, $this->reducer, $orElse);
-    }
-    
-    public function handle(Signal $signal): void
-    {
-        $this->reducer->consume($signal->item->value);
+        parent::__construct($stream, $reducer, $orElse);
     }
 }

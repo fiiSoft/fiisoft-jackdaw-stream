@@ -5,14 +5,14 @@ namespace FiiSoft\Jackdaw\Operation\Terminating;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Internal\ResultProvider;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
+use FiiSoft\Jackdaw\Operation\Internal\SimpleFinalOperation;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Predicate\Predicates;
+use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Stream;
 
-final class Find extends FinalOperation implements ResultProvider
+final class Find extends SimpleFinalOperation
 {
     private Predicate $predicate;
     private int $mode;
@@ -29,7 +29,7 @@ final class Find extends FinalOperation implements ResultProvider
         $this->predicate = Predicates::getAdapter($predicate);
         $this->mode = Check::getMode($mode);
         
-        parent::__construct($stream, $this);
+        parent::__construct($stream);
     }
     
     public function handle(Signal $signal): void
@@ -48,5 +48,64 @@ final class Find extends FinalOperation implements ResultProvider
     public function getResult(): Item
     {
         return $this->item;
+    }
+    
+    protected function __clone()
+    {
+        parent::__clone();
+    
+        $this->item = null;
+    }
+    
+    public function collectDataFromProducer(Producer $producer, Signal $signal, bool $reindexed): bool
+    {
+        $item = $signal->item;
+        
+        foreach ($producer->feed($item) as $_) {
+            if ($this->predicate->isSatisfiedBy($item->value, $item->key, $this->mode)) {
+                $this->item = $item->copy();
+                $signal->stop();
+                break;
+            }
+        }
+        
+        return $this->streamingFinished($signal);
+    }
+    
+    public function acceptSimpleData(array $data, Signal $signal, bool $reindexed): bool
+    {
+        $item = $signal->item;
+        
+        foreach ($data as $item->key => $item->value) {
+            if ($this->predicate->isSatisfiedBy($item->value, $item->key, $this->mode)) {
+                $this->item = $item->copy();
+                $signal->stop();
+                break;
+            }
+        }
+        
+        return $this->streamingFinished($signal);
+    }
+    
+    /**
+     * @param bool $reindexed
+     * @param Item[] $items
+     */
+    public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
+    {
+        foreach ($items as $item) {
+            if ($this->predicate->isSatisfiedBy($item->value, $item->key, $this->mode)) {
+                $this->item = $item->copy();
+                $signal->stop();
+                break;
+            }
+        }
+        
+        if (isset($item)) {
+            $signal->item->key = $item->key;
+            $signal->item->value = $item->value;
+        }
+        
+        return $this->streamingFinished($signal);
     }
 }

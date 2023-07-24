@@ -5,16 +5,17 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Condition\Conditions;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Predicate\Predicates;
 use PHPUnit\Framework\TestCase;
 
-final class DiscriminatorTest extends TestCase
+final class DiscriminatorsTest extends TestCase
 {
     public function test_getAdapter_throws_exception_on_invalid_argument(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         
-        Discriminators::getAdapter(15);
+        Discriminators::getAdapter([]);
     }
     
     public function test_GenericDiscriminator_throws_exception_when_callable_accepts_wrong_number_of_arguments(): void
@@ -82,11 +83,40 @@ final class DiscriminatorTest extends TestCase
         self::assertSame('bbb', Discriminators::byKey()->classify('aaa', 'bbb'));
     }
     
-    public function test_ByField_discriminator_throws_exception_when_argument_is_nor_array(): void
+    public function test_ByField_discriminator_throws_exception_when_argument_is_not_array(): void
     {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('ByField discriminator can handle only arrays-like values');
         
         Discriminators::byField('sex')->classify(5, 1);
+    }
+    
+    public function test_Mapper_can_be_used_as_Discriminator(): void
+    {
+        $discriminator = Discriminators::getAdapter(Mappers::fieldValue('gender'));
+        
+        self::assertSame('man', $discriminator->classify(['id' => 5, 'gender' => 'man'], 0));
+        self::assertSame('woman', $discriminator->classify(['id' => 7, 'gender' => 'woman'], 1));
+    }
+    
+    public function test_Alternately_throws_exception_when_argument_classifiers_is_empy(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param classifiers');
+        
+        Discriminators::alternately([]);
+    }
+    
+    public function test_Alternately_discriminator(): void
+    {
+        $discriminator = Discriminators::alternately(['one', 'two', 'three']);
+        
+        $classifiers = [];
+        
+        for ($i = 0; $i < 8; ++$i) {
+            $classifiers[] = $discriminator->classify('any', 'thing');
+        }
+        
+        self::assertSame(['one', 'two', 'three', 'one', 'two', 'three', 'one', 'two'], $classifiers);
     }
 }

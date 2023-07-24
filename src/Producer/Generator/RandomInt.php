@@ -3,39 +3,40 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\BaseProducer;
+use FiiSoft\Jackdaw\Producer\Tech\LimitedProducer;
 
-final class RandomInt extends BaseProducer
+final class RandomInt extends LimitedProducer
 {
     private int $min;
     private int $max;
     
-    private int $count = 0;
-    private int $limit;
-    
     public function __construct(int $min = 1, int $max = \PHP_INT_MAX, int $limit = \PHP_INT_MAX)
     {
+        parent::__construct($limit);
+        
         if ($max <= $min) {
             throw new \InvalidArgumentException('Max cannot be less than or equal to min');
         }
     
-        if ($limit < 0) {
-            throw new \InvalidArgumentException('Invalid param limit');
-        }
-        
         $this->min = $min;
         $this->max = $max;
-        $this->limit = $limit;
     }
     
     public function feed(Item $item): \Generator
     {
-        while ($this->count !== $this->limit) {
+        $count = 0;
+        
+        while ($count !== $this->limit) {
             
-            $item->key = $this->count++;
+            $item->key = $count++;
             $item->value = \random_int($this->min, $this->max);
             
             yield;
         }
+    }
+    
+    public function getLast(): ?Item
+    {
+        return null;
     }
 }

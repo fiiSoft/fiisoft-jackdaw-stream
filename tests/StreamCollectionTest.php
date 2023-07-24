@@ -31,7 +31,7 @@ final class StreamCollectionTest extends TestCase
         self::assertSame('[]', $this->collection->get('unknown_group')->toJson());
     }
     
-    public function test_get_returns_the_same_stream_each_time_when_is_called(): void
+    public function test_get_returns_the_same_result_each_time_when_is_called(): void
     {
         $first = $this->collection->get('numbers');
         $second = $this->collection->get('numbers');
@@ -39,12 +39,12 @@ final class StreamCollectionTest extends TestCase
         self::assertSame($second, $first);
     }
     
-    public function test_stream_returned_from_collection_should_be_reusable(): void
+    public function test_result_returned_from_collection_should_be_reusable(): void
     {
         $numbers = $this->collection->get('numbers');
         
         self::assertSame('[6,3,7,9]', $numbers->toJson());
-        self::assertSame('[6,3,7,9]', $numbers->toJson());
+        self::assertSame([6,3,7,9], $numbers->toArray());
     }
     
     public function test_get_all_as_array(): void

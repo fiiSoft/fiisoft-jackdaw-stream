@@ -2,6 +2,18 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 3.0.0
+
+Many changes not compatible with the previous version, many bugs fixed. Significant parts of the code have been rewritten and the API changed. Still PHP 7.4
+The previous version has been abandoned.
+
+- added new methods, e.g. fork()
+- removed StreamApi
+- rewritten StreamMaker - will be re-created in the future
+- for some methods the parameters they accept have been changed, e.g. first(), last()
+- the default behavior of retaining or re-indexing keys has been changed for many operations 
+- redesigned and reorganized core class structure
+
 ## 2.17.0
 
 - added QueueProducer

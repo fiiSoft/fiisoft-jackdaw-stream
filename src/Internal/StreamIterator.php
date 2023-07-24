@@ -6,8 +6,6 @@ use FiiSoft\Jackdaw\Stream;
 
 final class StreamIterator extends StreamPipe implements \Iterator
 {
-    use StubMethods;
-    
     private Stream $stream;
     private Item $item;
     

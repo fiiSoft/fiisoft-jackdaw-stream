@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter\Internal;
 
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Length;
 
 final class LengthFactory
@@ -20,32 +21,32 @@ final class LengthFactory
     {
     }
 
-    public function eq(int $length): Length
+    public function eq(int $length): Filter
     {
         return new Length($length, 'eq');
     }
     
-    public function ne(int $length): Length
+    public function ne(int $length): Filter
     {
         return new Length($length, 'ne');
     }
     
-    public function lt(int $length): Length
+    public function lt(int $length): Filter
     {
         return new Length($length, 'lt');
     }
     
-    public function le(int $length): Length
+    public function le(int $length): Filter
     {
         return new Length($length, 'le');
     }
     
-    public function gt(int $length): Length
+    public function gt(int $length): Filter
     {
         return new Length($length, 'gt');
     }
     
-    public function ge(int $length): Length
+    public function ge(int $length): Filter
     {
         return new Length($length, 'ge');
     }

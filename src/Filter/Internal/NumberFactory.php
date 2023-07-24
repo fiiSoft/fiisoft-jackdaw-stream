@@ -12,7 +12,6 @@ use FiiSoft\Jackdaw\Filter\Number\IsOdd;
 use FiiSoft\Jackdaw\Filter\Number\LessOrEqual;
 use FiiSoft\Jackdaw\Filter\Number\LessThan;
 use FiiSoft\Jackdaw\Filter\Number\NotEqual;
-use FiiSoft\Jackdaw\Filter\Number\NumberFilter;
 
 final class NumberFactory
 {
@@ -23,6 +22,7 @@ final class NumberFactory
         if (self::$instance === null) {
             self::$instance = new self();
         }
+        
         return self::$instance;
     }
     
@@ -30,32 +30,32 @@ final class NumberFactory
     {
     }
     
-    public function eq($value): NumberFilter
+    public function eq($value): Filter
     {
         return new Equal($value);
     }
     
-    public function ne($value): NumberFilter
+    public function ne($value): Filter
     {
         return new NotEqual($value);
     }
     
-    public function lt($value): NumberFilter
+    public function lt($value): Filter
     {
         return new LessThan($value);
     }
     
-    public function le($value): NumberFilter
+    public function le($value): Filter
     {
         return new LessOrEqual($value);
     }
     
-    public function gt($value): NumberFilter
+    public function gt($value): Filter
     {
         return new GreaterThan($value);
     }
     
-    public function ge($value): NumberFilter
+    public function ge($value): Filter
     {
         return new GreaterOrEqual($value);
     }

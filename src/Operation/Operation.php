@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Stream;
 
 interface Operation
 {
@@ -12,13 +13,18 @@ interface Operation
     
     public function setPrev(Operation $prev): void;
     
+    public function getNext(): ?Operation;
+    
+    public function getLast(): Operation;
+    
     public function removeFromChain(): Operation;
     
+    public function prepend(Operation $operation): void;
+    
     /**
-     * @param Signal $signal
      * @return bool return true to resume stream processing, false otherwise
      */
     public function streamingFinished(Signal $signal): bool;
     
-    public function isLazy(): bool;
+    public function assignStream(Stream $stream): void;
 }

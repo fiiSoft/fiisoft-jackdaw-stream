@@ -11,34 +11,56 @@ final class Comparators
     public static function getAdapter($comparator): ?Comparator
     {
         if ($comparator instanceof Comparator) {
-            $adapter = $comparator;
-        } elseif (\is_callable($comparator)) {
-            $adapter = self::generic($comparator);
-        } elseif ($comparator === null) {
-            $adapter = null;
-        } else {
-            throw new \InvalidArgumentException('Invalid param comparator');
+            return $comparator;
         }
         
-        return $adapter;
+        if (\is_callable($comparator)) {
+            return self::generic($comparator);
+        }
+        
+        if ($comparator === null) {
+            return null;
+        }
+        
+        throw new \InvalidArgumentException('Invalid param comparator');
     }
     
-    public static function default(): DefaultComparator
+    public static function default(): Comparator
     {
         return new DefaultComparator();
     }
     
-    public static function generic(callable $comparator): GenericComparator
+    public static function reverse(): Comparator
+    {
+        return new ReverseComparator();
+    }
+    
+    public static function generic(callable $comparator): Comparator
     {
         return new GenericComparator($comparator);
     }
     
     /**
      * @param string[]|int[] $fields
-     * @return SortBy
      */
-    public static function sortBy(array $fields): SortBy
+    public static function sortBy(array $fields): Comparator
     {
-        return new SortBy($fields);
+        return new FieldsComparator($fields);
+    }
+    
+    /**
+     * Allows to compare length of strings and size of arrays. Can also handle \Countable as well.
+     */
+    public static function size(): Comparator
+    {
+        return new SizeComparator();
+    }
+    
+    /**
+     * @param Comparator|callable $comparators
+     */
+    public static function multi(...$comparators): MultiComparator
+    {
+        return new MultiComparator(...$comparators);
     }
 }

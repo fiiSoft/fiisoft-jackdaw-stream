@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Resource;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\BaseProducer;
+use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
 
-final class PDOStatementAdapter extends BaseProducer
+final class PDOStatementAdapter extends NonCountableProducer
 {
     private \PDOStatement $statement;
     private ?int $fetchMode;

@@ -15,6 +15,7 @@ final class Tokenize extends BaseOperation
     public function __construct(string $tokens)
     {
         $this->tokenizer = Producers::tokenizer($tokens, '');
+        $this->tokenizer->keepIndex();
     }
     
     public function handle(Signal $signal): void
@@ -30,5 +31,12 @@ final class Tokenize extends BaseOperation
                 'Operation tokenize requires string value, but got '.Helper::typeOfParam($item->value)
             );
         }
+    }
+    
+    protected function __clone()
+    {
+        $this->tokenizer = clone $this->tokenizer;
+        
+        parent::__clone();
     }
 }

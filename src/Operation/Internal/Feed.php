@@ -2,21 +2,21 @@
 
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
-use FiiSoft\Jackdaw\Internal\StreamPipe;
+use FiiSoft\Jackdaw\Internal\ForkCollaborator;
 use FiiSoft\Jackdaw\Internal\Signal;
 
-final class Feed extends BaseOperation
+final class Feed extends StreamCollaborator
 {
-    private ?StreamPipe $stream;
+    private ?ForkCollaborator $stream;
     
-    public function __construct(StreamPipe $stream)
+    public function __construct(ForkCollaborator $stream)
     {
         $this->stream = $stream;
     }
     
     public function handle(Signal $signal): void
     {
-        if ($this->stream !== null && !$signal->sendTo($this->stream)) {
+        if ($this->stream !== null && !$this->stream->process($signal)) {
             $this->stream = null;
         }
         
@@ -28,8 +28,13 @@ final class Feed extends BaseOperation
         return new FeedMany($this->stream, $next->stream);
     }
     
-    public function stream(): StreamPipe
+    public function stream(): ForkCollaborator
     {
         return $this->stream;
+    }
+    
+    public function streamingFinished(Signal $signal): bool
+    {
+        return $this->next->streamingFinished($signal);
     }
 }
