@@ -36,6 +36,10 @@ final class Between implements Filter
         }
     }
     
+    /**
+     * @param mixed $value
+     * @param mixed $key
+     */
     public function isAllowed($value, $key, int $mode = Check::VALUE): bool
     {
         switch ($mode) {
@@ -52,6 +56,9 @@ final class Between implements Filter
         }
     }
     
+    /**
+     * @param mixed $value
+     */
     private function test($value): bool
     {
         if (\is_int($value) || \is_float($value)) {

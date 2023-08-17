@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Discriminator\Discriminators;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Reducer\Max;
 use FiiSoft\Jackdaw\Reducer\Min;
 use FiiSoft\Jackdaw\Reducer\Reducers;
@@ -140,5 +142,152 @@ final class ReducersTest extends TestCase
         $this->expectExceptionMessage('Reducer have to accept 2 arguments, but requires 1');
         
         Reducers::getAdapter('strtolower');
+    }
+    
+    public function test_MultiReducer_throws_exception_when_initial_array_is_empty(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param pattern - cannot be empty!');
+        
+        Reducers::getAdapter([]);
+    }
+    
+    public function test_CountUnique_can_count_bool_values(): void
+    {
+        $reducer = Reducers::countUnique();
+        
+        $reducer->consume(true);
+        $reducer->consume(false);
+        $reducer->consume(true);
+        
+        self::assertSame(['true' => 2, 'false' => 1], $reducer->result());
+    }
+    
+    public function test_CountUnique_can_count_float_values(): void
+    {
+        $reducer = Reducers::countUnique();
+        
+        $reducer->consume(4.0);
+        $reducer->consume(5.5);
+        $reducer->consume(4.0);
+        
+        self::assertSame([4 => 2, '5.5' => 1], $reducer->result());
+    }
+    
+    public function test_CountUnique_can_count_arrays(): void
+    {
+        $reducer = Reducers::countUnique();
+        
+        $arr1 = ['a' => 5];
+        $arr2 = [3 => '8'];
+        
+        $reducer->consume($arr1);
+        $reducer->consume($arr2);
+        $reducer->consume($arr1);
+        
+        self::assertSame([
+            '9b574798ab3bf7351f82eaf817c96d50' => 2,
+            '7d501c92edb4f260b35c33f2825a6703' => 1,
+        ], $reducer->result());
+    }
+    
+    public function test_CountUnique_can_count_objects(): void
+    {
+        $reducer = Reducers::countUnique();
+        
+        $ob1 = new \stdClass();
+        $ob2 = new \stdClass();
+        
+        $reducer->consume($ob1);
+        $reducer->consume($ob2);
+        $reducer->consume($ob1);
+        
+        [$count1, $count2] = \array_values($reducer->result());
+     
+        self::assertSame(2, $count1);
+        self::assertSame(1, $count2);
+    }
+    
+    public function test_CountUnique_can_count_nulls_ints_and_strings(): void
+    {
+        $reducer = Reducers::countUnique();
+        
+        $reducer->consume('foo');
+        $reducer->consume(null);
+        $reducer->consume(15);
+        
+        self::assertSame(['foo' => 1, 'null' => 1, 15 => 1], $reducer->result());
+    }
+    
+    public function test_CountUnique_can_also_count_other_strange_things(): void
+    {
+        $reducer = Reducers::countUnique();
+        
+        $res1 = \fopen('php://stdin', 'rb+');
+        $res2 = \fopen('php://memory', 'rb+');
+        
+        $reducer->consume($res1);
+        $reducer->consume($res2);
+        $reducer->consume($res1);
+        
+        [$count1, $count2] = \array_values($reducer->result());
+     
+        self::assertSame(2, $count1);
+        self::assertSame(1, $count2);
+    }
+    
+    public function test_CountUnique_reset(): void
+    {
+        $reducer = Reducers::countUnique();
+        
+        $reducer->consume('foo');
+        $reducer->reset();
+        
+        $reducer->consume('bar');
+        self::assertSame(['bar' => 1], $reducer->result());
+    }
+    
+    public function test_CountUnique_can_use_provided_discriminator(): void
+    {
+        $reducer = Reducers::countUnique(Discriminators::byField('name'));
+        
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+        ];
+        
+        foreach ($rowset as $row) {
+            $reducer->consume($row);
+        }
+        
+        self::assertSame([
+            'Sue' => 2,
+            'Chris' => 2,
+            'Joanna' => 1,
+        ], $reducer->result());
+    }
+    
+    public function test_CountUnique_can_use_boolean_discriminator(): void
+    {
+        $reducer = Reducers::countUnique(Filters::isString());
+        
+        foreach (['foo', 15, 'bar'] as $value) {
+            $reducer->consume($value);
+        }
+        
+        self::assertSame([1 => 2, 0 => 1], $reducer->result());
+    }
+    
+    public function test_CountUnique_throws_exception_when_classifier_returned_from_discriminator_is_invalid(): void
+    {
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessage('Unsupported value was returned from discriminator (got array)');
+        
+        $reducer = Reducers::countUnique(static fn($v): array => [$v]);
+        
+        $reducer->consume('foo');
     }
 }

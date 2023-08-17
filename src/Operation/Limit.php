@@ -38,9 +38,11 @@ final class Limit extends BaseOperation implements Limitable
         }
     }
     
-    public function applyLimit(int $limit): void
+    public function applyLimit(int $limit): bool
     {
         $this->limit = \min($this->limit, $limit);
+        
+        return true;
     }
     
     public function limit(): int

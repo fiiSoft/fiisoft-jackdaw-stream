@@ -16,12 +16,8 @@ final class OnlyIn implements Filter
         }
         
         $this->hashMap = $this->canBeHashMapped($values);
-    
-        if ($this->hashMap) {
-            $this->values = \array_flip($values);
-        } else {
-            $this->values = $values;
-        }
+        
+        $this->values = $this->hashMap ? \array_flip($values) : $values;
     }
     
     public function isAllowed($value, $key, int $mode = Check::VALUE): bool

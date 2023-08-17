@@ -41,4 +41,9 @@ abstract class State
      * @return int number of items hold in buffer
      */
     abstract public function count(): int;
+    
+    final public function destroy(): void
+    {
+        $this->buffer->setSize(0);
+    }
 }

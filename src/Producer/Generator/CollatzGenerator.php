@@ -38,7 +38,7 @@ final class CollatzGenerator extends NonCountableProducer
             }
     
             $item->key = $this->count++;
-            $item->value = (int) $number;
+            $item->value = $number;
             yield;
         }
     }

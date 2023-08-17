@@ -4,6 +4,7 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Condition\Conditions;
 use FiiSoft\Jackdaw\Internal\StreamCollection;
+use FiiSoft\Jackdaw\Operation\Terminating\GroupBy;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +19,7 @@ final class StreamCollectionTest extends TestCase
     
     protected function setUp(): void
     {
-        $this->collection = new StreamCollection($this->initialData);
+        $this->collection = new StreamCollection(new GroupBy('is_string'), $this->initialData);
     }
     
     public function test_get_existing_group(): void
@@ -83,17 +84,15 @@ final class StreamCollectionTest extends TestCase
             ->stream()
             ->mapWhen(
                 Conditions::keyEquals('numbers'),
-                static function (array $numbers): int {
-                    return \max($numbers);
-                }
+                static fn(array $numbers): int => \max($numbers)
             )
             ->mapWhen(
                 Conditions::keyEquals('words'),
                 static function (array $words): string {
                     return Stream::from($words)
-                        ->reduce(static function (string $longest, string $current) {
-                            return \strlen($current) > \strlen($longest) ? $current : $longest;
-                        })
+                        ->reduce(static fn(string $longest, string $current) =>
+                            \strlen($current) > \strlen($longest) ? $current : $longest
+                        )
                         ->get();
                 }
             )->toArrayAssoc();

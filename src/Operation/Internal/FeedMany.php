@@ -39,4 +39,13 @@ final class FeedMany extends StreamCollaborator
     {
         return $this->next->streamingFinished($signal);
     }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->streams = [];
+            
+            parent::destroy();
+        }
+    }
 }

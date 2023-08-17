@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Producer\Adapter;
 
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\ResultApi;
+use FiiSoft\Jackdaw\Internal\ResultItem;
 use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
 
 final class ResultAdapter extends NonCountableProducer
@@ -19,6 +20,15 @@ final class ResultAdapter extends NonCountableProducer
     {
         foreach ($this->result->toArrayAssoc() as $item->key => $item->value) {
             yield;
+        }
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->result = ResultItem::createNotFound();
+            
+            parent::destroy();
         }
     }
 }

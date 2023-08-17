@@ -2,12 +2,14 @@
 
 namespace FiiSoft\Jackdaw\Consumer;
 
+use FiiSoft\Jackdaw\Consumer\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class Consumers
 {
     /**
-     * @param Consumer|callable|resource $consumer
+     * @param Consumer|Reducer|callable|resource $consumer
      */
     public static function getAdapter($consumer): Consumer
     {
@@ -21,6 +23,10 @@ final class Consumers
     
         if (\is_resource($consumer)) {
             return self::resource($consumer);
+        }
+        
+        if ($consumer instanceof Reducer) {
+            return new ReducerAdapter($consumer);
         }
     
         throw new \InvalidArgumentException('Invalid param consumer');

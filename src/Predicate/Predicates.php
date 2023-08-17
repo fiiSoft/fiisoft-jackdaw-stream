@@ -32,6 +32,9 @@ final class Predicates
         return new GenericPredicate($predicate);
     }
     
+    /**
+     * @param mixed $value
+     */
     public static function value($value): Predicate
     {
         return new Value($value);

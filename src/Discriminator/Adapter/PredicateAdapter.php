@@ -21,7 +21,7 @@ final class PredicateAdapter implements Discriminator
     /**
      * @inheritDoc
      */
-    public function classify($value, $key)
+    public function classify($value, $key): bool
     {
         return $this->predicate->isSatisfiedBy($value, $key, $this->mode);
     }

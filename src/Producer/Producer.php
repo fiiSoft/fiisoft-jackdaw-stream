@@ -2,10 +2,11 @@
 
 namespace FiiSoft\Jackdaw\Producer;
 
+use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Stream;
 
-interface Producer
+interface Producer extends Destroyable
 {
     public function feed(Item $item): \Generator;
     

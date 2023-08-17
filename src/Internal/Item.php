@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
-class Item
+final class Item
 {
     /** @var string|int */
     public $key;
@@ -10,6 +10,10 @@ class Item
     /** @var mixed */
     public $value;
     
+    /**
+     * @param mixed|null $key
+     * @param mixed|null $value
+     */
     public function __construct($key = null, $value = null)
     {
         $this->key = $key;

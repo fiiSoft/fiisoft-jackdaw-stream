@@ -106,4 +106,9 @@ final class QueueProducer extends CountableProducer implements Consumer
         
         return $this->buffer[$last]->copy();
     }
+    
+    public function destroy(): void
+    {
+        $this->buffer = [];
+    }
 }

@@ -13,7 +13,7 @@ final class Concat extends BaseMapper
         $this->separator = $separator;
     }
     
-    public function map($value, $key)
+    public function map($value, $key): string
     {
         if (\is_array($value)) {
             return \implode($this->separator, $value);

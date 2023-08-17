@@ -19,7 +19,7 @@ final class ConsumersTest extends TestCase
     {
         $collector = [];
         
-        Consumers::generic(static function ($v) use (&$collector) {
+        Consumers::generic(static function ($v) use (&$collector): void {
             $collector[] = $v;
         })->consume(15, 2);
         
@@ -30,7 +30,7 @@ final class ConsumersTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        Consumers::generic(static fn($a,$b,$c) => true)->consume(2, 1);
+        Consumers::generic(static fn($a,$b,$c): bool => true)->consume(2, 1);
     }
     
     /**

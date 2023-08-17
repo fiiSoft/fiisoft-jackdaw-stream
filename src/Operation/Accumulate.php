@@ -7,9 +7,10 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 
-final class Accumulate extends BaseOperation
+final class Accumulate extends BaseOperation implements Reindexable
 {
     private Filter $filter;
     
@@ -65,5 +66,19 @@ final class Accumulate extends BaseOperation
         }
         
         return parent::streamingFinished($signal);
+    }
+    
+    public function isReindexed(): bool
+    {
+        return $this->reindex;
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->data = [];
+            
+            parent::destroy();
+        }
     }
 }

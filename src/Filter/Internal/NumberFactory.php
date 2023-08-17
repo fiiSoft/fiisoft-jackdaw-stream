@@ -30,31 +30,49 @@ final class NumberFactory
     {
     }
     
+    /**
+     * @param float|int $value
+     */
     public function eq($value): Filter
     {
         return new Equal($value);
     }
     
+    /**
+     * @param float|int $value
+     */
     public function ne($value): Filter
     {
         return new NotEqual($value);
     }
     
+    /**
+     * @param float|int $value
+     */
     public function lt($value): Filter
     {
         return new LessThan($value);
     }
     
+    /**
+     * @param float|int $value
+     */
     public function le($value): Filter
     {
         return new LessOrEqual($value);
     }
     
+    /**
+     * @param float|int $value
+     */
     public function gt($value): Filter
     {
         return new GreaterThan($value);
     }
     
+    /**
+     * @param float|int $value
+     */
     public function ge($value): Filter
     {
         return new GreaterOrEqual($value);

@@ -14,7 +14,7 @@ final class Last extends SimpleFinalOperation
     
     public function handle(Signal $signal): void
     {
-        if ($this->found === false) {
+        if (!$this->found) {
             $this->found = true;
         }
     }

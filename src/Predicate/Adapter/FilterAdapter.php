@@ -15,6 +15,9 @@ final class FilterAdapter implements Predicate
         $this->filter = $filter;
     }
     
+    /**
+     * @inheritDoc
+     */
     public function isSatisfiedBy($value, $key = null, int $mode = Check::VALUE): bool
     {
         return $this->filter->isAllowed($value, $key, $mode);

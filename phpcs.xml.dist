@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
+
+    <arg name="basepath" value="."/>
+    <arg name="cache" value="var/phpcs"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+
+    <rule ref="PSR12"/>
+
+    <file>src/</file>
+    <file>tests/</file>
+
+    <rule ref="Squiz.Functions.FunctionDeclarationArgumentSpacing.NoSpaceBeforeArg">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Generic.Files.LineLength.TooLong">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.Methods.FunctionCallSignature.SpaceBeforeCloseBracket">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Generic.Functions.FunctionCallArgumentSpacing.NoSpaceAfterComma">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.Methods.FunctionClosingBrace.SpacingBeforeClose">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR12.Files.OpenTag.NotAlone">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR12.Files.FileHeader.SpacingAfterBlock">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.Files.EndFileNewline.NoneFound">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR12.Operators.OperatorSpacing">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.Functions.MultiLineFunctionDeclaration.BraceOnSameLine">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.Functions.MultiLineFunctionDeclaration.NewlineBeforeOpenBrace">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.ControlStructures.SwitchDeclaration.BreakIndent">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.ControlStructures.SwitchDeclaration.BodyOnNextLineCASE">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.ControlStructures.SwitchDeclaration.BreakNotNewLine">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.Functions.MultiLineFunctionDeclaration.OneParamPerLine">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.ControlStructures.SwitchDeclaration.BodyOnNextLineDEFAULT">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.Classes.PropertyDeclaration.Multiple">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.WhiteSpace">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.Classes.ClassDeclaration.CloseBraceAfterBody">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Generic.PHP.LowerCaseKeyword.Found">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR12.Traits.UseDeclaration.SpaceBeforeClosingBrace">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR12.Traits.UseDeclaration.SpaceAfterOpeningBrace">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR12.ControlStructures.ControlStructureSpacing.FirstExpressionLine">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.Methods.FunctionCallSignature.Indent">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.Methods.FunctionCallSignature.MultipleArguments">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseParenthesis">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.Functions.MultiLineFunctionDeclaration.ContentAfterBrace">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Generic.Formatting.DisallowMultipleStatements.SameLine">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseBrace">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+</ruleset>

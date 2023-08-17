@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StatelessMapper;
 
-final class Key extends BaseMapper
+final class Key extends StatelessMapper
 {
     public function map($value, $key)
     {

@@ -15,64 +15,54 @@ use FiiSoft\Jackdaw\Predicate\Predicate;
 final class Discriminators
 {
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|string|int $discriminator
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
      */
     public static function getAdapter($discriminator, int $mode = Check::VALUE): Discriminator
     {
-        if (\is_callable($discriminator)) {
-            return self::generic($discriminator);
-        }
-    
         if ($discriminator instanceof Discriminator) {
             return $discriminator;
         }
         
+        if (\is_callable($discriminator)) {
+            return self::generic($discriminator);
+        }
+        
+        if (\is_array($discriminator) && !empty($discriminator)) {
+            return self::alternately($discriminator);
+        }
+    
         if ($discriminator instanceof Mapper) {
-            return self::mapper($discriminator);
+            return new MapperAdapter($discriminator);
         }
     
         if ($discriminator instanceof Filter) {
-            return self::filter($discriminator, $mode);
+            return new FilterAdapter($discriminator, $mode);
         }
     
         if ($discriminator instanceof Predicate) {
-            return self::predicate($discriminator, $mode);
+            return new PredicateAdapter($discriminator, $mode);
         }
     
         if ($discriminator instanceof Condition) {
-            return self::condition($discriminator);
-        }
-        
-        if (\is_string($discriminator) || \is_int($discriminator)) {
-            return self::byField($discriminator);
+            return new ConditionAdapter($discriminator);
         }
         
         throw new \InvalidArgumentException('Invalid param discriminator');
     }
     
+    /**
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array|string|int $discriminator
+     */
+    public static function prepare($discriminator, int $mode = Check::VALUE): Discriminator
+    {
+        return (\is_string($discriminator) && !\is_callable($discriminator)) || \is_int($discriminator)
+            ? self::byField($discriminator)
+            : self::getAdapter($discriminator, $mode);
+    }
+    
     public static function generic(callable $discriminator): Discriminator
     {
         return new GenericDiscriminator($discriminator);
-    }
-    
-    public static function mapper(Mapper $mapper): Discriminator
-    {
-        return new MapperAdapter($mapper);
-    }
-    
-    public static function filter(Filter $filter, int $mode = Check::VALUE): Discriminator
-    {
-        return new FilterAdapter($filter, $mode);
-    }
-    
-    public static function predicate(Predicate $predicate, int $mode = Check::VALUE): Discriminator
-    {
-        return new PredicateAdapter($predicate, $mode);
-    }
-    
-    public static function condition(Condition $condition): Discriminator
-    {
-        return new ConditionAdapter($condition);
     }
     
     public static function evenOdd(int $mode = Check::VALUE): Discriminator
@@ -102,5 +92,15 @@ final class Discriminators
     public static function alternately(array $classifiers): Discriminator
     {
         return new Alternately($classifiers);
+    }
+    
+    /**
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|string|int $discriminator
+     * @param string|int $yes
+     * @param string|int $no value of it must be different than value of $yes
+     */
+    public static function yesNo($discriminator, $yes = 'yes', $no = 'no'): Discriminator
+    {
+        return new YesNo($discriminator, $yes, $no);
     }
 }

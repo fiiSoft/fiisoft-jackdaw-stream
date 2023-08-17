@@ -4,17 +4,20 @@ namespace FiiSoft\Jackdaw\Comparator;
 
 final class FieldsComparator implements Comparator
 {
-    /** @var string[] */
+    /** @var string[]|int[] */
     private array $fields = [];
     
     /**
-     * @param string[]|int[] $fields format: "id asc", "name desc"
+     * @param array<string|int> $fields format: "id asc", "name desc"
      */
     public function __construct(array $fields)
     {
         $this->validateAndSetFields($fields);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function compare($value1, $value2): int
     {
         if (!\is_array($value1) && !$value1 instanceof \ArrayAccess
@@ -33,6 +36,9 @@ final class FieldsComparator implements Comparator
         return 0;
     }
     
+    /**
+     * @param array<string|int> $fields format: "id asc", "name desc"
+     */
     private function validateAndSetFields(array $fields): void
     {
         if (empty($fields)) {
@@ -67,6 +73,9 @@ final class FieldsComparator implements Comparator
         }
     }
     
+    /**
+     * @inheritDoc
+     */
     public function compareAssoc($value1, $value2, $key1, $key2): int
     {
         throw new \LogicException('Sorry, this comparision is not implemented, and never will be');

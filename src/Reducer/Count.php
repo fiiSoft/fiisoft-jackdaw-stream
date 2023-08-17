@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
-final class Count implements Reducer
+final class Count extends BaseReducer
 {
     private int $count = 0;
     
@@ -26,10 +26,5 @@ final class Count implements Reducer
     public function hasResult(): bool
     {
         return true;
-    }
-    
-    public function getResult(): Item
-    {
-        return new Item(0, $this->count);
     }
 }

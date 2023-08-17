@@ -13,4 +13,9 @@ abstract class BaseMapper implements Mapper
     {
         return false;
     }
+    
+    public function isStateless(): bool
+    {
+        return false;
+    }
 }

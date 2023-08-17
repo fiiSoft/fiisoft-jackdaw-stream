@@ -13,7 +13,7 @@ use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class Filter extends BaseOperation implements FilterSingle
 {
-    private FilterStrategy $filterStrategy;
+    private FilterStrategy $filter;
     
     private bool $negation;
     private int $mode;
@@ -25,7 +25,7 @@ final class Filter extends BaseOperation implements FilterSingle
      */
     public function __construct($filter, bool $negation = false, int $mode = Check::VALUE)
     {
-        $this->filterStrategy = Filters::getAdapter($filter);
+        $this->filter = Filters::getAdapter($filter);
         $this->negation = $negation;
         $this->mode = Check::getMode($mode);
     }
@@ -33,7 +33,7 @@ final class Filter extends BaseOperation implements FilterSingle
     public function handle(Signal $signal): void
     {
         if ($this->negation
-            XOR $this->filterStrategy->isAllowed($signal->item->value, $signal->item->key, $this->mode)
+            XOR $this->filter->isAllowed($signal->item->value, $signal->item->key, $this->mode)
         ) {
             $this->next->handle($signal);
         }
@@ -41,6 +41,6 @@ final class Filter extends BaseOperation implements FilterSingle
     
     public function filterData(): FilterData
     {
-        return new FilterData($this->filterStrategy, $this->negation, $this->mode);
+        return new FilterData($this->filter, $this->negation, $this->mode);
     }
 }

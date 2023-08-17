@@ -42,6 +42,9 @@ final class HasEvery extends SimpleFinalOperation
         }
     }
     
+    /**
+     * @param mixed $search
+     */
     private function testSingle($search, Signal $signal): bool
     {
         $pos = \array_search($search, $this->values, true);
@@ -57,6 +60,10 @@ final class HasEvery extends SimpleFinalOperation
         return false;
     }
     
+    /**
+     * @param mixed $value
+     * @param mixed $key
+     */
     private function testValueAndKey($value, $key, Signal $signal): bool
     {
         if (!empty($this->values)) {
@@ -143,7 +150,6 @@ final class HasEvery extends SimpleFinalOperation
     }
     
     /**
-     * @param bool $reindexed
      * @param Item[] $items
      */
     public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
@@ -172,5 +178,15 @@ final class HasEvery extends SimpleFinalOperation
         }
         
         return $this->streamingFinished($signal);
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->values = [];
+            $this->keys = [];
+            
+            parent::destroy();
+        }
     }
 }

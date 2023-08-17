@@ -17,6 +17,9 @@ final class GenericCondition implements Condition
         $this->numOfArgs = Helper::getNumOfArgs($condition);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function isTrueFor($value, $key): bool
     {
         $condition = $this->condition;

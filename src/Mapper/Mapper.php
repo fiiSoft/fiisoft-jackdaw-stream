@@ -15,4 +15,6 @@ interface Mapper
      * @return bool true when other mapper has been merged
      */
     public function mergeWith(Mapper $other): bool;
+    
+    public function isStateless(): bool;
 }

@@ -2,12 +2,17 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
+use FiiSoft\Jackdaw\Producer\Generator\CombinedGeneral;
+use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 use FiiSoft\Jackdaw\Producer\Internal\PushProducer;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseArrayIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
+use FiiSoft\Jackdaw\Producer\Internal\ReverseNumericalArrayIterator;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
@@ -359,7 +364,7 @@ final class ProducersTest extends TestCase
         self::assertSame(['a', 'b', 'c'], $producer->stream()->filter('\is_string')->toArray());
     }
     
-    public function test_Queue_producer(): void
+    public function test_QueueProducer_details(): void
     {
         $item = new Item();
         
@@ -744,5 +749,235 @@ final class ProducersTest extends TestCase
             1 => 'b',
             2 => 'a',
         ], $producer->stream()->toArrayAssoc());
+    }
+    
+    public function test_ReverseItemsIterator_can_reindex_keys(): void
+    {
+        //given
+        $items = $this->convertToItems([
+            3 => 'a',
+            2 => 'b',
+            4 => 'c',
+            1 => 'b',
+            0 => 'a',
+        ]);
+        
+        //when
+        $producer = new ReverseItemsIterator($items, true);
+        
+        //then
+        self::assertEquals(new Item(4, 'a'), $producer->getLast());
+        self::assertSame(['a', 'b', 'c', 'b', 'a'], $producer->stream()->toArrayAssoc());
+    }
+    
+    public function test_ReverseItemsIterator_returns_null_from_getLast_when_is_empty(): void
+    {
+        $producer = new ReverseItemsIterator([]);
+        
+        self::assertNull($producer->getLast());
+    }
+    
+    public function test_ReverseNumericalArrayIterator_can_return_the_last_element(): void
+    {
+        $producer = new ReverseNumericalArrayIterator(['a', 'b', 'c']);
+        
+        self::assertEquals(new Item(0, 'a'), $producer->getLast());
+    }
+    
+    public function test_ReverseNumericalArrayIterator_can_return_the_last_element_reindexed(): void
+    {
+        $producer = new ReverseNumericalArrayIterator(['a', 'b', 'c'], true);
+        
+        self::assertEquals(new Item(2, 'a'), $producer->getLast());
+    }
+    
+    public function test_ReverseNumericalArrayIterator_returns_null_from_getLast_when_is_empty(): void
+    {
+        $producer = new ReverseNumericalArrayIterator([]);
+        
+        self::assertNull($producer->getLast());
+    }
+    
+    public function test_ReverseNumericalArrayIterator_no_reindex(): void
+    {
+        $producer = new ReverseNumericalArrayIterator(['a', 'b', 'c', 'd']);
+        
+        self::assertSame([3 => 'd', 2 => 'c', 1 => 'b', 0 => 'a'], $producer->stream()->toArrayAssoc());
+    }
+    
+    public function test_ReverseNumericalArrayIterator_with_reindex(): void
+    {
+        $producer = new ReverseNumericalArrayIterator(['a', 'b', 'c', 'd'], true);
+        
+        self::assertSame(['d', 'c', 'b', 'a'], $producer->stream()->toArrayAssoc());
+    }
+    
+    public function test_BucketListIterator_returns_null_from_getLast_when_is_empty(): void
+    {
+        $producer = new BucketListIterator([]);
+        
+        self::assertSame(0, $producer->count());
+        self::assertNull($producer->getLast());
+    }
+    
+    public function test_QueueProducer(): void
+    {
+        //given
+        $queue = Producers::queue(['a', 'b']);
+        
+        self::assertFalse($queue->isEmpty());
+        self::assertSame(2, $queue->count());
+        
+        //when
+        self::assertSame(['a', 'b'], $queue->stream()->toArray());
+        
+        //then
+        self::assertTrue($queue->isEmpty());
+        self::assertSame(0, $queue->count());
+        self::assertEmpty($queue->stream()->toArray());
+        
+        //when
+        $queue->appendMany(['c', 'd']);
+        
+        //then
+        self::assertFalse($queue->isEmpty());
+        self::assertSame(2, $queue->count());
+        
+        //when
+        self::assertSame(['c', 'd'], $queue->stream()->toArray());
+        
+        //then
+        self::assertTrue($queue->isEmpty());
+        self::assertSame(0, $queue->count());
+        self::assertEmpty($queue->stream()->toArray());
+    }
+    
+    /**
+     * @dataProvider getDataForTestCombinedArraysNotEmpty
+     */
+    public function test_CombinedArrays_not_empty(CombinedArrays $producer): void
+    {
+        self::assertFalse($producer->isEmpty());
+        self::assertSame(2, $producer->count());
+        self::assertEquals(new Item('b', 2), $producer->getLast());
+    }
+    
+    public function getDataForTestCombinedArraysNotEmpty(): array
+    {
+        return [
+            [Producers::combinedFrom(['a', 'b'], [5, 2])],
+            [Producers::combinedFrom(['a', 'b'], [5, 2, 4])],
+            [Producers::combinedFrom(['a', 'b', 'c'], [5, 2])],
+        ];
+    }
+    
+    /**
+     * @dataProvider getDataForTestCombinedArraysEmpty
+     */
+    public function test_CombinedArrays_empty(CombinedArrays $producer): void
+    {
+        self::assertTrue($producer->isEmpty());
+        self::assertSame(0, $producer->count());
+        self::assertNull($producer->getLast());
+    }
+    
+    public function getDataForTestCombinedArraysEmpty(): array
+    {
+        return [
+            [Producers::combinedFrom([], [5, 2])],
+            [Producers::combinedFrom(['a', 'b'], [])],
+            [Producers::combinedFrom([], [])],
+        ];
+    }
+    
+    /**
+     * @dataProvider getDataForTestCombinedGeneralNotEmpty
+     */
+    public function test_CombinedGeneral_not_empty(CombinedGeneral $producer): void
+    {
+        self::assertFalse($producer->isEmpty());
+        self::assertNull($producer->getLast());
+        
+        if ($producer->isCountable()) {
+            self::assertSame(2, $producer->count());
+        }
+    }
+    
+    public function getDataForTestCombinedGeneralNotEmpty(): array
+    {
+        return [
+            [Producers::combinedFrom(['a', 'b'], Stream::from([5, 2]))],
+            [Producers::combinedFrom(['a', 'b'], static fn(): array => [5, 2, 4])],
+            [Producers::combinedFrom(['a', 'b', 'c'], Producers::getAdapter([5, 2]))],
+        ];
+    }
+    
+    /**
+     * @dataProvider getDataForTestCombinedGeneralEmpty
+     */
+    public function test_CombinedGeneral_empty(CombinedGeneral $producer): void
+    {
+        self::assertFalse($producer->isEmpty());
+        self::assertNull($producer->getLast());
+        
+        if ($producer->isCountable()) {
+            self::assertSame(0, $producer->count());
+        }
+    }
+    
+    public function getDataForTestCombinedGeneralEmpty(): array
+    {
+        $emptyArray = static fn(): array => [];
+        
+        return [
+            [Producers::combinedFrom($emptyArray, [5, 2])],
+            [Producers::combinedFrom(['a', 'b'], $emptyArray)],
+            [Producers::combinedFrom($emptyArray, Stream::empty())],
+        ];
+    }
+    
+    public function test_make_stream_from_CombinedGeneral(): void
+    {
+        $producer = Producers::combinedFrom(
+            static fn(): array => ['a', 2, 'b', 1, 'c'],
+            Producers::getAdapter([0, '2', 5, 'd', 4, 'e'])
+        );
+        
+        $result = $producer->stream()
+            ->onlyStrings()
+            ->onlyIntegers(Check::KEY)
+            ->toArrayAssoc();
+        
+        self::assertSame([2 => '2', 1 => 'd'], $result);
+    }
+    
+    public function test_CombinedGeneral_throws_exception_when_is_non_countable_and_method_count_is_called(): void
+    {
+        //Assert
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('CombinedGeneral producer cannot count how many elements can produce!');
+        
+        //Arrange
+        $producer = Producers::combinedFrom(
+            static fn(): array => ['a', 2, 'b', 1, 'c'],
+            Producers::getAdapter([0, '2', 5, 'd', 4, 'e'])
+        );
+        
+        //Act
+        $producer->count();
+    }
+    
+    /**
+     * @return Item[]
+     */
+    private function convertToItems(array $data): array
+    {
+        $items = [];
+        
+        foreach ($data as $key => $value) {
+            $items[] = new Item($key, $value);
+        }
+        
+        return $items;
     }
 }

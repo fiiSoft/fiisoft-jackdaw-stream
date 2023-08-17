@@ -36,4 +36,9 @@ final class ArrayAdapter extends CountableProducer
         
         return new Item($last, $this->source[$last]);
     }
+    
+    public function destroy(): void
+    {
+        $this->source = [];
+    }
 }

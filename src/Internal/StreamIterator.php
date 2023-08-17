@@ -27,7 +27,7 @@ final class StreamIterator extends StreamPipe implements \Iterator
         return $this->item->key;
     }
     
-    public function next()
+    public function next(): void
     {
         $this->isValid = false;
         try {
@@ -37,7 +37,7 @@ final class StreamIterator extends StreamPipe implements \Iterator
         }
     }
     
-    public function valid()
+    public function valid(): bool
     {
         if ($this->isValid) {
             return true;
@@ -48,7 +48,7 @@ final class StreamIterator extends StreamPipe implements \Iterator
         return false;
     }
     
-    public function rewind()
+    public function rewind(): void
     {
         $this->isValid = false;
         try {

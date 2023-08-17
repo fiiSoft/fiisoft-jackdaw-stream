@@ -65,4 +65,14 @@ final class Aggregate extends BaseOperation
         
         return true;
     }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->aggregated = [];
+            $this->keys = [];
+            
+            parent::destroy();
+        }
+    }
 }

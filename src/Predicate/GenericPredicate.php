@@ -18,6 +18,9 @@ final class GenericPredicate implements Predicate
         $this->numOfArgs = Helper::getNumOfArgs($predicate);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function isSatisfiedBy($value, $key = null, int $mode = Check::VALUE): bool
     {
         $isSatisfiedBy = $this->predicate;

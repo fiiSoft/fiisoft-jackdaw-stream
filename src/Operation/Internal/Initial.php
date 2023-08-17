@@ -55,6 +55,11 @@ final class Initial extends ProtectedCloning implements Operation
         return $this->next;
     }
     
+    public function getPrev(): ?Operation
+    {
+        return null;
+    }
+    
     public function getLast(): Operation
     {
         return $this->next !== null ? $this->next->getLast() : $this;
@@ -76,5 +81,10 @@ final class Initial extends ProtectedCloning implements Operation
             $this->next = clone $this->next;
             $this->next->setPrev($this);
         }
+    }
+    
+    public function destroy(): void
+    {
+        $this->next = null;
     }
 }

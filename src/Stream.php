@@ -3,99 +3,31 @@
 namespace FiiSoft\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collector;
-use FiiSoft\Jackdaw\Collector\Collectors;
-use FiiSoft\Jackdaw\Comparator\Comparator;
-use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\{Comparator, Comparators, ValueKeyCombined\ValueKeyComparator};
 use FiiSoft\Jackdaw\Condition\Condition;
-use FiiSoft\Jackdaw\Consumer\Consumer;
-use FiiSoft\Jackdaw\Discriminator\Discriminator;
-use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Filter\Filters;
-use FiiSoft\Jackdaw\Handler\ErrorHandler;
-use FiiSoft\Jackdaw\Handler\OnError;
-use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Internal\Collaborator;
-use FiiSoft\Jackdaw\Internal\Executable;
-use FiiSoft\Jackdaw\Internal\ForkCollaborator;
-use FiiSoft\Jackdaw\Internal\Interruption;
-use FiiSoft\Jackdaw\Internal\Pipe;
-use FiiSoft\Jackdaw\Internal\ResultApi;
-use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Internal\SignalHandler;
-use FiiSoft\Jackdaw\Internal\State\SourceNotReady;
-use FiiSoft\Jackdaw\Internal\State\Source;
-use FiiSoft\Jackdaw\Internal\State\Stack;
-use FiiSoft\Jackdaw\Internal\StreamCollection;
-use FiiSoft\Jackdaw\Internal\StreamIterator;
-use FiiSoft\Jackdaw\Internal\StreamPipe;
-use FiiSoft\Jackdaw\Mapper\Internal\ConditionalExtract;
-use FiiSoft\Jackdaw\Mapper\Mapper;
-use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Operation\Accumulate;
-use FiiSoft\Jackdaw\Operation\Aggregate;
-use FiiSoft\Jackdaw\Operation\Assert;
-use FiiSoft\Jackdaw\Operation\Chunk;
-use FiiSoft\Jackdaw\Operation\ChunkBy;
-use FiiSoft\Jackdaw\Operation\CollectIn;
-use FiiSoft\Jackdaw\Operation\CollectKeyIn;
-use FiiSoft\Jackdaw\Operation\Filter as OperationFilter;
-use FiiSoft\Jackdaw\Operation\FilterWhen;
-use FiiSoft\Jackdaw\Operation\Flat;
-use FiiSoft\Jackdaw\Operation\Flip;
-use FiiSoft\Jackdaw\Operation\Gather;
-use FiiSoft\Jackdaw\Operation\Internal\AssertionFailed;
-use FiiSoft\Jackdaw\Operation\Internal\Feed;
-use FiiSoft\Jackdaw\Operation\Internal\FeedMany;
-use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
-use FiiSoft\Jackdaw\Operation\Internal\LastOperation;
-use FiiSoft\Jackdaw\Operation\Internal\Fork;
-use FiiSoft\Jackdaw\Operation\Internal\Iterate;
-use FiiSoft\Jackdaw\Operation\Remember;
-use FiiSoft\Jackdaw\Operation\Limit;
-use FiiSoft\Jackdaw\Operation\Map;
-use FiiSoft\Jackdaw\Operation\MapFieldWhen;
-use FiiSoft\Jackdaw\Operation\MapKey;
-use FiiSoft\Jackdaw\Operation\MapKeyValue;
-use FiiSoft\Jackdaw\Operation\MapWhen;
-use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Operation\Reindex;
-use FiiSoft\Jackdaw\Operation\Reverse;
-use FiiSoft\Jackdaw\Operation\Scan;
-use FiiSoft\Jackdaw\Operation\SendTo;
-use FiiSoft\Jackdaw\Operation\SendToMax;
-use FiiSoft\Jackdaw\Operation\SendWhen;
-use FiiSoft\Jackdaw\Operation\Shuffle;
-use FiiSoft\Jackdaw\Operation\Skip;
-use FiiSoft\Jackdaw\Operation\SkipWhile;
-use FiiSoft\Jackdaw\Operation\Sort;
-use FiiSoft\Jackdaw\Operation\SortLimited;
-use FiiSoft\Jackdaw\Operation\Tail;
-use FiiSoft\Jackdaw\Operation\Terminating\Collect;
-use FiiSoft\Jackdaw\Operation\Terminating\CollectKeys;
-use FiiSoft\Jackdaw\Operation\Terminating\Count;
-use FiiSoft\Jackdaw\Operation\Terminating\Find;
-use FiiSoft\Jackdaw\Operation\Terminating\First;
-use FiiSoft\Jackdaw\Operation\Terminating\Fold;
-use FiiSoft\Jackdaw\Operation\Terminating\GroupBy;
-use FiiSoft\Jackdaw\Operation\Terminating\Has;
-use FiiSoft\Jackdaw\Operation\Terminating\HasEvery;
-use FiiSoft\Jackdaw\Operation\Terminating\HasOnly;
-use FiiSoft\Jackdaw\Operation\Terminating\IsEmpty;
-use FiiSoft\Jackdaw\Operation\Terminating\Last;
-use FiiSoft\Jackdaw\Operation\Terminating\Reduce;
-use FiiSoft\Jackdaw\Operation\Terminating\Until;
-use FiiSoft\Jackdaw\Operation\Tokenize;
-use FiiSoft\Jackdaw\Operation\Tuple;
-use FiiSoft\Jackdaw\Operation\Unique;
-use FiiSoft\Jackdaw\Predicate\Predicate;
-use FiiSoft\Jackdaw\Predicate\Predicates;
-use FiiSoft\Jackdaw\Producer\Internal\PushProducer;
-use FiiSoft\Jackdaw\Producer\Producer;
-use FiiSoft\Jackdaw\Producer\Producers;
+use FiiSoft\Jackdaw\Consumer\{Consumer, Consumers};
+use FiiSoft\Jackdaw\Discriminator\{Discriminator, Discriminators};
+use FiiSoft\Jackdaw\Filter\{Filter, Filters};
+use FiiSoft\Jackdaw\Handler\{ErrorHandler, OnError};
+use FiiSoft\Jackdaw\Internal\{Check, Collaborator, Destroyable, Executable, ForkCollaborator, Interruption, Pipe,
+    ResultApi, Signal, SignalHandler, StreamCollection, StreamIterator, StreamPipe};
+use FiiSoft\Jackdaw\Internal\State\{SourceNotReady, Source, Stack};
+use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, Mapper, Mappers};
+use FiiSoft\Jackdaw\Operation\{Accumulate, Aggregate, Assert, Categorize, Chunk, ChunkBy, Classify, CollectIn,
+    CollectKeysIn, Increasing, Internal\Dispatch, OmitReps, Extrema, Filter as OperationFilter, FilterWhen, Flat, Flip,
+    Gather, Internal\AssertionFailed, Internal\Feed, Internal\FeedMany, Internal\FinalOperation, Internal\LastOperation,
+    Internal\Fork, Internal\Iterate, Maxima, Remember, Limit, Map, MapFieldWhen, MapKey, MapKeyValue, MapWhen,
+    Operation, Reindex, Reverse, CountIn, Scan, Segregate, SendTo, SendToMax, SendWhen, Shuffle, Skip, SkipWhile, Sort,
+    SortLimited, StoreIn, Tail, Terminating\Collect, Terminating\CollectKeys, Terminating\Count, Terminating\Find,
+    Terminating\First, Terminating\Fold, Terminating\GroupBy, Terminating\Has, Terminating\HasEvery,
+    Terminating\HasOnly, Terminating\IsEmpty, Terminating\Last, Terminating\Reduce, Terminating\Until, Tokenize, Tuple,
+    Unique, UnpackTuple, Uptrends, Zip};
+use FiiSoft\Jackdaw\Predicate\{Predicate, Predicates};
+use FiiSoft\Jackdaw\Producer\{Internal\PushProducer, Producer, Producers};
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Registry\RegWriter;
 
-final class Stream extends Collaborator implements SignalHandler, Executable, \IteratorAggregate
+final class Stream extends Collaborator implements SignalHandler, Executable, Destroyable, \IteratorAggregate
 {
     private Source $source;
     private Signal $signal;
@@ -106,6 +38,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     private bool $executed = false;
     private bool $isLoop = false;
     private bool $isFirstProducer = true;
+    private bool $isDestroying = false;
     
     /** @var StreamPipe[] */
     private array $pushToStreams = [];
@@ -120,7 +53,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     private array $onErrorHandlers = [];
     
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|resource|array|scalar ...$elements
+     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array|scalar ...$elements
      */
     public static function of(...$elements): Stream
     {
@@ -128,7 +61,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|resource|array $producer
+     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array $producer
      */
     public static function from($producer): Stream
     {
@@ -294,25 +227,25 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     /**
      * Filters out non-numeric values
      */
-    public function onlyNumeric(): Stream
+    public function onlyNumeric(int $mode = Check::VALUE): Stream
     {
-        return $this->filter(Filters::isNumeric());
+        return $this->filter(Filters::isNumeric(), $mode);
     }
     
     /**
      * Filters out non-integer values
      */
-    public function onlyIntegers(): Stream
+    public function onlyIntegers(int $mode = Check::VALUE): Stream
     {
-        return $this->filter(Filters::isInt());
+        return $this->filter(Filters::isInt(), $mode);
     }
     
     /**
      * Filters out non-string values
      */
-    public function onlyStrings(): Stream
+    public function onlyStrings(int $mode = Check::VALUE): Stream
     {
-        return $this->filter(Filters::isString());
+        return $this->filter(Filters::isString(), $mode);
     }
     
     /**
@@ -381,7 +314,6 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
         return $this;
     }
     
-    
     /**
      * @param Condition|Predicate|Filter|callable $condition
      * @param Filter|Predicate|callable|mixed $filter
@@ -389,6 +321,18 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     public function omitWhen($condition, $filter, int $mode = Check::VALUE): Stream
     {
         $this->chainOperation(new FilterWhen($condition, $filter, true, $mode));
+        return $this;
+    }
+    
+    /**
+     * This operation skips all repeatable consecutive values in series, so each value is different than previous one.
+     * Unlike Unique, values can repeat in whole stream, but not one after another.
+     *
+     * @param Comparator|callable|null $comparator
+     */
+    public function omitReps($comparator = null, int $mode = Check::VALUE): Stream
+    {
+        $this->chainOperation(new OmitReps($comparator, $mode));
         return $this;
     }
     
@@ -448,7 +392,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Mapper|Reducer|Predicate|Filter|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
      */
     public function map($mapper): Stream
     {
@@ -458,8 +402,8 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     
     /**
      * @param Condition|Predicate|Filter|callable $condition
-     * @param Mapper|Reducer|callable|mixed $mapper
-     * @param Mapper|Reducer|callable|mixed|null $elseMapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $elseMapper
      */
     public function mapWhen($condition, $mapper, $elseMapper = null): Stream
     {
@@ -469,7 +413,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
      */
     public function mapField($field, $mapper): Stream
     {
@@ -479,8 +423,8 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     /**
      * @param string|int $field
      * @param Condition|Predicate|Filter|callable $condition
-     * @param Mapper|Reducer|callable|mixed $mapper
-     * @param Mapper|Reducer|callable|mixed|null $elseMapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $elseMapper
      */
     public function mapFieldWhen($field, $condition, $mapper, $elseMapper = null): Stream
     {
@@ -489,7 +433,30 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Mapper|Reducer|Predicate|Filter|callable|mixed $mapper
+     * It works very similarly to mapKey - the difference is that it uses Discriminator as mapper
+     * and guarantees that key is string, int or bool.
+     *
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
+     */
+    public function classify($discriminator): Stream
+    {
+        $this->chainOperation(new Classify($discriminator));
+        return $this;
+    }
+    
+    /**
+     * @param string|int $field
+     * @param string|int|null $orElse
+     */
+    public function classifyBy($field, $orElse = null): Stream
+    {
+        return $this->classify(Discriminators::byField($field, $orElse));
+    }
+    
+    /**
+     * Allows key mapping. If a string (but not callable) or an int is given, exactly that value is set as key.
+     *
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
      */
     public function mapKey($mapper): Stream
     {
@@ -513,6 +480,29 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
+     * Each time the signal reaches this operation, the value of passed variable is increased by 1.
+     *
+     * @param int $counter REFERENCE
+     */
+    public function countIn(int &$counter): Stream
+    {
+        $this->chainOperation(new CountIn($counter));
+        return $this;
+    }
+    
+    /**
+     * It works in a similar way to method collectIn() and allows to store values with keys
+     * in given array $buffer instead of Collector.
+     *
+     * @param \ArrayAccess|array $buffer REFERENCE
+     */
+    public function storeIn(&$buffer, bool $reindex = false): Stream
+    {
+        $this->chainOperation(new StoreIn($buffer, $reindex));
+        return $this;
+    }
+    
+    /**
      * @param Collector|\ArrayAccess|\SplHeap|\SplPriorityQueue $collector
      */
     public function collectIn($collector, ?bool $reindex = null): Stream
@@ -526,12 +516,12 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
      */
     public function collectKeysIn($collector): Stream
     {
-        $this->chainOperation(new CollectKeyIn($collector));
+        $this->chainOperation(new CollectKeysIn($collector));
         return $this;
     }
     
     /**
-     * @param Consumer|callable|resource $consumers resource must be writeable
+     * @param Consumer|Reducer|callable|resource $consumers resource must be writeable
      */
     public function call(...$consumers): Stream
     {
@@ -548,7 +538,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Consumer|callable|resource $consumer
+     * @param Consumer|Reducer|callable|resource $consumer
      */
     public function callMax(int $times, $consumer): Stream
     {
@@ -558,8 +548,8 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     
     /**
      * @param Condition|Predicate|Filter|callable $condition
-     * @param Consumer|callable|resource $consumer
-     * @param Consumer|callable|resource|null $elseConsumer
+     * @param Consumer|Reducer|callable|resource $consumer
+     * @param Consumer|Reducer|callable|resource|null $elseConsumer
      */
     public function callWhen($condition, $consumer, $elseConsumer = null): Stream
     {
@@ -568,7 +558,27 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Stream|Producer|ResultApi|\Iterator|\PDOStatement|resource|array ...$producers
+     * Sugar syntax to store current value or key in some external variable.
+     *
+     * @param mixed $variable REFERENCE
+     */
+    public function putIn(&$variable, int $mode = Check::VALUE): Stream
+    {
+        $mode = Check::getMode($mode);
+        
+        if ($mode === Check::VALUE) {
+            return $this->call(Consumers::sendValueTo($variable));
+        }
+        
+        if ($mode === Check::KEY) {
+            return $this->call(Consumers::sendKeyTo($variable));
+        }
+        
+        throw new \InvalidArgumentException('Only simple VALUE or KEY mode is supported');
+    }
+    
+    /**
+     * @param Stream|Producer|ResultApi|\Iterator|\PDOStatement|callable|resource|array ...$producers
      */
     public function join(...$producers): Stream
     {
@@ -601,6 +611,10 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
      */
     public function sort($comparator = null, int $mode = Check::VALUE): Stream
     {
+        if ($comparator instanceof ValueKeyComparator) {
+            $mode = Check::BOTH;
+        }
+        
         $this->chainOperation(new Sort($comparator, $mode));
         return $this;
     }
@@ -612,6 +626,10 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
      */
     public function best(int $limit, $comparator = null, int $mode = Check::VALUE): Stream
     {
+        if ($comparator instanceof ValueKeyComparator) {
+            $mode = Check::BOTH;
+        }
+        
         $this->chainOperation(new SortLimited($limit, $comparator, $mode));
         return $this;
     }
@@ -623,6 +641,10 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
      */
     public function rsort($comparator = null, int $mode = Check::VALUE): Stream
     {
+        if ($comparator instanceof ValueKeyComparator) {
+            $mode = Check::BOTH;
+        }
+        
         $this->chainOperation(new Sort($comparator, $mode, true));
         return $this;
     }
@@ -634,6 +656,10 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
      */
     public function worst(int $limit, $comparator = null, int $mode = Check::VALUE): Stream
     {
+        if ($comparator instanceof ValueKeyComparator) {
+            $mode = Check::BOTH;
+        }
+        
         $this->chainOperation(new SortLimited($limit, $comparator, $mode, true));
         return $this;
     }
@@ -711,16 +737,6 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
         return $this;
     }
     
-    /**
-     * It works the same way as chunk($size, true).
-     *
-     * @param int $size
-     */
-    public function chunkAssoc(int $size): Stream
-    {
-        return $this->chunk($size);
-    }
-    
     public function chunk(int $size, bool $reindex = false): Stream
     {
         $this->chainOperation(new Chunk($size, $reindex));
@@ -728,11 +744,11 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|string|int $discriminator
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array|string|int $discriminator
      */
     public function chunkBy($discriminator, bool $reindex = false): Stream
     {
-        $this->chainOperation(new ChunkBy($discriminator, $reindex));
+        $this->chainOperation(new ChunkBy(Discriminators::prepare($discriminator), $reindex));
         return $this;
     }
     
@@ -748,7 +764,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     /**
      * @param Filter|Predicate|callable|mixed $filter
      */
-    public function separateBy($filter, int $mode = Check::VALUE, bool $reindex = false): Stream
+    public function separateBy($filter, bool $reindex = false, int $mode = Check::VALUE): Stream
     {
         $this->chainOperation(new Accumulate($filter, $mode, $reindex, true));
         return $this;
@@ -762,7 +778,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
      */
     public function append($field, $mapper): Stream
     {
@@ -771,7 +787,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
      */
     public function complete($field, $mapper): Stream
     {
@@ -847,7 +863,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|callable|array|mixed $mapper
      */
     public function flatMap($mapper, int $level = 0): Stream
     {
@@ -891,6 +907,24 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
+     * @param Stream[]|LastOperation[]|ResultApi[]|Collector[]|Consumer[]|Reducer[] $handlers
+     */
+    public function dispatch($discriminator, array $handlers): Stream
+    {
+        foreach ($handlers as $handler) {
+            if ($handler === $this) {
+                throw new \LogicException('Looped message sending is not supported in Dispatch operation');
+            }
+        }
+        
+        $this->chainOperation(new Dispatch($discriminator, $handlers));
+        return $this;
+    }
+    
+    /**
+     * It works like conditional limit().
+     *
      * @param Filter|Predicate|callable|mixed $condition
      */
     public function while($condition, int $mode = Check::VALUE): Stream
@@ -900,6 +934,8 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
+     * It works like conditional limit().
+     *
      * @param Filter|Predicate|callable|mixed $condition
      */
     public function until($condition, int $mode = Check::VALUE): Stream
@@ -932,13 +968,11 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     /**
      * It collects elements in array as long as they meet given condition.
      * With first element which does not meet condition, gathering values is aborted
-     * and array of collected elements is passed to next step.
-     * Any other elements from the stream will be ignored (they will never be read).
-     *
+     * and array of collected elements is passed to next step. No other items in the stream will be read.
      *
      * @param Filter|Predicate|callable|mixed $condition
      */
-    public function gatherWhile($condition, int $mode = Check::VALUE, bool $reindex = false): Stream
+    public function gatherWhile($condition, bool $reindex = false, int $mode = Check::VALUE): Stream
     {
         return $this->while($condition, $mode)->gather($reindex);
     }
@@ -946,13 +980,42 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     /**
      * It collects elements in array until first element which does not meet given condition,
      * in which case gathering of values is aborted and array of collected elements is passed to next step.
-     * Any other elements from the stream will be ignored (they will never be read).
+     * No other items in the stream will be read.
      *
      * @param Filter|Predicate|callable|mixed $condition
      */
-    public function gatherUntil($condition, int $mode = Check::VALUE, bool $reindex = false): Stream
+    public function gatherUntil($condition, bool $reindex = false, int $mode = Check::VALUE): Stream
     {
         return $this->until($condition, $mode)->gather($reindex);
+    }
+    
+    /**
+     * @param int|null $buckets null means collect all elements
+     * @param Comparator|callable|null $comparator
+     */
+    public function segregate(
+        ?int $buckets = null, $comparator = null, int $mode = Check::VALUE, bool $reindex = false
+    ): Stream
+    {
+        $this->chainOperation(new Segregate($buckets, $comparator, $mode, $reindex));
+        return $this;
+    }
+    
+    /**
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
+     */
+    public function categorize($discriminator, ?bool $reindex = null): Stream
+    {
+        $this->chainOperation(new Categorize($discriminator, $reindex));
+        return $this;
+    }
+    
+    /**
+     * @param string|int $field
+     */
+    public function categorizeBy($field, ?bool $reindex = null): Stream
+    {
+        return $this->categorize(Discriminators::byField($field), $reindex);
     }
     
     /**
@@ -967,7 +1030,29 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|string|int $discriminator
+     * This operation works in the opposite way to makeTuple() - it maps tuple from the value
+     * ([key, value] or ['key' => key, 'value' => value]) to key and value of current element.
+     */
+    public function unpackTuple(bool $assoc = false): Stream
+    {
+        $this->chainOperation(new UnpackTuple($assoc));
+        return $this;
+    }
+    
+    /**
+     * Creates a numeric array where the first item comes from this stream, and the next items come from all passed
+     * providers of subsequent values. In the event that any supplier runs out, null is inserted in its place.
+     *
+     * @param array<Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array|scalar> $sources
+     */
+    public function zip(...$sources): Stream
+    {
+        $this->chainOperation(new Zip($sources));
+        return $this;
+    }
+    
+    /**
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
      */
     public function fork($discriminator, LastOperation $prototype): Stream
     {
@@ -980,11 +1065,85 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
+     * @param string|int $field
+     */
+    public function forkBy($field, LastOperation $prototype): Stream
+    {
+        return $this->fork(Discriminators::byField($field), $prototype);
+    }
+    
+    /**
      * Remember key and/or value of current element in passed registry.
      */
     public function remember(RegWriter $registry): Stream
     {
         $this->chainOperation(new Remember($registry));
+        return $this;
+    }
+    
+    /**
+     * @param Comparator|callable|null $comparator
+     */
+    public function accumulateUptrends($comparator = null, bool $reindex = false, int $mode = Check::VALUE): Stream
+    {
+        $this->chainOperation(new Uptrends($comparator, $mode, $reindex));
+        return $this;
+    }
+    
+    /**
+     * @param Comparator|callable|null $comparator
+     */
+    public function accumulateDowntrends($comparator = null, bool $reindex = false, int $mode = Check::VALUE): Stream
+    {
+        $this->chainOperation(new Uptrends($comparator, $mode, $reindex, true));
+        return $this;
+    }
+    
+    /**
+     * @param Comparator|callable|null $comparator
+     * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
+     */
+    public function onlyMaxima($comparator = null, bool $allowLimits = true, int $mode = Check::VALUE): Stream
+    {
+        $this->chainOperation(new Maxima($comparator, $allowLimits, $mode));
+        return $this;
+    }
+    
+    /**
+     * @param Comparator|callable|null $comparator
+     * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
+     */
+    public function onlyMinima($comparator = null, bool $allowLimits = true, int $mode = Check::VALUE): Stream
+    {
+        $this->chainOperation(new Maxima($comparator, $allowLimits, $mode, true));
+        return $this;
+    }
+    
+    /**
+     * @param Comparator|callable|null $comparator
+     * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
+     */
+    public function onlyExtrema($comparator = null, bool $allowLimits = true, int $mode = Check::VALUE): Stream
+    {
+        $this->chainOperation(new Extrema($comparator, $allowLimits, $mode));
+        return $this;
+    }
+    
+    /**
+     * @param Comparator|callable|null $comparator
+     */
+    public function increasingValues($comparator = null, int $mode = Check::VALUE): Stream
+    {
+        $this->chainOperation(new Increasing($comparator, $mode));
+        return $this;
+    }
+    
+    /**
+     * @param Comparator|callable|null $comparator
+     */
+    public function decreasingValues($comparator = null, int $mode = Check::VALUE): Stream
+    {
+        $this->chainOperation(new Increasing($comparator, $mode, true));
         return $this;
     }
     
@@ -1076,10 +1235,10 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     
     public function toArray(bool $preserveKeys = false): array
     {
-        $buffer = Collectors::default();
-        $this->runWith(new CollectIn($buffer, !$preserveKeys));
+        $buffer = [];
+        $this->runWith(new StoreIn($buffer, !$preserveKeys));
         
-        return $buffer->getData();
+        return $buffer;
     }
     
     /**
@@ -1099,7 +1258,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * Collect data as long as condition is true and finish processing when it is not.
+     * It collects data as long as the condition is true and then terminates processing when it is not.
      *
      * @param Filter|Predicate|callable|mixed $condition
      */
@@ -1109,7 +1268,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * Collect data until condition is met and then finish processing.
+     * It collects data as long as the condition is false and then terminates processing.
      *
      * @param Filter|Predicate|callable|mixed $condition
      */
@@ -1127,7 +1286,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Reducer|callable $reducer
+     * @param Reducer|callable|array $reducer
      * @param callable|mixed|null $orElse (default null)
      */
     public function reduce($reducer, $orElse = null): LastOperation
@@ -1137,7 +1296,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     
     /**
      * @param mixed $initial
-     * @param Reducer|callable $reducer
+     * @param Reducer|callable $reducer Callable accepts two arguments: accumulator and current value
      */
     public function fold($initial, $reducer): LastOperation
     {
@@ -1196,6 +1355,14 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
+     * @param Predicate|Filter|callable|mixed $predicate
+     */
+    public function findMax(int $limit, $predicate, int $mode = Check::VALUE): LastOperation
+    {
+        return $this->filter($predicate, $mode)->limit($limit)->collect();
+    }
+    
+    /**
      * Return first available element from stream or null when stream is empty.
      */
     public function first(): LastOperation
@@ -1232,9 +1399,19 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|string|int $discriminator
+     * It collects repeatable values in collections by their keys.
      */
-    public function groupBy($discriminator, bool $reindex = false): StreamCollection
+    public function group(?bool $reindex = null): StreamCollection
+    {
+        return $this->groupBy(Discriminators::byKey(), $reindex);
+    }
+    
+    /**
+     * It collects repeatable values in collections by given discriminator.
+     *
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array|string|int $discriminator
+     */
+    public function groupBy($discriminator, ?bool $reindex = null): StreamCollection
     {
         $groupBy = new GroupBy($discriminator, $reindex);
         $this->runWith($groupBy);
@@ -1243,7 +1420,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
     }
     
     /**
-     * @param Consumer|callable|resource $consumer
+     * @param Consumer|Reducer|callable|resource $consumer
      */
     public function forEach(...$consumer): void
     {
@@ -1274,6 +1451,31 @@ final class Stream extends Collaborator implements SignalHandler, Executable, \I
         $this->prepareToRun();
         $this->continueIteration();
         $this->finish();
+    }
+    
+    /**
+     * Experimental. Do not use it.
+     */
+    public function destroy(): void
+    {
+        if ($this->isDestroying) {
+            return;
+        }
+        
+        $this->isDestroying = true;
+        $this->started = true;
+        $this->executed = true;
+        $this->isLoop = false;
+        $this->isFirstProducer = true;
+        
+        $this->pushToStreams = [];
+        $this->onFinishHandlers = [];
+        $this->onSuccessHandlers = [];
+        $this->onErrorHandlers = [];
+        
+        $this->pipe->destroy();
+        $this->stack->destroy();
+        $this->source->destroy();
     }
     
     /**

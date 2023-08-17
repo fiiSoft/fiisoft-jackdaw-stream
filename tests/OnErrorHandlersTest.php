@@ -87,7 +87,7 @@ final class OnErrorHandlersTest extends TestCase
     /**
      * @dataProvider getDataForTestLogFormatterDescribesData
      */
-    public function test_LogFormatter_describes_data($value, $key, $message): void
+    public function test_LogFormatter_describes_data($value, $key, string $message): void
     {
         self::assertStringContainsString($message, LogFormatter::format(new \RuntimeException(), $value, $key));
     }

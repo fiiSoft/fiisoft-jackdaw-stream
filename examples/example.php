@@ -181,7 +181,7 @@ $rowset = [
 echo 'rowset 1: ', Stream::from($rowset)
     ->flat()
     ->only(['name', 'age'], Check::KEY)
-    ->chunkAssoc(2)
+    ->chunk(2)
     ->toJson()
 , PHP_EOL;
 
@@ -192,7 +192,7 @@ echo 'rowset 2: ', Stream::from($rowset)
 echo 'rowset 3: ', Stream::from($rowset)
     ->flat()
     ->without(['id'], Check::KEY)
-    ->chunkAssoc(2)
+    ->chunk(2)
     ->toJson(), PHP_EOL;
 
 $stream = Stream::from(['b','a','g','e','c'])

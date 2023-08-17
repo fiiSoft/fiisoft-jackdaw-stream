@@ -88,7 +88,6 @@ final class Find extends SimpleFinalOperation
     }
     
     /**
-     * @param bool $reindexed
      * @param Item[] $items
      */
     public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool

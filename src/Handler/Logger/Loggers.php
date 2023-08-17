@@ -2,28 +2,29 @@
 
 namespace FiiSoft\Jackdaw\Handler\Logger;
 
-use Psr\Log\LoggerInterface;
-use Symfony\Component\Console\Logger\ConsoleLogger;
-use Symfony\Component\Console\Output\OutputInterface;
-
 final class Loggers
 {
+    /**
+     * @param ErrorLogger|mixed $logger
+     */
     public static function getAdapter($logger): ErrorLogger
     {
         if ($logger instanceof ErrorLogger) {
             return $logger;
         }
-    
-        if ($logger instanceof ConsoleLogger) {
-            return new SymfonyLoggerAdapter($logger);
-        }
-    
-        if ($logger instanceof OutputInterface) {
-            return new SymfonyOutputAdapter($logger);
-        }
-    
-        if ($logger instanceof LoggerInterface) {
-            return new PsrLoggerAdapter($logger);
+        
+        if (\is_object($logger)) {
+            if (\is_a($logger, '\Symfony\Component\Console\Logger\ConsoleLogger')) {
+                return new SymfonyLoggerAdapter($logger);
+            }
+            
+            if (\is_a($logger, '\Symfony\Component\Console\Output\OutputInterface')) {
+                return new SymfonyOutputAdapter($logger);
+            }
+            
+            if (\is_a($logger, '\Psr\Log\LoggerInterface')) {
+                return new PsrLoggerAdapter($logger);
+            }
         }
         
         throw new \InvalidArgumentException('Invalid param logger');

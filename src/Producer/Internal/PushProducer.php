@@ -41,7 +41,7 @@ final class PushProducer extends NonCountableProducer implements MultiSourcedPro
             $i = -1;
         }
         
-        $generator = (static function () { yield; })();
+        $generator = (static function (): \Generator { yield; })();
         
         LOOP:
         do {
@@ -89,5 +89,18 @@ final class PushProducer extends NonCountableProducer implements MultiSourcedPro
     public function getProducers(): array
     {
         return $this->producers;
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            foreach ($this->producers as $producer) {
+                $producer->destroy();
+            }
+            
+            $this->producers = [];
+            
+            parent::destroy();
+        }
     }
 }

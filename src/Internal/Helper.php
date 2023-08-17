@@ -15,7 +15,7 @@ final class Helper
         
         if ($refl->hasReturnType()) {
             $returnType = $refl->getReturnType();
-            if ($returnType instanceof \ReflectionType) {
+            if ($returnType instanceof \ReflectionNamedType) {
                 return $returnType->getName() === 'array';
             }
         }
@@ -33,12 +33,16 @@ final class Helper
         );
     }
     
+    /**
+     * @param mixed $param
+     */
     public static function typeOfParam($param): string
     {
         return \is_object($param) ? 'object of type '.\get_class($param) : \gettype($param);
     }
+
     
-    public static function wrongNumOfArgsException(string $name, int $current, ...$alowed): \LogicException
+    public static function wrongNumOfArgsException(string $name, int $current, int ...$alowed): \LogicException
     {
         if (empty($alowed)) {
             $alowed[] = 0;
@@ -58,6 +62,9 @@ final class Helper
         return new \LogicException($message);
     }
     
+    /**
+     * @param array<string|int> $fields
+     */
     public static function areFieldsValid($fields): bool
     {
         if (\is_array($fields)) {
@@ -77,6 +84,9 @@ final class Helper
         return self::isFieldValid($fields);
     }
     
+    /**
+     * @param string|int $field
+     */
     public static function isFieldValid($field): bool
     {
         return \is_string($field) && $field !== '' || \is_int($field);

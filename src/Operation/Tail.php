@@ -115,7 +115,6 @@ final class Tail extends BaseOperation implements DataCollector
     }
     
     /**
-     * @param bool $reindexed
      * @param Item[] $items
      */
     public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
@@ -139,5 +138,15 @@ final class Tail extends BaseOperation implements DataCollector
         }
         
         return $this->streamingFinished($signal);
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->state->destroy();
+            $this->buffer->setSize(0);
+            
+            parent::destroy();
+        }
     }
 }

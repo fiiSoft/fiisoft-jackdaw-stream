@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
-final class Min implements Reducer
+final class Min extends BaseReducer
 {
     /** @var float|int|null */
     private $result;
@@ -33,11 +33,6 @@ final class Min implements Reducer
     public function hasResult(): bool
     {
         return $this->result !== null;
-    }
-    
-    public function getResult(): Item
-    {
-        return new Item(0, $this->result());
     }
     
     public function reset(): void

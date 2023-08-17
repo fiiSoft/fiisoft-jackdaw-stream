@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
-final class Average implements Reducer
+final class Average extends BaseReducer
 {
     private int $count = 0;
     
@@ -44,11 +44,6 @@ final class Average implements Reducer
     public function hasResult(): bool
     {
         return $this->count !== 0;
-    }
-    
-    public function getResult(): Item
-    {
-        return new Item(0, $this->result());
     }
     
     public function reset(): void

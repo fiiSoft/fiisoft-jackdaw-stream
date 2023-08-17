@@ -37,4 +37,13 @@ final class ArrayIteratorAdapter extends CountableProducer
         
         return null;
     }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->iterator = new \ArrayIterator();
+            
+            parent::destroy();
+        }
+    }
 }

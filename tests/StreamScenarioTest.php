@@ -51,15 +51,15 @@ final class StreamScenarioTest extends TestCase
         
         $stream = Stream::from([4, 7, 2, 'a', 8, null, 5, 3, 7])
             ->notNull()
-            ->call(function () use (&$counter1) {
+            ->call(static function () use (&$counter1): void {
                 ++$counter1;
             })
             ->limit(6)
             ->filter('is_int')
-            ->call(function () use (&$counter2) {
+            ->call(static function () use (&$counter2): void {
                 ++$counter2;
             })
-            ->map(fn(int $x) => $x ** 2)
+            ->map(static fn(int $x) => $x ** 2)
             ->omit(Filters::greaterThan(50))
             ->collectIn($buffer, true);
         
@@ -80,7 +80,7 @@ final class StreamScenarioTest extends TestCase
     
         $inputData = [4, 'c' => 7, 2, 'a', 'z' => 8, null, 5, '', 3, 7];
         
-        $stream = StreamMaker::from(static fn() => Stream::from($inputData)
+        $stream = StreamMaker::from(static fn(): Stream => Stream::from($inputData)
             ->filter('is_int')
             ->limit(5)
             ->skip(2)
@@ -146,12 +146,15 @@ final class StreamScenarioTest extends TestCase
     public function test_scenario_09(): void
     {
         $inputData = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6, 'g' => 7, 'h' => 8];
-        $stream = StreamMaker::from(static fn() => Stream::from($inputData)->limit(7)->chunk(3, true));
+        $stream = StreamMaker::from(static fn(): Stream => Stream::from($inputData)->limit(7)->chunk(3, true));
     
         self::assertSame('[[1,2,3],[4,5,6],[7]]', $stream->start()->limit(3)->toJson());
         self::assertSame('[[1,2,3],[4,5,6]]', $stream->start()->limit(2)->toJson());
         
-        self::assertSame('[[1,2,3],[4,5,6]]', $stream->start()->filter(static fn($ch) => \count($ch) === 3)->toJson());
+        self::assertSame(
+            '[[1,2,3],[4,5,6]]',
+            $stream->start()->filter(static fn($ch): bool => \count($ch) === 3)->toJson()
+        );
         self::assertSame('[[1,2,3],[4,5,6]]', $stream->start()->filter(Filters::length()->eq(3))->toJson());
         
         self::assertSame('[[1,2,3],[4,5,6]]', $stream->start()->limit(2)->filter(Filters::length()->eq(3))->toJson());
@@ -162,17 +165,17 @@ final class StreamScenarioTest extends TestCase
         $inputData = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6, 'g' => 7, 'h' => 8];
         $stream = Stream::from($inputData)
             ->limit(7) //without h=>8
-            ->while(static fn($v) => $v <= 5) //it should stop on f=>6
+            ->while(Filters::lessOrEqual(5)) //it should stop on f=>6
             ->chunk(3);
         
-        self::assertSame('[{"a":1,"b":2,"c":3}]', $stream->toJson());
+        self::assertSame('[{"a":1,"b":2,"c":3},{"d":4,"e":5}]', $stream->toJson());
     }
     
     public function test_scenario_11(): void
     {
         $inputData = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6, 'g' => 7, 'h' => 8];
         $stream = Stream::from($inputData)
-            ->while(static fn($v) => $v <= 5) //it should stop on f=>6
+            ->while(Filters::lessOrEqual(5)) //it should stop on f=>6
             ->sort(); //only five first should be passed to sort
         
         self::assertSame('1,2,3,4,5', $stream->toString());
@@ -182,7 +185,7 @@ final class StreamScenarioTest extends TestCase
     {
         $inputData = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6, 'g' => 7, 'h' => 8];
         $stream = Stream::from($inputData)
-            ->while(static fn($v) => $v <= 5) //it should stop on f=>6
+            ->while(Filters::lessOrEqual(5)) //it should stop on f=>6
             ->sort() //only five first should be passed to sort
             ->chunk(3, true); //it should produce two chunks: 3 and 2 elements
     
@@ -466,7 +469,7 @@ final class StreamScenarioTest extends TestCase
         ];
         
         $result = Stream::from($data)
-            ->fold([], static function (array $result, array $data) {
+            ->fold([], static function (array $result, array $data): array {
                 if (\is_numeric($data['val'])) {
                     $value = (int) $data['val'];
                     if ($value > 0) {
@@ -781,7 +784,7 @@ final class StreamScenarioTest extends TestCase
         
         Stream::from($rowset)
             ->mapKey(Mappers::fieldValue('name'))
-            ->call(static function ($_, string $name) use (&$countByName) {
+            ->call(static function ($_, string $name) use (&$countByName): void {
                 $countByName[$name] = ($countByName[$name] ?? 0) + 1;
             })
             ->run();
@@ -853,7 +856,7 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([
             'Sue' => (35 + 17 ) / 2,
             'Chris' => (26 + 26) / 2,
-            'Joanna' => 35 / 1,
+            'Joanna' => 35,
         ], $result);
     }
     
@@ -1027,9 +1030,7 @@ final class StreamScenarioTest extends TestCase
             ->accumulate(Filters::number()->isEven(), true)
             ->append('count', Reducers::count())
             ->chunk(3)
-            ->map(static function (array $chunk): array {
-                return Stream::from($chunk)->sortBy('count desc')->first()->get();
-            })
+            ->map(static fn(array $chunk): array => Stream::from($chunk)->sortBy('count desc')->first()->get())
             ->remove('count');
             
         $expected = [
@@ -1159,7 +1160,7 @@ final class StreamScenarioTest extends TestCase
         Stream::from($data)
             ->groupBy('\mb_strlen')
             ->stream()
-            ->forEach(static function (array $lines, int $length) use (&$result) {
+            ->forEach(static function (array $lines, int $length) use (&$result): void {
                 $result[$length] = Stream::from($lines)
                     ->tokenize()
                     ->reduce(Reducers::longest())
@@ -1256,5 +1257,574 @@ final class StreamScenarioTest extends TestCase
             ['id' => 8, 'name' => 'John', 'age' => 24, 'sex' => 'male'],
             ['id' => 10, 'name' => 'Tom', 'age' => 35, 'sex' => 'male'],
         ];
+    }
+    
+    public function test_scenario_66(): void
+    {
+        $result = Stream::from([4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 8, 9])
+            ->accumulateUptrends()
+            ->flat(1)
+            ->toArray();
+        
+        self::assertSame([2, 4, 5, 7, 6, 7, 8, 3, 5, 2, 4, 1, 3, 5, 8, 9], $result);
+    }
+    
+    public function test_scenario_67(): void
+    {
+        $result = Stream::from([4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 8, 9])
+            ->accumulateUptrends()
+            ->rsort(Comparators::size())
+            ->first();
+        
+        self::assertSame([16 => 1, 3, 5, 8, 9], $result->get());
+        
+        $result->transform('array_values');
+        self::assertSame([1, 3, 5, 8, 9], $result->get());
+    }
+    
+    public function test_scenario_68(): void
+    {
+        $result = Stream::from([
+                4, 3, 2,
+                4, 5, 7,
+                6, 7, 8,
+                6, 5, 3,
+                3, 5, 2,
+                4, 1, 3,
+                5, 8, 9,
+            ])
+            ->fork(
+                Discriminators::alternately(['first', 'second', 'third']),
+                Stream::empty()->accumulateUptrends(null, true)->rsort('count')->first()
+            );
+        
+        self::assertSame([
+            'first' => [3, 4, 5],
+            'second' => [3, 5, 7],
+            'third' => [2, 7, 8],
+        ], $result->toArrayAssoc());
+    }
+    
+    public function test_scenario_69(): void
+    {
+        $data = [2, 3, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
+        
+        $result = Stream::from($data)
+            ->onlyMinima()
+            ->fork(Discriminators::byValue(), Stream::empty()->count())
+            ->rsort()
+            ->first();
+        
+        self::assertSame([2 => 4], $result->toArrayAssoc());
+    }
+    
+    public function test_scenario_70(): void
+    {
+        $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
+        
+        $result = Stream::from($data)
+            ->onlyMaxima(null, false)
+            ->greaterOrEqual(5)
+            ->toArray();
+        
+        self::assertSame([7, 8, 5], $result);
+    }
+    
+    public function test_scenario_71(): void
+    {
+        $data = [
+            6,
+            4, 3, 2, 4,
+            5, 7, 6, 7, 8, 6, 5,
+            3, 3,
+            5,
+            2, 4, 1, 3,
+            5, 5,
+            3, 2, 4, 4,
+            5, 8, 9
+        ];
+        
+        $result = Stream::from($data)
+            ->greaterOrEqual(5)
+            ->onlyMaxima(null, false)
+            ->toArray();
+        
+        self::assertSame([7, 8], $result);
+    }
+    
+    public function test_scenario_72(): void
+    {
+        $data = [
+            6,
+            4, 3, 2, 4,
+            5, 7, 6, 7, 8, 6, 5,
+            3, 3,
+            5,
+            2, 4, 1, 3,
+            5, 5,
+            3, 2, 4, 4,
+            5, 8, 9
+        ];
+        
+        $result = Stream::from($data)
+            ->greaterOrEqual(5)
+            ->onlyMaxima()
+            ->toArray();
+        
+        self::assertSame([6, 7, 8, 9], $result);
+    }
+    
+    public function test_scenario_73(): void
+    {
+        $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
+        
+        $result = Stream::from($data)
+            ->onlyExtrema()
+            ->toArray();
+        
+        self::assertSame([6, 2, 7, 6, 8, 5, 2, 4, 1, 2, 9], $result);
+    }
+    
+    public function test_scenario_74(): void
+    {
+        $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
+        
+        $result = Stream::from($data)
+            ->fork(
+                Discriminators::evenOdd(),
+                Stream::empty()->onlyExtrema()->collect(true)
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => [6, 2, 8, 2, 4, 2, 8],
+            'odd' => [3, 5, 1, 3, 9],
+        ], $result);
+    }
+    
+    public function test_scenario_75(): void
+    {
+        $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
+        
+        $result = Stream::from($data)
+            ->fork(
+                Discriminators::evenOdd(),
+                Stream::empty()
+                    ->onlyExtrema()
+                    ->gather()
+                    ->append('min', Reducers::min())
+                    ->append('max', Reducers::max())
+                    ->extract(['min', 'max'])
+                    ->first()
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => ['min' => 2, 'max' => 8],
+            'odd' => ['min' => 1, 'max' => 9],
+        ], $result);
+    }
+    
+    public function test_scenario_76(): void
+    {
+        $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
+        
+        $result = Stream::from($data)
+            ->fork(
+                Discriminators::evenOdd(),
+                Stream::empty()
+                    ->onlyExtrema()
+                    ->gather()
+                    ->map(static fn(array $values, $key): array => [
+                        'min' => Mappers::getAdapter(Reducers::min())->map($values, $key),
+                        'max' => Mappers::getAdapter(Reducers::max())->map($values, $key)
+                    ])
+                    ->first()
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => ['min' => 2, 'max' => 8],
+            'odd' => ['min' => 1, 'max' => 9],
+        ], $result);
+    }
+    
+    public function test_scenario_77(): void
+    {
+        $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
+        
+        $result = Stream::from($data)
+            ->fork(
+                Discriminators::evenOdd(),
+                Stream::empty()->onlyExtrema()->reduce(Reducers::minMax())
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => ['min' => 2, 'max' => 8],
+            'odd' => ['min' => 1, 'max' => 9],
+        ], $result);
+    }
+    
+    public function test_scenario_78(): void
+    {
+        $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
+        
+        $result = Stream::from($data)
+            ->fork(
+                Discriminators::evenOdd(),
+                Stream::empty()
+                    ->onlyExtrema()
+                    ->reduce([
+                        'min' => Reducers::min(),
+                        'max' => Reducers::max(),
+                        'sum' => Reducers::sum(),
+                        'cnt' => Reducers::count(),
+                        'avg' => Reducers::average(2),
+                    ])
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => [
+                'min' => 2,
+                'max' => 8,
+                'sum' => 32,
+                'cnt' => 7,
+                'avg' => 4.57,
+            ],
+            'odd' => [
+                'min' => 1,
+                'max' => 9,
+                'sum' => 21,
+                'cnt' => 5,
+                'avg' => 4.2,
+            ],
+        ], $result);
+    }
+    
+    public function test_scenario_79(): void
+    {
+        $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
+        
+        $result = Stream::from($data)
+            ->omitReps()
+            ->onlyExtrema(null, false)
+            ->toArray();
+        
+        self::assertSame([2, 7, 6, 8, 3, 5, 2, 4, 1, 5, 2], $result);
+    }
+    
+    public function test_scenario_80(): void
+    {
+        $data = [1, 2, 3, 4, 5, 6, 7, 8];
+        
+        $result = Stream::from($data)
+            ->groupBy(Discriminators::evenOdd())
+            ->stream()
+            ->map(Reducers::getAdapter([
+                'min' => 'min',
+                'max' => 'max',
+            ]))
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'odd' => [
+                'min' => 1,
+                'max' => 7,
+            ],
+            'even' => [
+                'min' => 2,
+                'max' => 8,
+            ],
+        ], $result);
+    }
+    
+    public function test_scenario_81(): void
+    {
+        $data = ['The brown quick Python', 'jumps over', 'the lazy Panther'];
+        $longest = '';
+        
+        $result = Stream::from($data)
+            ->tokenize()
+            ->call(
+                static function (string $v) use (&$longest): void {
+                    if (\mb_strlen($longest) < \mb_strlen($v)) {
+                        $longest = $v;
+                    }
+                }
+            )
+            ->flatMap([
+                'lowercase' => '\strtolower',
+                'uppercase' => '\strtoupper',
+                'original' => Mappers::value(),
+                'longest' => Mappers::readFrom($longest),
+                'key' => Mappers::key(),
+            ])
+            ->groupBy(Discriminators::byKey())
+            ->toArray();
+        
+        $expected = [
+            'lowercase' => ['the', 'brown', 'quick', 'python', 'jumps', 'over', 'the', 'lazy', 'panther'],
+            'uppercase' => ['THE', 'BROWN', 'QUICK', 'PYTHON', 'JUMPS', 'OVER', 'THE', 'LAZY', 'PANTHER'],
+            'original' => ['The', 'brown', 'quick', 'Python', 'jumps', 'over', 'the', 'lazy', 'Panther'],
+            'longest' => ['The', 'brown', 'brown', 'Python', 'Python', 'Python', 'Python', 'Python', 'Panther'],
+            'key' => [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        ];
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_scenario_82(): void
+    {
+        $result = Stream::from(['The brown quick Python', 'jumps over', 'the lazy Panther'])
+            ->map(static fn(string $v): array
+                => \array_count_values(\str_split(\mb_strtolower(\str_replace(' ', '', $v))))
+            )
+            ->fold([], static function (array $result, array $current): array {
+                foreach ($current as $index => $value) {
+                    if (isset($result[$index])) {
+                        $result[$index] += $value;
+                    } else {
+                        $result[$index] = $value;
+                    }
+                }
+                
+                return $result;
+            })
+            ->stream()
+            ->omit(Filters::number()->eq(1))
+            ->sort(Comparators::valueDescKeyAsc())
+            ->toArrayAssoc();
+        
+        $expected = [
+            'e' => 4, 'h' => 4, 't' => 4, 'n' => 3, 'o' => 3, 'p' => 3, 'r' => 3, 'a' => 2, 'u' => 2, 'y' => 2,
+        ];
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_scenario_83(): void
+    {
+        $result = Stream::from(['The brown quick Python', 'jumps over', 'the lazy Panther'])
+            ->flatMap(static fn(string $v): array => \str_split(\mb_strtolower(\str_replace(' ', '', $v))))
+            ->fork(Discriminators::byValue(), Stream::empty()->count())
+            ->omit(Filters::number()->eq(1))
+            ->sort(Comparators::valueDescKeyAsc())
+            ->toArrayAssoc();
+        
+        $expected = [
+            'e' => 4, 'h' => 4, 't' => 4, 'n' => 3, 'o' => 3, 'p' => 3, 'r' => 3, 'a' => 2, 'u' => 2, 'y' => 2,
+        ];
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_scenario_84(): void
+    {
+        $result = Stream::from(['The brown quick Python', 'jumps over', 'the lazy Panther'])
+            ->flatMap(static fn(string $v): array => \str_split(\mb_strtolower(\str_replace(' ', '', $v))))
+            ->gather(true)
+            ->map('\array_count_values')
+            ->flatMap(Filters::number()->gt(1))
+            ->sort(Comparators::valueDescKeyAsc())
+            ->toArrayAssoc();
+        
+        $expected = [
+            'e' => 4, 'h' => 4, 't' => 4, 'n' => 3, 'o' => 3, 'p' => 3, 'r' => 3, 'a' => 2, 'u' => 2, 'y' => 2,
+        ];
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_scenario_85(): void
+    {
+        $result = Stream::from(['The brown quick Python', 'jumps over', 'the lazy Panther'])
+            ->flatMap(static fn(string $v): array => \str_split(\mb_strtolower(\str_replace(' ', '', $v))))
+            ->reduce(Reducers::countUnique(), [])
+            ->transform(Filters::number()->gt(1))
+            ->stream()
+            ->sort(Comparators::valueDescKeyAsc())
+            ->toArrayAssoc();
+        
+        $expected = [
+            'e' => 4, 'h' => 4, 't' => 4, 'n' => 3, 'o' => 3, 'p' => 3, 'r' => 3, 'a' => 2, 'u' => 2, 'y' => 2,
+        ];
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_scenario_86(): void
+    {
+        //Arrange
+        $rows = [
+            ['id' => 7, 'name' => 'Sue', 'age' => 17, 'sex' => 'female'],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26, 'sex' => 'male'],
+            ['id' => 2, 'name' => 'Kate', 'age' => 35, 'sex' => 'female'],
+            ['id' => 5, 'name' => 'Chris', 'age' => 20, 'sex' => 'male'],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 30, 'sex' => 'female'],
+            ['id' => 10, 'name' => 'Tom', 'age' => 35, 'sex' => 'male'],
+            ['id' => 1, 'name' => 'Sue', 'age' => 20, 'sex' => 'female'],
+        ];
+        
+        $junkData = [
+            4, $rows[0], 2.35, new \stdClass(), 8, 'foo', $rows[1], 4.16, true, 3, $rows[2], 5.22, 'bar', 5, $rows[3],
+            false, 7, $rows[4], 3.94, 'zoll', 'con', $rows[5], true, 14.33, 'ara', $rows[6], new \stdClass(),
+        ];
+        
+        $collectFloats = Collectors::values();
+        $countBools = Consumers::counter();
+        $sumInts = Reducers::sum();
+        
+        $countLetters = Stream::empty()
+            ->flatMap('\str_split')
+            ->reduce(Reducers::countUnique())
+            ->transform('ksort');
+        
+        $rowsHandler = Stream::empty()
+            ->filterBy('sex', 'female')
+            ->filterBy('age', Filters::greaterOrEqual(18))
+            ->extract('id')
+            ->collectIn($idsOfAdultWomen = Collectors::values());
+        
+        $countObjects = Stream::empty()->count();
+        
+        //Act
+        $countInts = Stream::from($junkData)
+            ->dispatch(
+                '\gettype',
+                [
+                    'integer' => $sumInts,
+                    'string' => $countLetters,
+                    'boolean' => $countBools,
+                    'array' => $rowsHandler,
+                    'double' => $collectFloats,
+                    'object' => $countObjects,
+                ]
+            )
+            ->onlyIntegers()
+            ->count();
+        
+        $countInts->run();
+        
+        //Assert
+        self::assertSame(5, $countInts->get());
+        self::assertSame(27, $sumInts->result());
+        self::assertSame(3, $countBools->count());
+        self::assertSame(2, $countObjects->get());
+        self::assertSame([2.35, 4.16, 5.22, 3.94, 14.33], $collectFloats->getData());
+        self::assertSame([2, 6, 1], $idsOfAdultWomen->getData());
+        
+        self::assertSame([
+            'a' => 3, 'b' => 1, 'c' => 1, 'f' => 1, 'l' => 2, 'n' => 1, 'o' => 4, 'r' => 2, 'z' => 1,
+        ], $countLetters->toArrayAssoc());
+    }
+    
+    public function test_scenario_87(): void
+    {
+        $data = [2,2,5,4,1,6,8,7,8,3,5,2,3,5,4];
+        
+        $allEvenNumbers = Collectors::default();
+        $countOddNumbers = Consumers::counter();
+        
+        $stream = Stream::from($data)
+            ->fork(
+                Discriminators::alternately(['first', 'second']),
+                Stream::empty()->dispatch(
+                    Discriminators::evenOdd(),
+                    [
+                        'even' => $allEvenNumbers,
+                        'odd' => $countOddNumbers,
+                    ]
+                )
+                ->reduce(Reducers::sum())
+            );
+        
+        self::assertSame([
+            'first' => 36,
+            'second' => 29,
+        ], $stream->toArrayAssoc());
+        
+        self::assertSame([0 => 2, 2, 3 => 4, 5 => 6, 8, 8 => 8, 11 => 2, 14 => 4], $allEvenNumbers->getData());
+        self::assertSame(7, $countOddNumbers->count());
+    }
+    
+    public function test_scenario_88(): void
+    {
+        $namesAndIds = Stream::from($this->rowsetDataset())
+            ->classifyBy('name')
+            ->extract('id')
+            ->group();
+        
+        self::assertSame([
+            'Sue' => [7],
+            'Kate' => [2],
+            'Chris' => [9, 5, 1, 4, 11, 13],
+            'Joanna' => [6],
+            'Phil' => [10],
+            'Mike' => [5],
+            'Joe' => [2],
+            'Sam' => [8],
+            'Doris' => [3],
+            'Nathaniel' => [12],
+        ], $namesAndIds->toArray());
+        
+        $repeatedNames = $namesAndIds->stream()->filter(Filters::length()->gt(1))->toArrayAssoc();
+        
+        self::assertSame(['Chris' => [9, 5, 1, 4, 11, 13]], $repeatedNames);
+    }
+    
+    public function test_scenario_89(): void
+    {
+        $isAdult = static fn(array $row): string => $row['age'] >= 18 ? 'adults' : 'kids';
+        
+        $result = Stream::from($this->rowsetDataset())
+            ->limit(3)
+            ->categorize($isAdult)
+            ->fork(
+                Discriminators::byKey(),
+                Stream::empty()
+                    ->map(Mappers::arrayColumn('id'))
+                    ->map(Mappers::concat(','))
+                    ->first()
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'kids' => '7',
+            'adults' => '2,9',
+        ], $result);
+    }
+    
+    public function test_scenario_90(): void
+    {
+        $result = Stream::from([3, 6, 5, 2, 1, 4])
+            ->categorize(Discriminators::evenOdd(), true)
+            ->sort(null, Check::KEY)
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => [6, 2, 4],
+            'odd' => [3, 5, 1],
+        ], $result);
+    }
+    
+    public function test_scenario_91(): void
+    {
+        $data = [8, 2, 5, 4, 2, 9, 7, 5, 1, 6, 2, 8, 3, 2, 9, 7, 4, 1, 6, 2, 5, 6, 3, 4, 9];
+        
+        $result = Stream::from($data)->segregate(null, null, Check::VALUE, true)->toArray();
+        
+        self::assertSame([
+            [1, 1],
+            [2, 2, 2, 2, 2],
+            [3, 3],
+            [4, 4, 4],
+            [5, 5, 5],
+            [6, 6, 6],
+            [7, 7],
+            [8, 8],
+            [9, 9, 9],
+        ], $result);
     }
 }

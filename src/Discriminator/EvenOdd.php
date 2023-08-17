@@ -13,6 +13,9 @@ final class EvenOdd implements Discriminator
         $this->mode = Check::getMode($mode);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function classify($value, $key)
     {
         switch ($this->mode) {
@@ -31,6 +34,9 @@ final class EvenOdd implements Discriminator
         
     }
     
+    /**
+     * @param mixed $value
+     */
     private function check($value): string
     {
         if (\is_int($value)) {

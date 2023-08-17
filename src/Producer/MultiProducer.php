@@ -9,7 +9,7 @@ use FiiSoft\Jackdaw\Producer\Tech\MultiSourcedProducer;
 final class MultiProducer extends BaseProducer implements MultiSourcedProducer
 {
     /** @var Producer[] */
-    protected array $producers = [];
+    private array $producers = [];
     
     public function __construct(Producer ...$producers)
     {
@@ -92,5 +92,18 @@ final class MultiProducer extends BaseProducer implements MultiSourcedProducer
     public function getProducers(): array
     {
         return $this->producers;
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            foreach ($this->producers as $producer) {
+                $producer->destroy();
+            }
+            
+            $this->producers = [];
+            
+            parent::destroy();
+        }
     }
 }

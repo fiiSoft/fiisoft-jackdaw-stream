@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
-final class Concat implements Reducer
+final class Concat extends BaseReducer
 {
     private array $pieces = [];
     private string $separator;
@@ -27,11 +27,6 @@ final class Concat implements Reducer
     public function hasResult(): bool
     {
         return !empty($this->pieces);
-    }
-    
-    public function getResult(): Item
-    {
-        return new Item(0, $this->result());
     }
     
     public function reset(): void

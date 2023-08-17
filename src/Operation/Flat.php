@@ -55,4 +55,13 @@ final class Flat extends BaseOperation
         
         parent::__clone();
     }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->flattener->destroy();
+            
+            parent::destroy();
+        }
+    }
 }

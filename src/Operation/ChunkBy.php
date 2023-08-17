@@ -2,19 +2,16 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
-use FiiSoft\Jackdaw\Discriminator\Discriminators;
-use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Predicate\Predicate;
+use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
 
-final class ChunkBy extends BaseOperation
+final class ChunkBy extends BaseOperation implements Reindexable
 {
     private Discriminator $discriminator;
+    
     private bool $reindex;
     
     /** @var string|int|null */
@@ -22,12 +19,9 @@ final class ChunkBy extends BaseOperation
     
     private array $chunked = [];
     
-    /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|string|int $discriminator
-     */
-    public function __construct($discriminator, bool $reindex = false)
+    public function __construct(Discriminator $discriminator, bool $reindex = false)
     {
-        $this->discriminator = Discriminators::getAdapter($discriminator);
+        $this->discriminator = $discriminator;
         $this->reindex = $reindex;
     }
     
@@ -94,5 +88,20 @@ final class ChunkBy extends BaseOperation
         }
         
         return parent::streamingFinished($signal);
+    }
+    
+    public function isReindexed(): bool
+    {
+        return $this->reindex;
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->previous = null;
+            $this->chunked = [];
+            
+            parent::destroy();
+        }
     }
 }

@@ -5,10 +5,13 @@ namespace FiiSoft\Jackdaw\Producer;
 use FiiSoft\Jackdaw\Internal\ResultApi;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayIteratorAdapter;
+use FiiSoft\Jackdaw\Producer\Adapter\CallableAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\IteratorAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ResultAdapter;
 use FiiSoft\Jackdaw\Producer\Generator\CollatzGenerator;
+use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;
+use FiiSoft\Jackdaw\Producer\Generator\CombinedGeneral;
 use FiiSoft\Jackdaw\Producer\Generator\RandomInt;
 use FiiSoft\Jackdaw\Producer\Generator\RandomString;
 use FiiSoft\Jackdaw\Producer\Generator\RandomUuid;
@@ -21,9 +24,22 @@ use FiiSoft\Jackdaw\Stream;
 final class Producers
 {
     /**
-     * @param array<Stream|Producer|ResultApi|\Traversable|\PDOStatement|resource|array|scalar> $elements
+     * @param array<Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array|scalar> $elements
      */
     public static function from(array $elements): Producer
+    {
+        $producers = self::prepare($elements);
+        
+        return \count($producers) === 1
+            ? self::getAdapter(\reset($producers))
+            : self::multiSourced(...$producers);
+    }
+    
+    /**
+     * @param array<Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array|scalar> $elements
+     * @return Producer[]
+     */
+    public static function prepare(array $elements): array
     {
         $index = 0;
         $mode = 1;
@@ -34,6 +50,7 @@ final class Producers
                 if ($item instanceof \Traversable
                     || $item instanceof ResultApi
                     || $item instanceof Producer
+                    || \is_callable($item)
                 ) {
                     $mode = 1;
                 } elseif ($mode === 1) {
@@ -55,13 +72,11 @@ final class Producers
             }
         }
         
-        return \count($producers) === 1
-            ? self::getAdapter(\reset($producers))
-            : self::multiSourced(...$producers);
+        return $producers;
     }
     
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|resource|array $producer
+     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array $producer
      */
     public static function getAdapter($producer): Producer
     {
@@ -91,6 +106,10 @@ final class Producers
         
         if (\is_resource($producer)) {
             return self::resource($producer);
+        }
+        
+        if (\is_callable($producer)) {
+            return self::fromCallable($producer);
         }
         
         throw new \InvalidArgumentException('Invalid param producer');
@@ -129,6 +148,25 @@ final class Producers
     public static function fromPDOStatement(\PDOStatement $statement, ?int $fetchMode = null): Producer
     {
         return new PDOStatementAdapter($statement, $fetchMode);
+    }
+    
+    /**
+     * @param callable $factory it MUST produce anything iterable with valid keys and values
+     */
+    public static function fromCallable(callable $factory): Producer
+    {
+        return new CallableAdapter($factory);
+    }
+    
+    /**
+     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array $keys
+     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array $values
+     */
+    public static function combinedFrom($keys, $values): Producer
+    {
+        return \is_array($keys) && \is_array($values)
+            ? new CombinedArrays($keys, $values)
+            : new CombinedGeneral($keys, $values);
     }
     
     public static function randomInt(int $min = 1, int $max = \PHP_INT_MAX, int $limit = \PHP_INT_MAX): Producer

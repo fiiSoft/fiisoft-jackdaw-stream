@@ -25,6 +25,9 @@ final class SizeComparator implements Comparator
         return $this->sizeOf($value1) <=> $this->sizeOf($value2) ?: $key1 <=> $key2;
     }
     
+    /**
+     * @param mixed $value
+     */
     private function sizeOf($value): int
     {
         if (\is_array($value)) {

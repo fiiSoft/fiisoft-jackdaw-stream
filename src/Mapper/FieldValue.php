@@ -24,17 +24,21 @@ final class FieldValue extends BaseMapper
     
     public function map($value, $key)
     {
-        if (\is_array($value) || $value instanceof \ArrayAccess) {
-            if (isset($value[$this->field])) {
-                return $value[$this->field];
+        if (\is_array($value)) {
+            if (!\array_key_exists($this->field, $value)) {
+                throw new \RuntimeException('Cannot extract value of field '.$this->field);
             }
-            
-            throw new \RuntimeException('Cannot extract value of field '.$this->field);
+        } elseif ($value instanceof \ArrayAccess) {
+            if (!isset($value[$this->field])) {
+                throw new \RuntimeException('Cannot extract value of field '.$this->field);
+            }
+        } else {
+            throw new \LogicException(
+                'It is impossible to extract field '.$this->field.' from '.Helper::typeOfParam($value)
+            );
         }
-    
-        throw new \LogicException(
-            'It is impossible to extract field '.$this->field.' from '.Helper::typeOfParam($value)
-        );
+        
+        return $value[$this->field];
     }
     
     public function mergeWith(Mapper $other): bool

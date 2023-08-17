@@ -40,6 +40,11 @@ final class Ending implements Operation
         return null;
     }
     
+    public function getPrev(): ?Operation
+    {
+        return $this->prev;
+    }
+    
     public function getLast(): Operation
     {
         return $this->prev ?? $this;
@@ -53,5 +58,10 @@ final class Ending implements Operation
     public function streamingFinished(Signal $signal): bool
     {
         return false;
+    }
+    
+    public function destroy(): void
+    {
+        $this->prev = null;
     }
 }

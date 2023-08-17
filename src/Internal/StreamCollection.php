@@ -2,18 +2,24 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
+use FiiSoft\Jackdaw\Operation\Terminating\GroupBy;
 use FiiSoft\Jackdaw\Stream;
 
-final class StreamCollection implements \Iterator
+final class StreamCollection implements Destroyable, \Iterator
 {
+    private GroupBy $groupBy;
+    
     /** @var ResultItem [] */
     private array $results = [];
     
     private array $dataCollection;
     private array $keys;
+
+    private bool $isDestroying = false;
     
-    public function __construct(array $dataCollection)
+    public function __construct(GroupBy $groupBy, array $dataCollection)
     {
+        $this->groupBy = $groupBy;
         $this->dataCollection = $dataCollection;
         $this->keys = $this->classifiers();
     }
@@ -96,5 +102,22 @@ final class StreamCollection implements \Iterator
     public function rewind(): void
     {
         \reset($this->keys);
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->isDestroying = true;
+            
+            foreach ($this->results as $result) {
+                $result->destroy();
+            }
+            
+            $this->results = [];
+            $this->dataCollection = [];
+            $this->keys = [];
+            
+            $this->groupBy->destroy();
+        }
     }
 }

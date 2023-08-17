@@ -13,6 +13,9 @@ final class InArray implements Predicate
         $this->values = $values;
     }
     
+    /**
+     * @inheritDoc
+     */
     public function isSatisfiedBy($value, $key = null, int $mode = Check::VALUE): bool
     {
         switch ($mode) {

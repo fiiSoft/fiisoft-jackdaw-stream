@@ -2,7 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-final class ToArray extends Internal\BaseMapper
+use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+
+final class ToArray extends BaseMapper
 {
     private bool $appendKey;
     

@@ -14,7 +14,7 @@ final class Tokenize extends BaseOperation
     
     public function __construct(string $tokens)
     {
-        $this->tokenizer = Producers::tokenizer($tokens, '');
+        $this->tokenizer = Producers::tokenizer($tokens);
         $this->tokenizer->keepIndex();
     }
     
@@ -38,5 +38,14 @@ final class Tokenize extends BaseOperation
         $this->tokenizer = clone $this->tokenizer;
         
         parent::__clone();
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->tokenizer->destroy();
+            
+            parent::destroy();
+        }
     }
 }

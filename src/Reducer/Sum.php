@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
-final class Sum implements Reducer
+final class Sum extends BaseReducer
 {
     /** @var float|int */
     private $result = 0;
@@ -32,11 +32,6 @@ final class Sum implements Reducer
     public function hasResult(): bool
     {
         return $this->hasAny;
-    }
-    
-    public function getResult(): Item
-    {
-        return new Item(0, $this->result());
     }
     
     public function reset(): void

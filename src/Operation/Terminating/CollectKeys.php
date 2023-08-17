@@ -63,4 +63,13 @@ final class CollectKeys extends SimpleFinalOperation
         
         return $this->streamingFinished($signal);
     }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->collected = [];
+            
+            parent::destroy();
+        }
+    }
 }

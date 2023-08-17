@@ -2,6 +2,18 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 4.0.0
+
+- removed method chunkAssoc()
+- changed the order of default arguments of several methods (those with $reindex parameter)
+- changed criteria of what arguments for methods groupBy() and fork() are valid
+- changed default behavior of groupBy() method when ByKey discriminator is used - it's now reindexed numerically by default
+- changed methods while() and until() - they work now like conditional limit(). The behaviour of collectWhile(), collectUntil(), gatherWhile() and gatherUntil() has changed, as well as all other methods in combination with while() or until() in the pipeline.
+- significantly changed and fixed how unique() works
+- Discriminators::getAdapter does not accept non-callable string or int as key in array-accessible values 
+- added operations: accumulateUptrends(), accumulateDowntrends(), onlyMaxima(), onlyMinima(), onlyExtrema(), omitReps(), findMax(), dispatch(), classify(), classifyBy(), categorize(), categorizeBy(), putIn(), storeIn(), segregate(), forkBy(), increasingValues(), decreasingValues(), group(), unpackTuple(), zip(), countIn()
+- fixed bugs
+
 ## 3.0.0
 
 Many changes not compatible with the previous version, many bugs fixed. Significant parts of the code have been rewritten and the API changed. Still PHP 7.4

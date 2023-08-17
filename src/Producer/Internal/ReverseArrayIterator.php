@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
 final class ReverseArrayIterator extends CountableProducer
 {
     private array $source;
+
     private bool $reindex;
     
     public function __construct(array $source, bool $reindex = false)
@@ -64,5 +65,10 @@ final class ReverseArrayIterator extends CountableProducer
         }
         
         return new Item($key, $value);
+    }
+    
+    public function destroy(): void
+    {
+        $this->source = [];
     }
 }

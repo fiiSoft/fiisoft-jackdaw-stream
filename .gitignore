@@ -3,3 +3,8 @@
 /vendor
 /var
 /composer.lock
+
+/phpunit.xml
+/phpcs.xml
+/psalm.xml
+/phpstan.neon

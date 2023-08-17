@@ -10,14 +10,13 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\DataCollector;
 use FiiSoft\Jackdaw\Operation\Internal\Limitable;
-use FiiSoft\Jackdaw\Operation\Internal\SortingOperation;
 use FiiSoft\Jackdaw\Operation\State\SortLimited\BufferNotFull;
 use FiiSoft\Jackdaw\Operation\State\SortLimited\SingleItem;
 use FiiSoft\Jackdaw\Operation\State\SortLimited\State;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use FiiSoft\Jackdaw\Producer\Producer;
 
-final class SortLimited extends BaseOperation implements Limitable, SortingOperation, DataCollector
+final class SortLimited extends BaseOperation implements Limitable, DataCollector
 {
     private ?Comparator $comparator = null;
     private State $state;
@@ -47,7 +46,7 @@ final class SortLimited extends BaseOperation implements Limitable, SortingOpera
         $this->limit = $limit;
         $this->reversed = $reversed;
         
-       $this->prepareToWork();
+        $this->prepareToWork();
     }
     
     public function handle(Signal $signal): void
@@ -97,7 +96,6 @@ final class SortLimited extends BaseOperation implements Limitable, SortingOpera
     }
     
     /**
-     * @param bool $reindexed
      * @param Item[] $items
      */
     public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
@@ -309,7 +307,7 @@ final class SortLimited extends BaseOperation implements Limitable, SortingOpera
         }
     }
     
-    public function applyLimit(int $limit): void
+    public function applyLimit(int $limit): bool
     {
         $limit = \min($this->limit, $limit);
         
@@ -321,18 +319,13 @@ final class SortLimited extends BaseOperation implements Limitable, SortingOpera
                 $this->prepareToWork();
             }
         }
+        
+        return true;
     }
     
     public function limit(): int
     {
         return $this->limit;
-    }
-    
-    public function reverseOrder(): void
-    {
-        $this->reversed = !$this->reversed;
-        
-        $this->prepareToWork();
     }
     
     public function transitTo(State $state): void
@@ -345,5 +338,14 @@ final class SortLimited extends BaseOperation implements Limitable, SortingOpera
         parent::__clone();
         
         $this->prepareToWork();
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->state->destroy();
+            
+            parent::destroy();
+        }
     }
 }

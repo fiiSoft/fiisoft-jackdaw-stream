@@ -13,7 +13,7 @@ final class JsonEncode extends BaseMapper
         $this->flags = $flags;
     }
     
-    public function map($value, $key)
+    public function map($value, $key): string
     {
         return \json_encode($value, \JSON_THROW_ON_ERROR | $this->flags);
     }

@@ -13,14 +13,15 @@ final class ResultItem implements ResultApi
     private ?StreamMaker $stream = null;
     
     private bool $found = false;
+    private bool $isDestroying = false;
     
-    /** @var string|int */
-    private $key = null;
+    /** @var string|int|null */
+    private $key;
     
     /** @var mixed */
     private $rawValue = null;
     
-    /** @var mixed */
+    /** @var mixed|null */
     private $finalValue = null;
     
     public static function createFound(Item $item, ?Transformer $transformer = null): self
@@ -46,6 +47,11 @@ final class ResultItem implements ResultApi
         return new self(true, $data, $id);
     }
     
+    /**
+     * @param mixed $value
+     * @param mixed $key
+     * @param mixed $default
+     */
     private function __construct(bool $found, $value, $key, $default = null, ?Transformer $transformer = null)
     {
         $this->key = $key;
@@ -242,5 +248,21 @@ final class ResultItem implements ResultApi
         }
         
         return null;
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->isDestroying = true;
+            
+            $this->finalValue = null;
+            $this->rawValue = null;
+            
+            if ($this->stream !== null) {
+                $temp = $this->stream;
+                $this->stream = null;
+                $temp->destroy();
+            }
+        }
     }
 }

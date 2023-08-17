@@ -27,4 +27,15 @@ final class Reindex extends BaseOperation
     
         $this->next->handle($signal);
     }
+    
+    public function mergeWith(Reindex $other): void
+    {
+        $this->index = $other->index;
+        $this->step = $other->step;
+    }
+    
+    public function isDefaultReindex(): bool
+    {
+        return $this->index === 0 && $this->step === 1;
+    }
 }

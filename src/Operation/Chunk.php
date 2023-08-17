@@ -4,8 +4,9 @@ namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
 
-final class Chunk extends BaseOperation
+final class Chunk extends BaseOperation implements Reindexable
 {
     private int $size;
     private int $count = 0;
@@ -70,5 +71,19 @@ final class Chunk extends BaseOperation
         }
     
         return parent::streamingFinished($signal);
+    }
+    
+    public function isReindexed(): bool
+    {
+        return $this->reindex;
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->chunked = [];
+            
+            parent::destroy();
+        }
     }
 }

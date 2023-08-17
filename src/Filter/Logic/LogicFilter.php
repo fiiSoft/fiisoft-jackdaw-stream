@@ -12,7 +12,7 @@ abstract class LogicFilter implements Filter
     protected array $filters = [];
     
     /**
-     * @param Filter[]|Predicate[]||callable[]|array $filters
+     * @param array<Filter|Predicate|callable|array> $filters
      */
     public function __construct(array $filters)
     {

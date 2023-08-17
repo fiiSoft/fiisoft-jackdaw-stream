@@ -9,7 +9,7 @@ final class Split extends BaseMapper
 {
     private string $separator;
     
-    public function __construct(string $separator = '')
+    public function __construct(string $separator = ' ')
     {
         $this->separator = $separator;
     }

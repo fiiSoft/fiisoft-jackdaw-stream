@@ -28,7 +28,7 @@ final class Trim extends BaseMapper
     public function mergeWith(Mapper $other): bool
     {
         if ($other instanceof self) {
-            $this->chars = \implode(\array_unique(\mb_str_split($this->chars.$other->chars), \SORT_REGULAR));
+            $this->chars = \implode('', \array_unique(\mb_str_split($this->chars.$other->chars), \SORT_REGULAR));
             return true;
         }
         

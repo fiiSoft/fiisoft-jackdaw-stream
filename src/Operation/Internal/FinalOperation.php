@@ -12,7 +12,7 @@ use FiiSoft\Jackdaw\Stream;
 
 abstract class FinalOperation extends StreamPipe implements LastOperation, Operation, ResultProvider, DataCollector
 {
-    use CommonOperationCode;
+    use CommonOperationCode { destroy as commonDestroy; }
     
     private Stream $stream;
     private ?Result $result = null;
@@ -185,5 +185,20 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
     final protected function continueIteration(bool $once = false): bool
     {
         return $this->stream->continueIteration($once);
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->commonDestroy();
+            
+            $this->orElse = null;
+            
+            if ($this->result !== null) {
+                $this->result->destroy();
+            }
+            
+            $this->stream->destroy();
+        }
     }
 }

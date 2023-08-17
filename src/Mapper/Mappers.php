@@ -2,11 +2,14 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
+use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Mapper\Internal\FilterAdapter;
-use FiiSoft\Jackdaw\Mapper\Internal\PredicateAdapter;
-use FiiSoft\Jackdaw\Mapper\Internal\ReducerAdapter;
-use FiiSoft\Jackdaw\Mapper\Internal\RegistryAdapter;
+use FiiSoft\Jackdaw\Mapper\Adapter\DiscriminatorAdapter;
+use FiiSoft\Jackdaw\Mapper\Adapter\FilterAdapter;
+use FiiSoft\Jackdaw\Mapper\Internal\MultiMapper;
+use FiiSoft\Jackdaw\Mapper\Adapter\PredicateAdapter;
+use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
+use FiiSoft\Jackdaw\Mapper\Adapter\RegistryAdapter;
 use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Registry\RegReader;
@@ -14,7 +17,7 @@ use FiiSoft\Jackdaw\Registry\RegReader;
 final class Mappers
 {
     /**
-     * @param Mapper|Reducer|Predicate|Filter|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
      */
     public static function getAdapter($mapper): Mapper
     {
@@ -84,6 +87,14 @@ final class Mappers
             return new RegistryAdapter($mapper);
         }
         
+        if ($mapper instanceof Discriminator) {
+            return new DiscriminatorAdapter($mapper);
+        }
+        
+        if (\is_array($mapper)) {
+            return new MultiMapper($mapper);
+        }
+        
         return self::simple($mapper);
     }
     
@@ -134,16 +145,38 @@ final class Mappers
         return new Concat($separator);
     }
     
+    /**
+     * It works with strings and produces arrays. Internally, it's a wrapper for \explode().
+     */
     public static function split(string $separator = ' '): Mapper
     {
         return new Split($separator);
     }
     
+    /**
+     * It works with strings and produces strings. Internally, it's a wrapper for \str_replace().
+     *
+     * @param array|string $search
+     * @param array|string $replace
+     */
+    public static function replace($search, $replace): Mapper
+    {
+        return new Replace($search, $replace);
+    }
+    
+    /**
+     * It works with arrays, strings and \Traversable objects.
+     * For strings, it mixes order of chars in string using \str_shuffle().
+     * For arrays and traversables, it mixes order of values in array using \shuffle() function.
+     */
     public static function shuffle(): Mapper
     {
         return new Shuffle();
     }
     
+    /**
+     * It works with strings and arrays and reverses order of chars and elements respectively.
+     */
     public static function reverse(): Mapper
     {
         return new Reverse();
@@ -160,7 +193,7 @@ final class Mappers
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
      */
     public static function append($field, $mapper): Mapper
     {
@@ -169,7 +202,7 @@ final class Mappers
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
      */
     public static function complete($field, $mapper): Mapper
     {
@@ -213,7 +246,7 @@ final class Mappers
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
      */
     public static function mapField($field, $mapper): Mapper
     {
@@ -264,5 +297,16 @@ final class Mappers
     public static function readFrom(&$variable): Mapper
     {
         return new Reference($variable);
+    }
+    
+    /**
+     * This is a convenient way to use the \array_column function.
+     *
+     * @param string|int|null $column
+     * @param string|int|null $index
+     */
+    public static function arrayColumn($column, $index = null): Mapper
+    {
+        return self::generic(static fn(array $rows): array => \array_column($rows, $column, $index));
     }
 }

@@ -49,4 +49,9 @@ final class Tokenizer extends NonCountableProducer
     {
         $this->keepIndex = true;
     }
+    
+    public function destroy(): void
+    {
+        $this->string = '';
+    }
 }

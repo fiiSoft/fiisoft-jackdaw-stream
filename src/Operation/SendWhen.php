@@ -10,6 +10,7 @@ use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Predicate\Predicate;
+use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class SendWhen extends BaseOperation
 {
@@ -20,8 +21,8 @@ final class SendWhen extends BaseOperation
     
     /**
      * @param Condition|Predicate|Filter|callable $condition
-     * @param Consumer|callable|resource $consumer
-     * @param Consumer|callable|resource|null $elseConsumer
+     * @param Consumer|Reducer|callable|resource $consumer
+     * @param Consumer|Reducer|callable|resource|null $elseConsumer
      */
     public function __construct($condition, $consumer, $elseConsumer = null)
     {

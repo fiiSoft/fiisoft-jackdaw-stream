@@ -12,9 +12,9 @@ final class IsEmpty extends SimpleFinalOperation
 {
     private bool $isEmpty;
     
-    public function __construct(Stream $stream, bool $initial)
+    public function __construct(Stream $stream, bool $isEmpty)
     {
-        $this->isEmpty = $initial;
+        $this->isEmpty = $isEmpty;
         
         parent::__construct($stream);
     }

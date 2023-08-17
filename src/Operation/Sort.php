@@ -10,12 +10,11 @@ use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\DataCollector;
-use FiiSoft\Jackdaw\Operation\Internal\SortingOperation;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 
-final class Sort extends BaseOperation implements SortingOperation, DataCollector
+final class Sort extends BaseOperation implements DataCollector
 {
     private ?Comparator $comparator = null;
     
@@ -95,7 +94,7 @@ final class Sort extends BaseOperation implements SortingOperation, DataCollecto
                     $items[] = new Item($key, $value);
                 }
                 
-                return $this->acceptCollectedItems($items, $signal, $reindexed);
+                return $this->acceptCollectedItems($items, $signal, false);
             }
         }
         
@@ -117,7 +116,7 @@ final class Sort extends BaseOperation implements SortingOperation, DataCollecto
         if ($this->next instanceof DataCollector) {
             $signal->continueFrom($this->next);
             
-            return $this->next->acceptCollectedItems($items, $signal, $reindexed);
+            return $this->next->acceptCollectedItems($items, $signal, false);
         }
         
         $signal->restartWith(new ForwardItemsIterator($items), $this->next);
@@ -150,5 +149,14 @@ final class Sort extends BaseOperation implements SortingOperation, DataCollecto
         }
         
         return fn($a, $b): int => $this->comparator->compare($a, $b);
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->items = [];
+            
+            parent::destroy();
+        }
     }
 }

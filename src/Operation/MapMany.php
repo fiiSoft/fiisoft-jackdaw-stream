@@ -39,4 +39,14 @@ final class MapMany extends BaseOperation
             $this->mappers[] = $mapper;
         }
     }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->last = null;
+            $this->mappers = [];
+            
+            parent::destroy();
+        }
+    }
 }

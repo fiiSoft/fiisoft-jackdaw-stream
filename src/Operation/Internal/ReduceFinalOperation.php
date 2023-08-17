@@ -70,7 +70,6 @@ abstract class ReduceFinalOperation extends FinalOperation
     }
     
     /**
-     * @param bool $reindexed
      * @param Item[] $items
      */
     final public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
@@ -85,5 +84,14 @@ abstract class ReduceFinalOperation extends FinalOperation
         }
         
         return $this->streamingFinished($signal);
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->reducer->reset();
+            
+            parent::destroy();
+        }
     }
 }

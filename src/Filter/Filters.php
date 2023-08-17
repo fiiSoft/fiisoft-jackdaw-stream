@@ -99,6 +99,9 @@ final class Filters
         return new OnlyIn($values);
     }
     
+    /**
+     * @param mixed $value
+     */
     public static function same($value): Filter
     {
         return new Same($value);
@@ -172,7 +175,6 @@ final class Filters
     
     /**
      * @param array|string|int $keys
-     * @param bool $allowNulls
      */
     public static function onlyWith($keys, bool $allowNulls = false): Filter
     {
@@ -230,5 +232,13 @@ final class Filters
     public static function NOT($filter): Filter
     {
         return new FilterNOT($filter);
+    }
+    
+    /**
+     * @param string|int $field
+     */
+    public static function hasField($field): Filter
+    {
+        return self::generic(static fn($row): bool => \is_array($row) && isset($row[$field]));
     }
 }

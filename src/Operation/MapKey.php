@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
+use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\FieldValue;
@@ -17,7 +18,7 @@ final class MapKey extends BaseOperation
     private Mapper $mapper;
     
     /**
-     * @param Mapper|Reducer|Predicate|Filter|callable|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
      */
     public function __construct($mapper)
     {
@@ -32,8 +33,7 @@ final class MapKey extends BaseOperation
     }
     
     /**
-     * @param MapKey $other
-     * @return bool when mapper from other MapKey has been merged
+     * @return bool return true when mapper from other MapKey has been merged
      */
     public function mergeWith(MapKey $other): bool
     {

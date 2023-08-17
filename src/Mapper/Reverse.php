@@ -3,14 +3,14 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StatelessMapper;
 
-final class Reverse extends BaseMapper
+final class Reverse extends StatelessMapper
 {
     public function map($value, $key)
     {
         if (\is_array($value)) {
-            return \array_reverse($value);
+            return \array_reverse($value, true);
         }
     
         if (\is_string($value)) {

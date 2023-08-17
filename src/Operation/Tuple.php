@@ -7,8 +7,8 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Tuple extends BaseOperation
 {
-    private int $index = 0;
     private bool $assoc;
+    private int $index = 0;
     
     public function __construct(bool $assoc = false)
     {
@@ -26,5 +26,10 @@ final class Tuple extends BaseOperation
         $signal->item->key = $this->index++;
         
         $this->next->handle($signal);
+    }
+    
+    public function isAssoc(): bool
+    {
+        return $this->assoc;
     }
 }

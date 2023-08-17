@@ -32,4 +32,13 @@ final class CollectIn extends BaseOperation
         
         $this->next->handle($signal);
     }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->collector = Collectors::default();
+            
+            parent::destroy();
+        }
+    }
 }

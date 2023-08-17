@@ -31,16 +31,15 @@ final class Length implements Filter
         }
     }
     
+    /**
+     * @param mixed $value
+     */
     private function length($value): int
     {
         if (\is_array($value)) {
             $length = \count($value);
         } elseif (\is_string($value)) {
-            if (\function_exists('mb_strlen')) {
-                $length = \mb_strlen($value);
-            } else {
-                $length = \strlen($value);
-            }
+            $length = \function_exists('mb_strlen') ? \mb_strlen($value) : \strlen($value);
         } else {
             throw new \InvalidArgumentException('Only arrays and strings are supported in Length filter');
         }

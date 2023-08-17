@@ -42,13 +42,9 @@ final class MapKeyValue extends BaseOperation
         
         if (\count($keyValuePair) === 1) {
             $value = \reset($keyValuePair);
+            
             $item->key = \key($keyValuePair);
-    
-            if ($value instanceof Mapper) {
-                $item->value = $value->map($item->value, $item->key);
-            } else {
-                $item->value = $value;
-            }
+            $item->value = $value instanceof Mapper ? $value->map($item->value, $item->key) : $value;
             
             $this->next->handle($signal);
         } else {

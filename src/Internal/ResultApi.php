@@ -3,18 +3,21 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Consumer\Consumer;
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 
-interface ResultApi extends ResultCaster, \Countable
+interface ResultApi extends ResultCaster, Destroyable, \Countable
 {
     public function found(): bool;
     
     public function notFound(): bool;
     
     /**
+     * This method should be called value(), because it returns value!
+     *
      * @return mixed|null
      */
     public function get();
@@ -22,7 +25,7 @@ interface ResultApi extends ResultCaster, \Countable
     /**
      * Register single transformer to perform final opertations on result (when result is available).
      *
-     * @param Transformer|Mapper|Reducer|callable|null $transformer
+     * @param Transformer|Mapper|Reducer|Filter|callable|null $transformer
      */
     public function transform($transformer): ResultApi;
     
@@ -43,7 +46,7 @@ interface ResultApi extends ResultCaster, \Countable
     public function tuple(): array;
     
     /**
-     * @param Consumer|callable|resource $consumer
+     * @param Consumer|Reducer|callable|resource $consumer
      */
     public function call($consumer): void;
     

@@ -11,7 +11,7 @@ final class Reduce extends ReduceFinalOperation
 {
     /**
      * @param Stream $stream
-     * @param Reducer|callable $reducer
+     * @param Reducer|callable|array $reducer
      * @param callable|mixed|null $orElse
      */
     public function __construct(Stream $stream, $reducer, $orElse = null)

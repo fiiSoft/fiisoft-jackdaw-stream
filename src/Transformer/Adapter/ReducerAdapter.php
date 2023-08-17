@@ -22,7 +22,7 @@ final class ReducerAdapter implements Transformer
         if (\is_iterable($value)) {
             $this->reducer->reset();
         
-            foreach ($value as $k => $v) {
+            foreach ($value as $v) {
                 $this->reducer->consume($v);
             }
             

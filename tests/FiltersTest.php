@@ -171,8 +171,8 @@ final class FiltersTest extends TestCase
     
     public function test_GenericFilter_can_call_callable_without_arguments(): void
     {
-        self::assertTrue(Filters::generic(static fn() => true)->isAllowed(1, 1));
-        self::assertFalse(Filters::generic(static fn() => false)->isAllowed(1, 1));
+        self::assertTrue(Filters::generic(static fn(): bool => true)->isAllowed(1, 1));
+        self::assertFalse(Filters::generic(static fn(): bool => false)->isAllowed(1, 1));
     }
     
     public function test_GenericFilter_can_call_callable_with_three_arguments(): void
@@ -181,7 +181,7 @@ final class FiltersTest extends TestCase
         $key = null;
         $mode = null;
         
-        $filter = Filters::generic(static function ($_value, $_key, $_mode) use (&$value, &$key, &$mode) {
+        $filter = Filters::generic(static function ($_value, $_key, $_mode) use (&$value, &$key, &$mode): bool {
             $value = $_value;
             $key = $_key;
             $mode = $_mode;
@@ -200,7 +200,7 @@ final class FiltersTest extends TestCase
         $value = null;
         $key = null;
         
-        $filter = Filters::generic(function ($_value, $_key, $_) use (&$value, &$key) {
+        $filter = Filters::generic(static function ($_value, $_key, $_) use (&$value, &$key): bool {
             $value = $_value;
             $key = $_key;
             return true;
@@ -216,13 +216,13 @@ final class FiltersTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        $filter = Filters::generic(static fn($a, $b, $c, $d) => true);
+        $filter = Filters::generic(static fn($a, $b, $c, $d): bool => true);
         $filter->isAllowed(1, 1);
     }
     
     public function test_GenericFilter_can_compare_key(): void
     {
-        $filter = Filters::generic(static fn($key) => $key === 'a');
+        $filter = Filters::generic(static fn($key): bool => $key === 'a');
         
         self::assertFalse($filter->isAllowed(15, 'a', Check::VALUE));
         self::assertTrue($filter->isAllowed(15, 'a', Check::KEY));
@@ -230,7 +230,7 @@ final class FiltersTest extends TestCase
     
     public function test_GenericFilter_can_compare_value(): void
     {
-        $filter = Filters::generic(static fn($val) => $val === 15);
+        $filter = Filters::generic(static fn($val): bool => $val === 15);
         
         self::assertTrue($filter->isAllowed(15, 'a', Check::VALUE));
         self::assertFalse($filter->isAllowed(15, 'a', Check::KEY));
@@ -238,7 +238,7 @@ final class FiltersTest extends TestCase
     
     public function test_GenericFilter_can_compare_both_value_and_key(): void
     {
-        $filter = Filters::generic(static fn($val) => $val === 'a');
+        $filter = Filters::generic(static fn($val): bool => $val === 'a');
         
         self::assertTrue($filter->isAllowed('a', 'a', Check::BOTH));
         self::assertFalse($filter->isAllowed(15, 'a', Check::BOTH));
@@ -247,7 +247,7 @@ final class FiltersTest extends TestCase
     
     public function test_GenericFilter_can_compare_any_value_or_key(): void
     {
-        $filter = Filters::generic(static fn($val) => $val === 'a');
+        $filter = Filters::generic(static fn($val): bool => $val === 'a');
         
         self::assertTrue($filter->isAllowed('a', 'a', Check::ANY));
         self::assertTrue($filter->isAllowed(15, 'a', Check::ANY));
@@ -259,7 +259,7 @@ final class FiltersTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
     
-        $filter = Filters::generic(static fn($val) => $val === 'a');
+        $filter = Filters::generic(static fn($val): bool => $val === 'a');
         $filter->isAllowed(1, 1, 0);
     }
     
@@ -544,6 +544,7 @@ final class FiltersTest extends TestCase
     public function test_FilterBy_throws_exception_when_field_is_not_present_in_value(): void
     {
         $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Field id does not exist in value');
         
         Filters::filterBy('id', 'is_int')->isAllowed(['name' => 'Joe'], 1);
     }
@@ -1268,5 +1269,16 @@ final class FiltersTest extends TestCase
         $refl->setStaticPropertyValue('instance', null);
         
         self::assertSame(Filters::number(), Filters::number());
+    }
+    
+    public function test_hasField(): void
+    {
+        $hasField = Filters::hasField('foo');
+        
+        self::assertFalse($hasField->isAllowed(15, 0));
+        self::assertFalse($hasField->isAllowed([], 0));
+        
+        self::assertFalse($hasField->isAllowed(['foo' => null], 0));
+        self::assertTrue($hasField->isAllowed(['foo' => 1], 0));
     }
 }

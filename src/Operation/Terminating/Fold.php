@@ -12,7 +12,7 @@ final class Fold extends ReduceFinalOperation
     /**
      * @param Stream $stream
      * @param mixed $initial
-     * @param Reducer|callable $reducer
+     * @param Reducer|callable $reducer Callable accepts two arguments: accumulator and current value
      */
     public function __construct(Stream $stream, $initial, $reducer)
     {

@@ -99,4 +99,11 @@ final class Flattener extends NonCountableProducer
     {
         return $level === 0 ? $this->maxLevel === self::MAX_LEVEL : $level === $this->maxLevel;
     }
+    
+    public function destroy(): void
+    {
+        $this->iterable = [];
+        
+        parent::destroy();
+    }
 }

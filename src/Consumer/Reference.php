@@ -13,7 +13,7 @@ final class Reference implements Consumer
      */
     public function __construct(&$value, &$key)
     {
-        $this->setter = static function ($v, $k) use (&$value, &$key) {
+        $this->setter = static function ($v, $k) use (&$value, &$key): void {
             $value = $v;
             $key = $k;
         };

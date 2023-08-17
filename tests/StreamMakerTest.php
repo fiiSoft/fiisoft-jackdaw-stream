@@ -9,7 +9,7 @@ use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\StreamMaker;
 use PHPUnit\Framework\TestCase;
 
-class StreamMakerTest extends TestCase
+final class StreamMakerTest extends TestCase
 {
     public function test_from_array(): void
     {
@@ -38,7 +38,7 @@ class StreamMakerTest extends TestCase
     
     public function test_from_callable_Stream_factory(): void
     {
-        $stream = StreamMaker::from(static fn() => Stream::from([5, 3, 1]));
+        $stream = StreamMaker::from(static fn(): Stream => Stream::from([5, 3, 1]));
     
         self::assertSame([5, 3, 1], $stream->start()->toArray());
         self::assertSame('5,3,1', $stream->start()->toString());

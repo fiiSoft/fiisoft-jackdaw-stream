@@ -9,8 +9,11 @@ final class RegReader
     private string $name;
     
     /** @var mixed|null */
-    private $orElse = null;
+    private $orElse;
     
+    /**
+     * @param mixed|null $orElse
+     */
     public function __construct(Storage $storage, string $name, $orElse = null)
     {
         $this->storage = $storage;

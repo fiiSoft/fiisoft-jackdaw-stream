@@ -31,17 +31,22 @@ final class MapField extends BaseMapper
      */
     public function map($value, $key)
     {
-        if (\is_array($value) || $value instanceof \ArrayAccess) {
-            if (\array_key_exists($this->field, $value)) {
-                $value[$this->field] = $this->mapper->map($value[$this->field], $key);
-                return $value;
+        if (\is_array($value)) {
+            if (!\array_key_exists($this->field, $value)) {
+                throw new \RuntimeException('Field '.$this->field.' does not exist in value');
             }
-    
-            throw new \RuntimeException('Field '.$this->field.' does not exist in value');
+        } elseif ($value instanceof \ArrayAccess) {
+            if (!isset($value[$this->field])) {
+                throw new \RuntimeException('Field '.$this->field.' does not exist in value');
+            }
+        } else {
+            throw new \LogicException(
+                'Unable to map field '.$this->field.' because value is '.Helper::typeOfParam($value)
+            );
         }
-    
-        throw new \LogicException(
-            'Unable to map field '.$this->field.' because value is '.Helper::typeOfParam($value)
-        );
+        
+        $value[$this->field] = $this->mapper->map($value[$this->field], $key);
+        
+        return $value;
     }
 }

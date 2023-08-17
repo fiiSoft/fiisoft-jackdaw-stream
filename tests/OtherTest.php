@@ -2,8 +2,13 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\GenericComparator;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Operation\Segregate\Bucket;
+use FiiSoft\Jackdaw\Operation\Strategy\Unique\FullAssocChecker;
 use PHPUnit\Framework\TestCase;
 
 final class OtherTest extends TestCase
@@ -234,5 +239,138 @@ final class OtherTest extends TestCase
             // :)
             self::assertSame(1, 'a' <=> 0);
         }
+    }
+    
+    public function test_put_various_values_as_keys_in_array(): void
+    {
+        $arr = [
+            true => 'a',
+            false => 'b',
+            3 => 'c',
+            '15.55' => 'd',
+            18.43 => 'e',
+        ];
+        
+        self::assertSame([
+            1 => 'a',
+            0 => 'b',
+            3 => 'c',
+            '15.55' => 'd',
+            18 => 'e'
+        ], $arr);
+    }
+    
+    public function test_Bucket_can_reindex_keys(): void
+    {
+        $bucket = new Bucket(true);
+        $bucket->add(new Item('a', 'b'));
+        
+        self::assertSame(['b'], $bucket->data);
+    }
+    
+    public function test_remove_elements_from_double_linked_list_of_buckets(): void
+    {
+        //given
+        $second = new Bucket();
+        $second->add(new Item(2, 'b'));
+        
+        $third = $second->append(new Item(3, 'c'));
+        $first = $second->prepend(new Item(1, 'a'));
+        
+        self::assertSame([1 => 'a'], $first->data);
+        self::assertSame([2 => 'b'], $second->data);
+        self::assertSame([3 => 'c'], $third->data);
+        
+        //when
+        $second->clear();
+        
+        //then
+        self::assertEmpty($second->data);
+        
+        //when
+        $first->clear();
+        
+        //then
+        self::assertEmpty($first->data);
+        
+        //when
+        $third->clear();
+        
+        //then
+        self::assertEmpty($third->data);
+    }
+    
+    public function test_usort(): void
+    {
+        $data = ['d', 'c', 'b', 'e', 'a'];
+        \usort($data, static fn(string $a, string $b): int => $a <=> $b);
+        
+        self::assertSame(['a', 'b', 'c', 'd', 'e'], $data);
+    }
+    
+    public function test_working_with_ArrayAccess(): void
+    {
+        $object = new class implements \ArrayAccess {
+            private array $storage = [];
+            
+            public function offsetExists($offset): bool {
+                return \array_key_exists($offset, $this->storage);
+            }
+            
+            public function offsetGet($offset) {
+                return $this->storage[$offset] ?? null;
+            }
+            
+            public function offsetSet($offset, $value): void {
+                $this->storage[$offset] = $value;
+            }
+            
+            public function offsetUnset($offset): void {
+                unset($this->storage[$offset]);
+            }
+        };
+        
+        self::assertFalse(isset($object['foo']));
+        
+        $object['foo'] = 'bar';
+        
+        self::assertTrue(isset($object['foo']));
+        self::assertSame('bar', $object['foo']);
+        
+        $object['bar'] = null;
+        
+        self::assertTrue(isset($object['bar'])); //it depends on implementation
+        self::assertNull($object['bar']);
+    }
+    
+    public function test_working_with_ArrayObject(): void
+    {
+        $object = new \ArrayObject();
+        
+        self::assertFalse(isset($object['foo']));
+        
+        $object['foo'] = 'bar';
+        
+        self::assertTrue(isset($object['foo']));
+        self::assertSame('bar', $object['foo']);
+        
+        $object['bar'] = null;
+        
+        self::assertFalse(isset($object['bar'])); //it depends on implementation
+        self::assertNull($object['bar']);
+    }
+    
+    public function test_FullAssocChecker_throws_exception_when_Comparator_is_invalid(): void
+    {
+        //Assert
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('FullAssocChecker can work only with four-argument callable');
+        
+        //Arrange
+        $comparator = Comparators::getAdapter('is_string');
+        self::assertInstanceOf(GenericComparator::class, $comparator);
+        
+        //Act
+        new FullAssocChecker($comparator);
     }
 }

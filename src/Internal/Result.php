@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
+use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
@@ -9,21 +10,20 @@ use FiiSoft\Jackdaw\Transformer\Transformers;
 final class Result extends StreamPipe implements ResultApi, Executable
 {
     private Stream $stream;
-    private ResultProvider $resultProvider;
+    private FinalOperation $resultProvider;
     private ?ResultItem $resultItem = null;
     private ?Transformer $transformer = null;
     
     private bool $isExecuted = false;
+    private bool $isDestroying = false;
     
     /** @var callable|mixed|null */
     private $orElse;
     
     /**
-     * @param Stream $stream
-     * @param ResultProvider $resultProvider
      * @param callable|mixed|null $orElse
      */
-    public function __construct(Stream $stream, ResultProvider $resultProvider, $orElse = null)
+    public function __construct(Stream $stream, FinalOperation $resultProvider, $orElse = null)
     {
         $this->stream = $stream;
         $this->resultProvider = $resultProvider;
@@ -176,5 +176,38 @@ final class Result extends StreamPipe implements ResultApi, Executable
         }
         
         return $this->resultItem;
+    }
+    
+    protected function prepareSubstream(bool $isLoop): void
+    {
+        $this->stream->prepareSubstream($isLoop);
+    }
+    
+    protected function process(Signal $signal): bool
+    {
+        return $this->stream->process($signal);
+    }
+    
+    protected function continueIteration(bool $once = false): bool
+    {
+        return $this->stream->continueIteration($once);
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->isDestroying = true;
+            
+            $this->orElse = null;
+            $this->transformer = null;
+            
+            $this->stream->destroy();
+            
+            if ($this->resultItem !== null) {
+                $this->resultItem->destroy();
+            }
+            
+            $this->resultProvider->destroy();
+        }
     }
 }

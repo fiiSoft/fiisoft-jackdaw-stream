@@ -4,7 +4,10 @@ namespace FiiSoft\Jackdaw\Operation\Internal;
 
 interface Limitable
 {
-    public function applyLimit(int $limit): void;
+    /**
+     * @return bool returns true when limit is applied, otherwise returns false
+     */
+    public function applyLimit(int $limit): bool;
     
     public function limit(): int;
 }

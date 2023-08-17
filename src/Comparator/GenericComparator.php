@@ -17,9 +17,7 @@ final class GenericComparator implements Comparator
         
         if ($this->numOfArgs === 1) {
             $this->numOfArgs = 2;
-            $this->comparator = static function ($first, $second) use ($comparator) {
-                return $comparator($first) <=> $comparator($second);
-            };
+            $this->comparator = static fn($first, $second): int => $comparator($first) <=> $comparator($second);
         } elseif ($this->numOfArgs === 2 || $this->numOfArgs === 4) {
             $this->comparator = $comparator;
         } else {
@@ -46,5 +44,15 @@ final class GenericComparator implements Comparator
         }
         
         return $compare($value1, $value2, $key1, $key2);
+    }
+    
+    public function isFullAssoc(): bool
+    {
+        return $this->numOfArgs === 4;
+    }
+    
+    public function comparator(): callable
+    {
+        return $this->comparator;
     }
 }

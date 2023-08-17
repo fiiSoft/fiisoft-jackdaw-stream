@@ -2,6 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Comparator;
 
+use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueAscKeyDescComparator;
+use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueDescKeyAscComparator;
+
 final class Comparators
 {
     /**
@@ -62,5 +65,23 @@ final class Comparators
     public static function multi(...$comparators): MultiComparator
     {
         return new MultiComparator(...$comparators);
+    }
+    
+    /**
+     * @param Comparator|callable|null $valueComparator
+     * @param Comparator|callable|null $keyComparator
+     */
+    public static function valueAscKeyDesc($valueComparator = null, $keyComparator = null): Comparator
+    {
+        return new ValueAscKeyDescComparator($valueComparator, $keyComparator);
+    }
+    
+    /**
+     * @param Comparator|callable|null $valueComparator
+     * @param Comparator|callable|null $keyComparator
+     */
+    public static function valueDescKeyAsc($valueComparator = null, $keyComparator = null): Comparator
+    {
+        return new ValueDescKeyAscComparator($valueComparator, $keyComparator);
     }
 }

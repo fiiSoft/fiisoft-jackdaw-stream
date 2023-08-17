@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\DataCollector;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseArrayIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
+use FiiSoft\Jackdaw\Producer\Internal\ReverseNumericalArrayIterator;
 use FiiSoft\Jackdaw\Producer\Producer;
 
 final class Reverse extends BaseOperation implements DataCollector
@@ -56,7 +57,11 @@ final class Reverse extends BaseOperation implements DataCollector
             return $this->streamingFinished($signal);
         }
         
-        $producer = new ReverseArrayIterator($data);
+        if ($reindexed) {
+            $producer = new ReverseNumericalArrayIterator($data);
+        } else {
+            $producer = new ReverseArrayIterator($data);
+        }
         
         if ($this->next instanceof DataCollector) {
             $signal->continueFrom($this->next);
@@ -70,7 +75,6 @@ final class Reverse extends BaseOperation implements DataCollector
     }
     
     /**
-     * @param bool $reindexed
      * @param Item[] $items
      */
     public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
@@ -90,5 +94,14 @@ final class Reverse extends BaseOperation implements DataCollector
         $signal->restartWith($producer, $this->next);
         
         return true;
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->items = [];
+            
+            parent::destroy();
+        }
     }
 }

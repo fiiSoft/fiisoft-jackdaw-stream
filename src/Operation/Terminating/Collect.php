@@ -4,11 +4,12 @@ namespace FiiSoft\Jackdaw\Operation\Terminating;
 
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
 use FiiSoft\Jackdaw\Operation\Internal\SimpleFinalOperation;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Stream;
 
-final class Collect extends SimpleFinalOperation
+final class Collect extends SimpleFinalOperation implements Reindexable
 {
     private array $collected = [];
     
@@ -59,11 +60,7 @@ final class Collect extends SimpleFinalOperation
     
     public function acceptSimpleData(array $data, Signal $signal, bool $reindexed): bool
     {
-        if ($reindexed || !$this->reindex) {
-            $this->collected = $data;
-        } else {
-            $this->collected = \array_values($data);
-        }
+        $this->collected = $reindexed || !$this->reindex ? $data : \array_values($data);
         
         if (!empty($data)) {
             $last = \array_key_last($data);
@@ -76,8 +73,6 @@ final class Collect extends SimpleFinalOperation
     
     /**
      * @param Item[] $items
-     * @param Signal $signal
-     * @param bool $reindexed
      */
     public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
     {
@@ -97,5 +92,19 @@ final class Collect extends SimpleFinalOperation
         }
         
         return $this->streamingFinished($signal);
+    }
+    
+    public function isReindexed(): bool
+    {
+        return $this->reindex;
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->collected = [];
+            
+            parent::destroy();
+        }
     }
 }

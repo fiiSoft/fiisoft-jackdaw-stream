@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
-final class Longest implements Reducer
+final class Longest extends BaseReducer
 {
     private ?string $result = null;
     private int $length = 0;
@@ -37,11 +37,6 @@ final class Longest implements Reducer
     public function hasResult(): bool
     {
         return $this->result !== null;
-    }
-    
-    public function getResult(): Item
-    {
-        return new Item(0, $this->result());
     }
     
     public function reset(): void

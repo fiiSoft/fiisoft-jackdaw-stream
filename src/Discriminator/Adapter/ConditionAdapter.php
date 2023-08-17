@@ -17,7 +17,7 @@ final class ConditionAdapter implements Discriminator
     /**
      * @inheritDoc
      */
-    public function classify($value, $key)
+    public function classify($value, $key): bool
     {
         return $this->condition->isTrueFor($value, $key);
     }

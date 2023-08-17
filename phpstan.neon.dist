@@ -1,0 +1,21 @@
+parameters:
+    checkMissingIterableValueType: false
+    treatPhpDocTypesAsCertain: false
+    checkGenericClassInNonGenericObjectType: false
+    ignoreErrors:
+        - '#Call to protected method*#'
+        -
+            message: '#Parameter \#1 \$stream of class FiiSoft\\Jackdaw\\Operation\\Internal\\Feed constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
+            path: 'src/Stream.php'
+        -
+            message: '#Parameter \#1 ...\$streams of class FiiSoft\\Jackdaw\\Operation\\Internal\\FeedMany constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
+            path: 'src/Stream.php'
+        -
+            message: '#Property FiiSoft\\Jackdaw\\Operation\\StoreIn::\$buffer is never read, only written.#'
+            path: 'src/Operation/StoreIn.php'
+        -
+            message: '#Parameter \#4 \$length of function substr_compare expects int, null given.#'
+            path: 'src/Comparator/FieldsComparator.php'
+        -
+            message: '#Property FiiSoft\\Jackdaw\\Collector\\Adapter\\ArrayAccessAdapter::\$buffer is never read, only written.#'
+            path: 'src/Collector/Adapter/ArrayAccessAdapter.php'

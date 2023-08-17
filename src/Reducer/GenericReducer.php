@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Reducer;
 
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
-final class GenericReducer implements Reducer
+final class GenericReducer extends BaseReducer
 {
     /** @var callable */
     private $reducer;
@@ -16,6 +16,9 @@ final class GenericReducer implements Reducer
     private bool $isFirst = true;
     private bool $hasAny = false;
     
+    /**
+     * @param callable $reducer This accepts two arguments: accumulator and current value
+     */
     public function __construct(callable $reducer)
     {
         $this->reducer = $reducer;
@@ -49,11 +52,6 @@ final class GenericReducer implements Reducer
     public function hasResult(): bool
     {
         return $this->hasAny;
-    }
-    
-    public function getResult(): Item
-    {
-        return new Item(0, $this->result());
     }
     
     public function reset(): void

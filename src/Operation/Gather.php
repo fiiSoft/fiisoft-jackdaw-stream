@@ -6,10 +6,11 @@ use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\DataCollector;
+use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 
-final class Gather extends BaseOperation implements DataCollector
+final class Gather extends BaseOperation implements DataCollector, Reindexable
 {
     private array $data = [];
     private bool $reindex;
@@ -37,7 +38,7 @@ final class Gather extends BaseOperation implements DataCollector
         if ($this->next instanceof DataCollector) {
             $signal->continueFrom($this->next);
             
-            return $this->next->acceptSimpleData([$this->data], $signal, $this->reindex);
+            return $this->next->acceptSimpleData([$this->data], $signal, true);
         }
         
         $signal->restartWith(Producers::fromArray([$this->data]), $this->next);
@@ -79,18 +80,13 @@ final class Gather extends BaseOperation implements DataCollector
             $signal->item->key = $last;
             $signal->item->value = $data[$last];
         }
-
-        if ($reindexed || !$this->reindex) {
-            $this->data = $data;
-        } else {
-            $this->data = \array_values($data);
-        }
+        
+        $this->data = $reindexed || !$this->reindex ? $data : \array_values($data);
         
         return $this->streamingFinished($signal);
     }
 
     /**
-     * @param bool $reindexed
      * @param Item[] $items
      */
     public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
@@ -112,5 +108,14 @@ final class Gather extends BaseOperation implements DataCollector
         }
         
         return $this->streamingFinished($signal);
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->data = [];
+            
+            parent::destroy();
+        }
     }
 }

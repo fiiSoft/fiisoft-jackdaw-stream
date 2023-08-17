@@ -17,7 +17,7 @@ final class FilterAdapter implements Discriminator
         $this->mode = Check::getMode($mode);
     }
     
-    public function classify($value, $key)
+    public function classify($value, $key): bool
     {
         return $this->filter->isAllowed($value, $key, $this->mode);
     }

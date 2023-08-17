@@ -9,6 +9,9 @@ final class Same implements Filter
     /** @var mixed */
     private $value;
     
+    /**
+     * @param mixed $value
+     */
     public function __construct($value)
     {
         $this->value = $value;

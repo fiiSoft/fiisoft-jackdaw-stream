@@ -34,7 +34,7 @@ final class MoveTo extends BaseMapper
         }
     }
     
-    public function map($value, $key)
+    public function map($value, $key): array
     {
         if ($this->key === null) {
             return [$this->field => $value];

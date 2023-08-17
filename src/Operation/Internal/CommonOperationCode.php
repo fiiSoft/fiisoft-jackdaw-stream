@@ -3,14 +3,13 @@
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Operation\Reverse;
-use FiiSoft\Jackdaw\Operation\Shuffle;
-use FiiSoft\Jackdaw\Operation\Unique;
 
 trait CommonOperationCode
 {
     protected ?Operation $next = null;
     protected ?Operation $prev = null;
+    
+    protected bool $isDestroying = false;
     
     final public function setNext(Operation $next, bool $direct = false): Operation
     {
@@ -32,16 +31,8 @@ trait CommonOperationCode
     final public function prepend(Operation $operation): void
     {
         if ($this->prev !== null) {
-            if ($this->prev instanceof Shuffle
-                || $this->prev instanceof Reverse
-                || $this->prev instanceof Unique
-                || $this->prev instanceof SortingOperation
-            ) {
-                $this->prev->prepend($operation);
-            } else {
-                $this->prev->setNext($operation, true);
-                $operation->setNext($this);
-            }
+            $this->prev->setNext($operation, true);
+            $operation->setNext($this);
         }
     }
     
@@ -56,8 +47,30 @@ trait CommonOperationCode
         return $this->next;
     }
     
+    final public function getPrev(): ?Operation
+    {
+        return $this->prev;
+    }
+    
     final public function getLast(): Operation
     {
         return $this->next !== null ? $this->next->getLast() : $this;
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->isDestroying = true;
+            
+            if ($this->next !== null) {
+                $this->next->destroy();
+                $this->next = null;
+            }
+            
+            if ($this->prev !== null) {
+                $this->prev->destroy();
+                $this->prev = null;
+            }
+        }
     }
 }

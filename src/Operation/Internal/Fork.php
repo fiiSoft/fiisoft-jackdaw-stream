@@ -23,7 +23,7 @@ final class Fork extends StreamCollaborator
     private array $streams = [];
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|string|int $discriminator
+     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
      */
     public function __construct($discriminator, ForkCollaborator $prototype)
     {
@@ -59,11 +59,27 @@ final class Fork extends StreamCollaborator
         $this->streams = [];
         
         if ($this->next instanceof DataCollector) {
+            $signal->continueFrom($this->next);
+            
             return $this->next->acceptSimpleData($data, $signal, false);
         }
         
         $signal->restartWith(Producers::fromArray($data), $this->next);
         
         return true;
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $temp = $this->streams;
+            $this->streams = [];
+            
+            foreach ($temp as $stream) {
+                $stream->destroy();
+            }
+            
+            parent::destroy();
+        }
     }
 }

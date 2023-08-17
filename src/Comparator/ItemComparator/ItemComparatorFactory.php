@@ -45,7 +45,7 @@ final class ItemComparatorFactory
             //@codeCoverageIgnoreStart
             default:
                 throw new \UnexpectedValueException('Unknown choice in ItemComparatorFactory: '.$choice);
-            // @codeCoverageIgnoreEnd
+            //@codeCoverageIgnoreEnd
         }
     }
 }

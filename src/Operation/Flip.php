@@ -7,13 +7,14 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Flip extends BaseOperation
 {
+    /** @var mixed|null */
+    private $key;
+    
     public function handle(Signal $signal): void
     {
-        $item = $signal->item;
-        
-        $key = $item->key;
-        $item->key = $item->value;
-        $item->value = $key;
+        $this->key = $signal->item->key;
+        $signal->item->key = $signal->item->value;
+        $signal->item->value = $this->key;
     
         $this->next->handle($signal);
     }

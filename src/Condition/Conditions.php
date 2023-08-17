@@ -54,8 +54,6 @@ final class Conditions
      */
     public static function keyEquals($condition): Condition
     {
-        return self::generic(static function ($_, $key) use ($condition) {
-            return $key === $condition;
-        });
+        return self::generic(static fn($_, $key): bool => $key === $condition);
     }
 }

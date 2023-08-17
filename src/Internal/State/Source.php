@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Internal\State;
 
 use FiiSoft\Jackdaw\Internal\Collaborator;
+use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Pipe;
 use FiiSoft\Jackdaw\Internal\ResultApi;
@@ -14,7 +15,7 @@ use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Stream;
 
-abstract class Source extends Collaborator
+abstract class Source extends Collaborator implements Destroyable
 {
     protected \Generator $currentSource;
     protected Producer $producer;
@@ -24,6 +25,7 @@ abstract class Source extends Collaborator
     protected Pipe $pipe;
     
     protected bool $isLoop;
+    private bool $isDestroying = false;
     
     public function __construct(
         bool $isLoop,
@@ -42,7 +44,7 @@ abstract class Source extends Collaborator
     }
     
     /**
-     * @param Stream[]|Producer[]|ResultApi[]|\Iterator[]|\PDOStatement[]|resource[]|array $producers
+     * @param array<Stream|Producer|ResultApi|\Iterator|\PDOStatement|callable|resource|array> $producers
      */
     final public function addProducers(array $producers): void
     {
@@ -146,5 +148,15 @@ abstract class Source extends Collaborator
         $this->stream->setSource(new SourceNotReady(
             $this->isLoop, $this->stream, $producer, $this->signal, $this->pipe, $this->stack
         ));
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->isDestroying = true;
+            
+            $this->producer->destroy();
+            $this->stack->destroy();
+        }
     }
 }

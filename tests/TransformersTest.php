@@ -2,11 +2,14 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Transformer\Adapter\MapperAdapter;
+use FiiSoft\Jackdaw\Transformer\Adapter\PhpSortingFunctionAdapter;
 use FiiSoft\Jackdaw\Transformer\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Transformer\GenericTransformer;
+use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
 use PHPUnit\Framework\TestCase;
 
@@ -56,10 +59,29 @@ final class TransformersTest extends TestCase
         self::assertSame('5', Transformers::getAdapter(Mappers::toString())->transform(5, 3));
     }
     
-    public function test_ReducerAdapter_with_iterable_value(): void
+    /**
+     * @dataProvider getDataForTestReducerAdapterWithIterableValue
+     */
+    public function test_ReducerAdapter_with_iterable_value(Transformer $transformer, $expected): void
     {
-        $transformer = Transformers::getAdapter(Reducers::sum());
-        self::assertSame(6, $transformer->transform([1, 2, 3], 'a'));
+        self::assertSame($expected, $transformer->transform([1, 2, 3], 'a'));
+    }
+    
+    public function getDataForTestReducerAdapterWithIterableValue(): array
+    {
+        $sum = Transformers::getAdapter(Reducers::sum());
+        $min = Transformers::getAdapter(Reducers::min());
+        $max = Transformers::getAdapter(Reducers::max());
+        $minMax = Transformers::getAdapter(Reducers::minMax());
+        $average = Transformers::getAdapter(Reducers::average());
+        
+        return [
+            [$sum, 6],
+            [$min, 1],
+            [$max, 3],
+            [$minMax, ['min' => 1, 'max' => 3]],
+            [$average, 2],
+        ];
     }
     
     public function test_ReducerAdapter_throws_exception_when_value_to_transform_is_not_iterable(): void
@@ -68,5 +90,22 @@ final class TransformersTest extends TestCase
         $this->expectExceptionMessage('Param value must be iterable');
         
         Transformers::getAdapter(Reducers::sum())->transform('a', 5);
+    }
+    
+    public function test_FilterAdapter_throws_exception_when_value_to_transform_is_not_iterable(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Param value must be iterable');
+        
+        Transformers::getAdapter(Filters::greaterThan(1))->transform('a', 5);
+    }
+    
+    public function test_PhpSortingFunctionAdapter_throws_exception_when_value_to_transform_is_not_iterable(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Only arrays can be sorted');
+        
+        $transformer = new PhpSortingFunctionAdapter('sort');
+        $transformer->transform('a', 1);
     }
 }

@@ -12,7 +12,7 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\SignalHandler;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StatelessMapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Internal\LastOperation;
 use FiiSoft\Jackdaw\Predicate\Predicates;
@@ -336,7 +336,7 @@ final class StreamTest extends TestCase
     
     public function test_map_can_accept_Mapper_isntance(): void
     {
-        $mapper = new class extends BaseMapper {
+        $mapper = new class extends StatelessMapper {
             public function map($value, $key) {
                 return 2 * $value;
             }
@@ -483,18 +483,45 @@ final class StreamTest extends TestCase
     
     public function test_unique_any(): void
     {
-        $inputData = [0 => 'a', 1 => 3, 'b' => 2, 2 => 'a', 3 => 'b', 4 => 'b', 5 => true, 6 => true];
-        $actual = Stream::from($inputData)->unique(null, Check::ANY)->toArrayAssoc();
+        //given
+        $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   2,    'c'];
+        $values = ['a', 3,  2, 'a', 'b', 'b', true, true, 'a'];
+        self::assertCount(\count($values), $keys);
         
-        self::assertSame([0 => 'a', 1 => 3, 'b' => 2, 4 => 'b', 5 => true, 6 => true], $actual);
+        $producer = static function () use ($values, $keys) {
+            for ($i = 0, $j = \count($values); $i < $j; ++$i) {
+                yield $keys[$i] => $values[$i];
+            }
+        };
+        
+        //when
+        $actual = Stream::from($producer)
+            ->unique(null, Check::ANY)
+            ->makeTuple()
+            ->toArray();
+        
+        //then
+        self::assertSame([
+            [0, 'a'], ['b', 3], [2, 2], [1, 'a'], ['a', 'b'], ['b', true], ['c', 'a']
+        ], $actual);
     }
     
     public function test_unique_both(): void
     {
-        $inputData = [0 => 'a', 1 => 'a', 'b' => 1, 2 => 'a', 3 => 'c', 4 => 'b'];
-        $actual = Stream::from($inputData)->unique(null, Check::BOTH)->toArrayAssoc();
+        //given
+        $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   2,    'c'];
+        $values = ['a', 3,  2, 'a', 'b', 'b', true, true, 'a'];
         
-        self::assertSame([0 => 'a', 'b' => 1, 3 => 'c'], $actual);
+        //when
+        $actual = Stream::from(Producers::combinedFrom($keys, $values))
+            ->unique(null, Check::BOTH)
+            ->makeTuple()
+            ->toArray();
+        
+        //then
+        self::assertSame([
+            [0, 'a'], ['b', 3], [2, 2], ['a', 'b'],
+        ], $actual);
     }
     
     public function test_sort_values(): void
@@ -842,7 +869,7 @@ final class StreamTest extends TestCase
             ['g' => 7, 'h' => 8],
         ];
         
-        self::assertSame($expected, Stream::from($inputData)->chunkAssoc(3)->toArray());
+        self::assertSame($expected, Stream::from($inputData)->chunk(3)->toArray());
     }
     
     public function test_scan(): void
@@ -862,15 +889,17 @@ final class StreamTest extends TestCase
         $stream = StreamMaker::from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
         
         self::assertSame(
-            [0, 1, 3, 6, 10],
-            $stream->start()->while(Filters::lessOrEqual(4), Check::KEY)
+            [0, 1, 3, 6, 10, 15],
+            $stream->start()
+                ->while(Filters::lessOrEqual(4), Check::KEY)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
         
         self::assertSame(
-            [0, 1, 3, 6, 10],
-            $stream->start()->while(Filters::lessOrEqual(5), Check::VALUE)
+            [0, 1, 3, 6, 10, 15],
+            $stream->start()
+                ->while(Filters::lessOrEqual(5), Check::VALUE)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
@@ -881,15 +910,17 @@ final class StreamTest extends TestCase
         $stream = StreamMaker::from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     
         self::assertSame(
-            [0, 1, 3, 6, 10],
-            $stream->start()->until(Filters::greaterThan(4), Check::KEY)
+            [0, 1, 3, 6, 10, 15],
+            $stream->start()
+                ->until(Filters::greaterThan(4), Check::KEY)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
     
         self::assertSame(
-            [0, 1, 3, 6, 10],
-            $stream->start()->until(Filters::greaterThan(5), Check::VALUE)
+            [0, 1, 3, 6, 10, 15],
+            $stream->start()
+                ->until(Filters::greaterThan(5), Check::VALUE)
                 ->scan(0, Reducers::sum())
                 ->toArray()
         );
@@ -939,7 +970,8 @@ final class StreamTest extends TestCase
     
         self::assertSame(
             [0, 1, 3, 6, 10],
-            $stream->start()->scan(0, Reducers::sum())
+            $stream->start()
+                ->scan(0, Reducers::sum())
                 ->limit(5)
                 ->toArray()
         );
@@ -1137,29 +1169,23 @@ final class StreamTest extends TestCase
     
     public function test_while(): void
     {
-        $count = 0;
-        $counter = function () use (&$count) {
-            ++$count;
-        };
-        
         Stream::of('a', 'v', 3, 'z')
+            ->call($before = Consumers::counter())
             ->while('is_string')
-            ->call($counter)
+            ->call($after = Consumers::counter())
             ->run();
         
-        self::assertSame(2, $count);
+        self::assertSame(3, $before->count());
+        self::assertSame(2, $after->count());
     }
     
     public function test_until(): void
     {
         $count = 0;
-        $counter = function () use (&$count) {
-            ++$count;
-        };
     
         Stream::of('a', 'v', 3, 'z')
             ->until('is_int')
-            ->call($counter)
+            ->countIn($count)
             ->run();
     
         self::assertSame(2, $count);
@@ -1320,7 +1346,9 @@ final class StreamTest extends TestCase
     
     public function test_feed_operation(): void
     {
-        $collector = Stream::of(['a', 'b'], Producers::sequentialInt(10, -1, 2))
+        $sdata = ['a', 'b'];
+        
+        $collector = Stream::of($sdata, Producers::sequentialInt(10, -1, 2))
             ->join(['foo', 'bar'])
             ->join(Producers::tokenizer(' ', 'the quick'))
             ->collect(true);
@@ -1380,7 +1408,7 @@ final class StreamTest extends TestCase
         $given = ['a','b','a','c','d','n','a'];
         $expected = ['a','b','c','d','n'];
         
-        $comparator = static fn(string $first, string $second) => $first <=> $second;
+        $comparator = static fn(string $first, string $second): int => $first <=> $second;
         $actual = Stream::from($given)->unique($comparator)->toArray();
         
         self::assertSame($expected, $actual);
@@ -1391,7 +1419,7 @@ final class StreamTest extends TestCase
         $given = [['a' => 1],['b' => 2],['a' => 3],['c' => 4],['d' => 5],['n' => 6],['a' => 7]];
         $expected = ['a','b','c','d','n'];
         
-        $comparator = static fn(string $first, string $second) => $first <=> $second;
+        $comparator = static fn(string $first, string $second): int => $first <=> $second;
         $actual = Stream::from($given)->flat()->unique($comparator, Check::KEY)->flip()->toArray();
         
         self::assertSame($expected, $actual);
@@ -1402,7 +1430,7 @@ final class StreamTest extends TestCase
         $given = [['a' => 1],['b' => 2],['a' => 3],['c' => 2],['d' => 5],['n' => 1],['o' => 2]];
         $expected = ['a' => 1, 'b' => 2, 'd' => 5];
     
-        $comparator = static function ($v1, $v2, $k1, $k2) {
+        $comparator = static function ($v1, $v2, $k1, $k2): int {
             return ($v1 <=> $v2) === 0
                 || ($k1 <=> $k2) === 0
                 || ($v1 <=> $k2) === 0
@@ -1418,7 +1446,7 @@ final class StreamTest extends TestCase
         $given = [['a' => 1],['b' => 2],['a' => 3],['c' => 'c'],['d' => 5],['n' => 1],['o' => 2]];
         $expected = ['a' => 3, 'b' => 2, 'c' => 'c', 'd' => 5, 'n' => 1, 'o' => 2];
     
-        $comparator = static fn($v1, $v2) => $v1 <=> $v2;
+        $comparator = static fn($v1, $v2): int => $v1 <=> $v2;
         $actual = Stream::from($given)->flat()->unique($comparator, Check::ANY)->toArrayAssoc();
         
         self::assertSame($expected, $actual);
@@ -1560,7 +1588,7 @@ final class StreamTest extends TestCase
     public function test_append(): void
     {
         $stream = Stream::from([4, 3])
-            ->mapKey('value')
+            ->mapKey(Mappers::simple('value'))
             ->append('double', static fn(int $v) => 2 * $v);
     
         self::assertSame([
@@ -2146,7 +2174,7 @@ final class StreamTest extends TestCase
         
         self::assertSame(20, $result->get());
         
-        $result->transform(static fn(int $sum): int => $sum / 2);
+        $result->transform(static fn(int $sum) => $sum / 2);
         
         self::assertSame(5, $result->get());
     }
@@ -2389,7 +2417,7 @@ final class StreamTest extends TestCase
     {
         $stream = Stream::of(1, 3, Producers::sequentialInt(4, 1, 1))
             ->collectIn($collector = Collectors::default(), true)
-            ->map(static fn($n) => $n * 2)
+            ->map(static fn($n): int => $n * 2)
             ->lessThan(10)
             ->loop();
 
@@ -2799,11 +2827,13 @@ final class StreamTest extends TestCase
     
     public function test_mapWhen_with_value_as_mapper_has_no_effect(): void
     {
-        $result = Stream::from(['a', 'b'])
+        $data = ['foo', 'bar'];
+        
+        $result = Stream::from($data)
             ->mapWhen('is_string', Mappers::value(), Mappers::value())
             ->toArray();
         
-        self::assertSame(['a', 'b'], $result);
+        self::assertSame($data, $result);
     }
     
     public function test_mapFieldWhen_with_value_as_mapper_has_no_effect(): void

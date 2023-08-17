@@ -10,27 +10,34 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Pipe;
+use FiiSoft\Jackdaw\Internal\ResultItem;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Aggregate;
 use FiiSoft\Jackdaw\Operation\Chunk;
+use FiiSoft\Jackdaw\Operation\Classify;
 use FiiSoft\Jackdaw\Operation\CollectIn;
 use FiiSoft\Jackdaw\Operation\Flat;
+use FiiSoft\Jackdaw\Operation\Internal\Dispatch;
+use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\Handlers;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\FeedMany;
 use FiiSoft\Jackdaw\Operation\Internal\Fork;
 use FiiSoft\Jackdaw\Operation\Internal\Initial;
+use FiiSoft\Jackdaw\Operation\Limit;
 use FiiSoft\Jackdaw\Operation\MapFieldWhen;
 use FiiSoft\Jackdaw\Operation\MapKey;
 use FiiSoft\Jackdaw\Operation\MapKeyValue;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Reverse;
+use FiiSoft\Jackdaw\Operation\Segregate;
 use FiiSoft\Jackdaw\Operation\SendTo;
 use FiiSoft\Jackdaw\Operation\SendToMax;
 use FiiSoft\Jackdaw\Operation\Sort;
 use FiiSoft\Jackdaw\Operation\SortLimited;
 use FiiSoft\Jackdaw\Operation\State\SortLimited\BufferFull;
 use FiiSoft\Jackdaw\Operation\State\SortLimited\SingleItem;
+use FiiSoft\Jackdaw\Operation\StoreIn;
 use FiiSoft\Jackdaw\Operation\Tail;
 use FiiSoft\Jackdaw\Operation\Terminating\Collect;
 use FiiSoft\Jackdaw\Operation\Terminating\CollectKeys;
@@ -111,6 +118,17 @@ final class OperationsTest extends TestCase
         $this->expectExceptionMessage('Invalid param field');
         
         new MapFieldWhen('', 'is_string', 'strtolower');
+    }
+    
+    public function test_MapFieldWhen_throws_exception_when_field_is_not_in_ArrayAccess_object(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Field foo does not exist in value');
+        
+        Stream::from([['bar' => 1]])
+            ->map(static fn(array $row): \ArrayObject => new \ArrayObject($row))
+            ->mapFieldWhen('foo', 'is_string', 'strtoupper')
+            ->run();
     }
     
     public function test_SortLimited_throws_exception_when_param_limit_is_invalid(): void
@@ -204,7 +222,7 @@ final class OperationsTest extends TestCase
         $flag = false;
         $initial = new Initial();
         
-        $initial->setNext(new SendTo(static function () use (&$flag) {
+        $initial->setNext(new SendTo(static function () use (&$flag): void {
             $flag = true;
         }));
         
@@ -228,7 +246,7 @@ final class OperationsTest extends TestCase
         $chunk = new Chunk(5, true);
         
         $initial->setNext($chunk);
-        $chunk->setNext(new SendTo(static function ($value, $key) use (&$passedData) {
+        $chunk->setNext(new SendTo(static function ($value, $key) use (&$passedData): void {
             $passedData[$key] = $value;
         }));
         
@@ -312,9 +330,7 @@ final class OperationsTest extends TestCase
     {
         $mappers = [
             static fn(): bool => true,
-            static function (): string {
-                return 'wrong';
-            },
+            static fn(): string => 'wrong',
             static fn() => [],
             static function () {
                 return [];
@@ -1076,6 +1092,22 @@ final class OperationsTest extends TestCase
         ];
     }
     
+    public function test_Reverse_acceptSimpleData_reindexed(): void
+    {
+        //given
+        [$stream, $pipe, $signal] = $this->prepare();
+        
+        $reverse = new Reverse();
+        $collect = new Collect($stream);
+        $this->addToPipe($pipe, $reverse, $collect);
+        
+        //when
+        $reverse->acceptSimpleData(['a', 'b', 'c'], $signal, true);
+        
+        //then
+        self::assertSame([2 => 'c', 1 => 'b', 0 => 'a'], $collect->get());
+    }
+    
     public function test_Reverse_acceptSimpleData_with_not_DataCollector_next_in_chain(): void
     {
         //given
@@ -1264,7 +1296,7 @@ final class OperationsTest extends TestCase
         $this->expectExceptionMessage('Value returned from discriminator is inappropriate (got array)');
         
         //Arrange
-        $groupBy = new GroupBy(static fn($v) => [$v]);
+        $groupBy = new GroupBy(static fn($v): array => [$v]);
         
         //Act
         $groupBy->collectDataFromProducer(Producers::from([1]), new Signal(Stream::empty()), false);
@@ -1277,7 +1309,7 @@ final class OperationsTest extends TestCase
         $this->expectExceptionMessage('Value returned from discriminator is inappropriate (got array)');
         
         //Arrange
-        $groupBy = new GroupBy(static fn($v) => [$v]);
+        $groupBy = new GroupBy(static fn($v): array => [$v]);
         
         //Act
         $groupBy->acceptSimpleData([1], new Signal(Stream::empty()), false);
@@ -1290,10 +1322,152 @@ final class OperationsTest extends TestCase
         $this->expectExceptionMessage('Value returned from discriminator is inappropriate (got array)');
         
         //Arrange
-        $groupBy = new GroupBy(static fn($v) => [$v]);
+        $groupBy = new GroupBy(static fn($v): array => [$v]);
         
         //Act
         $groupBy->acceptCollectedItems([new Item(1, 2)], new Signal(Stream::empty()), false);
+    }
+    
+    public function test_Dispatch_throws_excpetion_when_param_handlers_is_empty(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Param handlers cannot be empty');
+        
+        new Dispatch('is_string', []);
+    }
+    
+    public function test_Dispatch_throws_exception_when_there_is_no_handler_defined_for_classifier(): void
+    {
+        //Assert
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('There is no handler defined for classifier 1');
+        
+        //Arrange
+        $signal = new Signal(Stream::empty());
+        $signal->item->key = 1;
+        $signal->item->value = 'foo';
+        
+        $dispatch = new Dispatch('is_string', ['yes' => Consumers::counter()]);
+        
+        //Act
+        $dispatch->handle($signal);
+    }
+    
+    public function test_Dispatch_throws_exception_when_classifier_is_invalid(): void
+    {
+        //Assert
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Value returned from discriminator is inappropriate (got double)');
+        
+        //Arrange
+        $signal = new Signal(Stream::empty());
+        $signal->item->key = 1;
+        $signal->item->value = 'foo';
+        
+        $dispatch = new Dispatch(
+            static fn($v, $k): float => 15.5,
+            ['yes' => Consumers::counter()]
+        );
+        
+        //Act
+        $dispatch->handle($signal);
+    }
+    
+    public function test_Dispatcher_handlers_factory_throws_exception_when_not_StreamPipe_is_provided(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only StrimPipe is supported as Handler for Dispatcher');
+        
+        Handlers::getAdapter(ResultItem::createNotFound());
+    }
+    
+    public function test_Dispatcher_handlers_factory_throws_exception_when_handler_is_unsupported(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param handler - it cannot be string');
+        
+        Handlers::getAdapter('wrong');
+    }
+    
+    public function test_Classify_throws_exception_when_Discriminator_returns_invalid_value(): void
+    {
+        //Assert
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessage('Unsupported value was returned from discriminator (got array)');
+        
+        //Arrange
+        $signal = new Signal(Stream::empty());
+        $classify = new Classify(static fn($v): array => [$v]);
+        
+        //Act
+        $classify->handle($signal);
+    }
+    
+    public function test_StoreIn_throws_exception_when_param_buffer_is_invalid(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param buffer');
+        
+        $object = new \stdClass();
+        
+        new StoreIn($object);
+    }
+    
+    public function test_Segregate_can_handle_limit_zero_properly(): void
+    {
+        $segregate = new Segregate(3);
+        
+        self::assertFalse($segregate->applyLimit(0));
+        self::assertSame(1, $segregate->limit());
+    }
+    
+    public function test_Ending_can_return_previous_operation(): void
+    {
+        //given
+        $limit = new Limit(1);
+        $ending = new Ending();
+        
+        $limit->setNext($ending, true);
+        
+        //when
+        $prev = $ending->getPrev();
+        
+        //then
+        self::assertSame($limit, $prev);
+    }
+    
+    public function test_UnpackTyple_throws_exception_when_element_is_not_a_tuple(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('UnpackTuple cannot handle value which is not a valid tuple');
+        
+        Stream::from(['a', 'b'])->unpackTuple()->run();
+    }
+    
+    public function test_UnpackTuple_can_handle_numerical_array(): void
+    {
+        $data = ['a' => 1, 'b' => 2];
+        
+        $result = Stream::from($data)
+            ->makeTuple()
+            ->limit(5)
+            ->unpackTuple()
+            ->toArrayAssoc();
+        
+        self::assertSame($data, $result);
+    }
+    
+    public function test_UnpackTuple_can_handle_assoc_array(): void
+    {
+        $data = ['a' => 1, 'b' => 2];
+        
+        $result = Stream::from($data)
+            ->makeTuple(true)
+            ->limit(5)
+            ->unpackTuple(true)
+            ->toArrayAssoc();
+        
+        self::assertSame($data, $result);
     }
     
     /**

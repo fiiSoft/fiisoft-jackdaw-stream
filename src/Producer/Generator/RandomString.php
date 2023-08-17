@@ -46,7 +46,7 @@ final class RandomString extends LimitedProducer
             \shuffle($this->chars);
             
             $item->key = $count++;
-            $item->value = \implode(\array_slice($this->chars, 0, $length));
+            $item->value = \implode('', \array_slice($this->chars, 0, $length));
             
             yield;
         }

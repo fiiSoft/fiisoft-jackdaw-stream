@@ -72,10 +72,32 @@ final class Shuffle extends BaseOperation
         $this->count = 0;
     }
     
+    public function mergeWith(Shuffle $other): void
+    {
+        if ($this->chunkSize !== 0) {
+            $this->chunkSize = $other->chunkSize !== 0 ? \max($this->chunkSize, $other->chunkSize) : 0;
+        }
+    }
+    
+    public function isChunked(): bool
+    {
+        return $this->chunkSize > 0;
+    }
+    
     protected function __clone()
     {
         $this->iterator = clone $this->iterator;
         
         parent::__clone();
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->items = [];
+            $this->iterator->destroy();
+            
+            parent::destroy();
+        }
     }
 }

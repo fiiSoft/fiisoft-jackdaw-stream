@@ -4,6 +4,7 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
+use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueKeyComparator;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,7 @@ final class ComparatorsTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        Comparators::generic(static fn($v, $k, $n) => true);
+        Comparators::generic(static fn($v, $k, $n): bool => true);
     }
     
     public function test_MultiComparator_throws_exception_when_list_of_comparators_is_empty(): void
@@ -44,22 +45,22 @@ final class ComparatorsTest extends TestCase
             ['foo' => 5, 'bar' => 7],
         ));
         
-        self::assertSame(1, $comp->compare(
+        self::assertGreaterThan(0, $comp->compare(
             ['foo' => 7, 'bar' => 7],
             ['foo' => 5, 'bar' => 7],
         ));
         
-        self::assertSame(1, $comp->compare(
+        self::assertGreaterThan(0, $comp->compare(
             ['foo' => 5, 'bar' => 9],
             ['foo' => 5, 'bar' => 7],
         ));
         
-        self::assertSame(-1, $comp->compare(
+        self::assertLessThan(0, $comp->compare(
             ['foo' => 5, 'bar' => 7],
             ['foo' => 9, 'bar' => 7],
         ));
         
-        self::assertSame(-1, $comp->compare(
+        self::assertLessThan(0, $comp->compare(
             ['foo' => 5, 'bar' => 3],
             ['foo' => 5, 'bar' => 7],
         ));
@@ -80,42 +81,42 @@ final class ComparatorsTest extends TestCase
             'gh',
         ));
         
-        self::assertSame(1, $comp->compareAssoc(
+        self::assertGreaterThan(0, $comp->compareAssoc(
             ['foo' => 9, 'bar' => 7],
             ['foo' => 5, 'bar' => 7],
             'zo',
             'gh',
         ));
         
-        self::assertSame(1, $comp->compareAssoc(
+        self::assertGreaterThan(0, $comp->compareAssoc(
             ['foo' => 5, 'bar' => 9],
             ['foo' => 5, 'bar' => 7],
             'zo',
             'gh',
         ));
         
-        self::assertSame(1, $comp->compareAssoc(
+        self::assertGreaterThan(0, $comp->compareAssoc(
             ['foo' => 5, 'bar' => 7],
             ['foo' => 5, 'bar' => 7],
             'zon',
             'gh',
         ));
         
-        self::assertSame(-1, $comp->compareAssoc(
+        self::assertLessThan(0, $comp->compareAssoc(
             ['foo' => 3, 'bar' => 7],
             ['foo' => 5, 'bar' => 7],
             'zo',
             'gh',
         ));
         
-        self::assertSame(-1, $comp->compareAssoc(
+        self::assertLessThan(0, $comp->compareAssoc(
             ['foo' => 5, 'bar' => 5],
             ['foo' => 5, 'bar' => 7],
             'zo',
             'gh',
         ));
         
-        self::assertSame(-1, $comp->compareAssoc(
+        self::assertLessThan(0, $comp->compareAssoc(
             ['foo' => 5, 'bar' => 7],
             ['foo' => 5, 'bar' => 7],
             'z',
@@ -132,24 +133,24 @@ final class ComparatorsTest extends TestCase
         $comp->addComparators([Comparators::getAdapter(null)]);
         
         self::assertSame(0, $comp->compareAssoc(3, 3, 5, 5));
-        self::assertSame(-1, $comp->compareAssoc(3, 3, 5, 2));
+        self::assertLessThan(0, $comp->compareAssoc(3, 3, 5, 2));
         
-        self::assertSame(1, $comp->compareAssoc(3, 3, 2, 5));
-        self::assertSame(1, $comp->compareAssoc(4, 3, 2, 5));
-        self::assertSame(1, $comp->compareAssoc(3, 4, 2, 5));
+        self::assertGreaterThan(0, $comp->compareAssoc(3, 3, 2, 5));
+        self::assertGreaterThan(0, $comp->compareAssoc(4, 3, 2, 5));
+        self::assertGreaterThan(0, $comp->compareAssoc(3, 4, 2, 5));
     }
     
     public function test_GenericComparator_throws_exception_when_wrong_callable_is_used(): void
     {
         try {
-            Comparators::generic(static fn($a, $b, $c, $d) => true)->compare(1, 2);
+            Comparators::generic(static fn($a, $b, $c, $d): bool => true)->compare(1, 2);
             self::fail('Expected exception was not thrown');
         } catch (\LogicException $e) {
             //ok
         }
         
         try {
-            Comparators::generic(static fn($a, $b, $c) => true)->compareAssoc(1, 2, 3, 4);
+            Comparators::generic(static fn($a, $b, $c): bool => true)->compareAssoc(1, 2, 3, 4);
             self::fail('Expected exception was not thrown');
         } catch (\LogicException $e) {
             //ok
@@ -210,8 +211,8 @@ final class ComparatorsTest extends TestCase
         $comparator = Comparators::size();
         
         self::assertSame(0, $comparator->compare([5, 2], [3, 6]));
-        self::assertSame(-1, $comparator->compare([5, 2], [3, 6, 1]));
-        self::assertSame(1, $comparator->compare([5, 2, 1], [3, 6]));
+        self::assertLessThan(0, $comparator->compare([5, 2], [3, 6, 1]));
+        self::assertGreaterThan(0, $comparator->compare([5, 2, 1], [3, 6]));
     }
     
     public function test_SizeComparator_can_compare_length_of_strings(): void
@@ -219,8 +220,8 @@ final class ComparatorsTest extends TestCase
         $comparator = Comparators::size();
         
         self::assertSame(0, $comparator->compare('agd', 'trh'));
-        self::assertSame(-1, $comparator->compare('agd', 'trhb'));
-        self::assertSame(1, $comparator->compare('agdr', 'trh'));
+        self::assertLessThan(0, $comparator->compare('agd', 'trhb'));
+        self::assertGreaterThan(0, $comparator->compare('agdr', 'trh'));
     }
     
     public function test_SizeComparator_can_compare_Countable_objects(): void
@@ -228,8 +229,8 @@ final class ComparatorsTest extends TestCase
         $comparator = Comparators::size();
         
         self::assertSame(0, $comparator->compare(new \ArrayObject([4,7]), new \ArrayObject([2,9])));
-        self::assertSame(-1, $comparator->compare(new \ArrayObject([4,7]), new \ArrayObject([2,9,7])));
-        self::assertSame(1, $comparator->compare(new \ArrayObject([2, 4,7]), new \ArrayObject([2,9])));
+        self::assertLessThan(0, $comparator->compare(new \ArrayObject([4,7]), new \ArrayObject([2,9,7])));
+        self::assertGreaterThan(0, $comparator->compare(new \ArrayObject([2, 4,7]), new \ArrayObject([2,9])));
     }
     
     public function test_SizeComparator_throws_exception_when_cannot_compare_values(): void
@@ -245,10 +246,10 @@ final class ComparatorsTest extends TestCase
         $comparator = Comparators::size();
         
         self::assertSame(0, $comparator->compareAssoc('trg', 'rsh', 0, 0));
-        self::assertSame(1, $comparator->compareAssoc('trg', 'rsh', 1, 0));
-        self::assertSame(-1, $comparator->compareAssoc('trg', 'rsha', 1, 0));
-        self::assertSame(-1, $comparator->compareAssoc('trg', 'rsh', 1, 2));
-        self::assertSame(1, $comparator->compareAssoc('atrg', 'rsh', 1, 2));
+        self::assertGreaterThan(0, $comparator->compareAssoc('trg', 'rsh', 1, 0));
+        self::assertLessThan(0, $comparator->compareAssoc('trg', 'rsha', 1, 0));
+        self::assertLessThan(0, $comparator->compareAssoc('trg', 'rsh', 1, 2));
+        self::assertGreaterThan(0, $comparator->compareAssoc('atrg', 'rsh', 1, 2));
     }
     
     /**
@@ -328,5 +329,21 @@ final class ComparatorsTest extends TestCase
         yield [Check::BOTH, true, 'strnatcmp', ['b', 'c'], ['a', 'c'], -1];
         yield [Check::BOTH, true, 'strnatcmp', ['b', 'c'], ['a', 'b'], -1];
         yield [Check::BOTH, true, 'strnatcmp', ['b', 'c'], ['b', 'b'], -1];
+    }
+    
+    public function test_ValueKeyComparator_throws_exception_when_method_compare_is_called(): void
+    {
+        //Assert
+        $this->expectException(\BadMethodCallException::class);
+        
+        //Arrange
+        $comparator = new class extends ValueKeyComparator {
+            public function compareAssoc($value1, $value2, $key1, $key2): int {
+                return 0;
+            }
+        };
+        
+        //Act
+        $comparator->compare(1, 2);
     }
 }

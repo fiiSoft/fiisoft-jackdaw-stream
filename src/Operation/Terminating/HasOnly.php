@@ -37,6 +37,9 @@ final class HasOnly extends SimpleFinalOperation
         }
     }
     
+    /**
+     * @param mixed $search
+     */
     private function testSingle($search, Signal $signal): bool
     {
         if (!\in_array($search, $this->values, true)) {
@@ -163,5 +166,14 @@ final class HasOnly extends SimpleFinalOperation
         }
         
         return $this->streamingFinished($signal);
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->values = [];
+            
+            parent::destroy();
+        }
     }
 }

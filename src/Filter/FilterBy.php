@@ -29,16 +29,20 @@ final class FilterBy implements Filter
     
     public function isAllowed($value, $key, int $mode = Check::VALUE): bool
     {
-        if (\is_array($value) || $value instanceof \ArrayAccess) {
-            if (\array_key_exists($this->field, $value)) {
-                return $this->filter->isAllowed($value[$this->field], $key, $mode);
+        if (\is_array($value)) {
+            if (!\array_key_exists($this->field, $value)) {
+                throw new \RuntimeException('Field '.$this->field.' does not exist in value');
             }
-            
-            throw new \RuntimeException('ByField '.$this->field.' does not exist in value');
+        } elseif ($value instanceof \ArrayAccess) {
+            if (!isset($value[$this->field])) {
+                throw new \RuntimeException('Field '.$this->field.' does not exist in value');
+            }
+        } else {
+            throw new \LogicException(
+                'Unable to filter by '.$this->field.' because value is '.Helper::typeOfParam($value)
+            );
         }
     
-        throw new \LogicException(
-            'Unable to filter by '.$this->field.' because value is '.Helper::typeOfParam($value)
-        );
+        return $this->filter->isAllowed($value[$this->field], $key, $mode);
     }
 }

@@ -2,18 +2,21 @@
 
 namespace FiiSoft\Jackdaw;
 
+use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\ResultApi;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 
-final class StreamMaker
+final class StreamMaker implements Destroyable
 {
     /** @var callable */
     private $factory;
     
+    private bool $isDestroying = false;
+    
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|resource|array|scalar ...$elements
+     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array|scalar ...$elements
      */
     public static function of(...$elements): StreamMaker
     {
@@ -57,5 +60,13 @@ final class StreamMaker
         $factory = $this->factory;
         
         return $factory();
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->isDestroying = true;
+            $this->factory = static fn(): Stream => Stream::empty();
+        }
     }
 }

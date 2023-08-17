@@ -2,9 +2,10 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Concat;
-use FiiSoft\Jackdaw\Mapper\Internal\ReducerAdapter;
 use FiiSoft\Jackdaw\Mapper\JsonDecode;
 use FiiSoft\Jackdaw\Mapper\JsonEncode;
 use FiiSoft\Jackdaw\Mapper\Mappers;
@@ -66,7 +67,7 @@ final class MappersTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        Mappers::generic(static fn($a, $b, $c) => true)->map('a', 1);
+        Mappers::generic(static fn($a, $b, $c): bool => true)->map('a', 1);
     }
     
     public function test_GenericMapper_can_call_callable_without_arguments(): void
@@ -629,7 +630,7 @@ final class MappersTest extends TestCase
     
     public function test_Shuffle_can_mix_chars_in_strings(): void
     {
-        $string = \str_repeat(\implode(\range('a', 'z')), 10);
+        $string = \str_repeat(\implode('', \range('a', 'z')), 10);
         
         self::assertNotSame($string, Mappers::shuffle()->map($string, 0));
     }
@@ -729,5 +730,78 @@ final class MappersTest extends TestCase
     {
         self::assertTrue(Mappers::key()->mergeWith(Mappers::key()));
         self::assertFalse(Mappers::key()->mergeWith(Mappers::value()));
+    }
+    
+    public function test_MultiMapper_throws_exception_when_initial_array_is_empty(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param pattern - cannot be empty!');
+        
+        Mappers::getAdapter([]);
+    }
+    
+    public function test_Replace(): void
+    {
+        $mapper = Mappers::replace(' ', '');
+        
+        self::assertSame('abc', $mapper->map('a b c', 0));
+    }
+    
+    public function test_Replace_throws_exception_on_wrong_type_of_param_search(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param search - it cannot be integer');
+        
+        Mappers::replace(5, '');
+    }
+    
+    public function test_Replace_throws_exception_on_wrong_type_of_param_replace(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param replace - it cannot be integer');
+        
+        Mappers::replace(' ', 5);
+    }
+    
+    public function test_Replace_throws_exception_when_param_search_is_empty(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param search');
+        
+        Mappers::replace('', '');
+    }
+    
+    public function test_Replace_throws_exception_when_mapped_value_is_not_array(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Unable to replace chars in integer');
+        
+        Mappers::replace(' ', '')->map(15, 0);
+    }
+    
+    public function test_DiscriminatorAdapter_throws_exception_when_Discriminator_returns_invalid_value(): void
+    {
+        //Assert
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessage('Unsupported value was returned from discriminator (got array)');
+        
+        //Arrange
+        $mapper = Mappers::getAdapter(Discriminators::generic(static fn($v): array => [$v]));
+        
+        //Act
+        $mapper->map('foo', 1);
+    }
+    
+    public function test_FieldValue_can_handle_ArrayAccess_implementations(): void
+    {
+        self::assertSame('a', Mappers::fieldValue('foo')->map(new \ArrayObject(['foo' => 'a']), 1));
+    }
+    
+    public function test_MapField_can_handle_ArrayAccess_implementations(): void
+    {
+        self::assertEquals(
+            new \ArrayObject(['foo' => 6]),
+            Mappers::mapField('foo', static fn(int $v): int => $v * 2)->map(new \ArrayObject(['foo' => 3]), 1)
+        );
     }
 }

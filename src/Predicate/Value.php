@@ -9,11 +9,17 @@ final class Value implements Predicate
     /** @var mixed */
     private $value;
     
+    /**
+     * @param mixed $value
+     */
     public function __construct($value)
     {
         $this->value = $value;
     }
     
+    /**
+     * @inheritDoc
+     */
     public function isSatisfiedBy($value, $key = null, int $mode = Check::VALUE): bool
     {
         switch ($mode) {

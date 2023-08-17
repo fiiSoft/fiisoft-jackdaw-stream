@@ -52,4 +52,9 @@ final class ForwardItemsIterator extends CountableProducer
         
         return $this->items[$last]->copy();
     }
+    
+    public function destroy(): void
+    {
+        $this->items = [];
+    }
 }

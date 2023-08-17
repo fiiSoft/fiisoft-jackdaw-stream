@@ -79,4 +79,10 @@ final class CircularBufferIterator extends CountableProducer
         
         return $this->buffer[$index]->copy();
     }
+    
+    public function destroy(): void
+    {
+        $this->count = 0;
+        $this->buffer = [];
+    }
 }

@@ -12,10 +12,13 @@ final class FilterMany extends BaseOperation
     /** @var FilterData[] */
     private array $filters = [];
     
-    public function __construct(FilterSingle $first, FilterSingle $second)
+    public function __construct(FilterSingle $first, ?FilterSingle $second = null)
     {
         $this->add($first);
-        $this->add($second);
+        
+        if ($second !== null) {
+            $this->add($second);
+        }
     }
     
     public function handle(Signal $signal): void
@@ -41,5 +44,14 @@ final class FilterMany extends BaseOperation
     public function add(FilterSingle $filter): void
     {
         $this->filters[] = $filter->filterData();
+    }
+    
+    public function destroy(): void
+    {
+        if (!$this->isDestroying) {
+            $this->filters = [];
+            
+            parent::destroy();
+        }
     }
 }
