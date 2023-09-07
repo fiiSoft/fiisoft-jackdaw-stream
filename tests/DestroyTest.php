@@ -500,6 +500,14 @@ final class DestroyTest extends TestCase
         $stream->destroy();
     }
     
+    public function test_SortSingle_destroy(): void
+    {
+        $stream = Stream::from([1, 2, 1, 3])->best(1);
+        self::assertSame([1], $stream->toArray());
+        
+        $stream->destroy();
+    }
+    
     public function test_Tail_destroy(): void
     {
         $stream = Stream::from([1, 2, 1, 3])->tail(2);

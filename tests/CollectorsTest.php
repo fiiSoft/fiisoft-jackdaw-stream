@@ -262,6 +262,9 @@ final class CollectorsTest extends TestCase
         yield 'SplFixedArray'    => [new \SplFixedArray(5)];
         yield 'ArrayIterator'    => [new \ArrayIterator([])];
         yield 'ArrayObject'      => [new \ArrayObject()];
+        
+        $array = [];
+        yield 'array'            => [Collectors::array($array)];
     }
     
     /**
@@ -293,6 +296,9 @@ final class CollectorsTest extends TestCase
         yield 'ArrayIterator' =>        [new \ArrayIterator([]),     [4 => 'b', 8 => 'c', 3 => 'a']];
         yield 'ArrayObject' =>          [new \ArrayObject(),         [4 => 'b', 8 => 'c', 3 => 'a']];
         yield 'SplPriorityQueue' =>     [new \SplPriorityQueue(),    [2 => 'c', 1 => 'b', 0 => 'a']];
+        
+        $array = [];
+        yield 'array' =>                [Collectors::array($array),  [4 => 'b', 8 => 'c', 3 => 'a']];
     }
     
     /**
@@ -321,6 +327,9 @@ final class CollectorsTest extends TestCase
         yield 'SplFixedArray' =>        [new \SplFixedArray(10),     [3 => 'a', 4 => 'b', 8 => 'c']];
         yield 'ArrayIterator' =>        [new \ArrayIterator([]),     [4 => 'b', 8 => 'c', 3 => 'a']];
         yield 'ArrayObject' =>          [new \ArrayObject(),         [4 => 'b', 8 => 'c', 3 => 'a']];
+        
+        $array = [];
+        yield 'array' =>                [Collectors::array($array),  [4 => 'b', 8 => 'c', 3 => 'a']];
     }
     
     /**
@@ -368,6 +377,9 @@ final class CollectorsTest extends TestCase
         yield 'SplFixedArray' =>        [new \SplFixedArray(10)];
         yield 'ArrayIterator' =>        [new \ArrayIterator([])];
         yield 'ArrayObject' =>          [new \ArrayObject()];
+        
+        $array = [];
+        yield 'array' => [Collectors::array($array)];
     }
     
     /**

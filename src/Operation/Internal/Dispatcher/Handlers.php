@@ -42,7 +42,7 @@ final class Handlers
     }
     
     /**
-     * @param Stream[]|LastOperation[]|ResultApi[]|Collector[]|Consumer[]|Reducer[] $handlers
+     * @param array<Stream|LastOperation|ResultApi|Collector|Consumer|Reducer> $handlers
      * @return Handler[]
      */
     public static function prepare(array $handlers): array

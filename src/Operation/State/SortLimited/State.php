@@ -25,8 +25,5 @@ abstract class State
      */
     abstract public function getCollectedItems(): array;
     
-    public function destroy(): void
-    {
-        //noop
-    }
+    abstract public function destroy(): void;
 }

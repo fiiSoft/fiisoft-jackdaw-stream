@@ -16,16 +16,16 @@ $chars = str_split('qwertyuiopasdfghjklzxcvbnm');
 
 $count = 0;
 $progressBar = static function () use (&$count) {
-    if (++$count === 500) {
+    if (++$count === 5000) {
         $count = 0;
         echo '.';
     }
 };
 
-Stream::from(Producers::sequentialInt(1, 1, 1000000))
+Stream::from(Producers::sequentialInt(1, 1, 5_000_000))
     ->map(function (int $id) use ($chars) {
-        $scoring = mt_rand(100, 10000) / 100.0;
-        $credits = mt_rand(0, 1000000);
+        $scoring = mt_rand(100, 10_000) / 100.0;
+        $credits = mt_rand(0, 1_000_000);
         
         if (mt_rand(0,1) === 1) {
             $facebookId = md5($id.$scoring);

@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Collector;
 
 use FiiSoft\Jackdaw\Collector\Adapter\ArrayAccessAdapter;
+use FiiSoft\Jackdaw\Collector\Adapter\Iterable\ArrayAdapter;
 use FiiSoft\Jackdaw\Collector\Adapter\Iterable\ArrayIteratorAdapter;
 use FiiSoft\Jackdaw\Collector\Adapter\Iterable\ArrayObjectAdapter;
 use FiiSoft\Jackdaw\Collector\Adapter\SplDoublyLinkedListAdapter;
@@ -79,6 +80,11 @@ final class Collectors
     public static function values(): IterableCollector
     {
         return new DefaultCollector([], false);
+    }
+    
+    public static function array(array &$storage, bool $allowsKeys = true): IterableCollector
+    {
+        return new ArrayAdapter($storage, $allowsKeys);
     }
     
     public static function wrapSplPriorityQueue(

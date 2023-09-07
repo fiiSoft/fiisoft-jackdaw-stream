@@ -2292,4 +2292,86 @@ final class MoreStreamTest extends TestCase
         self::assertSame('abc', $result);
         self::assertSame(3, $count);
     }
+    
+    public function test_Unzip(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+        ];
+        
+        $ids = [];
+        $uniqueNames = Stream::empty()->unique()->collect(true);
+        $avgAge = Reducers::average(2);
+        
+        Stream::from($rowset)
+            ->unzip(
+                Collectors::array($ids, false),
+                $uniqueNames,
+                $avgAge
+            )->run();
+        
+        self::assertSame([2, 9, 6, 5, 7], $ids);
+        self::assertSame(['Sue', 'Chris', 'Joanna'], $uniqueNames->get());
+        self::assertSame((22 + 17 + 15 + 24 + 18) / 5, $avgAge->result());
+    }
+    
+    public function test_Unzip_throws_exception_when_value_is_not_iterable(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Operation Unzip requires iterable values');
+        
+        Stream::from(['a', 'b', 'c'])->unzip(Reducers::average())->run();
+    }
+    
+    public function test_ArrayCollector_with_keys(): void
+    {
+        $strings = [];
+        $collector = Collectors::array($strings);
+        
+        Stream::from(['a', 1, 'b', 2])
+            ->onlyStrings()
+            ->collectIn($collector)
+            ->run();
+        
+        self::assertSame(['a', 2 => 'b'], $strings);
+        
+        self::assertSame(['a', 2 => 'b'], $collector->getData());
+        self::assertSame(2, $collector->count());
+    }
+    
+    public function test_ArrayCollector_without_keys(): void
+    {
+        $strings = [];
+        $collector = Collectors::array($strings, false);
+        
+        Stream::from(['a', 1, 'b', 2])
+            ->onlyStrings()
+            ->collectIn($collector)
+            ->run();
+        
+        self::assertSame(['a', 'b'], $strings);
+        
+        self::assertSame(['a', 'b'], $collector->getData());
+        self::assertSame(2, $collector->count());
+    }
+    
+    public function test_ArrayCollector_reindex(): void
+    {
+        $strings = [];
+        $collector = Collectors::array($strings);
+        
+        Stream::from(['a', 1, 'b', 2])
+            ->onlyStrings()
+            ->collectIn($collector, true)
+            ->run();
+        
+        self::assertSame(['a', 'b'], $strings);
+        
+        self::assertSame(['a', 'b'], $collector->getData());
+        self::assertSame(2, $collector->count());
+    }
 }

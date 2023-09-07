@@ -14,14 +14,14 @@ use FiiSoft\Jackdaw\Internal\{Check, Collaborator, Destroyable, Executable, Fork
 use FiiSoft\Jackdaw\Internal\State\{SourceNotReady, Source, Stack};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, Mapper, Mappers};
 use FiiSoft\Jackdaw\Operation\{Accumulate, Aggregate, Assert, Categorize, Chunk, ChunkBy, Classify, CollectIn,
-    CollectKeysIn, Increasing, Internal\Dispatch, OmitReps, Extrema, Filter as OperationFilter, FilterWhen, Flat, Flip,
+    CollectKeysIn, Increasing, Dispatch, OmitReps, Extrema, Filter as OperationFilter, FilterWhen, Flat, Flip,
     Gather, Internal\AssertionFailed, Internal\Feed, Internal\FeedMany, Internal\FinalOperation, Internal\LastOperation,
     Internal\Fork, Internal\Iterate, Maxima, Remember, Limit, Map, MapFieldWhen, MapKey, MapKeyValue, MapWhen,
     Operation, Reindex, Reverse, CountIn, Scan, Segregate, SendTo, SendToMax, SendWhen, Shuffle, Skip, SkipWhile, Sort,
     SortLimited, StoreIn, Tail, Terminating\Collect, Terminating\CollectKeys, Terminating\Count, Terminating\Find,
     Terminating\First, Terminating\Fold, Terminating\GroupBy, Terminating\Has, Terminating\HasEvery,
     Terminating\HasOnly, Terminating\IsEmpty, Terminating\Last, Terminating\Reduce, Terminating\Until, Tokenize, Tuple,
-    Unique, UnpackTuple, Uptrends, Zip};
+    Unique, UnpackTuple, Unzip, Uptrends, Zip};
 use FiiSoft\Jackdaw\Predicate\{Predicate, Predicates};
 use FiiSoft\Jackdaw\Producer\{Internal\PushProducer, Producer, Producers};
 use FiiSoft\Jackdaw\Reducer\Reducer;
@@ -908,7 +908,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
-     * @param Stream[]|LastOperation[]|ResultApi[]|Collector[]|Consumer[]|Reducer[] $handlers
+     * @param array<Stream|LastOperation|ResultApi|Collector|Consumer|Reducer> $handlers
      */
     public function dispatch($discriminator, array $handlers): Stream
     {
@@ -1048,6 +1048,15 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     public function zip(...$sources): Stream
     {
         $this->chainOperation(new Zip($sources));
+        return $this;
+    }
+    
+    /**
+     * @param Stream|LastOperation|ResultApi|Collector|Consumer|Reducer $consumers
+     */
+    public function unzip(...$consumers): Stream
+    {
+        $this->chainOperation(new Unzip($consumers));
         return $this;
     }
     

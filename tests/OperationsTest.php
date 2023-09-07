@@ -18,7 +18,7 @@ use FiiSoft\Jackdaw\Operation\Chunk;
 use FiiSoft\Jackdaw\Operation\Classify;
 use FiiSoft\Jackdaw\Operation\CollectIn;
 use FiiSoft\Jackdaw\Operation\Flat;
-use FiiSoft\Jackdaw\Operation\Internal\Dispatch;
+use FiiSoft\Jackdaw\Operation\Dispatch;
 use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\Handlers;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\FeedMany;

@@ -37,7 +37,7 @@ abstract class HeapBuffer extends State
         return $data;
     }
     
-    public function destroy(): void
+    final public function destroy(): void
     {
         $this->buffer->rewind();
         while (!$this->buffer->isEmpty()) {

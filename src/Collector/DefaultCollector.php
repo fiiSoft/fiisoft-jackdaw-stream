@@ -2,9 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Collector;
 
+use FiiSoft\Jackdaw\Collector\Adapter\Iterable\BaseIterableCollector;
 use FiiSoft\Jackdaw\Stream;
 
-final class DefaultCollector extends BaseCollector implements IterableCollector, \IteratorAggregate
+final class DefaultCollector extends BaseIterableCollector
 {
     private array $buffer;
     
@@ -49,16 +50,6 @@ final class DefaultCollector extends BaseCollector implements IterableCollector,
     public function stream(): Stream
     {
         return Stream::from($this->buffer);
-    }
-    
-    final public function toJson(int $flags = 0): string
-    {
-        return \json_encode($this->buffer, \JSON_THROW_ON_ERROR | $flags);
-    }
-    
-    final public function toString(string $separator = ','): string
-    {
-        return \implode($separator, $this->buffer);
     }
     
     public function getIterator(): \ArrayIterator

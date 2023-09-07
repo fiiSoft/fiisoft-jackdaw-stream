@@ -1827,4 +1827,65 @@ final class StreamScenarioTest extends TestCase
             [9, 9, 9],
         ], $result);
     }
+    
+    public function test_scenario_92(): void
+    {
+        //Arrange
+        $rows = [
+            ['id' => 7, 'name' => 'Sue', 'age' => 17, 'sex' => 'female'],
+            ['id' => 9, 'name' => 'Chris', 'age' => 26, 'sex' => 'male'],
+            ['id' => 2, 'name' => 'Kate', 'age' => 35, 'sex' => 'female'],
+            ['id' => 5, 'name' => 'Chris', 'age' => 20, 'sex' => 'male'],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 30, 'sex' => 'female'],
+        ];
+        
+        $data = [
+            [4, 'foo', true, $rows[0], 2.35, new \stdClass()],
+            [8, 'bar', false, $rows[1], 4.16],
+            [3, 'zoll', true, $rows[2], 5.22],
+            [5, 'con', true, $rows[3], 3.94],
+            [7, 'ara', false, $rows[4], 14.33, new \stdClass(), 'this value will not be consumed'],
+        ];
+        
+        $collectFloats = Collectors::values();
+        $countBools = Consumers::counter();
+        $sumInts = Reducers::sum();
+        
+        $countLetters = Stream::empty()
+            ->flatMap('\str_split')
+            ->reduce(Reducers::countUnique())
+            ->transform('ksort');
+        
+        $rowsHandler = Stream::empty()
+            ->filterBy('sex', 'female')
+            ->filterBy('age', Filters::greaterOrEqual(18))
+            ->extract('id')
+            ->collectIn($idsOfAdultWomen = Collectors::values());
+        
+        $countObjects = Stream::empty()->count();
+        
+        //Act
+        $count = Stream::from($data)
+            ->unzip(
+                $sumInts,
+                $countLetters,
+                $countBools,
+                $rowsHandler,
+                $collectFloats,
+                $countObjects,
+            )
+            ->count();
+        
+        //Assert
+        self::assertSame(5, $count->get());
+        self::assertSame(27, $sumInts->result());
+        self::assertSame(5, $countBools->count());
+        self::assertSame(2, $countObjects->get());
+        self::assertSame([2.35, 4.16, 5.22, 3.94, 14.33], $collectFloats->getData());
+        self::assertSame([2, 6], $idsOfAdultWomen->getData());
+        
+        self::assertSame([
+            'a' => 3, 'b' => 1, 'c' => 1, 'f' => 1, 'l' => 2, 'n' => 1, 'o' => 4, 'r' => 2, 'z' => 1,
+        ], $countLetters->toArrayAssoc());
+    }
 }

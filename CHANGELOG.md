@@ -2,6 +2,11 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 4.1.0
+
+- added method unzip()
+- added possibility to use array as Collector (by reference)
+
 ## 4.0.0
 
 - removed method chunkAssoc()

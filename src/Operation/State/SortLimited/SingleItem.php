@@ -56,4 +56,9 @@ final class SingleItem extends State
     {
         return $this->hasOne ? [$this->best] : [];
     }
+    
+    public function destroy(): void
+    {
+        //noop
+    }
 }

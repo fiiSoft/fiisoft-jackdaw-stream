@@ -2,11 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Collector\Adapter\Iterable;
 
-use FiiSoft\Jackdaw\Collector\BaseCollector;
-use FiiSoft\Jackdaw\Collector\IterableCollector;
 use FiiSoft\Jackdaw\Stream;
 
-final class ArrayIteratorAdapter extends BaseCollector implements IterableCollector, \IteratorAggregate
+final class ArrayIteratorAdapter extends BaseIterableCollector
 {
     private \ArrayIterator $iterator;
     
@@ -57,16 +55,6 @@ final class ArrayIteratorAdapter extends BaseCollector implements IterableCollec
     public function stream(): Stream
     {
         return Stream::from($this->iterator);
-    }
-    
-    public function toString(string $separator = ','): string
-    {
-        return \implode($separator, $this->getData());
-    }
-    
-    public function toJson(int $flags = 0): string
-    {
-        return \json_encode($this->getData(), \JSON_THROW_ON_ERROR | $flags);
     }
     
     public function getIterator(): \ArrayIterator
