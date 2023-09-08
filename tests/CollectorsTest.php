@@ -202,7 +202,7 @@ final class CollectorsTest extends TestCase
         }
     }
     
-    public function getDataForTestVariousSplClassesCanBeUsedAsCollectors(): \Generator
+    public static function getDataForTestVariousSplClassesCanBeUsedAsCollectors(): \Generator
     {
         //ArrayAccess
         yield 'SplFixedArray' =>        [new \SplFixedArray(3),      [4, 8, 3]];
@@ -256,7 +256,7 @@ final class CollectorsTest extends TestCase
         self::assertTrue($collector->stream()->isEmpty()->get());
     }
     
-    public function getDataForTestSomeCollectorsAreIterable(): \Generator
+    public static function getDataForTestSomeCollectorsAreIterable(): \Generator
     {
         yield 'DefaultCollector' => [Collectors::default()];
         yield 'SplFixedArray'    => [new \SplFixedArray(5)];
@@ -289,7 +289,7 @@ final class CollectorsTest extends TestCase
         }
     }
     
-    public function getDataForTestSomeCollectorsAllowToPreserveKeys(): \Generator
+    public static function getDataForTestSomeCollectorsAllowToPreserveKeys(): \Generator
     {
         yield 'DefaultCollector' =>     [Collectors::default(),      [4 => 'b', 8 => 'c', 3 => 'a']];
         yield 'SplFixedArray' =>        [new \SplFixedArray(10),     [3 => 'a', 4 => 'b', 8 => 'c']];
@@ -321,7 +321,7 @@ final class CollectorsTest extends TestCase
         }
     }
     
-    public function getDataForTestSomeIterableCollectorsAllowToPreserveKeys(): \Generator
+    public static function getDataForTestSomeIterableCollectorsAllowToPreserveKeys(): \Generator
     {
         yield 'DefaultCollector' =>     [Collectors::default(),      [4 => 'b', 8 => 'c', 3 => 'a']];
         yield 'SplFixedArray' =>        [new \SplFixedArray(10),     [3 => 'a', 4 => 'b', 8 => 'c']];
@@ -371,7 +371,7 @@ final class CollectorsTest extends TestCase
         }
     }
     
-    public function getDataForTestSomeIterableCollectorsAllowToReindexKeys(): \Generator
+    public static function getDataForTestSomeIterableCollectorsAllowToReindexKeys(): \Generator
     {
         yield 'DefaultCollector' =>     [Collectors::default()];
         yield 'SplFixedArray' =>        [new \SplFixedArray(10)];
@@ -394,7 +394,7 @@ final class CollectorsTest extends TestCase
         $collector->set(1, 2);
     }
     
-    public function getDataForTestSomeAdaptersThrowExceptionWhenKeyIsSet(): \Generator
+    public static function getDataForTestSomeAdaptersThrowExceptionWhenKeyIsSet(): \Generator
     {
         yield 'SplMinHeap'          => [new \SplMinHeap()];
         yield 'SplMaxHeap'          => [new \SplMaxHeap()];

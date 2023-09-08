@@ -2,6 +2,14 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 4.2.0
+
+Library has been adapted to be fully compatible with PHP >= 8.0 (up to 8.2).
+
+If you have PHP > 7.4 you should be able to run `composer update` and everything should work with the newest packages, although I've found some of them trigger some deprecations. Anyway, everything seems to be working fine.
+
+Special thanks for Pol Dellaiera (@drupol on Github) for his pull request which gave me the motivation to make the code compatible with PHP 8.2
+
 ## 4.1.0
 
 - added method unzip()

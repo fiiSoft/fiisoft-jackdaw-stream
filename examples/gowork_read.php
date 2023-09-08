@@ -7,7 +7,7 @@ require_once  __DIR__ .'/../vendor/autoload.php';
 $timeStart = microtime(true);
 $memoryStart = memory_get_usage();
 
-$reader = function ($fp): \Generator {
+$reader = static function ($fp): \Generator {
     $index = 0;
     $line = fgets($fp);
     while ($line !== false) {
@@ -31,7 +31,7 @@ $stream = Wrap::iterable($reader(fopen(__DIR__.'/../var/testfile.txt', 'rb')))
         ++$count;
     })
     ->sort(static fn(array $a, array $b) => $b['credits'] <=> $a['credits'] ?: $a['id'] <=> $b['id'])
-    ->slice(0, 20);
+    ->take(20);
 
 echo 'best 20 rows: ', PHP_EOL;
 

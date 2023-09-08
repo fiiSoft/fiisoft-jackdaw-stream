@@ -95,7 +95,7 @@ final class PipeTest extends TestCase
         $this->assertPipeContainsOperations($pipe, ...$expected);
     }
     
-    public function getDataForTestGeneralChainOperations(): \Generator
+    public static function getDataForTestGeneralChainOperations(): \Generator
     {
         $stream = Stream::empty();
         $mapper = Mappers::generic('strtolower');
@@ -289,7 +289,7 @@ final class PipeTest extends TestCase
         self::assertSame($expected, $flat->maxLevel());
     }
     
-    public function getDataForTestChainFlatFlat(): array
+    public static function getDataForTestChainFlatFlat(): array
     {
         return [
             //firstLevel, secondLevel, expectedMaxLevel
@@ -317,7 +317,7 @@ final class PipeTest extends TestCase
         self::assertSame($isChunked, $shuffle->isChunked());
     }
     
-    public function getDataForTestChainShuffleShuffle(): array
+    public static function getDataForTestChainShuffleShuffle(): array
     {
         return [
             [null, null, false],
@@ -345,7 +345,7 @@ final class PipeTest extends TestCase
         self::assertSame(1, $operation->limit());
     }
     
-    public function getDataForTestChainLimitableFirst(): array
+    public static function getDataForTestChainLimitableFirst(): array
     {
         //only these two
         return [
@@ -402,7 +402,7 @@ final class PipeTest extends TestCase
         self::assertFalse($isEmpty->get());
     }
     
-    public function getDataForTestStackedIsEmpty(): array
+    public static function getDataForTestStackedIsEmpty(): array
     {
         return [
             ['gather'],
@@ -465,7 +465,7 @@ final class PipeTest extends TestCase
         self::assertFalse($hasEvery->get());
     }
     
-    public function createAllOperationModeVariations(): \Generator
+    public static function createAllOperationModeVariations(): \Generator
     {
         foreach (['gather', 'sort', 'reverse'] as $operation) {
             foreach ([Check::VALUE, Check::KEY, Check::ANY, Check::BOTH] as $mode) {

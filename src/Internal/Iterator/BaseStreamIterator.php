@@ -1,33 +1,26 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Internal;
+namespace FiiSoft\Jackdaw\Internal\Iterator;
 
+use FiiSoft\Jackdaw\Internal\Interruption;
+use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Stream;
 
-final class StreamIterator extends StreamPipe implements \Iterator
+abstract class BaseStreamIterator extends StreamPipe implements \Iterator
 {
-    private Stream $stream;
-    private Item $item;
+    protected Item $item;
     
+    private Stream $stream;
     private bool $isValid = false;
     
-    public function __construct(Stream $stream, Item $item)
+    final public function __construct(Stream $stream, Item $item)
     {
         $this->stream = $stream;
         $this->item = $item;
     }
     
-    public function current()
-    {
-        return $this->item->value;
-    }
-    
-    public function key()
-    {
-        return $this->item->key;
-    }
-    
-    public function next(): void
+    final public function next(): void
     {
         $this->isValid = false;
         try {
@@ -37,7 +30,7 @@ final class StreamIterator extends StreamPipe implements \Iterator
         }
     }
     
-    public function valid(): bool
+    final public function valid(): bool
     {
         if ($this->isValid) {
             return true;
@@ -48,7 +41,7 @@ final class StreamIterator extends StreamPipe implements \Iterator
         return false;
     }
     
-    public function rewind(): void
+    final public function rewind(): void
     {
         $this->isValid = false;
         try {

@@ -268,7 +268,7 @@ final class ComparatorsTest extends TestCase
         );
     }
     
-    public function getDataForTestItemComparator(): \Generator
+    public static function getDataForTestItemComparator(): \Generator
     {
         yield [Check::VALUE, false, null, [0, 1], [2, 1], 0];
         yield [Check::VALUE, false, null, [0, 1], [2, 2], -1];

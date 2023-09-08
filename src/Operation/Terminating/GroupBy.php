@@ -2,13 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
-use FiiSoft\Jackdaw\Internal\StreamCollection;
+use FiiSoft\Jackdaw\Internal\Collection\BaseStreamCollection;
 use FiiSoft\Jackdaw\Operation\Internal\GroupingOperation;
 
 final class GroupBy extends GroupingOperation
 {
-    public function result(): StreamCollection
+    public function result(): BaseStreamCollection
     {
-        return new StreamCollection($this, $this->collections);
+        return BaseStreamCollection::create($this, $this->collections);
     }
 }

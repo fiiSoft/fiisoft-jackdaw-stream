@@ -1004,7 +1004,7 @@ final class MoreStreamTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getAllPossibleTypesOfSourceForStream(): array
+    public static function getAllPossibleTypesOfSourceForStream(): array
     {
         return [
             'of' => ['of'],
@@ -1192,9 +1192,18 @@ final class MoreStreamTest extends TestCase
             ->gather(true)
             ->toArrayAssoc();
         
-        self::assertSame([
-            ['b', 1, 3]
-        ], $result);
+        //the exact order of sorted elements depends on PHP version
+        if (\PHP_MAJOR_VERSION === 7) {
+            $expected = [
+                ['b', 1, 3]
+            ];
+        } else {
+            $expected = [
+                [1, 3, 'b']
+            ];
+        }
+        
+        self::assertSame($expected, $result);
     }
     
     public function test_Sort_Gather_preserveKeys(): void
@@ -1204,9 +1213,18 @@ final class MoreStreamTest extends TestCase
             ->gather()
             ->toArrayAssoc();
         
-        self::assertSame([
-            [2 => 'b', 'a' => 1, 'c' => 3]
-        ], $result);
+        //the exact order of sorted elements depends on PHP version
+        if (\PHP_MAJOR_VERSION === 7) {
+            $expected = [
+                [2 => 'b', 'a' => 1, 'c' => 3]
+            ];
+        } else {
+            $expected = [
+                ['a' => 1, 'c' => 3, 2 => 'b']
+            ];
+        }
+        
+        self::assertSame($expected, $result);
     }
     
     public function test_Reverse_GroupBy_with_preserve_keys(): void
@@ -1227,10 +1245,20 @@ final class MoreStreamTest extends TestCase
             ->sort()
             ->groupBy('is_string');
         
-        self::assertSame([
-            1 => [0 => 'a', 2 => 'b', 4 => 'c'],
-            0 => [1 => 1, 3 => 2, 5 => 3],
-        ], $result->toArray());
+        //the exact order of sorted elements depends on PHP version
+        if (\PHP_MAJOR_VERSION === 7) {
+            $expected = [
+                1 => [0 => 'a', 2 => 'b', 4 => 'c'],
+                0 => [1 => 1, 3 => 2, 5 => 3],
+            ];
+        } else {
+            $expected = [
+                0 => [1 => 1, 3 => 2, 5 => 3],
+                1 => [0 => 'a', 2 => 'b', 4 => 'c'],
+            ];
+        }
+        
+        self::assertSame($expected, $result->toArray());
     }
     
     public function test_Sort_GroupBy_reindex(): void
@@ -1239,10 +1267,20 @@ final class MoreStreamTest extends TestCase
             ->sort()
             ->groupBy('is_string', true);
         
-        self::assertSame([
-            1 => ['a', 'b', 'c'],
-            0 => [1, 2, 3],
-        ], $result->toArray());
+        //the exact order of sorted elements depends on PHP version
+        if (\PHP_MAJOR_VERSION === 7) {
+            $expected = [
+                1 => ['a', 'b', 'c'],
+                0 => [1, 2, 3],
+            ];
+        } else {
+            $expected = [
+                0 => [1, 2, 3],
+                1 => ['a', 'b', 'c'],
+            ];
+        }
+        
+        self::assertSame($expected, $result->toArray());
     }
     
     public function test_Fork_GroupBy_preserveKeys(): void
@@ -1446,7 +1484,7 @@ final class MoreStreamTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataForTestFindUptrends(): array
+    public static function getDataForTestFindUptrends(): array
     {
         //dataset, expected
         return [
@@ -1478,7 +1516,7 @@ final class MoreStreamTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataForTestFindDowntrends(): array
+    public static function getDataForTestFindDowntrends(): array
     {
         //dataset, expected
         return [
@@ -1506,7 +1544,7 @@ final class MoreStreamTest extends TestCase
         self::assertSame($expected, Stream::from($data)->onlyMaxima()->toArrayAssoc());
     }
     
-    public function getDataForTestFindLocalMaxima(): array
+    public static function getDataForTestFindLocalMaxima(): array
     {
         return [
             //data, expected
@@ -1589,7 +1627,7 @@ final class MoreStreamTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataForTestFindLocalExtremaIncludeLimits(): array
+    public static function getDataForTestFindLocalExtremaIncludeLimits(): array
     {
         return [
             //data, expected
@@ -1617,7 +1655,7 @@ final class MoreStreamTest extends TestCase
         self::assertSame($expected, Stream::from($data)->onlyExtrema(null, false)->toArray());
     }
     
-    public function getDataForTestFindLocalExtremaWithoutLimits(): array
+    public static function getDataForTestFindLocalExtremaWithoutLimits(): array
     {
         return [
             [[3, 2, 4, 5, 3], [2, 5]],
@@ -2147,11 +2185,22 @@ final class MoreStreamTest extends TestCase
             ->segregate(3)
             ->toArray();
         
-        self::assertSame([
-            [6 => 1, 9 => 1, 13 => 1],
-            [15 => 2, 3 => 2, 20 => 2, 17 => 2, 11 => 2, 1 => 2],
-            [2 => 3, 19 => 3, 8 => 3, 16 => 3],
-        ], $result);
+        //the exact order of sorted elements depends on PHP version
+        if (\PHP_MAJOR_VERSION === 7) {
+            $expected = [
+                [6 => 1, 9 => 1, 13 => 1],
+                [15 => 2, 3 => 2, 20 => 2, 17 => 2, 11 => 2, 1 => 2],
+                [2 => 3, 19 => 3, 8 => 3, 16 => 3],
+            ];
+        } else {
+            $expected = [
+                [6 => 1, 9 => 1, 13 => 1],
+                [1 => 2, 3 => 2, 11 => 2, 15 => 2, 17 => 2, 20 => 2],
+                [2 => 3, 8 => 3, 16 => 3, 19 => 3],
+            ];
+        }
+        
+        self::assertSame($expected, $result);
     }
     
     public function test_Reverse_Reindex(): void
@@ -2270,7 +2319,7 @@ final class MoreStreamTest extends TestCase
         ], $result);
     }
     
-    public function getDataForTestZipWithOneSource(): array
+    public static function getDataForTestZipWithOneSource(): array
     {
         return [
             'array' => [[2, 4, 6]],

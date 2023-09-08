@@ -13,7 +13,7 @@ final class PDOStatementAdapter extends NonCountableProducer
     public function __construct(\PDOStatement $statement, ?int $fetchMode = null)
     {
         $this->statement = $statement;
-        $this->fetchMode = $fetchMode;
+        $this->fetchMode = $fetchMode ?? \PDO::FETCH_ASSOC;
     }
     
     public function feed(Item $item): \Generator

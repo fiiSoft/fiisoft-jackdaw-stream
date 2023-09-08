@@ -8,6 +8,8 @@ final class SplFixedArrayAdapter extends BaseIterableCollector
 {
     private \SplFixedArray $fixedArray;
     
+    private int $index = 0;
+    
     public function __construct(\SplFixedArray $fixedArray, ?bool $allowKeys = true)
     {
         parent::__construct($allowKeys);
@@ -22,9 +24,7 @@ final class SplFixedArrayAdapter extends BaseIterableCollector
     
     public function add($value): void
     {
-        $key = $this->fixedArray->key();
-        $this->fixedArray[$key] = $value;
-        $this->fixedArray->next();
+        $this->fixedArray[$this->index++] = $value;
     }
     
     public function count(): int
@@ -40,21 +40,29 @@ final class SplFixedArrayAdapter extends BaseIterableCollector
             unset($this->fixedArray[$i]);
         }
         
-        $this->fixedArray->rewind();
+        $this->index = 0;
     }
     
     public function getData(): array
     {
-        return \array_filter($this->fixedArray->toArray(), static fn($v): bool => $v !== null);
+        return \iterator_to_array($this->getIterator());
     }
     
     public function stream(): Stream
     {
-        return Stream::from($this->fixedArray)->notNull();
+        return Stream::from($this->getIterator());
     }
     
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
-        return $this->stream()->getIterator();
+        $iterator = function (): \Generator {
+            foreach ($this->fixedArray as $key => $value) {
+                if ($value !== null) {
+                    yield $key => $value;
+                }
+            }
+        };
+        
+        return $iterator();
     }
 }

@@ -663,7 +663,7 @@ final class ProducersTest extends TestCase
         self::assertSame(3, $producer->stream()->count()->get());
     }
     
-    public function getDataForTestRandomAndSequentialProducersAreReusable(): array
+    public static function getDataForTestRandomAndSequentialProducersAreReusable(): array
     {
         return [
             'sequentialInt' => [Producers::sequentialInt(1, 1, 3)],
@@ -862,7 +862,7 @@ final class ProducersTest extends TestCase
         self::assertEquals(new Item('b', 2), $producer->getLast());
     }
     
-    public function getDataForTestCombinedArraysNotEmpty(): array
+    public static function getDataForTestCombinedArraysNotEmpty(): array
     {
         return [
             [Producers::combinedFrom(['a', 'b'], [5, 2])],
@@ -881,7 +881,7 @@ final class ProducersTest extends TestCase
         self::assertNull($producer->getLast());
     }
     
-    public function getDataForTestCombinedArraysEmpty(): array
+    public static function getDataForTestCombinedArraysEmpty(): array
     {
         return [
             [Producers::combinedFrom([], [5, 2])],
@@ -903,7 +903,7 @@ final class ProducersTest extends TestCase
         }
     }
     
-    public function getDataForTestCombinedGeneralNotEmpty(): array
+    public static function getDataForTestCombinedGeneralNotEmpty(): array
     {
         return [
             [Producers::combinedFrom(['a', 'b'], Stream::from([5, 2]))],
@@ -925,7 +925,7 @@ final class ProducersTest extends TestCase
         }
     }
     
-    public function getDataForTestCombinedGeneralEmpty(): array
+    public static function getDataForTestCombinedGeneralEmpty(): array
     {
         $emptyArray = static fn(): array => [];
         

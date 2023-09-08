@@ -3,14 +3,14 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Condition\Conditions;
-use FiiSoft\Jackdaw\Internal\StreamCollection;
+use FiiSoft\Jackdaw\Internal\Collection\BaseStreamCollection;
 use FiiSoft\Jackdaw\Operation\Terminating\GroupBy;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
 
 final class StreamCollectionTest extends TestCase
 {
-    private StreamCollection $collection;
+    private BaseStreamCollection $collection;
     
     private array $initialData = [
         'numbers' => [6, 3, 7, 9],
@@ -19,7 +19,7 @@ final class StreamCollectionTest extends TestCase
     
     protected function setUp(): void
     {
-        $this->collection = new StreamCollection(new GroupBy('is_string'), $this->initialData);
+        $this->collection = BaseStreamCollection::create(new GroupBy('is_string'), $this->initialData);
     }
     
     public function test_get_existing_group(): void

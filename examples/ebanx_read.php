@@ -7,7 +7,7 @@ require_once  __DIR__ .'/../vendor/autoload.php';
 $timeStart = microtime(true);
 $memoryStart = memory_get_usage();
 
-$reader = function ($fp): \Generator {
+$reader = static function ($fp): \Generator {
     $index = 0;
     $line = fgets($fp);
     while ($line !== false) {

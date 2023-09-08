@@ -67,7 +67,7 @@ final class TransformersTest extends TestCase
         self::assertSame($expected, $transformer->transform([1, 2, 3], 'a'));
     }
     
-    public function getDataForTestReducerAdapterWithIterableValue(): array
+    public static function getDataForTestReducerAdapterWithIterableValue(): array
     {
         $sum = Transformers::getAdapter(Reducers::sum());
         $min = Transformers::getAdapter(Reducers::min());

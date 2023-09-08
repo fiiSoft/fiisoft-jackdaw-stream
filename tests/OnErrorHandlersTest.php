@@ -92,7 +92,7 @@ final class OnErrorHandlersTest extends TestCase
         self::assertStringContainsString($message, LogFormatter::format(new \RuntimeException(), $value, $key));
     }
     
-    public function getDataForTestLogFormatterDescribesData(): array
+    public static function getDataForTestLogFormatterDescribesData(): array
     {
         $longArray = [
             'qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm'

@@ -49,7 +49,7 @@ final class PredicatesTest extends TestCase
         $predicate->isSatisfiedBy(3, 2, 5);
     }
     
-    public function getPredicates(): array
+    public static function getPredicates(): array
     {
         return [
             [Predicates::getAdapter(5)],

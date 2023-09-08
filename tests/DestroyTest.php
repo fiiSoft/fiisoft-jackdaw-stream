@@ -146,16 +146,16 @@ final class DestroyTest extends TestCase
         self::assertSame(0, $producer->count());
     }
     
-    public function getDataForTestGeneralProducerDestroy(): array
+    public static function getDataForTestGeneralProducerDestroy(): array
     {
         return [
             'QueueProducer' => [Producers::queue(['a', 'b', 'c'])],
             'MultiProducer' => [Producers::multiSourced(Producers::queue(['a', 'b']), Producers::fromArray(['c']))],
             'BucketListIterator' => [new BucketListIterator([new Bucket(), new Bucket(), new Bucket()])],
             'CircularBufferIterator' => [new CircularBufferIterator(['a', 'b', 'c'], 3, 1)],
-            'ForwardItemsIterator' => [new ForwardItemsIterator($this->convertToItems([1, 2, 3]))],
+            'ForwardItemsIterator' => [new ForwardItemsIterator(self::convertToItems([1, 2, 3]))],
             'ReverseArrayIterator' => [new ReverseArrayIterator(['a', 'b', 'c'])],
-            'ReverseItemsIterator' => [new ReverseItemsIterator($this->convertToItems(['a', 'b', 'c']))],
+            'ReverseItemsIterator' => [new ReverseItemsIterator(self::convertToItems(['a', 'b', 'c']))],
             'ReverseNumericalArrayIterator' => [new ReverseNumericalArrayIterator(['a', 'b', 'c'])],
             'ArrayIteratorAdapter' => [Producers::getAdapter(new \ArrayIterator(['a', 'b', 'c']))],
             'IteratorAdapter' => [Producers::fromIterator(new \ArrayObject(['a', 'b', 'c']))],
@@ -189,7 +189,7 @@ final class DestroyTest extends TestCase
         //given
         $fp = \fopen(__FILE__, 'rb');
         
-        $isOpen = @\fstat($fp);
+        $isOpen = \is_resource($fp);
         self::assertNotFalse($isOpen);
         
         $producer = Producers::resource($fp, true);
@@ -198,7 +198,7 @@ final class DestroyTest extends TestCase
         $producer->destroy();
         
         //then
-        $isOpen = @\fstat($fp);
+        $isOpen = \is_resource($fp);
         self::assertFalse($isOpen);
         
         self::assertSame(0, $producer->stream()->count()->get());
@@ -534,7 +534,7 @@ final class DestroyTest extends TestCase
         $stream->destroy();
     }
     
-    public function getDataForTestUniqueDestroy(): array
+    public static function getDataForTestUniqueDestroy(): array
     {
         $twoArgs = static fn($a, $b): int => \gettype($a) === \gettype($b) ? $a <=> $b : 1;
         
@@ -608,7 +608,7 @@ final class DestroyTest extends TestCase
     /**
      * @return Item[]
      */
-    private function convertToItems(array $data): array
+    private static function convertToItems(array $data): array
     {
         $items = [];
         

@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-use Illuminate\Support\LazyCollection;
+use Illuminate\Support\Collection;
 
 require_once  __DIR__ .'/../vendor/autoload.php';
 
 $timeStart = microtime(true);
 $memoryStart = memory_get_usage();
 
-$reader = function ($fp): \Generator {
+$reader = static function ($fp): \Generator {
     $index = 0;
     $line = fgets($fp);
     while ($line !== false) {
@@ -18,7 +18,7 @@ $reader = function ($fp): \Generator {
 
 $count = 0;
 
-$collection = new LazyCollection($reader(fopen(__DIR__.'/../var/testfile.txt', 'rb')));
+$collection = new Collection($reader(fopen(__DIR__.'/../var/testfile.txt', 'rb')));
 $rows = $collection
     ->map(static fn(string $line) => json_decode($line, true, 512, JSON_THROW_ON_ERROR))
     ->filter(static fn(array $row) => $row['isVerified'])

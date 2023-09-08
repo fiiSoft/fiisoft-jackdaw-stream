@@ -83,7 +83,7 @@ final class OperationsTest extends TestCase
         new Aggregate($keys);
     }
     
-    public function getDataForTestAggregateThrowsExceptionWhenParamKeysIsInvalid(): array
+    public static function getDataForTestAggregateThrowsExceptionWhenParamKeysIsInvalid(): array
     {
         return [
             [[]],
@@ -326,7 +326,7 @@ final class OperationsTest extends TestCase
         new MapKeyValue($mapper);
     }
     
-    public function getDataForTestMapKeyValueThrowsExceptionWhenDeclaredTypeOfValueOfMapperIsNotArray(): \Generator
+    public static function getDataForTestMapKeyValueThrowsExceptionWhenDeclaredTypeOfValueOfMapperIsNotArray(): \Generator
     {
         $mappers = [
             static fn(): bool => true,
@@ -462,7 +462,7 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $collect->get());
     }
     
-    public function getDataForCollect(): array
+    public static function getDataForCollect(): array
     {
         //reindex, dataset, expected keys
         return [
@@ -541,7 +541,7 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $collectKeys->get());
     }
     
-    public function getDataForCollectKeys(): array
+    public static function getDataForCollectKeys(): array
     {
         //dataset, expected keys
         return [
@@ -634,7 +634,7 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $count->get());
     }
     
-    public function getDataForCount(): array
+    public static function getDataForCount(): array
     {
         //dataset, expected count
         return [
@@ -712,7 +712,7 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $has->get());
     }
     
-    public function getDataForTestHas(): \Generator
+    public static function getDataForTestHas(): \Generator
     {
         $cases = [
             [Filters::greaterOrEqual(5), false],
@@ -721,7 +721,7 @@ final class OperationsTest extends TestCase
         
         $dataSet = [1, 2, 3 => 3, 4];
         
-        yield from $this->generateVariationsWithValues($cases, $dataSet);
+        yield from self::generateVariationsWithValues($cases, $dataSet);
     }
     
     /**
@@ -803,7 +803,7 @@ final class OperationsTest extends TestCase
         }
     }
     
-    public function getDataForTestFind(): array
+    public static function getDataForTestFind(): array
     {
         $dataSet = [1 => 'a', 2, 'b' => 3, 4];
         
@@ -888,7 +888,7 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $reduce->get());
     }
     
-    public function getDataForTestReduce(): array
+    public static function getDataForTestReduce(): array
     {
         return [
             //dataSet, expected
@@ -982,46 +982,47 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $collect->get());
     }
     
-    public function getDataForTestSort(): array
+    public static function getDataForTestSort(): array
     {
+        $expected2 = [6 => 1, 8 => 2, 5 => 2, 7 => 3, 1 => 3, 4 => 5, 3 => 5, 2 => 6, 0 => 6];
+        $expected3 = [0 => 6, 1 => 3, 2 => 6, 3 => 5, 4 => 5, 5 => 2, 6 => 1, 7 => 3, 8 => 2];
+        $expected4 = [8 => 2, 7 => 3, 6 => 1, 5 => 2, 4 => 5, 3 => 5, 2 => 6, 1 => 3, 0 => 6];
+        $expected5 = [6 => 1, 5 => 2, 8 => 2, 1 => 3, 7 => 3, 3 => 5, 4 => 5, 0 => 6, 2 => 6];
+        $expected6 = [2 => 6, 0 => 6, 4 => 5, 3 => 5, 7 => 3, 1 => 3, 8 => 2, 5 => 2, 6 => 1];
+        
+        //sometimes the order of elements differs in various versions of PHP :(
+        if (\PHP_MAJOR_VERSION === 7) {
+            $expected1 = [0 => 6, 2 => 6, 4 => 5, 3 => 5, 7 => 3, 1 => 3, 8 => 2, 5 => 2, 6 => 1];
+        } else {
+            $expected1 = $expected6;
+        }
+        
         //reversed, mode, Comparator, expected
         return [
             [
-                false, Check::VALUE, null,
-                [6 => 1, 8 => 2, 5 => 2, 7 => 3, 1 => 3, 4 => 5, 3 => 5, 2 => 6, 0 => 6]
+                false, Check::VALUE, null, $expected2
             ], [
-                true, Check::VALUE, null,
-                [0 => 6, 2 => 6, 4 => 5, 3 => 5, 7 => 3, 1 => 3, 8 => 2, 5 => 2, 6 => 1]
+                true, Check::VALUE, null, $expected1
             ], [
-                false, Check::VALUE, Comparators::default(),
-                [6 => 1, 8 => 2, 5 => 2, 7 => 3, 1 => 3, 4 => 5, 3 => 5, 2 => 6, 0 => 6]
+                false, Check::VALUE, Comparators::default(), $expected2
             ], [
-                true, Check::VALUE, Comparators::default(),
-                [0 => 6, 2 => 6, 4 => 5, 3 => 5, 7 => 3, 1 => 3, 8 => 2, 5 => 2, 6 => 1]
+                true, Check::VALUE, Comparators::default(), $expected1
             ], [
-                false, Check::KEY, null,
-                [0 => 6, 1 => 3, 2 => 6, 3 => 5, 4 => 5, 5 => 2, 6 => 1, 7 => 3, 8 => 2]
+                false, Check::KEY, null, $expected3
             ], [
-                true, Check::KEY, null,
-                [8 => 2, 7 => 3, 6 => 1, 5 => 2, 4 => 5, 3 => 5, 2 => 6, 1 => 3, 0 => 6]
+                true, Check::KEY, null, $expected4
             ], [
-                false, Check::KEY, Comparators::default(),
-                [0 => 6, 1 => 3, 2 => 6, 3 => 5, 4 => 5, 5 => 2, 6 => 1, 7 => 3, 8 => 2]
+                false, Check::KEY, Comparators::default(), $expected3
             ], [
-                true, Check::KEY, Comparators::default(),
-                [8 => 2, 7 => 3, 6 => 1, 5 => 2, 4 => 5, 3 => 5, 2 => 6, 1 => 3, 0 => 6]
+                true, Check::KEY, Comparators::default(), $expected4
             ], [
-                false, Check::BOTH, null,
-                [6 => 1, 5 => 2, 8 => 2, 1 => 3, 7 => 3, 3 => 5, 4 => 5, 0 => 6, 2 => 6]
+                false, Check::BOTH, null, $expected5
             ], [
-                true, Check::BOTH, null,
-                [2 => 6, 0 => 6, 4 => 5, 3 => 5, 7 => 3, 1 => 3, 8 => 2, 5 => 2, 6 => 1]
+                true, Check::BOTH, null, $expected6
             ], [
-                false, Check::BOTH, Comparators::default(),
-                [6 => 1, 5 => 2, 8 => 2, 1 => 3, 7 => 3, 3 => 5, 4 => 5, 0 => 6, 2 => 6]
+                false, Check::BOTH, Comparators::default(), $expected5
             ], [
-                true, Check::BOTH, Comparators::default(),
-                [2 => 6, 0 => 6, 4 => 5, 3 => 5, 7 => 3, 1 => 3, 8 => 2, 5 => 2, 6 => 1]
+                true, Check::BOTH, Comparators::default(), $expected6
             ],
         ];
     }
@@ -1083,7 +1084,7 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $collect->get());
     }
     
-    public function getDataForTestReverseAcceptSimpleData(): array
+    public static function getDataForTestReverseAcceptSimpleData(): array
     {
         //data, expected
         return [
@@ -1233,7 +1234,7 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $hasEvery->get());
     }
     
-    public function getDataForTestHasEvery(): \Generator
+    public static function getDataForTestHasEvery(): \Generator
     {
         $cases = [
             [[3, 5], false],
@@ -1242,7 +1243,7 @@ final class OperationsTest extends TestCase
         
         $dataSet = [1, 2, 3, 4];
         
-        yield from $this->generateVariationsWithValues($cases, $dataSet);
+        yield from self::generateVariationsWithValues($cases, $dataSet);
     }
     
     public function test_limit_of_SortLimited_can_be_only_decreased(): void
@@ -1484,7 +1485,7 @@ final class OperationsTest extends TestCase
         return $items;
     }
     
-    private function generateVariationsWithValues(array $cases, $dataSet): \Generator
+    private static function generateVariationsWithValues(array $cases, $dataSet): \Generator
     {
         foreach ([Check::VALUE, Check::KEY, Check::ANY, Check::BOTH] as $mode) {
             foreach ($cases as [$values, $expected]) {

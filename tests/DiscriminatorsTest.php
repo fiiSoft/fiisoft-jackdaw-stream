@@ -23,7 +23,7 @@ final class DiscriminatorsTest extends TestCase
         Discriminators::getAdapter($discriminator);
     }
     
-    public function getDataForTestGetAdapterThrowsExceptionOnInvalidArgument(): array
+    public static function getDataForTestGetAdapterThrowsExceptionOnInvalidArgument(): array
     {
         return [
             [[]], //empty array

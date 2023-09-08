@@ -2,7 +2,9 @@
 
 Let's wrap native PHP array operations into stream-like wrappers, similar to Java and Scala. And... here we are! 
 
-Of course, it's not as fast as clean PHP - and will never be, because it's impossible - but still, this is the fastest library of its kind in complex scenarios which I've found so far. And is really powerful. 
+Of course, it's not as fast as clean PHP - and will never be, because it's impossible - but is fast enough. 
+
+Previously was here: ~~this is the fastest library of its kind in complex scenarios which I've found so far~~ - but it's not so simple actually. Memory consumption and execution speed vary greatly from version of PHP, version of libraries and even if you run it as a native process or in a docker with the same version of PHP!. So, it depends.
 
 Is it bugged? Oh, hell yes! But even so, it's still great and fun to play. 
 

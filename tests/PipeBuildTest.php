@@ -126,7 +126,7 @@ final class PipeBuildTest extends TestCase
         self::assertSame($expected, Stream::from($data)->limit($limit)->tail($tail)->toArray());
     }
     
-    public function getDataForTestLimitTail(): array
+    public static function getDataForTestLimitTail(): array
     {
         return [
             //limit, tail, expected
@@ -187,7 +187,7 @@ final class PipeBuildTest extends TestCase
         self::assertSame([1, 2, 3], Stream::from([3, 6, 2, 5, 1, 4])->shuffle()->best(3)->toArray());
     }
     
-    public function getDataForTestShuffleReverseSortingOperation(): array
+    public static function getDataForTestShuffleReverseSortingOperation(): array
     {
         return [
             'Shuffle-Sort' => [new Shuffle(), new Sort()],
@@ -235,7 +235,7 @@ final class PipeBuildTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataForTestSegregateTail(): array
+    public static function getDataForTestSegregateTail(): array
     {
         $full = [
             [3 => 1],
@@ -266,7 +266,7 @@ final class PipeBuildTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataForTestSortLimitedTail(): array
+    public static function getDataForTestSortLimitedTail(): array
     {
         return [
             //limit, tail, expected
@@ -905,7 +905,7 @@ final class PipeBuildTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataForTestReindexAccumulate(): array
+    public static function getDataForTestReindexAccumulate(): array
     {
         $normal = [
             [0 => 'a', 1 => 'b'],
@@ -925,7 +925,7 @@ final class PipeBuildTest extends TestCase
             [13 => 'b'],
         ];
         
-        return $this->buildReindexReindexableTestData($normal, $reindexed, $custom);
+        return self::buildReindexReindexableTestData($normal, $reindexed, $custom);
     }
     
     /**
@@ -940,7 +940,7 @@ final class PipeBuildTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataForTestReindexChunk(): array
+    public static function getDataForTestReindexChunk(): array
     {
         $normal = [
             [0 => 'a', 'b', 1],
@@ -960,11 +960,11 @@ final class PipeBuildTest extends TestCase
             [13 => 'b'],
         ];
         
-        return $this->buildReindexReindexableTestData($normal, $reindexed, $custom);
+        return self::buildReindexReindexableTestData($normal, $reindexed, $custom);
     }
     
     /**
-     * @dataProvider getDataAForTestReindexChunkBy
+     * @dataProvider getDataForTestReindexChunkBy
      */
     public function test_Reindex_ChunkBy(int $start, int $step, bool $reindex, array $expected): void
     {
@@ -977,7 +977,7 @@ final class PipeBuildTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataAForTestReindexChunkBy(): array
+    public static function getDataForTestReindexChunkBy(): array
     {
         $normal = [
             [0 => 'a', 'b'],
@@ -1003,11 +1003,11 @@ final class PipeBuildTest extends TestCase
             [13 => 'b'],
         ];
         
-        return $this->buildReindexReindexableTestData($normal, $reindexed, $custom);
+        return self::buildReindexReindexableTestData($normal, $reindexed, $custom);
     }
     
     /**
-     * @dataProvider getDataAForTestReindexCollect
+     * @dataProvider getDataForTestReindexCollect
      */
     public function test_Reindex_Collect(int $start, int $step, bool $reindex, array $expected): void
     {
@@ -1019,13 +1019,13 @@ final class PipeBuildTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataAForTestReindexCollect(): array
+    public static function getDataForTestReindexCollect(): array
     {
         $normal = [0 => 'a', 'b', 'c', 'a'];
         $reindexed = [0 => 'a', 'b', 'c', 'a'];
         $custom = [1 => 'a', 3 => 'b', 5 => 'c', 7 => 'a'];
         
-        return $this->buildReindexReindexableTestData($normal, $reindexed, $custom);
+        return self::buildReindexReindexableTestData($normal, $reindexed, $custom);
     }
     
     /**
@@ -1039,7 +1039,7 @@ final class PipeBuildTest extends TestCase
         );
     }
     
-    public function getDataForTestReindexGather(): array
+    public static function getDataForTestReindexGather(): array
     {
         return [
             //start, step, reindex, expected
@@ -1064,7 +1064,7 @@ final class PipeBuildTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataForTestReindexSegregate(): array
+    public static function getDataForTestReindexSegregate(): array
     {
         $normal = [
             [0 => 'a', 2 => 'a'],
@@ -1084,7 +1084,7 @@ final class PipeBuildTest extends TestCase
             [7 => 'c'],
         ];
         
-        return $this->buildReindexReindexableTestData($normal, $reindexed, $custom);
+        return self::buildReindexReindexableTestData($normal, $reindexed, $custom);
     }
     
     /**
@@ -1100,7 +1100,7 @@ final class PipeBuildTest extends TestCase
         self::assertSame($expected, $result);
     }
     
-    public function getDataForTestReindexUptrends(): array
+    public static function getDataForTestReindexUptrends(): array
     {
         $normal = [
             [0 => 'a', 'b'],
@@ -1120,7 +1120,7 @@ final class PipeBuildTest extends TestCase
             [13 => 'a', 15 => 'c'],
         ];
         
-        return $this->buildReindexReindexableTestData($normal, $reindexed, $custom);
+        return self::buildReindexReindexableTestData($normal, $reindexed, $custom);
     }
     
     public function test_Reindex_UnpackTuple(): void
@@ -1161,7 +1161,7 @@ final class PipeBuildTest extends TestCase
         self::assertSame($data, $result);
     }
     
-    private function buildReindexReindexableTestData(array $normal, array $reindexed, array $custom): array
+    private static function buildReindexReindexableTestData(array $normal, array $reindexed, array $custom): array
     {
         return [
             'default_default' => [0, 1, false, $normal],

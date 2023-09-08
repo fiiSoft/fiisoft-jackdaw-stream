@@ -64,7 +64,7 @@ final class OtherTest extends TestCase
     public function test_how_SplHeap_acts(): void
     {
         $heap = new class extends \SplHeap {
-            protected function compare($value1, $value2) {
+            protected function compare($value1, $value2): int {
                 return $value2 <=> $value1;
             }
         };
@@ -111,7 +111,7 @@ final class OtherTest extends TestCase
     public function test_reversed_limited_sort_with_SplHeap(): void
     {
         $heap = new class extends \SplHeap {
-            public function compare($value2, $value1) {
+            public function compare($value2, $value1): int {
                 return $value1 <=> $value2;
             }
         };
@@ -136,7 +136,7 @@ final class OtherTest extends TestCase
     public function test_straight_limited_sort_with_SplHeap(): void
     {
         $heap = new class extends \SplHeap {
-            public function compare($value1, $value2) {
+            public function compare($value1, $value2): int {
                 return $value1 <=> $value2;
             }
         };
@@ -243,13 +243,23 @@ final class OtherTest extends TestCase
     
     public function test_put_various_values_as_keys_in_array(): void
     {
-        $arr = [
-            true => 'a',
-            false => 'b',
-            3 => 'c',
-            '15.55' => 'd',
-            18.43 => 'e',
-        ];
+        if (\version_compare(\PHP_VERSION, '8.1.0') >= 0) {
+            $arr = [
+                true => 'a',
+                false => 'b',
+                3 => 'c',
+                '15.55' => 'd',
+                18 => 'e',
+            ];
+        } else {
+            $arr = [
+                true => 'a',
+                false => 'b',
+                3 => 'c',
+                '15.55' => 'd',
+                18.43 => 'e',
+            ];
+        }
         
         self::assertSame([
             1 => 'a',
@@ -310,25 +320,47 @@ final class OtherTest extends TestCase
     
     public function test_working_with_ArrayAccess(): void
     {
-        $object = new class implements \ArrayAccess {
-            private array $storage = [];
-            
-            public function offsetExists($offset): bool {
-                return \array_key_exists($offset, $this->storage);
-            }
-            
-            public function offsetGet($offset) {
-                return $this->storage[$offset] ?? null;
-            }
-            
-            public function offsetSet($offset, $value): void {
-                $this->storage[$offset] = $value;
-            }
-            
-            public function offsetUnset($offset): void {
-                unset($this->storage[$offset]);
-            }
-        };
+        if (\version_compare(\PHP_VERSION, '8.1.0') >= 0) {
+            $object = new class implements \ArrayAccess {
+                private array $storage = [];
+                
+                public function offsetExists($offset): bool {
+                    return \array_key_exists($offset, $this->storage);
+                }
+                
+                public function offsetGet($offset): mixed {
+                    return $this->storage[$offset] ?? null;
+                }
+                
+                public function offsetSet($offset, $value): void {
+                    $this->storage[$offset] = $value;
+                }
+                
+                public function offsetUnset($offset): void {
+                    unset($this->storage[$offset]);
+                }
+            };
+        } else {
+            $object = new class implements \ArrayAccess {
+                private array $storage = [];
+                
+                public function offsetExists($offset): bool {
+                    return \array_key_exists($offset, $this->storage);
+                }
+                
+                public function offsetGet($offset) {
+                    return $this->storage[$offset] ?? null;
+                }
+                
+                public function offsetSet($offset, $value): void {
+                    $this->storage[$offset] = $value;
+                }
+                
+                public function offsetUnset($offset): void {
+                    unset($this->storage[$offset]);
+                }
+            };
+        }
         
         self::assertFalse(isset($object['foo']));
         

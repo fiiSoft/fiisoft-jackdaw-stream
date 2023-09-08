@@ -40,7 +40,7 @@ final class MappersTest extends TestCase
         Mappers::extract($fields);
     }
     
-    public function getDataForTestExtractThrowsExceptionOnInvalidParam(): \Generator
+    public static function getDataForTestExtractThrowsExceptionOnInvalidParam(): \Generator
     {
         $fields = [
             [],

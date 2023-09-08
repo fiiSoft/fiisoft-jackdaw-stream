@@ -14,6 +14,8 @@
             <file>src/Internal/ProtectedCloning.php</file>
             <file>src/Internal/ForkCollaborator.php</file>
             <file>src/Internal/Collaborator.php</file>
+            <file>src/Internal/Iterator/StreamIterator81.php</file>
+            <file>src/Internal/Collection/StreamCollection81.php</file>
         </exclude>
         <report>
             <html outputDirectory="var/phpunit/html/" lowUpperBound="50" highLowerBound="100"/>

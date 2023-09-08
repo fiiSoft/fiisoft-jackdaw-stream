@@ -9,8 +9,9 @@ use FiiSoft\Jackdaw\Consumer\{Consumer, Consumers};
 use FiiSoft\Jackdaw\Discriminator\{Discriminator, Discriminators};
 use FiiSoft\Jackdaw\Filter\{Filter, Filters};
 use FiiSoft\Jackdaw\Handler\{ErrorHandler, OnError};
-use FiiSoft\Jackdaw\Internal\{Check, Collaborator, Destroyable, Executable, ForkCollaborator, Interruption, Pipe,
-    ResultApi, Signal, SignalHandler, StreamCollection, StreamIterator, StreamPipe};
+use FiiSoft\Jackdaw\Internal\{Check, Collaborator, Collection\BaseStreamCollection, Destroyable, Executable,
+    ForkCollaborator, Interruption, Iterator\StreamIterator81, Pipe, ResultApi, Signal, SignalHandler,
+    Iterator\StreamIterator, StreamPipe};
 use FiiSoft\Jackdaw\Internal\State\{SourceNotReady, Source, Stack};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, Mapper, Mappers};
 use FiiSoft\Jackdaw\Operation\{Accumulate, Aggregate, Assert, Categorize, Chunk, ChunkBy, Classify, CollectIn,
@@ -1410,7 +1411,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * It collects repeatable values in collections by their keys.
      */
-    public function group(?bool $reindex = null): StreamCollection
+    public function group(?bool $reindex = null): BaseStreamCollection
     {
         return $this->groupBy(Discriminators::byKey(), $reindex);
     }
@@ -1420,7 +1421,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
      *
      * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array|string|int $discriminator
      */
-    public function groupBy($discriminator, ?bool $reindex = null): StreamCollection
+    public function groupBy($discriminator, ?bool $reindex = null): BaseStreamCollection
     {
         $groupBy = new GroupBy($discriminator, $reindex);
         $this->runWith($groupBy);
@@ -1611,7 +1612,13 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     {
         $this->chainOperation(new Iterate());
         
-        return new StreamIterator($this, $this->signal->item);
+        if (\version_compare(\PHP_VERSION, '8.1.0') >= 0) {
+            //@codeCoverageIgnoreStart
+            return new StreamIterator81($this, $this->signal->item);
+            //@codeCoverageIgnoreEnd
+        } else {
+            return new StreamIterator($this, $this->signal->item);
+        }
     }
     
     private function chainOperation(Operation $next): Operation

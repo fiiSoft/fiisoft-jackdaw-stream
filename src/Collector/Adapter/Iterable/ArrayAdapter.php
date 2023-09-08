@@ -30,7 +30,7 @@ final class ArrayAdapter extends BaseIterableCollector
         return new \ArrayIterator($this->storage);
     }
     
-    public function count()
+    public function count(): int
     {
         return \count($this->storage);
     }

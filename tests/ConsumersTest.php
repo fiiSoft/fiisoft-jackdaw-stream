@@ -51,7 +51,7 @@ final class ConsumersTest extends TestCase
         self::assertSame($expectedOutput, $output);
     }
     
-    public function getDataForTestPrinterConsumerSimplyEchoOutputToStdout(): array
+    public static function getDataForTestPrinterConsumerSimplyEchoOutputToStdout(): array
     {
         return [
             //mode, expected output

@@ -2684,7 +2684,7 @@ final class StreamTest extends TestCase
         Stream::from(['a', 'b', 'c'])->mapKV($mapper)->run();
     }
     
-    public function getDataForTestMapKeyValueThrowsExcetionWhenResultOfMapperIsNotValid(): \Generator
+    public static function getDataForTestMapKeyValueThrowsExcetionWhenResultOfMapperIsNotValid(): \Generator
     {
         $mappers = [
             static fn(): array => [], //empty array
