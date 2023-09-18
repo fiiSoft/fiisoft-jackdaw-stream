@@ -2,10 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparator;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
-use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
@@ -14,23 +14,21 @@ use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
 final class Uptrends extends BaseOperation implements Reindexable
 {
     private ItemComparator $comparator;
+    private Comparison $comparison;
     private ?Item $previous = null;
     
     private array $trend = [];
     private int $index = 0;
-    private bool $reindex;
+    private bool $reindex, $downtrend;
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function __construct(
-        $comparator = null,
-        int $mode = Check::VALUE,
-        bool $reindex = false,
-        bool $downtrend = false
-    ) {
-        $this->comparator = ItemComparatorFactory::getFor($mode, $downtrend, $comparator);
+    public function __construct(bool $reindex = false, bool $downtrend = false, $comparison = null)
+    {
         $this->reindex = $reindex;
+        $this->downtrend = $downtrend;
+        $this->comparison = Comparison::prepare($comparison);
     }
     
     public function handle(Signal $signal): void
@@ -39,6 +37,7 @@ final class Uptrends extends BaseOperation implements Reindexable
         
         if ($this->previous === null) {
             $this->previous = $item->copy();
+            $this->comparator = ItemComparatorFactory::getForComparison($this->comparison, $this->downtrend);
         } elseif ($this->comparator->compare($this->previous, $item) < 0) {
             if ($this->reindex) {
                 $this->trend[] = $this->previous->value;

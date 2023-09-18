@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<psalm
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    cacheDirectory="var/psalm"
+    errorLevel="1"
+    ensureArrayIntOffsetsExist="false"
+    skipChecksOnUnresolvableIncludes="true"
+    findUnusedPsalmSuppress="true"
+    allowNamedArgumentCalls="false"
+    strictBinaryOperands="true"
+    resolveFromConfigFile="true"
+    allowPhpStormGenerics="true"
+    hideExternalErrors="true"
+    allowFileIncludes="true"
+    inferPropertyTypesFromConstructor="false"
+    reportMixedIssues="false"
+    addParamDefaultToDocblockType="true"
+    useDocblockTypes="false"
+    findUnusedCode="true"
+    allowStringToStandInForClass="false"
+    reportInfo="false"
+    sealAllMethods="false"
+    usePhpDocPropertiesWithoutMagicCall="false"
+    usePhpDocMethodsWithoutMagicCall="false"
+    ignoreInternalFunctionNullReturn="true"
+    findUnusedVariablesAndParams="false"
+    ignoreInternalFunctionFalseReturn="true"
+    ensureArrayStringOffsetsExist="false"
+    throwExceptionOnError="false"
+    checkForThrowsInGlobalScope="false"
+    checkForThrowsDocblock="false"
+    findUnusedBaselineEntry="true"
+    restrictReturnTypes="false"
+>
+    <projectFiles>
+        <directory name="src"/>
+        <ignoreFiles>
+            <file name="src/Producer/Generator/Uuid/Symfony/SymfonyUuidGenerator.php" />
+        </ignoreFiles>
+    </projectFiles>
+
+    <issueHandlers>
+        <PossiblyUnusedReturnValue errorLevel="suppress" />
+        <PossiblyUnusedMethod errorLevel="suppress" />
+        <MissingTemplateParam errorLevel="suppress" />
+        <UnusedVariable errorLevel="suppress" />
+        <UnusedParam errorLevel="suppress" />
+        <UnusedClass errorLevel="suppress" />
+        <InvalidArgument errorLevel="suppress" />
+        <PossiblyUnusedProperty errorLevel="suppress" />
+        <ReservedWord errorLevel="suppress" />
+        <NullableReturnStatement errorLevel="suppress" />
+        <InvalidNullableReturnType errorLevel="suppress" />
+        <InvalidOperand errorLevel="suppress" />
+        <NoInterfaceProperties errorLevel="suppress" />
+        <PossiblyNullReference errorLevel="suppress" />
+        <PossiblyNullPropertyFetch errorLevel="suppress" />
+        <PossiblyNullArrayOffset errorLevel="suppress" />
+        <PossiblyNullIterator errorLevel="suppress" />
+        <PossiblyNullPropertyAssignmentValue errorLevel="suppress" />
+        <ArgumentTypeCoercion errorLevel="suppress" />
+        <MissingParamType errorLevel="suppress" />
+        <MissingReturnType errorLevel="suppress" />
+        <MissingPropertyType errorLevel="suppress" />
+        <MissingClosureParamType errorLevel="suppress" />
+        <PropertyNotSetInConstructor errorLevel="suppress" />
+        <MissingClosureReturnType errorLevel="suppress" />
+    </issueHandlers>
+</psalm>

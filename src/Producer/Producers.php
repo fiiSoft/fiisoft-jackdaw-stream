@@ -2,12 +2,12 @@
 
 namespace FiiSoft\Jackdaw\Producer;
 
-use FiiSoft\Jackdaw\Internal\ResultApi;
+use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayIteratorAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\CallableAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\IteratorAdapter;
-use FiiSoft\Jackdaw\Producer\Adapter\ResultAdapter;
+use FiiSoft\Jackdaw\Producer\Adapter\ResultCasterAdapter;
 use FiiSoft\Jackdaw\Producer\Generator\CollatzGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;
@@ -17,6 +17,7 @@ use FiiSoft\Jackdaw\Producer\Generator\RandomString;
 use FiiSoft\Jackdaw\Producer\Generator\RandomUuid;
 use FiiSoft\Jackdaw\Producer\Generator\SequentialInt;
 use FiiSoft\Jackdaw\Producer\Generator\Tokenizer;
+use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidGenerator;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
 use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
 use FiiSoft\Jackdaw\Stream;
@@ -24,7 +25,7 @@ use FiiSoft\Jackdaw\Stream;
 final class Producers
 {
     /**
-     * @param array<Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array|scalar> $elements
+     * @param array<Stream|Producer|ResultCaster|UuidGenerator|\Traversable|\PDOStatement|callable|resource|array|scalar> $elements
      */
     public static function from(array $elements): Producer
     {
@@ -36,7 +37,7 @@ final class Producers
     }
     
     /**
-     * @param array<Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array|scalar> $elements
+     * @param array<Stream|Producer|ResultCaster|UuidGenerator|\Traversable|\PDOStatement|callable|resource|array|scalar> $elements
      * @return Producer[]
      */
     public static function prepare(array $elements): array
@@ -48,8 +49,9 @@ final class Producers
         foreach ($elements as $item) {
             if (\is_object($item)) {
                 if ($item instanceof \Traversable
-                    || $item instanceof ResultApi
+                    || $item instanceof ResultCaster
                     || $item instanceof Producer
+                    || $item instanceof UuidGenerator
                     || \is_callable($item)
                 ) {
                     $mode = 1;
@@ -76,7 +78,7 @@ final class Producers
     }
     
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array $producer
+     * @param Stream|Producer|ResultCaster|UuidGenerator|\Traversable|\PDOStatement|callable|resource|array $producer
      */
     public static function getAdapter($producer): Producer
     {
@@ -88,7 +90,7 @@ final class Producers
             return $producer;
         }
         
-        if ($producer instanceof ResultApi) {
+        if ($producer instanceof ResultCaster) {
             return self::fromResult($producer);
         }
         
@@ -104,6 +106,10 @@ final class Producers
             return self::fromIterator($producer);
         }
         
+        if ($producer instanceof UuidGenerator) {
+            return self::uuidFrom($producer);
+        }
+        
         if (\is_resource($producer)) {
             return self::resource($producer);
         }
@@ -116,7 +122,7 @@ final class Producers
     }
     
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|resource|array $producers
+     * @param Stream|Producer|ResultCaster|UuidGenerator|\Traversable|\PDOStatement|resource|array $producers
      */
     public static function multiSourced(...$producers): Producer
     {
@@ -140,9 +146,9 @@ final class Producers
         return new ArrayIteratorAdapter($iterator);
     }
     
-    public static function fromResult(ResultApi $result): Producer
+    public static function fromResult(ResultCaster $result): Producer
     {
-        return new ResultAdapter($result);
+        return new ResultCasterAdapter($result);
     }
     
     public static function fromPDOStatement(\PDOStatement $statement, ?int $fetchMode = null): Producer
@@ -159,8 +165,8 @@ final class Producers
     }
     
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array $keys
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array $values
+     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array $keys
+     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array $values
      */
     public static function combinedFrom($keys, $values): Producer
     {
@@ -189,9 +195,14 @@ final class Producers
         return new RandomString($minLength, $maxLength, $limit, $charset);
     }
     
-    public static function randomUuid(bool $asHex = true, int $limit = \PHP_INT_MAX): Producer
+    public static function uuidFrom(UuidGenerator $provider, int $limit = \PHP_INT_MAX): Producer
     {
-        return new RandomUuid($asHex, $limit);
+        return new RandomUuid($limit, $provider);
+    }
+    
+    public static function randomUuid(int $limit = \PHP_INT_MAX): Producer
+    {
+        return new RandomUuid($limit);
     }
     
     public static function collatz(int $startNumber = null): Producer

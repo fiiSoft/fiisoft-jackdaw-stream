@@ -1,7 +1,13 @@
 parameters:
+    level: 6
     checkMissingIterableValueType: false
     treatPhpDocTypesAsCertain: false
     checkGenericClassInNonGenericObjectType: false
+    excludePaths:
+        analyse:
+            - src/*/FieldsComparator.php
+            - src/Internal/Collection/StreamCollection.php
+            - src/Internal/Iterator/StreamIterator.php
     ignoreErrors:
         - '#Call to protected method*#'
         -
@@ -15,7 +21,7 @@ parameters:
             path: 'src/Operation/StoreIn.php'
         -
             message: '#Parameter \#4 \$length of function substr_compare expects int, null given.#'
-            path: 'src/Comparator/FieldsComparator.php'
+            path: 'src/Comparator/Basic/FieldsComparator.php'
         -
             message: '#Property FiiSoft\\Jackdaw\\Collector\\Adapter\\ArrayAccessAdapter::\$buffer is never read, only written.#'
             path: 'src/Collector/Adapter/ArrayAccessAdapter.php'

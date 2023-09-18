@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Comparator;
+namespace FiiSoft\Jackdaw\Comparator\Basic;
 
-final class FieldsComparator implements Comparator
+final class FieldsComparator extends BaseComparator
 {
-    /** @var string[]|int[] */
+    /** @var array<string|int> */
     private array $fields = [];
     
     /**
@@ -27,7 +27,7 @@ final class FieldsComparator implements Comparator
         }
     
         foreach ($this->fields as $field => $sortAsc) {
-            $compare = $value1[$field] <=> $value2[$field];
+            $compare = \gettype($value1[$field]) <=> \gettype($value2[$field]) ?: $value1[$field] <=> $value2[$field];
             if ($compare !== 0) {
                 return $sortAsc ? $compare : -$compare;
             }

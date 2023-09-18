@@ -17,4 +17,9 @@ interface Mapper
     public function mergeWith(Mapper $other): bool;
     
     public function isStateless(): bool;
+    
+    /**
+     * @return Mapper a new instance that "knows" it's for mapping keys instead of values
+     */
+    public function makeKeyMapper(): Mapper;
 }

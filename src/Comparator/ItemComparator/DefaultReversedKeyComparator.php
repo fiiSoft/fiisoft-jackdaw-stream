@@ -8,6 +8,6 @@ final class DefaultReversedKeyComparator implements ItemComparator
 {
     public function compare(Item $first, Item $second): int
     {
-        return $second->key <=> $first->key;
+        return \gettype($second->key) <=> \gettype($first->key) ?: $second->key <=> $first->key;
     }
 }

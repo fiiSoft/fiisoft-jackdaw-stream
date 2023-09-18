@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Comparator;
+namespace FiiSoft\Jackdaw\Comparator\Basic;
 
 use FiiSoft\Jackdaw\Internal\Helper;
 
 /**
  * Allows to compare length of strings and size of arrays. Can also handle \Countable as well.
  */
-final class SizeComparator implements Comparator
+final class SizeComparator extends BaseComparator
 {
     /**
      * @inheritDoc

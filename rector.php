@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Rector\CodeQuality\Rector\Array_\CallableThisArrayToAnonymousFunctionRector;
 use Rector\CodeQuality\Rector\Empty_\SimplifyEmptyCheckOnEmptyArrayRector;
 use Rector\CodeQuality\Rector\Expression\InlineIfToExplicitIfRector;
 use Rector\CodeQuality\Rector\Foreach_\UnusedForeachValueToArrayKeysRector;
@@ -10,7 +11,6 @@ use Rector\CodingStyle\Rector\Catch_\CatchExceptionNameMatchingTypeRector;
 use Rector\CodingStyle\Rector\ClassConst\SplitGroupedClassConstantsRector;
 use Rector\CodingStyle\Rector\ClassMethod\MakeInheritedMethodVisibilitySameAsParentRector;
 use Rector\CodingStyle\Rector\ClassMethod\NewlineBeforeNewAssignSetRector;
-use Rector\CodingStyle\Rector\ClassMethod\UnSpreadOperatorRector;
 use Rector\CodingStyle\Rector\Property\SplitGroupedPropertiesRector;
 use Rector\CodingStyle\Rector\Stmt\NewlineAfterStatementRector;
 use Rector\Config\RectorConfig;
@@ -26,6 +26,7 @@ use Rector\Naming\Rector\ClassMethod\RenameVariableToMatchNewTypeRector;
 use Rector\Naming\Rector\Foreach_\RenameForeachValueVariableToMatchExprVariableRector;
 use Rector\Naming\Rector\Foreach_\RenameForeachValueVariableToMatchMethodCallReturnTypeRector;
 use Rector\Php55\Rector\String_\StringClassNameToClassConstantRector;
+use Rector\Php74\Rector\Ternary\ParenthesizeNestedTernaryRector;
 use Rector\Set\ValueObject\SetList;
 use Rector\Strict\Rector\Empty_\DisallowedEmptyRuleFixerRector;
 use Rector\Strict\Rector\Ternary\DisallowedShortTernaryRuleFixerRector;
@@ -57,7 +58,6 @@ return static function (RectorConfig $configurator): void {
         SimplifyEmptyCheckOnEmptyArrayRector::class,
         RenameForeachValueVariableToMatchExprVariableRector::class,
         RemoveUselessParamTagRector::class,
-        UnSpreadOperatorRector::class,
         DisallowedEmptyRuleFixerRector::class,
         RenameVariableToMatchNewTypeRector::class,
         RenameVariableToMatchMethodCallReturnTypeRector::class,
@@ -83,5 +83,7 @@ return static function (RectorConfig $configurator): void {
         AddParamTypeBasedOnPHPUnitDataProviderRector::class,
         StringClassNameToClassConstantRector::class,
         UnwrapFutureCompatibleIfPhpVersionRector::class,
+        CallableThisArrayToAnonymousFunctionRector::class,
+        ParenthesizeNestedTernaryRector::class,
     ]);
 };

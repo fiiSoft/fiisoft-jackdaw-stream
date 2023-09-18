@@ -4,6 +4,8 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
+use FiiSoft\Jackdaw\Comparator\Sorting\By;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
@@ -465,7 +467,7 @@ final class StreamTest extends TestCase
             [0 => 'a', 1 => 'b', 2 => true, 4 => 'c'],
             Stream::from([0, 1, 2, 3, 4, 5, 6])
                 ->mapKey(static fn(int $value) => $keys[$value]) //to produce non-unique keys in stream
-                ->unique(null, Check::KEY)
+                ->unique(Compare::keys())
                 ->flip()
                 ->toArrayAssoc()
         );
@@ -475,7 +477,7 @@ final class StreamTest extends TestCase
     {
         $result = Stream::from([1, 2, 3, 4])
             ->mapKey(static fn(int $v): string => ($v & 1) === 0 ? 'b' : 'a')
-            ->unique(null, Check::KEY)
+            ->unique(Compare::keys())
             ->toArrayAssoc();
         
         self::assertSame(['a' => 1, 'b' => 2], $result);
@@ -488,15 +490,11 @@ final class StreamTest extends TestCase
         $values = ['a', 3,  2, 'a', 'b', 'b', true, true, 'a'];
         self::assertCount(\count($values), $keys);
         
-        $producer = static function () use ($values, $keys) {
-            for ($i = 0, $j = \count($values); $i < $j; ++$i) {
-                yield $keys[$i] => $values[$i];
-            }
-        };
+        $producer = Producers::combinedFrom($keys, $values);
         
         //when
         $actual = Stream::from($producer)
-            ->unique(null, Check::ANY)
+            ->unique(Compare::valuesAndKeysSeparately())
             ->makeTuple()
             ->toArray();
         
@@ -512,9 +510,11 @@ final class StreamTest extends TestCase
         $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   2,    'c'];
         $values = ['a', 3,  2, 'a', 'b', 'b', true, true, 'a'];
         
+        $producer = Producers::combinedFrom($keys, $values);
+        
         //when
-        $actual = Stream::from(Producers::combinedFrom($keys, $values))
-            ->unique(null, Check::BOTH)
+        $actual = Stream::from($producer)
+            ->unique(Compare::bothValuesAndKeysTogether())
             ->makeTuple()
             ->toArray();
         
@@ -533,7 +533,7 @@ final class StreamTest extends TestCase
     {
         self::assertSame(
             ['a' => 2, 'z' => 1],
-            Stream::from(['z' => 1, 'a' => 2])->sort(null, Check::KEY)->toArray(true)
+            Stream::from(['z' => 1, 'a' => 2])->sort(By::key())->toArray(true)
         );
     }
     
@@ -546,7 +546,7 @@ final class StreamTest extends TestCase
     {
         self::assertSame(
             ['z' => 1, 'a' => 2],
-            Stream::from(['z' => 1, 'a' => 2])->rsort(null, Check::KEY)->toArray(true)
+            Stream::from(['z' => 1, 'a' => 2])->rsort(By::key())->toArray(true)
         );
     }
     
@@ -1409,7 +1409,7 @@ final class StreamTest extends TestCase
         $expected = ['a','b','c','d','n'];
         
         $comparator = static fn(string $first, string $second): int => $first <=> $second;
-        $actual = Stream::from($given)->unique($comparator)->toArray();
+        $actual = Stream::from($given)->unique()->toArray();
         
         self::assertSame($expected, $actual);
     }
@@ -1420,7 +1420,7 @@ final class StreamTest extends TestCase
         $expected = ['a','b','c','d','n'];
         
         $comparator = static fn(string $first, string $second): int => $first <=> $second;
-        $actual = Stream::from($given)->flat()->unique($comparator, Check::KEY)->flip()->toArray();
+        $actual = Stream::from($given)->flat()->unique(Compare::keys($comparator))->flip()->toArray();
         
         self::assertSame($expected, $actual);
     }
@@ -1431,13 +1431,28 @@ final class StreamTest extends TestCase
         $expected = ['a' => 1, 'b' => 2, 'd' => 5];
     
         $comparator = static function ($v1, $v2, $k1, $k2): int {
-            return ($v1 <=> $v2) === 0
-                || ($k1 <=> $k2) === 0
-                || ($v1 <=> $k2) === 0
-                || ($v2 <=> $k1) === 0 ? 0 : 1;
+            $cmp2 = $cmp3 = $cmp4 = -2;
+            
+            $cmp1 = \gettype($v1) <=> \gettype($v2) ?: $v1 <=> $v2;
+            if ($cmp1 !== 0) {
+                $cmp2 = \gettype($k1) <=> \gettype($k2) ?: $k1 <=> $k2;
+                if ($cmp2 !== 0) {
+                    $cmp3 = \gettype($v1) <=> \gettype($k2) ?: $v1 <=> $k2;
+                    if ($cmp3 !== 0) {
+                        $cmp4 = \gettype($v2) <=> \gettype($k1) ?: $v2 <=> $k1;
+                    }
+                }
+            }
+            
+            if ($cmp1 === 0 || $cmp2 === 0 || $cmp3 === 0 || $cmp4 === 0) {
+                return 0;
+            }
+            
+            return 64 * $cmp1 + 16 * $cmp2 + 4 * $cmp3 + $cmp4;
         };
         
-        $actual = Stream::from($given)->flat()->unique($comparator, Check::BOTH)->toArrayAssoc();
+        $actual = Stream::from($given)->flat()->unique($comparator)->toArrayAssoc();
+        
         self::assertSame($expected, $actual);
     }
     
@@ -1447,7 +1462,7 @@ final class StreamTest extends TestCase
         $expected = ['a' => 3, 'b' => 2, 'c' => 'c', 'd' => 5, 'n' => 1, 'o' => 2];
     
         $comparator = static fn($v1, $v2): int => $v1 <=> $v2;
-        $actual = Stream::from($given)->flat()->unique($comparator, Check::ANY)->toArrayAssoc();
+        $actual = Stream::from($given)->flat()->unique(Compare::valuesAndKeysSeparately($comparator))->toArrayAssoc();
         
         self::assertSame($expected, $actual);
     }
@@ -1494,7 +1509,9 @@ final class StreamTest extends TestCase
     public function test_sort_by_keys_with_comparator(): void
     {
         $data = ['c' => 1, 'a' => 2, 'd' => 3, 'b' => 4];
-        $actual = Stream::from($data)->sort(Comparators::default(), Check::KEY)->toArrayAssoc();
+        $actual = Stream::from($data)
+            ->sort(By::key(Comparators::default()))
+            ->toArrayAssoc();
         
         self::assertSame(['a' => 2, 'b' => 4, 'c' => 1, 'd' => 3], $actual);
     }
@@ -2047,7 +2064,7 @@ final class StreamTest extends TestCase
     public function test_SortLimited_with_default_comparator_to_sort_by_key(): void
     {
         $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
-            ->best(3, null, Check::KEY)
+            ->best(3, By::key())
             ->toArray();
         
         self::assertSame(['d', 'a', 'b'], $result);
@@ -2056,7 +2073,7 @@ final class StreamTest extends TestCase
     public function test_SortLimited_reversed_with_default_comparator_to_sort_by_key(): void
     {
         $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
-            ->worst(3, null, Check::KEY)
+            ->worst(3, By::key())
             ->toArray();
         
         self::assertSame(['e', 'c', 'b'], $result);
@@ -2065,7 +2082,7 @@ final class StreamTest extends TestCase
     public function test_SortLimited_with_custom_comparator_to_sort_by_key(): void
     {
         $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
-            ->best(3, static fn(int $first, int $second): int => $first <=> $second, Check::KEY)
+            ->best(3, By::key(static fn(int $first, int $second): int => $first <=> $second))
             ->toArray();
         
         self::assertSame(['d', 'a', 'b'], $result);
@@ -2074,7 +2091,7 @@ final class StreamTest extends TestCase
     public function test_SortLimited_reversed_with_custom_comparator_to_sort_by_key(): void
     {
         $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
-            ->worst(3, static fn(int $first, int $second): int => $first <=> $second, Check::KEY)
+            ->worst(3, By::key(static fn(int $first, int $second): int => $first <=> $second))
             ->toArray();
         
         self::assertSame(['e', 'c', 'b'], $result);
@@ -2083,7 +2100,7 @@ final class StreamTest extends TestCase
     public function test_SortLimited_with_default_comparator_to_sort_by_value_and_key(): void
     {
         $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
-            ->best(3, null, Check::BOTH)
+            ->best(3, By::assoc())
             ->toArray();
         
         self::assertSame(['a', 'b', 'c'], $result);
@@ -2092,7 +2109,7 @@ final class StreamTest extends TestCase
     public function test_SortLimited_reversed_with_default_comparator_to_sort_by_value_and_key(): void
     {
         $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
-            ->worst(3, null, Check::BOTH)
+            ->worst(3, By::assoc())
             ->toArray();
         
         self::assertSame(['e', 'd', 'c'], $result);
@@ -2101,7 +2118,7 @@ final class StreamTest extends TestCase
     public function test_SortLimited_with_custom_comparator_to_sort_by_value_and_key(): void
     {
         $comparator = static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k1 <=> $k2;
-        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])->best(3, $comparator, Check::BOTH)->toArray();
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])->best(3, By::assoc($comparator))->toArray();
         
         self::assertSame(['a', 'b', 'c'], $result);
     }
@@ -2109,7 +2126,7 @@ final class StreamTest extends TestCase
     public function test_SortLimited_reversed_with_custom_comparator_to_sort_by_value_and_key(): void
     {
         $comparator = static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k1 <=> $k2;
-        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])->worst(3, $comparator, Check::BOTH)->toArray();
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])->worst(3, By::assoc($comparator))->toArray();
         
         self::assertSame(['e', 'd', 'c'], $result);
     }

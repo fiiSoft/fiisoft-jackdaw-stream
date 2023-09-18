@@ -1,22 +1,26 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Comparator;
+namespace FiiSoft\Jackdaw\Comparator\Basic;
 
-final class MultiComparator implements Comparator
+use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\Comparators;
+
+final class MultiComparator extends BaseComparator
 {
     /** @var Comparator[] */
     private array $comparators = [];
     
     /**
-     * @param Comparator|callable $comparators
+     * @param Comparable|callable $comparators
      */
     public function __construct(...$comparators)
     {
-        if (empty($comparators)) {
+        $this->addComparators($comparators);
+        
+        if (empty($this->comparators)) {
             throw new \InvalidArgumentException('Invalid param comparators');
         }
-        
-        $this->addComparators($comparators);
     }
     
     /**
@@ -49,16 +53,16 @@ final class MultiComparator implements Comparator
         return 0;
     }
     
+    /**
+     * @param array<Comparable|callable|null> $comparators
+     */
     public function addComparators(array $comparators): void
     {
         foreach ($comparators as $comparator) {
-            if ($comparator === null) {
-                $comparator = Comparators::default();
-            } else {
-                $comparator = Comparators::getAdapter($comparator);
+            $comparator = Comparators::getAdapter($comparator);
+            if ($comparator !== null) {
+                $this->comparators[] = $comparator;
             }
-            
-            $this->comparators[] = $comparator;
         }
     }
 }

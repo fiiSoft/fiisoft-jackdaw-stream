@@ -68,7 +68,8 @@ final class Pipe extends ProtectedCloning implements Destroyable
     /** @var Operation[] */
     public array $stack = [];
     
-    private ?object $replacement = null;
+    /** @var Operation|LastOperation|null  */
+    private $replacement = null;
     
     private bool $prepared = false;
     private bool $isDestroying = false;
@@ -114,9 +115,9 @@ final class Pipe extends ProtectedCloning implements Destroyable
     }
     
     /**
-     * @return Operation
+     * @return Operation|LastOperation
      */
-    public function chainOperation(Operation $operation, Stream $stream): object
+    public function chainOperation(Operation $operation, Stream $stream)
     {
         if ($this->canAppend($operation, $stream)) {
             $this->append($operation);
@@ -439,7 +440,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
             }
         } elseif ($next instanceof Unique) {
             if (!$this->isOmitRepsInPipe()) {
-                $stream->omitReps($next->comparator(), $next->mode());
+                $stream->omitReps($next->comparison());
             }
         } elseif ($next instanceof Collect) {
             if ($this->last instanceof Flip) {

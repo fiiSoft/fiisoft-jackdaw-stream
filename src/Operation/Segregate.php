@@ -2,10 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparator;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
-use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
@@ -19,6 +19,7 @@ use FiiSoft\Jackdaw\Producer\Producer;
 final class Segregate extends BaseOperation implements Limitable, Reindexable, DataCollector
 {
     private ItemComparator $comparator;
+    private Comparison $comparison;
 
     /** @var Bucket[] */
     private array $buckets = [];
@@ -28,21 +29,17 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable, D
     
     /**
      * @param int|null $buckets null means collect all elements
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function __construct(
-        ?int $buckets = null,
-        $comparator = null,
-        int $mode = Check::VALUE,
-        bool $reindex = false
-    ) {
+    public function __construct(?int $buckets = null, bool $reindex = false, $comparison = null)
+    {
         if ($buckets === null) {
             $buckets = \PHP_INT_MAX;
         } elseif ($buckets < 1) {
             throw new \InvalidArgumentException('Invalid param buckets');
         }
         
-        $this->comparator = ItemComparatorFactory::getFor($mode, false, $comparator);
+        $this->comparison = Comparison::prepare($comparison);
         $this->limit = $buckets;
         
         $this->buckets[0] = new Bucket($reindex);
@@ -52,6 +49,8 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable, D
     public function handle(Signal $signal): void
     {
         if ($this->count === 0) {
+            $this->comparator = ItemComparatorFactory::getForComparison($this->comparison);
+            
             $this->buckets[0]->add($signal->item);
             ++$this->count;
             

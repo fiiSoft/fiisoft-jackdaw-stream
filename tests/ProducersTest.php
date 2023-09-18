@@ -6,6 +6,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedGeneral;
+use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidProvider;
 use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
@@ -20,6 +21,8 @@ use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
 use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
+use Ramsey\Uuid\UuidInterface as RamseyUuid;
+use Symfony\Component\Uid\AbstractUid as SymfonyUuid;
 
 final class ProducersTest extends TestCase
 {
@@ -76,22 +79,28 @@ final class ProducersTest extends TestCase
     
     public function test_RandomUuid_generator(): void
     {
-        if (!\class_exists('\Ramsey\Uuid\Uuid')) {
-            self::markTestSkipped('Class Ramsey\Uuid\Uuid is required to run this test');
-        }
+        $this->checkIfRamseyOrSymfonyUuidIsInstalled();
         
-        $producer = Producers::randomUuid(true, 5);
+        $expectedStringLength = \interface_exists(RamseyUuid::class) ? 32 : 22;
+        
+        $producer = Producers::randomUuid(5);
         $count = 0;
     
         $item = new Item();
         foreach ($producer->feed($item) as $_) {
             self::assertIsString($item->value);
-            self::assertSame(32, \strlen($item->value));
-            self::assertStringMatchesFormat('%x', $item->value);
+            self::assertSame($expectedStringLength, \strlen($item->value));
             ++$count;
         }
         
         self::assertSame(5, $count);
+    }
+    
+    private function checkIfRamseyOrSymfonyUuidIsInstalled(): void
+    {
+        if (!\interface_exists(RamseyUuid::class) && !\class_exists(SymfonyUuid::class)) {
+            self::markTestSkipped('Neither ramsey/uuid or symfony/uid is required to run this test');
+        }
     }
     
     public function test_SequentialInt_generator_throws_exception_on_param_step_zero(): void
@@ -185,7 +194,7 @@ final class ProducersTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid param limit');
         
-        Producers::randomUuid(true, -1);
+        Producers::randomUuid(-1);
     }
     
     public function test_PDOStatement_generator(): void
@@ -626,6 +635,8 @@ final class ProducersTest extends TestCase
     
     public function test_RandomUuid_producer_never_returns_the_last_value(): void
     {
+        $this->checkIfRamseyOrSymfonyUuidIsInstalled();
+        
         self::assertNull(Producers::randomUuid()->getLast());
     }
     
@@ -663,14 +674,101 @@ final class ProducersTest extends TestCase
         self::assertSame(3, $producer->stream()->count()->get());
     }
     
-    public static function getDataForTestRandomAndSequentialProducersAreReusable(): array
+    public static function getDataForTestRandomAndSequentialProducersAreReusable(): \Generator
     {
-        return [
-            'sequentialInt' => [Producers::sequentialInt(1, 1, 3)],
-            'randomString' => [Producers::randomString(1, 5, 3)],
-            'randomUuid' => [Producers::randomUuid(true, 3)],
-            'randomInt' => [Producers::randomInt(1, 10, 3)],
-        ];
+        yield 'sequentialInt' => [Producers::sequentialInt(1, 1, 3)];
+        yield 'randomString' => [Producers::randomString(1, 5, 3)];
+        yield 'randomInt' => [Producers::randomInt(1, 10, 3)];
+        
+        $testDefaultUuidProducer = false;
+        
+        if (\interface_exists(RamseyUuid::class)) {
+            $testDefaultUuidProducer = true;
+            
+            yield 'ramseyDefault' => [Producers::uuidFrom(UuidProvider::ramsey(), 3)];
+            yield 'ramseyHex' => [Producers::uuidFrom(UuidProvider::ramseyHex(), 3)];
+        }
+        
+        if (\class_exists(SymfonyUuid::class)) {
+            $testDefaultUuidProducer = true;
+            
+            yield 'symfonyDefault' => [Producers::uuidFrom(UuidProvider::symfony(), 3)];
+            yield 'symfonyBase32' => [Producers::uuidFrom(UuidProvider::symfonyBase32(), 3)];
+            yield 'symfonyBase58' => [Producers::uuidFrom(UuidProvider::symfonyBase58(), 3)];
+        }
+        
+        if ($testDefaultUuidProducer) {
+            yield 'randomUuid' => [Producers::randomUuid(3)];
+        }
+    }
+    
+    public function test_UuidProvider_ramsey_default(): void
+    {
+        $this->checkIfRamseyUuidIsInstalled();
+        
+        $uuid = Producers::uuidFrom(UuidProvider::ramsey(\Ramsey\Uuid\Uuid::uuid4()))
+            ->stream()->first()->get();
+        
+        self::assertIsString($uuid);
+        self::assertSame(36, \strlen($uuid));
+    }
+    
+    public function test_UuidProvider_ramsey_hex(): void
+    {
+        $this->checkIfRamseyUuidIsInstalled();
+        
+        $uuid = Producers::uuidFrom(UuidProvider::ramseyHex(\Ramsey\Uuid\Uuid::uuid4()))
+            ->stream()->first()->get();
+        
+        self::assertIsString($uuid);
+        self::assertSame(32, \strlen($uuid));
+    }
+    
+    private function checkIfRamseyUuidIsInstalled(): void
+    {
+        if (!\interface_exists(RamseyUuid::class)) {
+            self::markTestSkipped('Test skipped because ramsey/uuid is not installed');
+        }
+    }
+    
+    public function test_UuidProvider_symfony_default(): void
+    {
+        $this->checkIfSymfonyUuidIsInstalled();
+        
+        $uuid = Producers::uuidFrom(UuidProvider::symfony(\Symfony\Component\Uid\Uuid::v4()))
+            ->stream()->first()->get();
+        
+        self::assertIsString($uuid);
+        self::assertSame(36, \strlen($uuid));
+    }
+    
+    public function test_UuidProvider_symfony_base32(): void
+    {
+        $this->checkIfSymfonyUuidIsInstalled();
+        
+        $uuid = Producers::uuidFrom(UuidProvider::symfonyBase32(\Symfony\Component\Uid\Uuid::v4()))
+            ->stream()->first()->get();
+        
+        self::assertIsString($uuid);
+        self::assertSame(26, \strlen($uuid));
+    }
+    
+    public function test_UuidProvider_symfony_base58(): void
+    {
+        $this->checkIfSymfonyUuidIsInstalled();
+        
+        $uuid = Producers::uuidFrom(UuidProvider::symfonyBase58(\Symfony\Component\Uid\Uuid::v4()))
+            ->stream()->first()->get();
+        
+        self::assertIsString($uuid);
+        self::assertSame(22, \strlen($uuid));
+    }
+    
+    private function checkIfSymfonyUuidIsInstalled(): void
+    {
+        if (!\class_exists(SymfonyUuid::class)) {
+            self::markTestSkipped('Test skipped because symfony/uid is not installed');
+        }
     }
     
     public function test_PusProducer_can_hold_other_producers(): void
@@ -965,6 +1063,19 @@ final class ProducersTest extends TestCase
         
         //Act
         $producer->count();
+    }
+    
+    public function test_UuidGenerator_can_be_use_as_producer(): void
+    {
+        //given
+        $producer = Producers::getAdapter(UuidProvider::symfonyBase58());
+     
+        //when
+        $uuid = Stream::from($producer)->first()->get();
+        
+        //then
+        self::assertIsString($uuid);
+        self::assertSame(22, \strlen($uuid));
     }
     
     /**

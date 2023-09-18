@@ -2,18 +2,21 @@
 
 namespace FiiSoft\Jackdaw\Comparator\ItemComparator;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
-use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\ComparisonSpec;
+use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Check;
 
 final class ItemComparatorFactory
 {
-    /**
-     * @param Comparator|callable|null $custom
-     */
-    public static function getFor(int $mode, bool $reversed = false, $custom = null): ItemComparator
+    public static function getForSorting(Sorting $sorting): ItemComparator
     {
-        $mode = Check::getMode($mode);
+        return self::getForComparison($sorting, $sorting->isReversed());
+    }
+    
+    public static function getForComparison(ComparisonSpec $comparison, bool $reversed = false): ItemComparator
+    {
+        $mode = $comparison->mode();
+        $custom = $comparison->comparator();
         
         $choice = ($custom !== null ? 'custom_' : 'default_') . ($reversed ? 'reversed_' : 'normal_');
         
@@ -24,8 +27,6 @@ final class ItemComparatorFactory
         } else {
             $choice .= 'assoc';
         }
-        
-        $custom = Comparators::getAdapter($custom);
         
         switch ($choice) {
             case 'default_normal_value': return new DefaultNormalValueComparator();

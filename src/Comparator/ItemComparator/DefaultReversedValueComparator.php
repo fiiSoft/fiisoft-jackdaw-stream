@@ -8,6 +8,6 @@ final class DefaultReversedValueComparator implements ItemComparator
 {
     public function compare(Item $first, Item $second): int
     {
-        return $second->value <=> $first->value;
+        return \gettype($second->value) <=> \gettype($first->value) ?: $second->value <=> $first->value;
     }
 }

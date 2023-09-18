@@ -1,0 +1,49 @@
+<?php declare(strict_types=1);
+
+namespace FiiSoft\Jackdaw\Comparator\Sorting\Specs;
+
+use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
+use FiiSoft\Jackdaw\Internal\Check;
+
+final class SingleSorting extends Sorting
+{
+    private ?Comparator $comparator;
+    private bool $reversed;
+    private int $mode;
+    
+    /**
+     * @param Comparable|callable|null $comparator
+     */
+    public function __construct(
+        bool $reversed = false,
+        $comparator = null,
+        int $mode = Check::VALUE
+    ) {
+        $this->reversed = $reversed;
+        $this->mode = Check::getMode($mode);
+        $this->comparator = Comparators::getAdapter($comparator);
+    }
+    
+    public function comparator(): ?Comparator
+    {
+        return $this->comparator;
+    }
+    
+    public function mode(): int
+    {
+        return $this->mode;
+    }
+    
+    public function isReversed(): bool
+    {
+        return $this->reversed;
+    }
+    
+    public function getReversed(): self
+    {
+        return new self(!$this->reversed, $this->comparator, $this->mode);
+    }
+}

@@ -2,6 +2,22 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 5.0.0
+
+Several significant changes incompatible with previous version: 
+ - changed arguments of methods: omitReps(), sort(), rsort(), best(), worst(), unique(), segregate(), accumulateUptrends(), accumulateDowntrends(), onlyMaxima(), onlyMinima(), onlyExtrema()
+ - methods increasingValues() and decreasingValues() renamed to increasingTrend() and decreasingTrend() respectively; their arguments have also been changed
+ - changed arguments in factory method Producers::randomUuid()
+ - removed methods Comparators::valueAscKeyDesc() and Comparators::valueDescKeyAsc()
+ - method Comparators::sortBy() renamed to Comparators::fields()
+ - new method added to Mapper
+
+New features:
+ - added possibility to convenient use of symfony/uid as generator for UIDs
+ - added possibility to use Stream, Producer, \Generator and \Traversable as Mapper 
+ - greatly improved speed of operation unique() when a custom Comparator is provided
+ - several other features related to sorting and comparison operations
+
 ## 4.2.0
 
 Library has been adapted to be fully compatible with PHP >= 8.0 (up to 8.2).

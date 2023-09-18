@@ -26,6 +26,5 @@ final class DiscriminatorAdapter extends BaseMapper
         throw new \UnexpectedValueException(
             'Unsupported value was returned from discriminator (got '.Helper::typeOfParam($classifier).')'
         );
-        
     }
 }

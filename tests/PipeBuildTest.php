@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
@@ -1058,7 +1059,7 @@ final class PipeBuildTest extends TestCase
     {
         $result = Stream::from([5 => 'a', 'b', 'a', 'c', 'b'])
             ->reindex($start, $step)
-            ->segregate(null, null, Check::VALUE, $reindex)
+            ->segregate(null, $reindex, Compare::values())
             ->toArrayAssoc();
         
         self::assertSame($expected, $result);
@@ -1094,7 +1095,7 @@ final class PipeBuildTest extends TestCase
     {
         $result = Stream::from([5 => 'a', 'b', 'a', 'b', 'c', 'b', 'a', 'c'])
             ->reindex($start, $step)
-            ->accumulateUptrends(null, $reindex)
+            ->accumulateUptrends($reindex)
             ->toArrayAssoc();
         
         self::assertSame($expected, $result);

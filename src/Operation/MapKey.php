@@ -22,7 +22,7 @@ final class MapKey extends BaseOperation
      */
     public function __construct($mapper)
     {
-        $this->mapper = Mappers::getAdapter($mapper);
+        $this->mapper = Mappers::getAdapter($mapper)->makeKeyMapper();
     }
     
     public function handle(Signal $signal): void

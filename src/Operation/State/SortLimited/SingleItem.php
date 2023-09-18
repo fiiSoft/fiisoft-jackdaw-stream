@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Operation\State\SortLimited;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparator;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
+use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Operation\SortLimited;
 
@@ -15,14 +15,11 @@ final class SingleItem extends State
     
     private bool $hasOne = false;
     
-    /**
-     * @param Comparator|callable|null $comparator
-     */
-    public function __construct(SortLimited $operation, int $mode, bool $reversed, $comparator)
+    public function __construct(SortLimited $operation, Sorting $sorting)
     {
         parent::__construct($operation);
         
-        $this->comparator = ItemComparatorFactory::getFor($mode, $reversed, $comparator);
+        $this->comparator = ItemComparatorFactory::getForSorting($sorting);
         $this->best = new Item();
     }
     

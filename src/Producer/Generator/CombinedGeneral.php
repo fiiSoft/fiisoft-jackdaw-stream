@@ -3,7 +3,7 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Internal\ResultApi;
+use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
@@ -14,8 +14,8 @@ final class CombinedGeneral extends BaseProducer
     private Producer $keys, $values;
     
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array $keys
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array $values
+     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array $keys
+     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array $values
      */
     public function __construct($keys, $values)
     {

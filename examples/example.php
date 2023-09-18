@@ -361,7 +361,7 @@ $rowset = [
 
 echo 'two best players: ', PHP_EOL;
 Stream::from($rowset)
-    ->best(2, Comparators::sortBy(['score desc', 'name']))
+    ->best(2, Comparators::fields(['score desc', 'name']))
     ->map(Mappers::concat(' '))
     ->forEach(Consumers::printer(Check::VALUE));
 

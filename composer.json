@@ -7,7 +7,7 @@
     ],
     "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
     "license": "MIT",
-    "version": "4.2.0",
+    "version": "5.0.0",
     "authors": [
         {
             "name": "fiiSoft",
@@ -22,7 +22,8 @@
     },
     "suggest": {
         "ext-pdo": "To use PDOStatementAdapter as Producer for Stream",
-        "ramsey/uuid": "To use RandomUuid generator as Producer for Stream",
+        "ramsey/uuid": "To use RandomUuid generator (backed by ramsey/uuid) as Producer for Stream",
+        "symfony/uid": "To use RandomUuid generator (backed by symfony/uid) as Producer for Stream",
         "symfony/console": "To use Symfony console output as error logger",
         "psr/log": "To use PsrLogger as error logger"
     },
@@ -53,13 +54,18 @@
         "phpstan/phpstan-deprecation-rules": ">=1.1",
         "phpstan/phpstan-phpunit": ">=1.3",
         "rector/rector": ">=0.18.0",
-        "phpstan/extension-installer": ">=1.3"
+        "phpstan/extension-installer": ">=1.3",
+        "symfony/uid": ">=5.1",
+        "phpmd/phpmd": ">=2.13",
+        "vimeo/psalm": ">=5.15"
     },
     "scripts": {
         "check": [
             "vendor/bin/phpcs --ignore-annotations -s",
-            "vendor/bin/phpstan analyse --level=6 src/",
-            "vendor/bin/rector process src/ --dry-run"
+            "vendor/bin/phpstan analyse src/",
+            "vendor/bin/rector process src/ --dry-run",
+            "vendor/bin/psalm",
+            "vendor/bin/phpmd src html phpmd.xml.dist --reportfile var/phpmd.html"
         ],
         "test": "vendor/bin/phpunit --no-coverage",
         "report" : "XDEBUG_MODE=coverage php vendor/bin/phpunit"

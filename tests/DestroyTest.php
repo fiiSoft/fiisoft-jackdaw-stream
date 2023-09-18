@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
+use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
@@ -525,8 +526,10 @@ final class DestroyTest extends TestCase
         $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   2,    'a'];
         $values = ['a', 3,  2, 'a', 'b', 'b', true, true, 'c'];
         
+        $comparison = Comparison::create($mode, $comparator);
+        
         //when
-        $stream = Stream::from(Producers::combinedFrom($keys, $values))->unique($comparator, $mode);
+        $stream = Stream::from(Producers::combinedFrom($keys, $values))->unique($comparison);
         
         //then
         self::assertSame($expected, $stream->makeTuple()->toArray());
@@ -536,37 +539,45 @@ final class DestroyTest extends TestCase
     
     public static function getDataForTestUniqueDestroy(): array
     {
-        $twoArgs = static fn($a, $b): int => \gettype($a) === \gettype($b) ? $a <=> $b : 1;
+        $twoArgs = static fn($a, $b): int => \gettype($a) <=> \gettype($b) ?: $a <=> $b;
         
-        $fourArgs = static fn($v1, $v2, $k1, $k2): int =>
-               ($v1 <=> $v2) === 0 && \gettype($v1) === \gettype($v2)
-            || ($k1 <=> $k2) === 0 && \gettype($k1) === \gettype($k2)
-            || ($v1 <=> $k2) === 0 && \gettype($v1) === \gettype($k2)
-            || ($v2 <=> $k1) === 0 && \gettype($v2) === \gettype($k1)
-            ? 0 : 1;
+        $fourArgs = static function ($v1, $v2, $k1, $k2): int {
+            $cmp = \gettype($v1) <=> \gettype($v2) ?: $v1 <=> $v2;
+            if ($cmp !== 0) {
+                $cmp = \gettype($k1) <=> \gettype($k2) ?: $k1 <=> $k2;
+                if ($cmp !== 0) {
+                    $cmp = \gettype($v1) <=> \gettype($k2) ?: $v1 <=> $k2;
+                    if ($cmp !== 0) {
+                        return \gettype($v2) <=> \gettype($k1) ?: $v2 <=> $k1;
+                    }
+                }
+            }
+            
+            return 0;
+        };
         
         //random mode because its doesn't matter when four-argument callable is used to compare items
         $randomMode = \mt_rand(Check::VALUE, Check::ANY);
         
         return [
             //comparator, mode, expected (tuples)
-            [null, Check::VALUE, [[0, 'a'], ['b', 3], [2, 2], ['a', 'b'], ['b', true], ['a', 'c']]],
+            0 => [null, Check::VALUE, [[0, 'a'], ['b', 3], [2, 2], ['a', 'b'], ['b', true], ['a', 'c']]],
             [null, Check::KEY,   [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b']]],
             [null, Check::ANY,   [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b'], ['b', true], ['a', 'c']]],
             [null, Check::BOTH,  [[0, 'a'], ['b', 3], [2, 2], ['a', 'b']]],
-            
-            [$twoArgs, Check::VALUE, [[0, 'a'], ['b', 3], [2, 2], ['a', 'b'], ['b', true], ['a', 'c']]],
+
+            4 => [$twoArgs, Check::VALUE, [[0, 'a'], ['b', 3], [2, 2], ['a', 'b'], ['b', true], ['a', 'c']]],
             [$twoArgs, Check::KEY,   [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b']]],
             [$twoArgs, Check::ANY,   [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b'], ['b', true], ['a', 'c']]],
             [$twoArgs, Check::BOTH,  [[0, 'a'], ['b', 3], [2, 2], ['a', 'b']]],
             
-            [$fourArgs, $randomMode, [[0, 'a'], ['b', 3], [2, 2]]],
+            8 => [$fourArgs, $randomMode, [[0, 'a'], ['b', 3], [2, 2]]],
         ];
     }
     
     public function test_Uptrends_destroy(): void
     {
-        $stream = Stream::from([1, 2, 1, 3])->accumulateUptrends(null, true);
+        $stream = Stream::from([1, 2, 1, 3])->accumulateUptrends(true);
         
         self::assertSame([[1, 2], [1, 3]], $stream->toArray());
         

@@ -1,7 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Comparator;
+namespace FiiSoft\Jackdaw\Comparator\Basic;
 
+use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 
 final class GenericComparator implements Comparator
@@ -17,7 +19,8 @@ final class GenericComparator implements Comparator
         
         if ($this->numOfArgs === 1) {
             $this->numOfArgs = 2;
-            $this->comparator = static fn($first, $second): int => $comparator($first) <=> $comparator($second);
+            $this->comparator = static fn($first, $second): int
+                => \gettype($first) <=> \gettype($second) ?: $comparator($first) <=> $comparator($second);
         } elseif ($this->numOfArgs === 2 || $this->numOfArgs === 4) {
             $this->comparator = $comparator;
         } else {
@@ -51,7 +54,17 @@ final class GenericComparator implements Comparator
         return $this->numOfArgs === 4;
     }
     
-    public function comparator(): callable
+    public function comparator(): Comparator
+    {
+        return $this;
+    }
+    
+    public function mode(): int
+    {
+        return $this->numOfArgs === 4 ? Check::BOTH : Check::VALUE;
+    }
+    
+    public function getWrappedCallable(): callable
     {
         return $this->comparator;
     }

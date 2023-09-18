@@ -4,6 +4,11 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
+use FiiSoft\Jackdaw\Comparator\Sorting\By;
+use FiiSoft\Jackdaw\Comparator\Sorting\Key;
+use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
+use FiiSoft\Jackdaw\Comparator\Sorting\Value;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
@@ -1192,18 +1197,7 @@ final class MoreStreamTest extends TestCase
             ->gather(true)
             ->toArrayAssoc();
         
-        //the exact order of sorted elements depends on PHP version
-        if (\PHP_MAJOR_VERSION === 7) {
-            $expected = [
-                ['b', 1, 3]
-            ];
-        } else {
-            $expected = [
-                [1, 3, 'b']
-            ];
-        }
-        
-        self::assertSame($expected, $result);
+        self::assertSame([[1, 3, 'b']], $result);
     }
     
     public function test_Sort_Gather_preserveKeys(): void
@@ -1213,16 +1207,9 @@ final class MoreStreamTest extends TestCase
             ->gather()
             ->toArrayAssoc();
         
-        //the exact order of sorted elements depends on PHP version
-        if (\PHP_MAJOR_VERSION === 7) {
-            $expected = [
-                [2 => 'b', 'a' => 1, 'c' => 3]
-            ];
-        } else {
-            $expected = [
-                ['a' => 1, 'c' => 3, 2 => 'b']
-            ];
-        }
+        $expected = [
+            ['a' => 1, 'c' => 3, 2 => 'b']
+        ];
         
         self::assertSame($expected, $result);
     }
@@ -1245,18 +1232,10 @@ final class MoreStreamTest extends TestCase
             ->sort()
             ->groupBy('is_string');
         
-        //the exact order of sorted elements depends on PHP version
-        if (\PHP_MAJOR_VERSION === 7) {
-            $expected = [
-                1 => [0 => 'a', 2 => 'b', 4 => 'c'],
-                0 => [1 => 1, 3 => 2, 5 => 3],
-            ];
-        } else {
-            $expected = [
-                0 => [1 => 1, 3 => 2, 5 => 3],
-                1 => [0 => 'a', 2 => 'b', 4 => 'c'],
-            ];
-        }
+        $expected = [
+            0 => [1 => 1, 3 => 2, 5 => 3],
+            1 => [0 => 'a', 2 => 'b', 4 => 'c'],
+        ];
         
         self::assertSame($expected, $result->toArray());
     }
@@ -1267,18 +1246,10 @@ final class MoreStreamTest extends TestCase
             ->sort()
             ->groupBy('is_string', true);
         
-        //the exact order of sorted elements depends on PHP version
-        if (\PHP_MAJOR_VERSION === 7) {
-            $expected = [
-                1 => ['a', 'b', 'c'],
-                0 => [1, 2, 3],
-            ];
-        } else {
-            $expected = [
-                0 => [1, 2, 3],
-                1 => ['a', 'b', 'c'],
-            ];
-        }
+        $expected = [
+            0 => [1, 2, 3],
+            1 => ['a', 'b', 'c'],
+        ];
         
         self::assertSame($expected, $result->toArray());
     }
@@ -1371,7 +1342,7 @@ final class MoreStreamTest extends TestCase
         
         $result = Stream::from($data)
             ->sort()
-            ->rsort(null, Check::KEY)
+            ->rsort(By::key())
             ->toArrayAssoc();
         
         $expected = [
@@ -1393,10 +1364,6 @@ final class MoreStreamTest extends TestCase
     {
         $data = [4 => 5, 8 => 2, 2 => 6, 3 => 5, 7 => 3, 5 => 2, 6 => 1, 1 => 3, 0 => 6];
         
-        $result = Stream::from($data)
-            ->sort(static fn($v1, $v2, $k2, $k1): int => $v1 <=> $v2 ?: $k1 <=> $k2, Check::BOTH)
-            ->toArrayAssoc();
-        
         $expected = [
             6 => 1,
             8 => 2,
@@ -1409,7 +1376,23 @@ final class MoreStreamTest extends TestCase
             0 => 6,
         ];
         
-        self::assertSame($expected, $result);
+        $result1 = Stream::from($data)
+            ->sort(By::assoc(static fn($v1, $v2, $k2, $k1): int => $v1 <=> $v2 ?: $k1 <=> $k2))
+            ->toArrayAssoc();
+        
+        self::assertSame($expected, $result1);
+        
+        $result2 = Stream::from($data)
+            ->sort(By::assocAsc(static fn($v1, $v2, $k2, $k1): int => $v1 <=> $v2 ?: $k1 <=> $k2))
+            ->toArrayAssoc();
+        
+        self::assertSame($expected, $result2);
+        
+        $result3 = Stream::from($data)
+            ->rsort(By::assocDesc(static fn($v1, $v2, $k2, $k1): int => $v1 <=> $v2 ?: $k1 <=> $k2))
+            ->toArrayAssoc();
+        
+        self::assertSame($expected, $result3);
     }
     
     public function test_skipWhile(): void
@@ -1454,7 +1437,7 @@ final class MoreStreamTest extends TestCase
         ];
         
         $result = Stream::from($data)
-            ->sort(Comparators::reverse(), Check::BOTH)
+            ->sort(By::assoc(Comparators::reverse()))
             ->toArrayAssoc();
         
         $expected = [
@@ -1478,7 +1461,7 @@ final class MoreStreamTest extends TestCase
     public function test_find_uptrends(array $dataset, array $expected): void
     {
         $result = Stream::from($dataset)
-            ->accumulateUptrends(null, true)
+            ->accumulateUptrends(true)
             ->toArray();
         
         self::assertSame($expected, $result);
@@ -1510,7 +1493,7 @@ final class MoreStreamTest extends TestCase
     public function test_find_downtrends(array $dataset, array $expected): void
     {
         $result = Stream::from($dataset)
-            ->accumulateDowntrends(null, true)
+            ->accumulateDowntrends(true)
             ->toArray();
         
         self::assertSame($expected, $result);
@@ -1603,7 +1586,7 @@ final class MoreStreamTest extends TestCase
             20 => 5, 5, 3, 2, 4,
             25 => 4, 5, 8, 9
             ])
-            ->onlyMinima(null, false)
+            ->onlyMinima(false)
             ->toArrayAssoc();
         
         self::assertSame([
@@ -1652,7 +1635,7 @@ final class MoreStreamTest extends TestCase
      */
     public function test_find_local_extrema_without_limits(array $data, array $expected): void
     {
-        self::assertSame($expected, Stream::from($data)->onlyExtrema(null, false)->toArray());
+        self::assertSame($expected, Stream::from($data)->onlyExtrema(false)->toArray());
     }
     
     public static function getDataForTestFindLocalExtremaWithoutLimits(): array
@@ -1686,13 +1669,143 @@ final class MoreStreamTest extends TestCase
         ], $result->get());
     }
     
-    public function test_omit_repetitions_in_elements(): void
+    public function test_omit_repetitions_by_values(): void
     {
         $data = [5, 2, 2, 1, 1, 3, 3, 3, 2, 2, 3, 3, 5, 5, 5];
-        
-        $result = Stream::from($data)->omitReps()->toArray();
-        
+
+        $result = Stream::from($data)->omitReps(Compare::values())->toArray();
+
         self::assertSame([5, 2, 1, 3, 2, 3, 5], $result);
+    }
+    
+    public function test_omit_repetitions_by_keys(): void
+    {
+        $keys = [5, 2, 2, 1, 1, 3, 3, 3, 4, 4];
+
+        $result = Stream::from($keys)
+            ->flip()
+            ->omitReps(Compare::keys())
+            ->toArrayAssoc();
+
+        self::assertSame([5 => 0, 2 => 1, 1 => 3, 3 => 5, 4 => 8], $result);
+    }
+    
+    public function test_omit_repetitions_by_compare_values_and_keys_separately(): void
+    {
+        $keys   = [5,   2,   2,   1,   1,   3,   3,   3,   4,   4];
+        $values = ['a', 'a', 'b', 'b', 'c', 'a', 'b', 'c', 'a', 'b'];
+
+        $result = Stream::from($keys)
+            ->zip($values)
+            ->unpackTuple()
+            ->omitReps(Compare::valuesAndKeysSeparately())
+            ->toArrayAssoc();
+
+        self::assertSame([5 => 'a', 2 => 'b', 1 => 'c', 3 => 'a', 4 => 'b'], $result);
+    }
+    
+    public function test_omit_repetitions_by_compare_values_and_keys_together(): void
+    {
+        $keys   = [5,   2,   2,   2,   1,   3,   3,   3,   4,   4];
+        $values = ['a', 'a', 'b', 'b', 'b', 'a', 'a', 'c', 'a', 'b'];
+
+        $result = Stream::from($keys)
+            ->zip($values)
+            ->unpackTuple()
+            ->omitReps(Compare::bothValuesAndKeysTogether())
+            ->makeTuple()
+            ->toArrayAssoc();
+
+        self::assertSame([
+            [5, 'a'],
+            [2, 'a'],
+            [2, 'b'],
+            [1, 'b'],
+            [3, 'a'],
+            [3, 'c'],
+            [4, 'a'],
+            [4, 'b'],
+        ], $result);
+    }
+    
+    /**
+     * @dataProvider getDataForTestOmitWithVariousComparisons
+     */
+    public function test_omit_with_various_comparisons($comparison, array $expected): void
+    {
+        $keys   = [5,   2,   2,   2,   1,   3,   3,   3,   4,   4];
+        $values = ['a', 'a', 'b', 'b', 'b', 'a', 'a', 'c', 'a', 'b'];
+
+        $result = Stream::from($keys)
+            ->zip($values)
+            ->unpackTuple()
+            ->omitReps($comparison)
+            ->makeTuple()
+            ->toArrayAssoc();
+
+        self::assertSame($expected, $result);
+    }
+    
+    public static function getDataForTestOmitWithVariousComparisons(): array
+    {
+        $a = [
+            0 => [5, 'a'],
+            1 => [2, 'a'],
+            2 => [2, 'b'],
+            3 => [2, 'b'],
+            4 => [1, 'b'],
+            5 => [3, 'a'],
+            6 => [3, 'a'],
+            7 => [3, 'c'],
+            8 => [4, 'a'],
+            9 => [4, 'b'],
+        ];
+        
+        $valuesComparator = static fn(string $a, string $b): int => $a <=> $b;
+        $keysComparator = static fn(int $a, int $b): int => $a <=> $b;
+        $fullComparator = static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k1 <=> $k2;
+        
+        $byValues                  = [$a[0], $a[2], $a[5], $a[7], $a[8], $a[9]];
+        $byKeys                    = [$a[0], $a[1], $a[4], $a[5], $a[8]];
+        $byValuesAndKeysSeparately = [$a[0], $a[2], $a[5], $a[9]];
+        $byBothValuesAndKeys       = [$a[0], $a[1], $a[2], $a[4], $a[5], $a[7], $a[8], $a[9]];
+        
+        return [
+            //comparison, expected tuples
+            0 => [null, $byValues],
+            1 => [$valuesComparator, $byValues],
+            2 => [Compare::values(), $byValues],
+            3 => [Compare::values($valuesComparator), $byValues],
+            4 => [Compare::values(Comparators::getAdapter($valuesComparator)), $byValues],
+            
+            5 => [Compare::keys(), $byKeys],
+            6 => [Compare::keys($keysComparator), $byKeys],
+            7 => [Compare::keys(Comparators::getAdapter($keysComparator)), $byKeys],
+            
+            8 => [Compare::valuesAndKeysSeparately(), $byValuesAndKeysSeparately],
+            9 => [Compare::valuesAndKeysSeparately($valuesComparator, $keysComparator), $byValuesAndKeysSeparately],
+            10 => [
+                Compare::valuesAndKeysSeparately(
+                    Comparators::getAdapter($valuesComparator),
+                    Comparators::getAdapter($keysComparator)
+                ),
+                $byValuesAndKeysSeparately
+            ],
+            
+            11 => [Compare::bothValuesAndKeysTogether(), $byBothValuesAndKeys],
+            12 => [Compare::bothValuesAndKeysTogether($valuesComparator, $keysComparator), $byBothValuesAndKeys],
+            13 => [
+                Compare::bothValuesAndKeysTogether(
+                    Comparators::getAdapter($valuesComparator),
+                    Comparators::getAdapter($keysComparator)
+                ),
+                $byBothValuesAndKeys
+            ],
+            
+            14 => [$fullComparator, $byBothValuesAndKeys],
+            15 => [Compare::assoc($fullComparator), $byBothValuesAndKeys],
+            16 => [Compare::assoc(), $byBothValuesAndKeys],
+        ];
     }
     
     public function test_MultiMapper_1(): void
@@ -1737,10 +1850,12 @@ final class MoreStreamTest extends TestCase
         $shuffledData = Stream::from($expected)->shuffle()->toArrayAssoc();
         
         $result = Stream::from($shuffledData)
-            ->sort(Comparators::multi(
-                static fn(int $v1, int $v2, string $k1, string $k2): int => $v2 <=> $v1,
-                static fn(int $v1, int $v2, string $k1, string $k2): int => $k1 <=> $k2,
-            ), Check::BOTH)
+            ->sort(By::assoc(
+                Comparators::multi(
+                    static fn(int $v1, int $v2, string $k1, string $k2): int => $v2 <=> $v1,
+                    static fn(int $v1, int $v2, string $k1, string $k2): int => $k1 <=> $k2,
+                )
+            ))
             ->toArrayAssoc();
         
         self::assertSame($expected, $result);
@@ -1755,7 +1870,7 @@ final class MoreStreamTest extends TestCase
         $shuffledData = Stream::from($expected)->shuffle()->toArrayAssoc();
         
         $result = Stream::from($shuffledData)
-            ->sort(Comparators::valueDescKeyAsc())
+            ->sort(By::both(Value::desc(), Key::asc()))
             ->toArrayAssoc();
         
         self::assertSame($expected, $result);
@@ -1770,7 +1885,7 @@ final class MoreStreamTest extends TestCase
         $shuffledData = Stream::from($expected)->shuffle()->toArrayAssoc();
         
         $result = Stream::from($shuffledData)
-            ->sort(Comparators::valueAscKeyDesc())
+            ->sort(By::both(Value::asc(), Key::desc()))
             ->toArrayAssoc();
         
         self::assertSame($expected, $result);
@@ -1785,7 +1900,7 @@ final class MoreStreamTest extends TestCase
         $shuffledData = Stream::from($expected)->shuffle()->toArrayAssoc();
         
         $result = Stream::from($shuffledData)
-            ->sort(null, Check::BOTH)
+            ->sort(By::assoc())
             ->toArrayAssoc();
         
         self::assertSame($expected, $result);
@@ -1800,7 +1915,7 @@ final class MoreStreamTest extends TestCase
         $shuffledData = Stream::from($expected)->shuffle()->toArrayAssoc();
         
         $result = Stream::from($shuffledData)
-            ->rsort(null, Check::BOTH)
+            ->rsort(By::assoc())
             ->toArrayAssoc();
         
         self::assertSame($expected, $result);
@@ -1813,11 +1928,11 @@ final class MoreStreamTest extends TestCase
         ];
         
         $result1 = Stream::from($data)
-            ->rsort(Comparators::valueAscKeyDesc())
+            ->rsort(By::both(Value::asc(), Key::desc()))
             ->toArrayAssoc();
         
         $result2 = Stream::from($data)
-            ->sort(Comparators::valueDescKeyAsc())
+            ->sort(By::both(Value::desc(), Key::asc()))
             ->toArrayAssoc();
         
         self::assertSame($result1, $result2);
@@ -1830,11 +1945,11 @@ final class MoreStreamTest extends TestCase
         ];
         
         $result1 = Stream::from($data)
-            ->best(10, Comparators::valueAscKeyDesc())
+            ->best(10, By::both(Value::asc(), Key::desc()))
             ->toArrayAssoc();
         
         $result2 = Stream::from($data)
-            ->worst(10, Comparators::valueDescKeyAsc())
+            ->worst(10, By::both(Value::desc(), Key::asc()))
             ->toArrayAssoc();
         
         self::assertSame($result1, $result2);
@@ -1869,7 +1984,7 @@ final class MoreStreamTest extends TestCase
     {
         $data = [3, 2, 3, 4, 4, 3, 1, 5, 6, 5, 4, 7, 8];
         
-        $result = Stream::from($data)->increasingValues()->toArray();
+        $result = Stream::from($data)->increasingTrend()->toArray();
         
         self::assertSame([3, 3, 4, 4, 5, 6, 7, 8], $result);
     }
@@ -1878,7 +1993,7 @@ final class MoreStreamTest extends TestCase
     {
         $data = [8, 9, 8, 6, 5, 7, 5, 3, 4, 1, 3];
         
-        $result = Stream::from($data)->decreasingValues()->toArray();
+        $result = Stream::from($data)->decreasingTrend()->toArray();
         
         self::assertSame([8, 8, 6, 5, 5, 3, 1], $result);
     }
@@ -2185,7 +2300,7 @@ final class MoreStreamTest extends TestCase
             ->segregate(3)
             ->toArray();
         
-        //the exact order of sorted elements depends on PHP version
+        //the exact order of elements sorted by native functions depends on PHP version
         if (\PHP_MAJOR_VERSION === 7) {
             $expected = [
                 [6 => 1, 9 => 1, 13 => 1],
@@ -2422,5 +2537,224 @@ final class MoreStreamTest extends TestCase
         
         self::assertSame(['a', 'b'], $collector->getData());
         self::assertSame(2, $collector->count());
+    }
+    
+    public function test_Sort_by_value_asc(): void
+    {
+        $data = [5, 2, 4, 1];
+        $expected = [1, 2, 4, 5];
+        
+        self::assertSame($expected, Stream::from($data)->sort()->toArray());
+        self::assertSame($expected, Stream::from($data)->sort(By::value())->toArray());
+        self::assertSame($expected, Stream::from($data)->sort(By::valueAsc())->toArray());
+        
+        self::assertSame($expected, Stream::from($data)->rsort(By::value(null, true))->toArray());
+        self::assertSame($expected, Stream::from($data)->rsort(By::valueDesc())->toArray());
+    }
+    
+    public function test_Sort_by_value_desc(): void
+    {
+        $data = [5, 2, 4, 1];
+        $expected = [5, 4, 2, 1];
+        
+        self::assertSame($expected, Stream::from($data)->rsort()->toArray());
+        self::assertSame($expected, Stream::from($data)->rsort(By::value())->toArray());
+        
+        self::assertSame($expected, Stream::from($data)->sort(By::value(null, true))->toArray());
+        self::assertSame($expected, Stream::from($data)->sort(By::valueDesc())->toArray());
+    }
+    
+    public function test_Sort_by_key_asc(): void
+    {
+        $data = [5 => 'a', 2 => 'c', 4 => 'b', 1 => 'd'];
+        $expected = [1 => 'd', 2 => 'c', 4 => 'b', 5 => 'a'];
+        
+        self::assertSame($expected, Stream::from($data)->sort(By::key())->toArrayAssoc());
+        self::assertSame($expected, Stream::from($data)->sort(By::keyAsc())->toArrayAssoc());
+        
+        self::assertSame($expected, Stream::from($data)->rsort(By::key(null, true))->toArrayAssoc());
+        self::assertSame($expected, Stream::from($data)->rsort(By::keyDesc())->toArrayAssoc());
+    }
+    
+    public function test_Sort_by_key_desc(): void
+    {
+        $data = [5 => 'a', 2 => 'c', 4 => 'b', 1 => 'd'];
+        $expected = [5 => 'a', 4 => 'b', 2 => 'c', 1 => 'd'];
+        
+        self::assertSame($expected, Stream::from($data)->rsort(By::key())->toArrayAssoc());
+        
+        self::assertSame($expected, Stream::from($data)->sort(By::key(null, true))->toArrayAssoc());
+        self::assertSame($expected, Stream::from($data)->sort(By::keyDesc())->toArrayAssoc());
+    }
+    
+    /**
+     * @dataProvider getDataForTestSortByValueAndKey
+     */
+    public function test_Sort_by_value_and_key(Sorting $normal, Sorting $reversed, array $expected): void
+    {
+        $data = [3 => 'b', 5 => 'a', 2 => 'c', 4 => 'b', 1 => 'd', 6 => 'a'];
+        
+        self::assertSame($expected, Stream::from($data)->sort($normal)->toArrayAssoc());
+        self::assertSame($expected, Stream::from($data)->rsort($reversed)->toArrayAssoc());
+    }
+    
+    public static function getDataForTestSortByValueAndKey(): array
+    {
+        return [
+            //normal, reversed, expected
+            'value_asc_key_asc' => [
+                By::both(Value::asc(), Key::asc()),
+                By::both(Value::desc(), Key::desc()),
+                [5 => 'a', 6 => 'a', 3 => 'b', 4 => 'b', 2 => 'c', 1 => 'd'],
+            ],
+            'value_asc_key_desc' => [
+                By::both(Value::asc(), Key::desc()),
+                By::both(Value::desc(), Key::asc()),
+                [6 => 'a', 5 => 'a', 4 => 'b', 3 => 'b', 2 => 'c', 1 => 'd']
+            ],
+            'value_desc_key_desc' => [
+                By::both(Value::desc(), Key::desc()),
+                By::both(Value::asc(), Key::asc()),
+                [1 => 'd', 2 => 'c', 4 => 'b', 3 => 'b', 6 => 'a', 5 => 'a']
+            ],
+            'value_desc_key_asc' => [
+                By::both(Value::desc(), Key::asc()),
+                By::both(Value::asc(), Key::desc()),
+                [1 => 'd', 2 => 'c', 3 => 'b', 4 => 'b', 5 => 'a', 6 => 'a']
+            ],
+        ];
+    }
+    
+    /**
+     * @dataProvider getDataForTestSortByKeyAndValue
+     */
+    public function test_Sort_by_key_and_value(Sorting $normal, Sorting $reversed, array $expected): void
+    {
+        $keys = [1, 3, 1, 2];
+        $values = ['a', 'a', 'b', 'b'];
+        
+        $result1 = Stream::from($keys)
+            ->zip($values)
+            ->unpackTuple()
+            ->sort($normal)
+            ->makeTuple()
+            ->toArray();
+        
+        $result2 = Stream::from($keys)
+            ->zip($values)
+            ->unpackTuple()
+            ->rsort($reversed)
+            ->makeTuple()
+            ->toArray();
+        
+        self::assertSame($expected, $result1);
+        self::assertSame($expected, $result2);
+    }
+    
+    public static function getDataForTestSortByKeyAndValue(): array
+    {
+        return [
+            //normal, reversed, expected
+            'key_asc_value_asc' => [
+                By::both(Key::asc(), Value::asc()),
+                By::both(Key::desc(), Value::desc()),
+                [
+                    [1, 'a'],
+                    [1, 'b'],
+                    [2, 'b'],
+                    [3, 'a'],
+                ]
+            ],
+            'key_asc_value_desc' => [
+                By::both(Key::asc(), Value::desc()),
+                By::both(Key::desc(), Value::asc()),
+                [
+                    [1, 'b'],
+                    [1, 'a'],
+                    [2, 'b'],
+                    [3, 'a'],
+                ]
+            ],
+            'key_desc_value_desc' => [
+                By::both(Key::desc(), Value::desc()),
+                By::both(Key::asc(), Value::asc()),
+                [
+                    [3, 'a'],
+                    [2, 'b'],
+                    [1, 'b'],
+                    [1, 'a'],
+                ]
+            ],
+            'key_desc_value_asc' => [
+                By::both(Key::desc(), Value::asc()),
+                By::both(Key::asc(), Value::desc()),
+                [
+                    [3, 'a'],
+                    [2, 'b'],
+                    [1, 'a'],
+                    [1, 'b'],
+                ]
+            ],
+        ];
+    }
+    
+    /**
+     * @dataProvider getDataForTestSortByCustomComparator
+     */
+    public function test_Sort_by_custom_comparator($sorting, array $expected): void
+    {
+        $data = [5 => 'a', 2 => 'c', 3 => 'a', 1 => 'b', 4 => 'c'];
+        
+        $result = Stream::from($data)->sort($sorting)->toArrayAssoc();
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public static function getDataForTestSortByCustomComparator(): array
+    {
+        $valueAscKeyDesc = [
+            5 => 'a',
+            3 => 'a',
+            1 => 'b',
+            4 => 'c',
+            2 => 'c',
+        ];
+        
+        $valueAsc = [
+            5 => 'a',
+            3 => 'a',
+            1 => 'b',
+            2 => 'c',
+            4 => 'c',
+        ];
+        
+        $valueComparator = static fn(string $a, string $b): int => $a <=> $b;
+        $valueAndKeyComparator = static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k2 <=> $k1;
+        
+        return [
+            //sorting, expected
+            0 => [null, $valueAsc],
+            [$valueComparator, $valueAsc],
+
+            2 => [Comparators::default(), $valueAsc],
+            [Comparators::generic($valueComparator), $valueAsc],
+            [Comparators::getAdapter($valueComparator), $valueAsc],
+
+            5 => [By::value(), $valueAsc],
+            [By::valueAsc(), $valueAsc],
+            [By::value($valueComparator), $valueAsc],
+            [By::valueAsc($valueComparator), $valueAsc],
+            [By::value(Comparators::default()), $valueAsc],
+            [By::valueAsc(Comparators::default()), $valueAsc],
+            
+            11 => [$valueAndKeyComparator, $valueAscKeyDesc],
+            [Comparators::generic($valueAndKeyComparator), $valueAscKeyDesc],
+            [Comparators::getAdapter($valueAndKeyComparator), $valueAscKeyDesc],
+            
+            15 => [By::assoc($valueAndKeyComparator), $valueAscKeyDesc],
+            [By::assocAsc($valueAndKeyComparator), $valueAscKeyDesc],
+            [By::assoc(Comparators::getAdapter($valueAndKeyComparator)), $valueAscKeyDesc],
+            [By::assocAsc(Comparators::getAdapter($valueAndKeyComparator)), $valueAscKeyDesc],
+        ];
     }
 }

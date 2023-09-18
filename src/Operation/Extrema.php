@@ -2,10 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparator;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
-use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
@@ -15,6 +15,7 @@ final class Extrema extends BaseOperation
     private const FLAT = 0, UP = 1, DOWN = 2;
     
     private ItemComparator $comparator;
+    private Comparison $comparison;
     private ?Item $previous = null;
     private Item $item;
     
@@ -22,17 +23,14 @@ final class Extrema extends BaseOperation
     private bool $allowLimits, $isFirst = true;
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function __construct(
-        $comparator = null,
-        bool $allowLimits = true,
-        int $mode = Check::VALUE
-    ) {
-        $this->comparator = ItemComparatorFactory::getFor($mode, false, $comparator);
+    public function __construct(bool $allowLimits = true, $comparison = null)
+    {
         $this->allowLimits = $allowLimits;
-        
         $this->direction = $allowLimits ? self::UP : self::FLAT;
+        $this->comparison = Comparison::prepare($comparison);
+        
         $this->item = new Item();
     }
     
@@ -42,6 +40,7 @@ final class Extrema extends BaseOperation
         
         if ($this->previous === null) {
             $this->previous = $this->item->copy();
+            $this->comparator = ItemComparatorFactory::getForComparison($this->comparison);
         } else {
             $compare = $this->comparator->compare($this->previous, $this->item);
             if ($compare === 0) {

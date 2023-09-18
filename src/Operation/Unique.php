@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
-use FiiSoft\Jackdaw\Comparator\Comparators;
-use FiiSoft\Jackdaw\Comparator\GenericComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
+use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
@@ -16,17 +16,14 @@ use FiiSoft\Jackdaw\Operation\Strategy\Unique\UniquenessChecker;
 final class Unique extends BaseOperation
 {
     private UniquenessChecker $checker;
-    
-    private ?Comparator $comparator;
-    private int $mode;
+    private Comparison $comparison;
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function __construct($comparator = null, int $mode = Check::VALUE)
+    public function __construct($comparison = null)
     {
-        $this->comparator = Comparators::getAdapter($comparator);
-        $this->mode = Check::getMode($mode);
+        $this->comparison = Comparison::prepare($comparison);
         
         $this->prepareStrategy();
     }
@@ -40,19 +37,20 @@ final class Unique extends BaseOperation
     
     private function prepareStrategy(): void
     {
-        if ($this->comparator !== null) {
-            if ($this->comparator instanceof GenericComparator && $this->comparator->isFullAssoc()) {
-                $this->checker = new FullAssocChecker($this->comparator);
-                $this->mode = Check::BOTH;
+        $comparator = $this->comparison->comparator();
+        
+        if ($comparator !== null) {
+            if ($comparator instanceof GenericComparator && $comparator->isFullAssoc()) {
+                $this->checker = new FullAssocChecker($comparator);
                 return;
             }
             
-            $strategy = new ComparisonStrategy\CustomComparator($this->comparator);
+            $strategy = new ComparisonStrategy\CustomComparator($comparator);
         } else {
             $strategy = new ComparisonStrategy\StandardComparator();
         }
         
-        switch ($this->mode) {
+        switch ($this->comparison->mode()) {
             case Check::VALUE:
                 $this->checker = new StandardChecker\CheckValue($strategy);
             break;
@@ -75,14 +73,9 @@ final class Unique extends BaseOperation
         parent::__clone();
     }
     
-    public function comparator(): ?Comparator
+    public function comparison(): Comparison
     {
-        return $this->comparator;
-    }
-    
-    public function mode(): int
-    {
-        return $this->mode;
+        return $this->comparison;
     }
     
     public function destroy(): void

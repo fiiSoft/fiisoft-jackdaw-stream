@@ -3,22 +3,21 @@
 namespace FiiSoft\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collector;
-use FiiSoft\Jackdaw\Comparator\{Comparator, Comparators, ValueKeyCombined\ValueKeyComparator};
+use FiiSoft\Jackdaw\Comparator\{Comparable, Comparison\Comparison, Sorting\By, Sorting\Sorting};
 use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Consumer\{Consumer, Consumers};
 use FiiSoft\Jackdaw\Discriminator\{Discriminator, Discriminators};
 use FiiSoft\Jackdaw\Filter\{Filter, Filters};
 use FiiSoft\Jackdaw\Handler\{ErrorHandler, OnError};
 use FiiSoft\Jackdaw\Internal\{Check, Collaborator, Collection\BaseStreamCollection, Destroyable, Executable,
-    ForkCollaborator, Interruption, Iterator\StreamIterator81, Pipe, ResultApi, Signal, SignalHandler,
-    Iterator\StreamIterator, StreamPipe};
-use FiiSoft\Jackdaw\Internal\State\{SourceNotReady, Source, Stack};
+    ForkCollaborator, Interruption, Iterator\StreamIterator, Iterator\StreamIterator81, Pipe, ResultApi, ResultCaster,
+    Signal, SignalHandler, StreamPipe, State\Source, State\SourceNotReady, State\Stack};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, Mapper, Mappers};
 use FiiSoft\Jackdaw\Operation\{Accumulate, Aggregate, Assert, Categorize, Chunk, ChunkBy, Classify, CollectIn,
-    CollectKeysIn, Increasing, Dispatch, OmitReps, Extrema, Filter as OperationFilter, FilterWhen, Flat, Flip,
-    Gather, Internal\AssertionFailed, Internal\Feed, Internal\FeedMany, Internal\FinalOperation, Internal\LastOperation,
-    Internal\Fork, Internal\Iterate, Maxima, Remember, Limit, Map, MapFieldWhen, MapKey, MapKeyValue, MapWhen,
-    Operation, Reindex, Reverse, CountIn, Scan, Segregate, SendTo, SendToMax, SendWhen, Shuffle, Skip, SkipWhile, Sort,
+    CollectKeysIn, CountIn, Dispatch, Extrema, Filter as OperationFilter, FilterWhen, Flat, Flip, Gather, Increasing,
+    Internal\AssertionFailed, Internal\Feed, Internal\FeedMany, Internal\FinalOperation, Internal\Fork,
+    Internal\Iterate, Internal\LastOperation, Limit, Map, MapFieldWhen, MapKey, MapKeyValue, MapWhen, Maxima, OmitReps,
+    Operation, Reindex, Remember, Reverse, Scan, Segregate, SendTo, SendToMax, SendWhen, Shuffle, Skip, SkipWhile, Sort,
     SortLimited, StoreIn, Tail, Terminating\Collect, Terminating\CollectKeys, Terminating\Count, Terminating\Find,
     Terminating\First, Terminating\Fold, Terminating\GroupBy, Terminating\Has, Terminating\HasEvery,
     Terminating\HasOnly, Terminating\IsEmpty, Terminating\Last, Terminating\Reduce, Terminating\Until, Tokenize, Tuple,
@@ -54,7 +53,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     private array $onErrorHandlers = [];
     
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array|scalar ...$elements
+     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array|scalar ...$elements
      */
     public static function of(...$elements): Stream
     {
@@ -62,7 +61,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array $producer
+     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array $producer
      */
     public static function from($producer): Stream
     {
@@ -329,11 +328,11 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
      * This operation skips all repeatable consecutive values in series, so each value is different than previous one.
      * Unlike Unique, values can repeat in whole stream, but not one after another.
      *
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function omitReps($comparator = null, int $mode = Check::VALUE): Stream
+    public function omitReps($comparison = null): Stream
     {
-        $this->chainOperation(new OmitReps($comparator, $mode));
+        $this->chainOperation(new OmitReps($comparison));
         return $this;
     }
     
@@ -579,7 +578,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Stream|Producer|ResultApi|\Iterator|\PDOStatement|callable|resource|array ...$producers
+     * @param Stream|Producer|ResultCaster|\Iterator|\PDOStatement|callable|resource|array ...$producers
      */
     public function join(...$producers): Stream
     {
@@ -589,11 +588,11 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function unique($comparator = null, int $mode = Check::VALUE): Stream
+    public function unique($comparison = null): Stream
     {
-        $this->chainOperation(new Unique($comparator, $mode));
+        $this->chainOperation(new Unique($comparison));
         return $this;
     }
     
@@ -602,66 +601,50 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
      */
     public function sortBy(...$fields): Stream
     {
-        return $this->sort(Comparators::sortBy($fields));
+        return $this->sort(By::fields($fields));
     }
     
     /**
      * Normal (ascending) sorting.
      *
-     * @param Comparator|callable|null $comparator
+     * @param Sorting|Comparable|callable|null $sorting
      */
-    public function sort($comparator = null, int $mode = Check::VALUE): Stream
+    public function sort($sorting = null): Stream
     {
-        if ($comparator instanceof ValueKeyComparator) {
-            $mode = Check::BOTH;
-        }
-        
-        $this->chainOperation(new Sort($comparator, $mode));
-        return $this;
-    }
-    
-    /**
-     * Normal sorting with limited number of {$limit} first values passed further to stream.
-     *
-     * @param Comparator|callable|null $comparator
-     */
-    public function best(int $limit, $comparator = null, int $mode = Check::VALUE): Stream
-    {
-        if ($comparator instanceof ValueKeyComparator) {
-            $mode = Check::BOTH;
-        }
-        
-        $this->chainOperation(new SortLimited($limit, $comparator, $mode));
+        $this->chainOperation(new Sort($sorting));
         return $this;
     }
     
     /**
      * Reversed (descending) sorting.
      *
-     * @param Comparator|callable|null $comparator
+     * @param Sorting|Comparable|callable|null $sorting
      */
-    public function rsort($comparator = null, int $mode = Check::VALUE): Stream
+    public function rsort($sorting = null): Stream
     {
-        if ($comparator instanceof ValueKeyComparator) {
-            $mode = Check::BOTH;
-        }
-        
-        $this->chainOperation(new Sort($comparator, $mode, true));
+        $this->chainOperation(new Sort(Sorting::reverse($sorting)));
+        return $this;
+    }
+    
+    /**
+     * Normal sorting with limited number of {$limit} first values passed further to stream.
+     *
+     * @param Sorting|Comparable|callable|null $sorting
+     */
+    public function best(int $limit, $sorting = null): Stream
+    {
+        $this->chainOperation(new SortLimited($limit, $sorting));
         return $this;
     }
     
     /**
      * Reversed sorting with limited number of {$limit} values passed further to stream.
      *
-     * @param Comparator|callable|null $comparator
+     * @param Sorting|Comparable|callable|null $sorting
      */
-    public function worst(int $limit, $comparator = null, int $mode = Check::VALUE): Stream
+    public function worst(int $limit, $sorting = null): Stream
     {
-        if ($comparator instanceof ValueKeyComparator) {
-            $mode = Check::BOTH;
-        }
-        
-        $this->chainOperation(new SortLimited($limit, $comparator, $mode, true));
+        $this->chainOperation(new SortLimited($limit, Sorting::reverse($sorting)));
         return $this;
     }
     
@@ -992,13 +975,11 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param int|null $buckets null means collect all elements
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function segregate(
-        ?int $buckets = null, $comparator = null, int $mode = Check::VALUE, bool $reindex = false
-    ): Stream
+    public function segregate(?int $buckets = null, bool $reindex = false, $comparison = null): Stream
     {
-        $this->chainOperation(new Segregate($buckets, $comparator, $mode, $reindex));
+        $this->chainOperation(new Segregate($buckets, $reindex, $comparison));
         return $this;
     }
     
@@ -1044,7 +1025,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
      * Creates a numeric array where the first item comes from this stream, and the next items come from all passed
      * providers of subsequent values. In the event that any supplier runs out, null is inserted in its place.
      *
-     * @param array<Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array|scalar> $sources
+     * @param array<Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array|scalar> $sources
      */
     public function zip(...$sources): Stream
     {
@@ -1092,68 +1073,68 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function accumulateUptrends($comparator = null, bool $reindex = false, int $mode = Check::VALUE): Stream
+    public function accumulateUptrends(bool $reindex = false, $comparison = null): Stream
     {
-        $this->chainOperation(new Uptrends($comparator, $mode, $reindex));
+        $this->chainOperation(new Uptrends($reindex, false, $comparison));
         return $this;
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function accumulateDowntrends($comparator = null, bool $reindex = false, int $mode = Check::VALUE): Stream
+    public function accumulateDowntrends(bool $reindex = false, $comparison = null): Stream
     {
-        $this->chainOperation(new Uptrends($comparator, $mode, $reindex, true));
+        $this->chainOperation(new Uptrends($reindex, true, $comparison));
         return $this;
     }
     
     /**
-     * @param Comparator|callable|null $comparator
      * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function onlyMaxima($comparator = null, bool $allowLimits = true, int $mode = Check::VALUE): Stream
+    public function onlyMaxima(bool $allowLimits = true, $comparison = null): Stream
     {
-        $this->chainOperation(new Maxima($comparator, $allowLimits, $mode));
+        $this->chainOperation(new Maxima($allowLimits, false, $comparison));
         return $this;
     }
     
     /**
-     * @param Comparator|callable|null $comparator
      * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function onlyMinima($comparator = null, bool $allowLimits = true, int $mode = Check::VALUE): Stream
+    public function onlyMinima(bool $allowLimits = true, $comparison = null): Stream
     {
-        $this->chainOperation(new Maxima($comparator, $allowLimits, $mode, true));
+        $this->chainOperation(new Maxima($allowLimits, true, $comparison));
         return $this;
     }
     
     /**
-     * @param Comparator|callable|null $comparator
      * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function onlyExtrema($comparator = null, bool $allowLimits = true, int $mode = Check::VALUE): Stream
+    public function onlyExtrema(bool $allowLimits = true, $comparison = null): Stream
     {
-        $this->chainOperation(new Extrema($comparator, $allowLimits, $mode));
+        $this->chainOperation(new Extrema($allowLimits, $comparison));
         return $this;
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function increasingValues($comparator = null, int $mode = Check::VALUE): Stream
+    public function increasingTrend($comparison = null): Stream
     {
-        $this->chainOperation(new Increasing($comparator, $mode));
+        $this->chainOperation(new Increasing(false, $comparison));
         return $this;
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param Comparison|Comparable|callable|null $comparison
      */
-    public function decreasingValues($comparator = null, int $mode = Check::VALUE): Stream
+    public function decreasingTrend($comparison = null): Stream
     {
-        $this->chainOperation(new Increasing($comparator, $mode, true));
+        $this->chainOperation(new Increasing(true, $comparison));
         return $this;
     }
     
@@ -1509,8 +1490,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
         $this->executed = true;
         $this->finishSubstreems();
         
-        $signal = $this->signal;
-        if (!$signal->isError) {
+        if (!$this->signal->isError) {
             foreach ($this->onSuccessHandlers as $handler) {
                 $handler();
             }

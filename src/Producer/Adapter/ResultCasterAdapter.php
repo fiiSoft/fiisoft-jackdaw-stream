@@ -3,15 +3,15 @@
 namespace FiiSoft\Jackdaw\Producer\Adapter;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Internal\ResultApi;
+use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Internal\ResultItem;
 use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
 
-final class ResultAdapter extends NonCountableProducer
+final class ResultCasterAdapter extends NonCountableProducer
 {
-    private ResultApi $result;
+    private ResultCaster $result;
     
-    public function __construct(ResultApi $result)
+    public function __construct(ResultCaster $result)
     {
         $this->result = $result;
     }

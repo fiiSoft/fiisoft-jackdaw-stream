@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw;
 
 use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Internal\ResultApi;
+use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 
@@ -16,7 +16,7 @@ final class StreamMaker implements Destroyable
     private bool $isDestroying = false;
     
     /**
-     * @param Stream|Producer|ResultApi|\Traversable|\PDOStatement|callable|resource|array|scalar ...$elements
+     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array|scalar ...$elements
      */
     public static function of(...$elements): StreamMaker
     {
@@ -24,7 +24,7 @@ final class StreamMaker implements Destroyable
     }
     
     /**
-     * @param Producer|\Iterator|ResultApi|array|callable $factory callable MUST return new Stream every time
+     * @param Producer|\Iterator|ResultCaster|array|callable $factory callable MUST return new Stream every time
      */
     public static function from($factory): StreamMaker
     {
@@ -32,7 +32,7 @@ final class StreamMaker implements Destroyable
             $callable = static fn(): Stream => Stream::from($factory);
         } elseif ($factory instanceof Producer) {
             $callable = static fn(): Stream => Stream::from(clone $factory);
-        } elseif ($factory instanceof ResultApi) {
+        } elseif ($factory instanceof ResultCaster) {
             $callable = static fn(): Stream => Stream::from($factory);
         } elseif ($factory instanceof \Iterator) {
             $callable = static fn(): Stream => Stream::from(clone $factory);

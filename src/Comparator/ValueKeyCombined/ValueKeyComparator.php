@@ -3,7 +3,9 @@
 namespace FiiSoft\Jackdaw\Comparator\ValueKeyCombined;
 
 use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\Comparable;
 use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Internal\Check;
 
 abstract class ValueKeyComparator implements Comparator
 {
@@ -11,13 +13,13 @@ abstract class ValueKeyComparator implements Comparator
     protected Comparator $keyComparator;
     
     /**
-     * @param Comparator|callable|null $valueComparator
-     * @param Comparator|callable|null $keyComparator
+     * @param Comparable|callable|null $valueComparator
+     * @param Comparable|callable|null $keyComparator
      */
     public function __construct($valueComparator = null, $keyComparator = null)
     {
-        $this->valueComparator = Comparators::getAdapter($valueComparator) ?? Comparators::default();
-        $this->keyComparator = Comparators::getAdapter($keyComparator) ?? Comparators::default();
+        $this->valueComparator = Comparators::prepare($valueComparator);
+        $this->keyComparator = Comparators::prepare($keyComparator);
     }
     
     /**
@@ -26,5 +28,15 @@ abstract class ValueKeyComparator implements Comparator
     final public function compare($value1, $value2): int
     {
         throw new \BadMethodCallException('Method '.__METHOD__.' should never be called');
+    }
+    
+    final public function comparator(): Comparator
+    {
+        return $this;
+    }
+    
+    final public function mode(): int
+    {
+        return Check::BOTH;
     }
 }

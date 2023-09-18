@@ -4,6 +4,9 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\Sorting\By;
+use FiiSoft\Jackdaw\Comparator\Sorting\Key;
+use FiiSoft\Jackdaw\Comparator\Sorting\Value;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
@@ -736,7 +739,7 @@ final class StreamScenarioTest extends TestCase
             ->groupBy(Discriminators::byKey(), true)
             ->stream()
             ->map(Reducers::average())
-            ->sort(null, Check::KEY)
+            ->sort(By::key())
             ->toArrayAssoc();
     
         self::assertSame([
@@ -1063,7 +1066,7 @@ final class StreamScenarioTest extends TestCase
         
         $stream = Stream::from($data)
             ->accumulate(Filters::number()->isEven(), true)
-            ->rsort(Comparators::size())
+            ->rsort(By::size())
             ->first();
         
         self::assertSame([2,2,8,6,4,6,4,8], $stream->get());
@@ -1273,7 +1276,7 @@ final class StreamScenarioTest extends TestCase
     {
         $result = Stream::from([4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 8, 9])
             ->accumulateUptrends()
-            ->rsort(Comparators::size())
+            ->rsort(By::size())
             ->first();
         
         self::assertSame([16 => 1, 3, 5, 8, 9], $result->get());
@@ -1295,7 +1298,7 @@ final class StreamScenarioTest extends TestCase
             ])
             ->fork(
                 Discriminators::alternately(['first', 'second', 'third']),
-                Stream::empty()->accumulateUptrends(null, true)->rsort('count')->first()
+                Stream::empty()->accumulateUptrends(true)->rsort('count')->first()
             );
         
         self::assertSame([
@@ -1323,7 +1326,7 @@ final class StreamScenarioTest extends TestCase
         $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
         
         $result = Stream::from($data)
-            ->onlyMaxima(null, false)
+            ->onlyMaxima(false)
             ->greaterOrEqual(5)
             ->toArray();
         
@@ -1346,7 +1349,7 @@ final class StreamScenarioTest extends TestCase
         
         $result = Stream::from($data)
             ->greaterOrEqual(5)
-            ->onlyMaxima(null, false)
+            ->onlyMaxima(false)
             ->toArray();
         
         self::assertSame([7, 8], $result);
@@ -1509,7 +1512,7 @@ final class StreamScenarioTest extends TestCase
         
         $result = Stream::from($data)
             ->omitReps()
-            ->onlyExtrema(null, false)
+            ->onlyExtrema(false)
             ->toArray();
         
         self::assertSame([2, 7, 6, 8, 3, 5, 2, 4, 1, 5, 2], $result);
@@ -1594,7 +1597,7 @@ final class StreamScenarioTest extends TestCase
             })
             ->stream()
             ->omit(Filters::number()->eq(1))
-            ->sort(Comparators::valueDescKeyAsc())
+            ->sort(By::both(Value::desc(), Key::asc()))
             ->toArrayAssoc();
         
         $expected = [
@@ -1610,7 +1613,7 @@ final class StreamScenarioTest extends TestCase
             ->flatMap(static fn(string $v): array => \str_split(\mb_strtolower(\str_replace(' ', '', $v))))
             ->fork(Discriminators::byValue(), Stream::empty()->count())
             ->omit(Filters::number()->eq(1))
-            ->sort(Comparators::valueDescKeyAsc())
+            ->sort(By::both(Value::desc(), Key::asc()))
             ->toArrayAssoc();
         
         $expected = [
@@ -1627,7 +1630,7 @@ final class StreamScenarioTest extends TestCase
             ->gather(true)
             ->map('\array_count_values')
             ->flatMap(Filters::number()->gt(1))
-            ->sort(Comparators::valueDescKeyAsc())
+            ->sort(By::both(Value::desc(), Key::asc()))
             ->toArrayAssoc();
         
         $expected = [
@@ -1644,7 +1647,7 @@ final class StreamScenarioTest extends TestCase
             ->reduce(Reducers::countUnique(), [])
             ->transform(Filters::number()->gt(1))
             ->stream()
-            ->sort(Comparators::valueDescKeyAsc())
+            ->sort(By::both(Value::desc(), Key::asc()))
             ->toArrayAssoc();
         
         $expected = [
@@ -1800,7 +1803,7 @@ final class StreamScenarioTest extends TestCase
     {
         $result = Stream::from([3, 6, 5, 2, 1, 4])
             ->categorize(Discriminators::evenOdd(), true)
-            ->sort(null, Check::KEY)
+            ->sort(By::key())
             ->toArrayAssoc();
         
         self::assertSame([
@@ -1813,7 +1816,7 @@ final class StreamScenarioTest extends TestCase
     {
         $data = [8, 2, 5, 4, 2, 9, 7, 5, 1, 6, 2, 8, 3, 2, 9, 7, 4, 1, 6, 2, 5, 6, 3, 4, 9];
         
-        $result = Stream::from($data)->segregate(null, null, Check::VALUE, true)->toArray();
+        $result = Stream::from($data)->segregate(null, true)->toArray();
         
         self::assertSame([
             [1, 1],

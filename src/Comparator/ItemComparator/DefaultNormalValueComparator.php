@@ -8,6 +8,6 @@ final class DefaultNormalValueComparator implements ItemComparator
 {
     public function compare(Item $first, Item $second): int
     {
-        return $first->value <=> $second->value;
+        return \gettype($first->value) <=> \gettype($second->value) ?: $first->value <=> $second->value;
     }
 }

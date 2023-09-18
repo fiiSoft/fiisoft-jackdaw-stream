@@ -2,9 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
-use FiiSoft\Jackdaw\Comparator\Comparators;
-use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
@@ -18,33 +17,22 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 final class SortLimited extends BaseOperation implements Limitable, DataCollector
 {
-    private ?Comparator $comparator = null;
+    private Sorting $sorting;
     private State $state;
     
-    private bool $reversed;
-    private int $mode;
     private int $limit;
     
     /**
-     * @param int $limit
-     * @param Comparator|callable|null $comparator
-     * @param int $mode
-     * @param bool $reversed
+     * @param Sorting|Comparable|callable|null $sorting
      */
-    public function __construct(
-        int $limit,
-        $comparator = null,
-        int $mode = Check::VALUE,
-        bool $reversed = false
-    ) {
+    public function __construct(int $limit, $sorting = null)
+    {
         if ($limit < 1) {
             throw new \InvalidArgumentException('Invalid param limit');
         }
         
-        $this->comparator = Comparators::getAdapter($comparator);
-        $this->mode = Check::getMode($mode);
         $this->limit = $limit;
-        $this->reversed = $reversed;
+        $this->sorting = Sorting::prepare($sorting);
         
         $this->prepareToWork();
     }
@@ -115,195 +103,9 @@ final class SortLimited extends BaseOperation implements Limitable, DataCollecto
     private function prepareToWork(): void
     {
         if ($this->limit === 1) {
-            $this->state = new SingleItem($this, $this->mode, $this->reversed, $this->comparator);
+            $this->state = new SingleItem($this, $this->sorting);
         } else {
-            $this->state = new BufferNotFull($this, $this->createHeap(), $this->limit);
-        }
-    }
-    
-    private function createHeap(): \SplHeap
-    {
-        switch ($this->mode) {
-            case Check::VALUE:
-                if ($this->comparator === null) {
-                    if ($this->reversed) {
-                        return new class extends \SplHeap {
-                            /**
-                             * @param Item $value1
-                             * @param Item $value2
-                             */
-                            public function compare($value1, $value2): int {
-                                return $value2->value <=> $value1->value;
-                            }
-                        };
-                    }
-                    
-                    return new class extends \SplHeap {
-                        /**
-                         * @param Item $value1
-                         * @param Item $value2
-                         */
-                        public function compare($value1, $value2): int {
-                            return $value1->value <=> $value2->value;
-                        }
-                    };
-                }
-                
-                if ($this->reversed) {
-                    return new class ($this->comparator) extends \SplHeap {
-                        private Comparator $comparator;
-                        
-                        public function __construct(Comparator $comparator) {
-                            $this->comparator = $comparator;
-                        }
-                        
-                        /**
-                         * @param Item $value1
-                         * @param Item $value2
-                         */
-                        public function compare($value1, $value2): int {
-                            return $this->comparator->compare($value2->value, $value1->value);
-                        }
-                    };
-                }
-                
-                return new class ($this->comparator) extends \SplHeap {
-                    private Comparator $comparator;
-                    
-                    public function __construct(Comparator $comparator) {
-                        $this->comparator = $comparator;
-                    }
-                    
-                    /**
-                     * @param Item $value1
-                     * @param Item $value2
-                     */
-                    public function compare($value1, $value2): int {
-                        return $this->comparator->compare($value1->value, $value2->value);
-                    }
-                };
-            
-            case Check::KEY:
-                if ($this->comparator === null) {
-                    if ($this->reversed) {
-                        return new class extends \SplHeap {
-                            /**
-                             * @param Item $value1
-                             * @param Item $value2
-                             */
-                            public function compare($value1, $value2): int {
-                                return $value2->key <=> $value1->key;
-                            }
-                        };
-                    }
-                    
-                    return new class extends \SplHeap {
-                        /**
-                         * @param Item $value1
-                         * @param Item $value2
-                         */
-                        public function compare($value1, $value2): int {
-                            return $value1->key <=> $value2->key;
-                        }
-                    };
-                }
-                
-                if ($this->reversed) {
-                    return new class ($this->comparator) extends \SplHeap {
-                        private Comparator $comparator;
-                        
-                        public function __construct(Comparator $comparator) {
-                            $this->comparator = $comparator;
-                        }
-                        
-                        /**
-                         * @param Item $value1
-                         * @param Item $value2
-                         */
-                        public function compare($value1, $value2): int {
-                            return $this->comparator->compare($value2->key, $value1->key);
-                        }
-                    };
-                }
-                
-                return new class ($this->comparator) extends \SplHeap {
-                    private Comparator $comparator;
-                    
-                    public function __construct(Comparator $comparator) {
-                        $this->comparator = $comparator;
-                    }
-                    
-                    /**
-                     * @param Item $value1
-                     * @param Item $value2
-                     */
-                    public function compare($value1, $value2): int {
-                        return $this->comparator->compare($value1->key, $value2->key);
-                    }
-                };
-            
-            default:
-                if ($this->comparator === null) {
-                    if ($this->reversed) {
-                        return new class extends \SplHeap {
-                            /**
-                             * @param Item $value1
-                             * @param Item $value2
-                             */
-                            public function compare($value1, $value2): int {
-                                return $value2->value <=> $value1->value ?: $value2->key <=> $value1->key;
-                            }
-                        };
-                    }
-                    
-                    return new class extends \SplHeap {
-                        /**
-                         * @param Item $value1
-                         * @param Item $value2
-                         */
-                        public function compare($value1, $value2): int {
-                            return $value1->value <=> $value2->value ?: $value1->key <=> $value2->key;
-                        }
-                    };
-                }
-                
-                if ($this->reversed) {
-                    return new class ($this->comparator) extends \SplHeap {
-                        private Comparator $comparator;
-                        
-                        public function __construct(Comparator $comparator) {
-                            $this->comparator = $comparator;
-                        }
-                        
-                        /**
-                         * @param Item $value1
-                         * @param Item $value2
-                         */
-                        public function compare($value1, $value2): int {
-                            return $this->comparator->compareAssoc(
-                                $value2->value, $value1->value, $value2->key, $value1->key
-                            );
-                        }
-                    };
-                }
-                
-                return new class ($this->comparator) extends \SplHeap {
-                    private Comparator $comparator;
-                    
-                    public function __construct(Comparator $comparator) {
-                        $this->comparator = $comparator;
-                    }
-                    
-                    /**
-                     * @param Item $value1
-                     * @param Item $value2
-                     */
-                    public function compare($value1, $value2): int {
-                        return $this->comparator->compareAssoc(
-                            $value1->value, $value2->value, $value1->key, $value2->key
-                        );
-                    }
-                };
+            $this->state = new BufferNotFull($this, $this->sorting, $this->limit);
         }
     }
     

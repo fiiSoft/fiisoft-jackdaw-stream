@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
-use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\Comparable;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
+use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
@@ -16,27 +16,17 @@ use FiiSoft\Jackdaw\Producer\Producers;
 
 final class Sort extends BaseOperation implements DataCollector
 {
-    private ?Comparator $comparator = null;
-    
-    private bool $reversed;
-    private int $mode;
+    private Sorting $sorting;
     
     /** @var Item[] */
     private array $items = [];
     
     /**
-     * @param Comparator|callable|null $comparator
-     * @param int $mode
-     * @param bool $reversed
+     * @param Sorting|Comparable|callable|null $sorting
      */
-    public function __construct(
-        $comparator = null,
-        int $mode = Check::VALUE,
-        bool $reversed = false
-    ) {
-        $this->comparator = Comparators::getAdapter($comparator);
-        $this->mode = Check::getMode($mode);
-        $this->reversed = $reversed;
+    public function __construct($sorting = null)
+    {
+        $this->sorting = Sorting::prepare($sorting);
     }
     
     public function handle(Signal $signal): void
@@ -47,8 +37,7 @@ final class Sort extends BaseOperation implements DataCollector
     public function streamingFinished(Signal $signal): bool
     {
         if (\count($this->items) > 1) {
-            $comparator = ItemComparatorFactory::getFor($this->mode, $this->reversed, $this->comparator);
-            \usort($this->items, static fn(Item $first, Item $second): int => $comparator->compare($first, $second));
+            $this->sortItems($this->items);
         }
         
         if ($this->next instanceof DataCollector) {
@@ -76,13 +65,7 @@ final class Sort extends BaseOperation implements DataCollector
     public function acceptSimpleData(array $data, Signal $signal, bool $reindexed): bool
     {
         if (\count($data) > 1) {
-            if ($this->mode === Check::VALUE || $this->mode === Check::KEY) {
-                if ($this->mode === Check::VALUE) {
-                    \uasort($data, $this->createSimpleComparator());
-                } else {
-                    \uksort($data, $this->createSimpleComparator());
-                }
-                
+            if ($this->sortSimpleData($data)) {
                 if ($this->next instanceof DataCollector) {
                     $signal->continueFrom($this->next);
                     
@@ -109,8 +92,7 @@ final class Sort extends BaseOperation implements DataCollector
     public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
     {
         if (\count($items) > 1) {
-            $comparator = ItemComparatorFactory::getFor($this->mode, $this->reversed, $this->comparator);
-            \usort($items, static fn(Item $first, Item $second): int => $comparator->compare($first, $second));
+            $this->sortItems($items);
         }
         
         if ($this->next instanceof DataCollector) {
@@ -126,29 +108,61 @@ final class Sort extends BaseOperation implements DataCollector
     
     public function reverseOrder(): void
     {
-        $this->reversed = !$this->reversed;
+        $this->sorting = $this->sorting->getReversed();
     }
     
     public function createSortLimited(int $limit): SortLimited
     {
-        return new SortLimited($limit, $this->comparator, $this->mode, $this->reversed);
+        return new SortLimited($limit, $this->sorting);
+    }
+    
+    /**
+     * @param Item[] $items REFERENCE
+     */
+    private function sortItems(array &$items): void
+    {
+        $comparator = ItemComparatorFactory::getForSorting($this->sorting);
+        
+        \usort($items, [$comparator, 'compare']);
+    }
+    
+    /**
+     * @param array $data REFERENCE
+     */
+    private function sortSimpleData(array &$data): bool
+    {
+        $mode = $this->sorting->mode();
+        
+        if ($mode === Check::VALUE) {
+            \uasort($data, $this->createSimpleComparator());
+            return true;
+        }
+        
+        if ($mode === Check::KEY) {
+            \uksort($data, $this->createSimpleComparator());
+            return true;
+        }
+        
+        return false;
     }
     
     private function createSimpleComparator(): callable
     {
-        if ($this->comparator === null) {
-            if ($this->reversed) {
-                return static fn($b, $a): int => $a <=> $b;
+        $comparator = $this->sorting->comparator();
+        
+        if ($comparator === null) {
+            if ($this->sorting->isReversed()) {
+                return static fn($b, $a): int => \gettype($a) <=> \gettype($b) ?: $a <=> $b;
             }
             
-            return static fn($a, $b): int => $a <=> $b;
+            return static fn($a, $b): int => \gettype($a) <=> \gettype($b) ?: $a <=> $b;
         }
         
-        if ($this->reversed) {
-            return fn($b, $a): int => $this->comparator->compare($a, $b);
+        if ($this->sorting->isReversed()) {
+            return static fn($b, $a): int => $comparator->compare($a, $b);
         }
         
-        return fn($a, $b): int => $this->comparator->compare($a, $b);
+        return [$comparator, 'compare'];
     }
     
     public function destroy(): void

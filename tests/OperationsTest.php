@@ -5,6 +5,8 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\Sorting\By;
+use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
@@ -17,8 +19,8 @@ use FiiSoft\Jackdaw\Operation\Aggregate;
 use FiiSoft\Jackdaw\Operation\Chunk;
 use FiiSoft\Jackdaw\Operation\Classify;
 use FiiSoft\Jackdaw\Operation\CollectIn;
-use FiiSoft\Jackdaw\Operation\Flat;
 use FiiSoft\Jackdaw\Operation\Dispatch;
+use FiiSoft\Jackdaw\Operation\Flat;
 use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\Handlers;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\FeedMany;
@@ -969,7 +971,7 @@ final class OperationsTest extends TestCase
         //given
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $sort = new Sort($comparator, $mode, $reversed);
+        $sort = new Sort(Sorting::create($reversed, $comparator, $mode));
         $collect = new Collect($stream);
         $this->addToPipe($pipe, $sort, $collect);
         
@@ -990,7 +992,7 @@ final class OperationsTest extends TestCase
         $expected5 = [6 => 1, 5 => 2, 8 => 2, 1 => 3, 7 => 3, 3 => 5, 4 => 5, 0 => 6, 2 => 6];
         $expected6 = [2 => 6, 0 => 6, 4 => 5, 3 => 5, 7 => 3, 1 => 3, 8 => 2, 5 => 2, 6 => 1];
         
-        //sometimes the order of elements differs in various versions of PHP :(
+        //the exact order of elements sorted by native functions depends on PHP version
         if (\PHP_MAJOR_VERSION === 7) {
             $expected1 = [0 => 6, 2 => 6, 4 => 5, 3 => 5, 7 => 3, 1 => 3, 8 => 2, 5 => 2, 6 => 1];
         } else {
@@ -999,29 +1001,40 @@ final class OperationsTest extends TestCase
         
         //reversed, mode, Comparator, expected
         return [
-            [
+            0 => [
                 false, Check::VALUE, null, $expected2
-            ], [
+            ],
+            1 => [
                 true, Check::VALUE, null, $expected1
-            ], [
+            ],
+            2 => [
                 false, Check::VALUE, Comparators::default(), $expected2
-            ], [
+            ],
+            3 => [
                 true, Check::VALUE, Comparators::default(), $expected1
-            ], [
+            ],
+            4 => [
                 false, Check::KEY, null, $expected3
-            ], [
+            ],
+            5 => [
                 true, Check::KEY, null, $expected4
-            ], [
+            ],
+            6 => [
                 false, Check::KEY, Comparators::default(), $expected3
-            ], [
+            ],
+            7 => [
                 true, Check::KEY, Comparators::default(), $expected4
-            ], [
+            ],
+            8 => [
                 false, Check::BOTH, null, $expected5
-            ], [
+            ],
+            9 => [
                 true, Check::BOTH, null, $expected6
-            ], [
+            ],
+            10 => [
                 false, Check::BOTH, Comparators::default(), $expected5
-            ], [
+            ],
+            11 => [
                 true, Check::BOTH, Comparators::default(), $expected6
             ],
         ];
@@ -1032,7 +1045,7 @@ final class OperationsTest extends TestCase
         //given
         [, $pipe, $signal] = $this->prepare();
         
-        $sort = new Sort(null, Check::VALUE, false);
+        $sort = new Sort();
         $this->addToPipe($pipe, $sort, new CollectIn(Collectors::default()));
         
         $signal->streamIsEmpty();
@@ -1051,7 +1064,7 @@ final class OperationsTest extends TestCase
         //given
         [, $pipe, $signal] = $this->prepare();
         
-        $sort = new Sort(null, Check::VALUE, false);
+        $sort = new Sort();
         $this->addToPipe($pipe, $sort, new CollectIn(Collectors::default()));
         
         $signal->streamIsEmpty();
@@ -1266,7 +1279,7 @@ final class OperationsTest extends TestCase
     
     public function test_SingeItem_strategy_is_protected_agains_change_its_limit(): void
     {
-        $state = new SingleItem(new SortLimited(1), Check::VALUE, false, null);
+        $state = new SingleItem(new SortLimited(1), By::value());
         $state->setLength(1);
         
         $this->expectException(\LogicException::class);

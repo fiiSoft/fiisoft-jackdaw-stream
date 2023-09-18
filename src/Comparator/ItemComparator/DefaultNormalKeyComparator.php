@@ -8,6 +8,6 @@ final class DefaultNormalKeyComparator implements ItemComparator
 {
     public function compare(Item $first, Item $second): int
     {
-        return $first->key <=> $second->key;
+        return \gettype($first->key) <=> \gettype($second->key) ?: $first->key <=> $second->key;
     }
 }

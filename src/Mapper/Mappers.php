@@ -4,20 +4,25 @@ namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Mapper\Adapter\DiscriminatorAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\FilterAdapter;
-use FiiSoft\Jackdaw\Mapper\Internal\MultiMapper;
+use FiiSoft\Jackdaw\Mapper\Adapter\GeneratorAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\PredicateAdapter;
+use FiiSoft\Jackdaw\Mapper\Adapter\ProducerAdadpter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\RegistryAdapter;
+use FiiSoft\Jackdaw\Mapper\Internal\MultiMapper;
 use FiiSoft\Jackdaw\Predicate\Predicate;
+use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Registry\RegReader;
+use FiiSoft\Jackdaw\Stream;
 
 final class Mappers
 {
     /**
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param Mapper|Reducer|Predicate|Filter|Discriminator|Producer|Stream|ResultCaster|\Traversable|callable|array|mixed $mapper
      */
     public static function getAdapter($mapper): Mapper
     {
@@ -89,6 +94,30 @@ final class Mappers
         
         if ($mapper instanceof Discriminator) {
             return new DiscriminatorAdapter($mapper);
+        }
+        
+        if ($mapper instanceof ResultCaster) {
+            return new GeneratorAdapter((static function () use ($mapper): \Generator {
+                foreach ($mapper->toArrayAssoc() as $key => $value) {
+                    yield $key => $value;
+                }
+            })());
+        }
+        
+        if ($mapper instanceof Producer) {
+            return new ProducerAdadpter($mapper);
+        }
+        
+        if ($mapper instanceof \Generator) {
+            return new GeneratorAdapter($mapper);
+        }
+        
+        if ($mapper instanceof \Traversable) {
+            return new GeneratorAdapter((static function () use ($mapper) {
+                foreach ($mapper as $key => $value) {
+                    yield $key => $value;
+                }
+            })());
         }
         
         if (\is_array($mapper)) {

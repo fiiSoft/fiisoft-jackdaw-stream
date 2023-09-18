@@ -3,18 +3,19 @@
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidGenerator;
+use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidProvider;
 use FiiSoft\Jackdaw\Producer\Tech\LimitedProducer;
-use Ramsey\Uuid\Uuid;
 
 final class RandomUuid extends LimitedProducer
 {
-    private bool $asHex;
+    private UuidGenerator $provider;
     
-    public function __construct(bool $asHex = true, int $limit = \PHP_INT_MAX)
+    public function __construct(int $limit = \PHP_INT_MAX, ?UuidGenerator $provider = null)
     {
         parent::__construct($limit);
         
-        $this->asHex = $asHex;
+        $this->provider = $provider ?? UuidProvider::default();
     }
     
     public function feed(Item $item): \Generator
@@ -22,9 +23,9 @@ final class RandomUuid extends LimitedProducer
         $count = 0;
         
         while ($count !== $this->limit) {
-    
+            
             $item->key = $count++;
-            $item->value = $this->asHex ? Uuid::uuid4()->getHex()->toString() : Uuid::uuid4()->toString();
+            $item->value = $this->provider->create();
             
             yield;
         }

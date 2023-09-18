@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\State\SortLimited;
 
+use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Operation\SortLimited;
 
@@ -10,9 +11,9 @@ final class BufferNotFull extends HeapBuffer
     private int $length;
     private int $count = 0;
     
-    public function __construct(SortLimited $operation, \SplHeap $buffer, int $length)
+    public function __construct(SortLimited $operation, Sorting $sorting, int $length)
     {
-        parent::__construct($operation, $buffer);
+        parent::__construct($operation, HeapFactory::createHeapForSorting($sorting));
         
         $this->length = $length;
     }

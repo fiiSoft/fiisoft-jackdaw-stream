@@ -2,19 +2,34 @@
 
 namespace FiiSoft\Jackdaw\Comparator;
 
-use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueAscKeyDescComparator;
-use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueDescKeyAscComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\DefaultComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\FieldsComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\MultiComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\ReverseComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\SizeComparator;
 
 final class Comparators
 {
     /**
-     * @param Comparator|callable|null $comparator
-     * @return Comparator|null
+     * @param Comparable|callable|null $comparator
+     */
+    public static function prepare($comparator): Comparator
+    {
+        return self::getAdapter($comparator) ?? self::default();
+    }
+    
+    /**
+     * @param Comparable|callable|null $comparator
      */
     public static function getAdapter($comparator): ?Comparator
     {
         if ($comparator instanceof Comparator) {
             return $comparator;
+        }
+        
+        if ($comparator instanceof Comparable) {
+            return $comparator->comparator();
         }
         
         if (\is_callable($comparator)) {
@@ -44,9 +59,9 @@ final class Comparators
     }
     
     /**
-     * @param string[]|int[] $fields
+     * @param array<string|int> $fields
      */
-    public static function sortBy(array $fields): Comparator
+    public static function fields(array $fields): Comparator
     {
         return new FieldsComparator($fields);
     }
@@ -65,23 +80,5 @@ final class Comparators
     public static function multi(...$comparators): MultiComparator
     {
         return new MultiComparator(...$comparators);
-    }
-    
-    /**
-     * @param Comparator|callable|null $valueComparator
-     * @param Comparator|callable|null $keyComparator
-     */
-    public static function valueAscKeyDesc($valueComparator = null, $keyComparator = null): Comparator
-    {
-        return new ValueAscKeyDescComparator($valueComparator, $keyComparator);
-    }
-    
-    /**
-     * @param Comparator|callable|null $valueComparator
-     * @param Comparator|callable|null $keyComparator
-     */
-    public static function valueDescKeyAsc($valueComparator = null, $keyComparator = null): Comparator
-    {
-        return new ValueDescKeyAscComparator($valueComparator, $keyComparator);
     }
 }

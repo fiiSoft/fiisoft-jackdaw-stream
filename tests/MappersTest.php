@@ -18,6 +18,7 @@ use FiiSoft\Jackdaw\Mapper\ToString;
 use FiiSoft\Jackdaw\Mapper\Trim;
 use FiiSoft\Jackdaw\Predicate\Predicates;
 use FiiSoft\Jackdaw\Reducer\Reducers;
+use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 
 final class MappersTest extends TestCase
@@ -209,18 +210,22 @@ final class MappersTest extends TestCase
         try {
             Mappers::toInt()->map(['id' => 1], 1);
             self::fail('Exception expected');
-        } catch (\LogicException $e) {
-            //ok
+        } catch (AssertionFailedError $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            self::assertInstanceOf(\LogicException::class, $e);
+            self::assertSame('Unable to cast to int param array', $e->getMessage());
         }
         
         try {
             Mappers::toInt('id')->map(15, 1);
             self::fail('Exception expected');
-        } catch (\LogicException $e) {
-            //ok
+        } catch (AssertionFailedError $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            self::assertInstanceOf(\LogicException::class, $e);
+            self::assertSame('Unable to cast to int param integer', $e->getMessage());
         }
-        
-        self::assertTrue(true);
     }
     
     public function test_ToFloat_throws_exception_on_invalid_param(): void
@@ -242,18 +247,22 @@ final class MappersTest extends TestCase
         try {
             Mappers::toFloat()->map(['id' => 1], 1);
             self::fail('Exception expected');
-        } catch (\LogicException $e) {
-            //ok
+        } catch (AssertionFailedError $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            self::assertInstanceOf(\LogicException::class, $e);
+            self::assertSame('Unable to cast to float param array', $e->getMessage());
         }
         
         try {
             Mappers::toFloat('id')->map(15, 1);
             self::fail('Exception expected');
-        } catch (\LogicException $e) {
-            //ok
+        } catch (AssertionFailedError $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            self::assertInstanceOf(\LogicException::class, $e);
+            self::assertSame('Unable to cast to float param integer', $e->getMessage());
         }
-        
-        self::assertTrue(true);
     }
     
     public function test_Append(): void

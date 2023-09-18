@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
+use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
@@ -179,17 +180,17 @@ final class PipeTest extends TestCase
         yield 'Reindex_Gather_5' => [new Reindex(1), new Gather(true), Gather::class];
         yield 'Reindex_Gather_6' => [new Reindex(0, 2), new Gather(true), Gather::class];
         yield 'Reindex_Segregate_1' => [new Reindex(), new Segregate(), Reindex::class, Segregate::class];
-        yield 'Reindex_Segregate_2' => [new Reindex(), new Segregate(null, null, Check::VALUE, true), Segregate::class];
+        yield 'Reindex_Segregate_2' => [new Reindex(), new Segregate(null, true, Compare::values()), Segregate::class];
         yield 'Reindex_Segregate_3' => [new Reindex(1, 2), new Segregate(), Reindex::class, Segregate::class];
         yield 'Reindex_Segregate_4' => [
-            new Reindex(1, 2), new Segregate(null, null, Check::VALUE, true), Segregate::class
+            new Reindex(1, 2), new Segregate(null, true, Compare::values()), Segregate::class
         ];
         yield 'Reindex_UnpackTuple' => [new Reindex(), new UnpackTuple(), UnpackTuple::class];
         yield 'Reindex_Uptrends_1' => [new Reindex(), new Uptrends(), Reindex::class, Uptrends::class];
-        yield 'Reindex_Uptrends_2' => [new Reindex(), new Uptrends(null, Check::VALUE, true), Uptrends::class];
+        yield 'Reindex_Uptrends_2' => [new Reindex(), new Uptrends(true), Uptrends::class];
         yield 'Reindex_Uptrends_3' => [new Reindex(1, 2), new Uptrends(), Reindex::class, Uptrends::class];
         yield 'Reindex_Uptrends_4' => [
-            new Reindex(1, 2), new Uptrends(null, Check::VALUE, true), Uptrends::class
+            new Reindex(1, 2), new Uptrends(true), Uptrends::class
         ];
         
         yield 'Reverse_Count' => [new Reverse(), new Count($stream), Count::class];

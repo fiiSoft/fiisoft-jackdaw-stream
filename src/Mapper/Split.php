@@ -14,7 +14,7 @@ final class Split extends BaseMapper
         $this->separator = $separator;
     }
     
-    public function map($value, $key)
+    public function map($value, $key): array
     {
         if (\is_string($value)) {
             return \explode($this->separator, $value);
