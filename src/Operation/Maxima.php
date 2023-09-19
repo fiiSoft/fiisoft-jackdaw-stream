@@ -22,7 +22,7 @@ final class Maxima extends BaseOperation
     private bool $allowLimits, $reversed;
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function __construct(bool $allowLimits = true, bool $reversed = false, $comparison = null)
     {

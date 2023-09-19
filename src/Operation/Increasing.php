@@ -19,7 +19,7 @@ final class Increasing extends BaseOperation
     private bool $reversed;
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function __construct(bool $reversed = false, $comparison = null)
     {

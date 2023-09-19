@@ -3,12 +3,11 @@
 namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Producer\Producers;
-use FiiSoft\Jackdaw\Stream;
 
 final class Zip extends BaseOperation
 {
@@ -24,11 +23,11 @@ final class Zip extends BaseOperation
     /** @var \Generator[] */
     private array $generators = [];
     
-    /** @var array<Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array|scalar> */
+    /** @var array<ProducerReady|resource|callable|iterable|scalar> */
     private array $sources;
     
     /**
-     * @param array<Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array|scalar> $sources
+     * @param array<ProducerReady|resource|callable|iterable|scalar> $sources
      */
     public function __construct(array $sources)
     {

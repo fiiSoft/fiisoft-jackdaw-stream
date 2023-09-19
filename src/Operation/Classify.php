@@ -2,22 +2,19 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
+use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
-use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class Classify extends BaseOperation
 {
     private Discriminator $discriminator;
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array $discriminator
      */
     public function __construct($discriminator)
     {

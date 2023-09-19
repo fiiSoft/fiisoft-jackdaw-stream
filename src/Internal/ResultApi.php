@@ -5,11 +5,12 @@ namespace FiiSoft\Jackdaw\Internal;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Mapper\Mapper;
+use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\HandlerReady;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 
-interface ResultApi extends ResultCaster, Destroyable, \Countable
+interface ResultApi extends HandlerReady, ResultCaster, Destroyable, \Countable
 {
     public function found(): bool;
     

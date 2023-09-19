@@ -23,7 +23,7 @@ final class Extrema extends BaseOperation
     private bool $allowLimits, $isFirst = true;
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function __construct(bool $allowLimits = true, $comparison = null)
     {

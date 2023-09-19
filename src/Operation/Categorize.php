@@ -17,7 +17,7 @@ final class Categorize extends GroupingOperation
             return $this->next->acceptSimpleData($this->collections, $signal, false);
         }
         
-        $signal->restartWith(Producers::fromArray($this->collections), $this->next);
+        $signal->restartWith(Producers::getAdapter($this->collections), $this->next);
         
         return true;
     }

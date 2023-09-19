@@ -16,7 +16,6 @@ use FiiSoft\Jackdaw\Mapper\ToFloat;
 use FiiSoft\Jackdaw\Mapper\ToInt;
 use FiiSoft\Jackdaw\Mapper\ToString;
 use FiiSoft\Jackdaw\Mapper\Trim;
-use FiiSoft\Jackdaw\Predicate\Predicates;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
@@ -68,12 +67,12 @@ final class MappersTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        Mappers::generic(static fn($a, $b, $c): bool => true)->map('a', 1);
+        Mappers::getAdapter(static fn($a, $b, $c): bool => true)->map('a', 1);
     }
     
     public function test_GenericMapper_can_call_callable_without_arguments(): void
     {
-        self::assertSame('foo', Mappers::generic(static fn(): string => 'foo')->map('bar', 1));
+        self::assertSame('foo', Mappers::getAdapter(static fn(): string => 'foo')->map('bar', 1));
     }
     
     public function test_JsonDecode(): void
@@ -660,26 +659,18 @@ final class MappersTest extends TestCase
         Mappers::getAdapter(Filters::string()->contains('foo'))->map(15, 1);
     }
     
-    public function test_Filter_used_as_mapper_allows_to_remove_elements_in_arrays(): void
+    public function test_Filter_used_as_mapper_allows_to_remove_elements_in_arrays_1(): void
     {
         $data = ['a', 1, 'b', 2, 'c', 3];
         
         self::assertSame([1 => 1, 3 => 2, 5 => 3], Mappers::getAdapter(Filters::isInt())->map($data, 1));
     }
     
-    public function test_Predicate_used_as_mapper_throws_exception_when_mapped_value_is_not_iterable(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to map integer using Predicate because it is not iterable');
-        
-        Mappers::getAdapter(Predicates::value('foo'))->map(15, 1);
-    }
-    
-    public function test_Predicate_used_as_mapper_allows_to_remove_elements_in_arrays(): void
+    public function test_Filter_used_as_mapper_allows_to_remove_elements_in_arrays_2(): void
     {
         $data = ['a', 1, 'b', 2, 'c', 3];
         
-        self::assertSame([1 => 1, 3 => 2, 5 => 3], Mappers::getAdapter(Predicates::inArray([1, 2, 3]))->map($data, 1));
+        self::assertSame([1 => 1, 5 => 3], Mappers::getAdapter(Filters::onlyIn([1, 3]))->map($data, 1));
     }
     
     public function test_FieldValue_throws_exception_when_param_field_is_invalid(): void
@@ -795,7 +786,7 @@ final class MappersTest extends TestCase
         $this->expectExceptionMessage('Unsupported value was returned from discriminator (got array)');
         
         //Arrange
-        $mapper = Mappers::getAdapter(Discriminators::generic(static fn($v): array => [$v]));
+        $mapper = Mappers::getAdapter(Discriminators::getAdapter(static fn($v): array => [$v]));
         
         //Act
         $mapper->map('foo', 1);
@@ -812,5 +803,31 @@ final class MappersTest extends TestCase
             new \ArrayObject(['foo' => 6]),
             Mappers::mapField('foo', static fn(int $v): int => $v * 2)->map(new \ArrayObject(['foo' => 3]), 1)
         );
+    }
+    
+    public function test_Increment_can_increment_integer_values(): void
+    {
+        self::assertSame(7, Mappers::increment(2)->map(5, 'a'));
+    }
+    
+    public function test_Increment_can_decrement_integer_values(): void
+    {
+        self::assertSame(3, Mappers::decrement(2)->map(5, 'a'));
+    }
+    
+    public function test_Increment_throws_exception_when_value_is_not_integer(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Mapper Increment requires integers');
+        
+        Mappers::increment()->map('foo', 'bar');
+    }
+    
+    public function test_Increment_throws_exception_when_param_step_is_zero(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param step - it cannot be 0');
+        
+        Mappers::increment(0);
     }
 }

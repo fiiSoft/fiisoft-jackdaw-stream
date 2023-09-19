@@ -4,13 +4,12 @@ namespace FiiSoft\Jackdaw\Filter\Logic;
 
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class FilterXOR extends LogicFilter
 {
     /**
-     * @param Filter|Predicate|callable|mixed $first
-     * @param Filter|Predicate|callable|mixed $second
+     * @param Filter|callable|mixed $first
+     * @param Filter|callable|mixed $second
      */
     public function __construct($first, $second)
     {

@@ -56,6 +56,7 @@ use FiiSoft\Jackdaw\Operation\Terminating\HasEvery;
 use FiiSoft\Jackdaw\Operation\Terminating\HasOnly;
 use FiiSoft\Jackdaw\Operation\Terminating\IsEmpty;
 use FiiSoft\Jackdaw\Operation\Terminating\Last;
+use FiiSoft\Jackdaw\Operation\Terminating\Until;
 use FiiSoft\Jackdaw\Operation\Tokenize;
 use FiiSoft\Jackdaw\Operation\Tuple;
 use FiiSoft\Jackdaw\Operation\Unique;
@@ -99,8 +100,8 @@ final class PipeTest extends TestCase
     public static function getDataForTestGeneralChainOperations(): \Generator
     {
         $stream = Stream::empty();
-        $mapper = Mappers::generic('strtolower');
-        $discriminator = Discriminators::generic('is_string');
+        $mapper = Mappers::getAdapter('strtolower');
+        $discriminator = Discriminators::getAdapter('is_string');
         
         yield 'Accumulate_Reindex_custom' => [
             new Accumulate('is_subclass_of'), new Reindex(1), Accumulate::class, Reindex::class
@@ -573,6 +574,38 @@ final class PipeTest extends TestCase
         //then
         self::assertSame([], $pipe->stack);
         $this->assertPipeContainsOperations($pipe, Sort::class, Map::class);
+    }
+    
+    public function test_Until_with_FilterNOT(): void
+    {
+        //given
+        [$stream, $pipe] = $this->prepare();
+        
+        $operation = new Until(Filters::NOT('is_string'));
+        
+        //when
+        $this->chainOperations($pipe, $stream, $operation);
+        
+        //then
+        $addedOperation = $pipe->head->getNext();
+        
+        self::assertNotSame($addedOperation, $operation);
+        self::assertInstanceOf(Until::class, $addedOperation);
+        self::assertFalse($addedOperation->canBeInversed());
+    }
+    
+    public function test_Until_throws_exception_when_cannot_be_inversed(): void
+    {
+        //Assert
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot create inversed operation');
+        
+        //Arrange
+        $operation = new Until('is_string');
+        self::assertFalse($operation->canBeInversed());
+        
+        //Act
+        $operation->createInversed();
     }
     
     private function createOperation(string $name): Operation

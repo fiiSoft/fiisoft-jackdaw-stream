@@ -54,6 +54,7 @@ use FiiSoft\Jackdaw\Operation\Terminating\HasEvery;
 use FiiSoft\Jackdaw\Operation\Terminating\HasOnly;
 use FiiSoft\Jackdaw\Operation\Terminating\IsEmpty;
 use FiiSoft\Jackdaw\Operation\Terminating\Last;
+use FiiSoft\Jackdaw\Operation\Terminating\Until;
 use FiiSoft\Jackdaw\Operation\Tokenize;
 use FiiSoft\Jackdaw\Operation\Tuple;
 use FiiSoft\Jackdaw\Operation\Unique;
@@ -467,6 +468,9 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 $this->last = $this->last->removeFromChain();
                 return false;
             }
+        } elseif ($next instanceof Until && $next->canBeInversed()) {
+            $this->append($next->createInversed());
+            return false;
         }
         
         if ($next instanceof Reindexable) {

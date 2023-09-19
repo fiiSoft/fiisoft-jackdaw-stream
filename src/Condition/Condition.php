@@ -2,7 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Condition;
 
-interface Condition
+use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
+
+interface Condition extends ConditionReady, DiscriminatorReady
 {
     /**
      * @param mixed $value

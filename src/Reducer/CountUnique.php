@@ -2,14 +2,11 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
+use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
-use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Mapper;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
 final class CountUnique extends BaseReducer
@@ -20,7 +17,7 @@ final class CountUnique extends BaseReducer
     private array $values = [];
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array|null $discriminator
+     * @param DiscriminatorReady|callable|array|null $discriminator
      */
     public function __construct($discriminator = null, int $mode = Check::VALUE)
     {

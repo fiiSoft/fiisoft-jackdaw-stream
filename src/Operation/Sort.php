@@ -22,7 +22,7 @@ final class Sort extends BaseOperation implements DataCollector
     private array $items = [];
     
     /**
-     * @param Sorting|Comparable|callable|null $sorting
+     * @param Comparable|callable|null $sorting
      */
     public function __construct($sorting = null)
     {
@@ -81,7 +81,7 @@ final class Sort extends BaseOperation implements DataCollector
             }
         }
         
-        $signal->restartWith(Producers::fromArray($data), $this->next);
+        $signal->restartWith(Producers::getAdapter($data), $this->next);
         
         return true;
     }

@@ -2,7 +2,6 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
-use FiiSoft\Jackdaw\Filter\Adapter\PredicateAdapter;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Filter\Internal\NumberFactory;
 use FiiSoft\Jackdaw\Filter\IsBool;
@@ -13,7 +12,6 @@ use FiiSoft\Jackdaw\Filter\IsNumeric;
 use FiiSoft\Jackdaw\Filter\IsString;
 use FiiSoft\Jackdaw\Filter\Length;
 use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Predicate\Predicates;
 use PHPUnit\Framework\TestCase;
 
 final class FiltersTest extends TestCase
@@ -171,8 +169,8 @@ final class FiltersTest extends TestCase
     
     public function test_GenericFilter_can_call_callable_without_arguments(): void
     {
-        self::assertTrue(Filters::generic(static fn(): bool => true)->isAllowed(1, 1));
-        self::assertFalse(Filters::generic(static fn(): bool => false)->isAllowed(1, 1));
+        self::assertTrue(Filters::getAdapter(static fn(): bool => true)->isAllowed(1, 1));
+        self::assertFalse(Filters::getAdapter(static fn(): bool => false)->isAllowed(1, 1));
     }
     
     public function test_GenericFilter_can_call_callable_with_three_arguments(): void
@@ -181,7 +179,7 @@ final class FiltersTest extends TestCase
         $key = null;
         $mode = null;
         
-        $filter = Filters::generic(static function ($_value, $_key, $_mode) use (&$value, &$key, &$mode): bool {
+        $filter = Filters::getAdapter(static function ($_value, $_key, $_mode) use (&$value, &$key, &$mode): bool {
             $value = $_value;
             $key = $_key;
             $mode = $_mode;
@@ -200,7 +198,7 @@ final class FiltersTest extends TestCase
         $value = null;
         $key = null;
         
-        $filter = Filters::generic(static function ($_value, $_key, $_) use (&$value, &$key): bool {
+        $filter = Filters::getAdapter(static function ($_value, $_key, $_) use (&$value, &$key): bool {
             $value = $_value;
             $key = $_key;
             return true;
@@ -216,13 +214,13 @@ final class FiltersTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        $filter = Filters::generic(static fn($a, $b, $c, $d): bool => true);
+        $filter = Filters::getAdapter(static fn($a, $b, $c, $d): bool => true);
         $filter->isAllowed(1, 1);
     }
     
     public function test_GenericFilter_can_compare_key(): void
     {
-        $filter = Filters::generic(static fn($key): bool => $key === 'a');
+        $filter = Filters::getAdapter(static fn($key): bool => $key === 'a');
         
         self::assertFalse($filter->isAllowed(15, 'a', Check::VALUE));
         self::assertTrue($filter->isAllowed(15, 'a', Check::KEY));
@@ -230,7 +228,7 @@ final class FiltersTest extends TestCase
     
     public function test_GenericFilter_can_compare_value(): void
     {
-        $filter = Filters::generic(static fn($val): bool => $val === 15);
+        $filter = Filters::getAdapter(static fn($val): bool => $val === 15);
         
         self::assertTrue($filter->isAllowed(15, 'a', Check::VALUE));
         self::assertFalse($filter->isAllowed(15, 'a', Check::KEY));
@@ -238,7 +236,7 @@ final class FiltersTest extends TestCase
     
     public function test_GenericFilter_can_compare_both_value_and_key(): void
     {
-        $filter = Filters::generic(static fn($val): bool => $val === 'a');
+        $filter = Filters::getAdapter(static fn($val): bool => $val === 'a');
         
         self::assertTrue($filter->isAllowed('a', 'a', Check::BOTH));
         self::assertFalse($filter->isAllowed(15, 'a', Check::BOTH));
@@ -247,7 +245,7 @@ final class FiltersTest extends TestCase
     
     public function test_GenericFilter_can_compare_any_value_or_key(): void
     {
-        $filter = Filters::generic(static fn($val): bool => $val === 'a');
+        $filter = Filters::getAdapter(static fn($val): bool => $val === 'a');
         
         self::assertTrue($filter->isAllowed('a', 'a', Check::ANY));
         self::assertTrue($filter->isAllowed(15, 'a', Check::ANY));
@@ -259,7 +257,7 @@ final class FiltersTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
     
-        $filter = Filters::generic(static fn($val): bool => $val === 'a');
+        $filter = Filters::getAdapter(static fn($val): bool => $val === 'a');
         $filter->isAllowed(1, 1, 0);
     }
     
@@ -402,9 +400,10 @@ final class FiltersTest extends TestCase
         Filters::onlyIn(['test'])->isAllowed('a', 'a', 0);
     }
     
-    public function test_OnlyIn_throws_exception_on_invalid_mode_not_hashmap(): void
+    public function test_OnlyIn_throws_exception_on_invalid_param_mode(): void
     {
         $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param mode');
         
         Filters::onlyIn([false])->isAllowed('a', 'a', 0);
     }
@@ -693,16 +692,6 @@ final class FiltersTest extends TestCase
         
         self::assertInstanceOf(IsBool::class, Filters::getAdapter('is_bool'));
         self::assertInstanceOf(IsBool::class, Filters::getAdapter('\is_bool'));
-        
-        self::assertInstanceOf(PredicateAdapter::class, Filters::getAdapter(Predicates::inArray([1, 2])));
-    }
-    
-    public function test_it_allows_to_use_any_Predicate_as_Filter(): void
-    {
-        $filter = Filters::getAdapter(Predicates::inArray([1, 2]));
-        
-        self::assertTrue($filter->isAllowed(1, 'a'));
-        self::assertFalse($filter->isAllowed(3, 'a'));
     }
     
     public function test_NumbeFilter_Equal_can_compare_number_and_numeric_type(): void
@@ -1280,5 +1269,25 @@ final class FiltersTest extends TestCase
         
         self::assertFalse($hasField->isAllowed(['foo' => null], 0));
         self::assertTrue($hasField->isAllowed(['foo' => 1], 0));
+    }
+    
+    public function test_OnlyIn_hashMap_strings(): void
+    {
+        $filter = Filters::onlyIn(['foo', 'bar']);
+        
+        self::assertTrue($filter->isAllowed('foo', 5, Check::VALUE));
+        self::assertFalse($filter->isAllowed('foo', 5, Check::KEY));
+        self::assertTrue($filter->isAllowed('foo', 5, Check::ANY));
+        self::assertFalse($filter->isAllowed('foo', 5, Check::BOTH));
+    }
+    
+    public function test_OnlyIn_hashMap_ints(): void
+    {
+        $filter = Filters::onlyIn([5, 3]);
+        
+        self::assertFalse($filter->isAllowed('foo', 5, Check::VALUE));
+        self::assertTrue($filter->isAllowed('foo', 5, Check::KEY));
+        self::assertTrue($filter->isAllowed('foo', 5, Check::ANY));
+        self::assertFalse($filter->isAllowed('foo', 5, Check::BOTH));
     }
 }

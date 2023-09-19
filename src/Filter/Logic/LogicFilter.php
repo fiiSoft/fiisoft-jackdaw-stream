@@ -4,7 +4,6 @@ namespace FiiSoft\Jackdaw\Filter\Logic;
 
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Filters;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 abstract class LogicFilter implements Filter
 {
@@ -12,7 +11,7 @@ abstract class LogicFilter implements Filter
     protected array $filters = [];
     
     /**
-     * @param array<Filter|Predicate|callable|array> $filters
+     * @param array<Filter|callable|mixed> $filters
      */
     public function __construct(array $filters)
     {

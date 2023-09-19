@@ -2,32 +2,32 @@
 
 namespace FiiSoft\Jackdaw;
 
-use FiiSoft\Jackdaw\Collector\Collector;
-use FiiSoft\Jackdaw\Comparator\{Comparable, Comparison\Comparison, Sorting\By, Sorting\Sorting};
-use FiiSoft\Jackdaw\Condition\Condition;
-use FiiSoft\Jackdaw\Consumer\{Consumer, Consumers};
-use FiiSoft\Jackdaw\Discriminator\{Discriminator, Discriminators};
+use FiiSoft\Jackdaw\Collector\{Collector};
+use FiiSoft\Jackdaw\Comparator\{Comparable, Sorting\By, Sorting\Sorting};
+use FiiSoft\Jackdaw\Condition\{ConditionReady};
+use FiiSoft\Jackdaw\Consumer\{ConsumerReady, Consumers};
+use FiiSoft\Jackdaw\Discriminator\{DiscriminatorReady, Discriminators};
 use FiiSoft\Jackdaw\Filter\{Filter, Filters};
 use FiiSoft\Jackdaw\Handler\{ErrorHandler, OnError};
 use FiiSoft\Jackdaw\Internal\{Check, Collaborator, Collection\BaseStreamCollection, Destroyable, Executable,
-    ForkCollaborator, Interruption, Iterator\StreamIterator, Iterator\StreamIterator81, Pipe, ResultApi, ResultCaster,
-    Signal, SignalHandler, StreamPipe, State\Source, State\SourceNotReady, State\Stack};
-use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, Mapper, Mappers};
+    ForkCollaborator, Interruption, Iterator\StreamIterator, Iterator\StreamIterator81, Pipe, Signal, SignalHandler,
+    State\Source, State\SourceNotReady, State\Stack, StreamPipe};
+use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, MapperReady, Mappers};
 use FiiSoft\Jackdaw\Operation\{Accumulate, Aggregate, Assert, Categorize, Chunk, ChunkBy, Classify, CollectIn,
     CollectKeysIn, CountIn, Dispatch, Extrema, Filter as OperationFilter, FilterWhen, Flat, Flip, Gather, Increasing,
-    Internal\AssertionFailed, Internal\Feed, Internal\FeedMany, Internal\FinalOperation, Internal\Fork,
-    Internal\Iterate, Internal\LastOperation, Limit, Map, MapFieldWhen, MapKey, MapKeyValue, MapWhen, Maxima, OmitReps,
-    Operation, Reindex, Remember, Reverse, Scan, Segregate, SendTo, SendToMax, SendWhen, Shuffle, Skip, SkipWhile, Sort,
-    SortLimited, StoreIn, Tail, Terminating\Collect, Terminating\CollectKeys, Terminating\Count, Terminating\Find,
-    Terminating\First, Terminating\Fold, Terminating\GroupBy, Terminating\Has, Terminating\HasEvery,
-    Terminating\HasOnly, Terminating\IsEmpty, Terminating\Last, Terminating\Reduce, Terminating\Until, Tokenize, Tuple,
-    Unique, UnpackTuple, Unzip, Uptrends, Zip};
-use FiiSoft\Jackdaw\Predicate\{Predicate, Predicates};
-use FiiSoft\Jackdaw\Producer\{Internal\PushProducer, Producer, Producers};
+    Internal\AssertionFailed, Internal\Dispatcher\HandlerReady, Internal\Feed, Internal\FeedMany,
+    Internal\FinalOperation, Internal\Fork, Internal\Iterate, Internal\LastOperation, Limit, Map, MapFieldWhen, MapKey,
+    MapKeyValue, MapWhen, Maxima, OmitReps, Operation, Reindex, Remember, Reverse, Scan, Segregate, SendTo, SendToMax,
+    SendWhen, Shuffle, Skip, SkipWhile, Sort, SortLimited, StoreIn, Tail, Terminating\Collect, Terminating\CollectKeys,
+    Terminating\Count, Terminating\Find, Terminating\First, Terminating\Fold, Terminating\GroupBy, Terminating\Has,
+    Terminating\HasEvery, Terminating\HasOnly, Terminating\IsEmpty, Terminating\Last, Terminating\Reduce,
+    Terminating\Until, Tokenize, Tuple, Unique, UnpackTuple, Unzip, Uptrends, Zip};
+use FiiSoft\Jackdaw\Producer\{Internal\PushProducer, Producer, ProducerReady, Producers};
 use FiiSoft\Jackdaw\Reducer\Reducer;
-use FiiSoft\Jackdaw\Registry\RegWriter;
+use FiiSoft\Jackdaw\Registry\{RegWriter};
 
-final class Stream extends Collaborator implements SignalHandler, Executable, Destroyable, \IteratorAggregate
+final class Stream extends Collaborator
+    implements HandlerReady, SignalHandler, Executable, Destroyable, \IteratorAggregate
 {
     private Source $source;
     private Signal $signal;
@@ -53,7 +53,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     private array $onErrorHandlers = [];
     
     /**
-     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array|scalar ...$elements
+     * @param ProducerReady|resource|callable|iterable|scalar ...$elements
      */
     public static function of(...$elements): Stream
     {
@@ -61,7 +61,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array $producer
+     * @param ProducerReady|resource|callable|iterable $producer
      */
     public static function from($producer): Stream
     {
@@ -129,20 +129,20 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed $condition
+     * @param Filter|callable|mixed $filter
      */
-    public function skipWhile($condition, int $mode = Check::VALUE): Stream
+    public function skipWhile($filter, int $mode = Check::VALUE): Stream
     {
-        $this->chainOperation(new SkipWhile($condition, $mode));
+        $this->chainOperation(new SkipWhile($filter, $mode));
         return $this;
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed $condition
+     * @param Filter|callable|mixed $filter
      */
-    public function skipUntil($condition, int $mode = Check::VALUE): Stream
+    public function skipUntil($filter, int $mode = Check::VALUE): Stream
     {
-        $this->chainOperation(new SkipWhile($condition, $mode, true));
+        $this->chainOperation(new SkipWhile($filter, $mode, true));
         return $this;
     }
     
@@ -252,7 +252,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
      * Assert that element in stream satisfies given requirements.
      * If not, it throws non-catchable exception.
      *
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      * @throws AssertionFailed
      */
     public function assert($filter, int $mode = Check::VALUE): Stream
@@ -271,7 +271,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param string|int $field
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public function filterBy($field, $filter): Stream
     {
@@ -279,7 +279,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public function filter($filter, int $mode = Check::VALUE): Stream
     {
@@ -288,8 +288,8 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Condition|Predicate|Filter|callable $condition
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param ConditionReady|callable $condition
+     * @param Filter|callable|mixed $filter
      */
     public function filterWhen($condition, $filter, int $mode = Check::VALUE): Stream
     {
@@ -299,14 +299,14 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param string|int $field
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public function omitBy($field, $filter): Stream
     {
         return $this->omit(Filters::filterBy($field, $filter));
     }
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public function omit($filter, int $mode = Check::VALUE): Stream
     {
@@ -315,8 +315,8 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Condition|Predicate|Filter|callable $condition
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param ConditionReady|callable $condition
+     * @param Filter|callable|mixed $filter
      */
     public function omitWhen($condition, $filter, int $mode = Check::VALUE): Stream
     {
@@ -328,7 +328,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
      * This operation skips all repeatable consecutive values in series, so each value is different than previous one.
      * Unlike Unique, values can repeat in whole stream, but not one after another.
      *
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function omitReps($comparison = null): Stream
     {
@@ -392,7 +392,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public function map($mapper): Stream
     {
@@ -401,9 +401,9 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Condition|Predicate|Filter|callable $condition
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $elseMapper
+     * @param ConditionReady|callable $condition
+     * @param MapperReady|callable|iterable|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
     public function mapWhen($condition, $mapper, $elseMapper = null): Stream
     {
@@ -413,7 +413,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public function mapField($field, $mapper): Stream
     {
@@ -422,9 +422,9 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param string|int $field
-     * @param Condition|Predicate|Filter|callable $condition
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $elseMapper
+     * @param ConditionReady|callable $condition
+     * @param MapperReady|callable|iterable|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
     public function mapFieldWhen($field, $condition, $mapper, $elseMapper = null): Stream
     {
@@ -436,7 +436,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
      * It works very similarly to mapKey - the difference is that it uses Discriminator as mapper
      * and guarantees that key is string, int or bool.
      *
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array $discriminator
      */
     public function classify($discriminator): Stream
     {
@@ -456,7 +456,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * Allows key mapping. If a string (but not callable) or an int is given, exactly that value is set as key.
      *
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public function mapKey($mapper): Stream
     {
@@ -521,7 +521,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Consumer|Reducer|callable|resource $consumers resource must be writeable
+     * @param ConsumerReady|callable|resource $consumers resource must be writeable
      */
     public function call(...$consumers): Stream
     {
@@ -530,7 +530,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Consumer|callable|resource $consumer
+     * @param ConsumerReady|callable|resource $consumer
      */
     public function callOnce($consumer): Stream
     {
@@ -538,7 +538,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Consumer|Reducer|callable|resource $consumer
+     * @param ConsumerReady|callable|resource $consumer
      */
     public function callMax(int $times, $consumer): Stream
     {
@@ -547,9 +547,9 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Condition|Predicate|Filter|callable $condition
-     * @param Consumer|Reducer|callable|resource $consumer
-     * @param Consumer|Reducer|callable|resource|null $elseConsumer
+     * @param ConditionReady|callable $condition
+     * @param ConsumerReady|callable|resource $consumer
+     * @param ConsumerReady|callable|resource|null $elseConsumer
      */
     public function callWhen($condition, $consumer, $elseConsumer = null): Stream
     {
@@ -578,7 +578,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Stream|Producer|ResultCaster|\Iterator|\PDOStatement|callable|resource|array ...$producers
+     * @param ProducerReady|resource|callable|iterable ...$producers
      */
     public function join(...$producers): Stream
     {
@@ -588,7 +588,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function unique($comparison = null): Stream
     {
@@ -607,7 +607,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * Normal (ascending) sorting.
      *
-     * @param Sorting|Comparable|callable|null $sorting
+     * @param Comparable|callable|null $sorting
      */
     public function sort($sorting = null): Stream
     {
@@ -618,7 +618,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * Reversed (descending) sorting.
      *
-     * @param Sorting|Comparable|callable|null $sorting
+     * @param Comparable|callable|null $sorting
      */
     public function rsort($sorting = null): Stream
     {
@@ -629,7 +629,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * Normal sorting with limited number of {$limit} first values passed further to stream.
      *
-     * @param Sorting|Comparable|callable|null $sorting
+     * @param Comparable|callable|null $sorting
      */
     public function best(int $limit, $sorting = null): Stream
     {
@@ -640,7 +640,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * Reversed sorting with limited number of {$limit} values passed further to stream.
      *
-     * @param Sorting|Comparable|callable|null $sorting
+     * @param Comparable|callable|null $sorting
      */
     public function worst(int $limit, $sorting = null): Stream
     {
@@ -728,7 +728,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array|string|int $discriminator
      */
     public function chunkBy($discriminator, bool $reindex = false): Stream
     {
@@ -737,7 +737,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public function accumulate($filter, bool $reindex = false, int $mode = Check::VALUE): Stream
     {
@@ -746,7 +746,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public function separateBy($filter, bool $reindex = false, int $mode = Check::VALUE): Stream
     {
@@ -762,7 +762,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public function append($field, $mapper): Stream
     {
@@ -771,7 +771,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public function complete($field, $mapper): Stream
     {
@@ -797,7 +797,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public function extractWhen($filter, int $mode = Check::VALUE): Stream
     {
@@ -817,7 +817,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public function removeWhen($filter, int $mode = Check::VALUE): Stream
     {
@@ -847,7 +847,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Mapper|Reducer|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public function flatMap($mapper, int $level = 0): Stream
     {
@@ -891,8 +891,8 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
-     * @param array<Stream|LastOperation|ResultApi|Collector|Consumer|Reducer> $handlers
+     * @param DiscriminatorReady|callable|array $discriminator
+     * @param HandlerReady[] $handlers
      */
     public function dispatch($discriminator, array $handlers): Stream
     {
@@ -909,22 +909,22 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * It works like conditional limit().
      *
-     * @param Filter|Predicate|callable|mixed $condition
+     * @param Filter|callable|mixed $filter
      */
-    public function while($condition, int $mode = Check::VALUE): Stream
+    public function while($filter, int $mode = Check::VALUE): Stream
     {
-        $this->chainOperation(new Until($condition, $mode, true));
+        $this->chainOperation(new Until($filter, $mode, true));
         return $this;
     }
     
     /**
      * It works like conditional limit().
      *
-     * @param Filter|Predicate|callable|mixed $condition
+     * @param Filter|callable|mixed $filter
      */
-    public function until($condition, int $mode = Check::VALUE): Stream
+    public function until($filter, int $mode = Check::VALUE): Stream
     {
-        $this->chainOperation(new Until($condition, $mode));
+        $this->chainOperation(new Until($filter, $mode));
         return $this;
     }
     
@@ -954,11 +954,11 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
      * With first element which does not meet condition, gathering values is aborted
      * and array of collected elements is passed to next step. No other items in the stream will be read.
      *
-     * @param Filter|Predicate|callable|mixed $condition
+     * @param Filter|callable|mixed $filter
      */
-    public function gatherWhile($condition, bool $reindex = false, int $mode = Check::VALUE): Stream
+    public function gatherWhile($filter, bool $reindex = false, int $mode = Check::VALUE): Stream
     {
-        return $this->while($condition, $mode)->gather($reindex);
+        return $this->while($filter, $mode)->gather($reindex);
     }
     
     /**
@@ -966,16 +966,16 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
      * in which case gathering of values is aborted and array of collected elements is passed to next step.
      * No other items in the stream will be read.
      *
-     * @param Filter|Predicate|callable|mixed $condition
+     * @param Filter|callable|mixed $filter
      */
-    public function gatherUntil($condition, bool $reindex = false, int $mode = Check::VALUE): Stream
+    public function gatherUntil($filter, bool $reindex = false, int $mode = Check::VALUE): Stream
     {
-        return $this->until($condition, $mode)->gather($reindex);
+        return $this->until($filter, $mode)->gather($reindex);
     }
     
     /**
      * @param int|null $buckets null means collect all elements
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function segregate(?int $buckets = null, bool $reindex = false, $comparison = null): Stream
     {
@@ -984,7 +984,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array|string|int $discriminator
      */
     public function categorize($discriminator, ?bool $reindex = null): Stream
     {
@@ -1025,7 +1025,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
      * Creates a numeric array where the first item comes from this stream, and the next items come from all passed
      * providers of subsequent values. In the event that any supplier runs out, null is inserted in its place.
      *
-     * @param array<Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array|scalar> $sources
+     * @param array<ProducerReady|resource|callable|iterable|scalar> $sources
      */
     public function zip(...$sources): Stream
     {
@@ -1034,7 +1034,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Stream|LastOperation|ResultApi|Collector|Consumer|Reducer $consumers
+     * @param HandlerReady ...$consumers
      */
     public function unzip(...$consumers): Stream
     {
@@ -1043,7 +1043,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array $discriminator
      */
     public function fork($discriminator, LastOperation $prototype): Stream
     {
@@ -1073,7 +1073,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function accumulateUptrends(bool $reindex = false, $comparison = null): Stream
     {
@@ -1082,7 +1082,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function accumulateDowntrends(bool $reindex = false, $comparison = null): Stream
     {
@@ -1092,7 +1092,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function onlyMaxima(bool $allowLimits = true, $comparison = null): Stream
     {
@@ -1102,7 +1102,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function onlyMinima(bool $allowLimits = true, $comparison = null): Stream
     {
@@ -1112,7 +1112,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     /**
      * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function onlyExtrema(bool $allowLimits = true, $comparison = null): Stream
     {
@@ -1121,7 +1121,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function increasingTrend($comparison = null): Stream
     {
@@ -1130,7 +1130,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function decreasingTrend($comparison = null): Stream
     {
@@ -1251,21 +1251,19 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * It collects data as long as the condition is true and then terminates processing when it is not.
      *
-     * @param Filter|Predicate|callable|mixed $condition
+     * @param Filter|callable|mixed $filter
      */
-    public function collectWhile($condition, int $mode = Check::VALUE): LastOperation
+    public function collectWhile($filter, int $mode = Check::VALUE): LastOperation
     {
-        return $this->while($condition, $mode)->collect();
+        return $this->while($filter, $mode)->collect();
     }
     
     /**
-     * It collects data as long as the condition is false and then terminates processing.
-     *
-     * @param Filter|Predicate|callable|mixed $condition
+     * @param Filter|callable|mixed $filter
      */
-    public function collectUntil($condition, int $mode = Check::VALUE): LastOperation
+    public function collectUntil($filter, int $mode = Check::VALUE): LastOperation
     {
-        return $this->until($condition, $mode)->collect();
+        return $this->until($filter, $mode)->collect();
     }
     
     /**
@@ -1313,7 +1311,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * Tell if element occurs in stream.
      *
-     * @param Predicate|Filter|callable|mixed $value
+     * @param Filter|callable|mixed $value
      */
     public function has($value, int $mode = Check::VALUE): LastOperation
     {
@@ -1322,7 +1320,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     
     public function hasAny(array $values, int $mode = Check::VALUE): LastOperation
     {
-        return $this->has(Predicates::inArray($values), $mode);
+        return $this->has(Filters::onlyIn($values), $mode);
     }
     
     public function hasEvery(array $values, int $mode = Check::VALUE): LastOperation
@@ -1338,7 +1336,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * Return first element in stream which satisfies given predicate or null when element was not found.
      *
-     * @param Predicate|Filter|callable|mixed $predicate
+     * @param Filter|callable|mixed $predicate
      */
     public function find($predicate, int $mode = Check::VALUE): LastOperation
     {
@@ -1346,7 +1344,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Predicate|Filter|callable|mixed $predicate
+     * @param Filter|callable|mixed $predicate
      */
     public function findMax(int $limit, $predicate, int $mode = Check::VALUE): LastOperation
     {
@@ -1400,7 +1398,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     /**
      * It collects repeatable values in collections by given discriminator.
      *
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array|string|int $discriminator
      */
     public function groupBy($discriminator, ?bool $reindex = null): BaseStreamCollection
     {
@@ -1411,7 +1409,7 @@ final class Stream extends Collaborator implements SignalHandler, Executable, De
     }
     
     /**
-     * @param Consumer|Reducer|callable|resource $consumer
+     * @param ConsumerReady|callable|resource $consumer
      */
     public function forEach(...$consumer): void
     {

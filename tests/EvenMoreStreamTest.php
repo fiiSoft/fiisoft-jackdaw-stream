@@ -5,8 +5,12 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Comparator\Sorting\By;
+use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Producer\Producers;
+use FiiSoft\Jackdaw\Reducer\Reducers;
+use FiiSoft\Jackdaw\Registry\Registry;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
 
@@ -268,8 +272,8 @@ final class EvenMoreStreamTest extends TestCase
     {
         return [
             //data, expected
-//            [[], []],
-//            [[1], [1]],
+            [[], []],
+            [[1], [1]],
             [[1, 2, 1, 2], [1, 2]],
             [[2, 1, 2, 1], [2, 1]],
             [[3, 3, 3], [3]],
@@ -332,5 +336,139 @@ final class EvenMoreStreamTest extends TestCase
             ['b', true],
             [2, true],
         ], $result);
+    }
+    
+    public function test_collatz_with_variable_as_source_of_stream(): void
+    {
+        $collector = Reducers::concat(', ');
+        
+        $current = 304;
+        Stream::from(Producers::readFrom($current))
+            ->callOnce($collector)
+            ->mapWhen(
+                static fn(int $n): bool => ($n & 1) === 0,
+                static fn(int $n): int => $n >> 1,
+                static fn(int $n): int => (3 * $n + 1)
+            )
+            ->call($collector)
+            ->until(1)
+            ->putIn($current)
+            ->run();
+        
+        $expected = '304, 152, 76, 38, 19, 58, 29, 88, 44, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1';
+        
+        self::assertSame($expected, $collector->result());
+    }
+    
+    public function test_collatz_with_Registry_as_source_of_stream(): void
+    {
+        $collector = Reducers::concat(', ');
+        
+        $entry = Registry::new()->entry(Check::VALUE, 304);
+        Stream::from($entry)
+            ->callOnce($collector)
+            ->mapWhen(
+                static fn(int $n): bool => ($n & 1) === 0,
+                static fn(int $n): int => $n >> 1,
+                static fn(int $n): int => (3 * $n + 1)
+            )
+            ->call($collector)
+            ->until(1)
+            ->remember($entry)
+            ->run();
+        
+        $expected = '304, 152, 76, 38, 19, 58, 29, 88, 44, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1';
+        
+        self::assertSame($expected, $collector->result());
+    }
+    
+    public function test_fizzbuzz_with_variable_as_source_of_stream(): void
+    {
+        $counter = 1;
+        
+        $result = Stream::from(Producers::readFrom($counter))
+            ->while(Filters::lessOrEqual(30))
+            ->mapKey(static fn(int $n): int => ($n % 3 === 0 ? 2 : 0) | ($n % 5 === 0 ? 1 : 0))
+            ->map(static fn(int $n, int $k): string => (string) [$n, 'Buzz', 'Fizz', 'Fizz Buzz'][$k])
+            ->countIn($counter)
+            ->reduce(Reducers::concat(', '));
+        
+        $expected = '1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, Fizz Buzz, 16, 17, Fizz, 19, '
+            .'Buzz, Fizz, 22, 23, Fizz, Buzz, 26, Fizz, 28, 29, Fizz Buzz';
+        
+        self::assertSame($expected, $result->get());
+    }
+    
+    public function test_fizzbuzz_with_Registry_as_source_of_stream(): void
+    {
+        $counter = Registry::new()->entry(Check::VALUE, 1);
+        
+        $result = Stream::from($counter)
+            ->while(Filters::lessOrEqual(30))
+            ->call(static function (int $val) use ($counter) {
+                $counter->set($val + 1);
+            })
+            ->mapKey(static fn(int $n): int => ($n % 3 === 0 ? 2 : 0) | ($n % 5 === 0 ? 1 : 0))
+            ->map(static fn(int $n, int $k): string => (string) [$n, 'Buzz', 'Fizz', 'Fizz Buzz'][$k])
+            ->reduce(Reducers::concat(', '));
+        
+        $expected = '1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, Fizz Buzz, 16, 17, Fizz, 19, '
+            .'Buzz, Fizz, 22, 23, Fizz, Buzz, 26, Fizz, 28, 29, Fizz Buzz';
+        
+        self::assertSame($expected, $result->get());
+    }
+    
+    public function test_use_Registry_as_Consumer(): void
+    {
+        $lastNumber = Registry::shared()->entry(Check::BOTH);
+        $lastLetter = Registry::shared()->entry(Check::BOTH);
+        
+        Stream::from(['a', 7, 3, 'b', false, 'c', 5, 'd'])
+            ->while(Filters::OR('is_int', 'is_string'))
+            ->callWhen('is_int', $lastNumber)
+            ->callWhen('is_string', $lastLetter)
+            ->run();
+        
+        self::assertSame([2, 3], $lastNumber->get());
+        self::assertSame([3, 'b'], $lastLetter->get());
+    }
+    
+    public function test_use_Registry_as_Discriminator(): void
+    {
+        //given
+        $discriminator = Registry::new()->entry(Check::VALUE);
+        
+        //when
+        $result = Stream::from([9, 6, 8, 7, 6, 4, 7, 5, 2, 5])
+            ->callOnce(static function (int $firstValue) use ($discriminator) {
+                $discriminator->set($firstValue > 5 ? 'foo' : 'bar');
+            })
+            ->callWhen(
+                Filters::AND(Filters::lessOrEqual(5), static fn(): bool => $discriminator->get() !== 'bar'),
+                static function () use ($discriminator) {
+                    $discriminator->set('bar');
+                }
+            )
+            ->fork($discriminator, Stream::empty()->reduce(Reducers::sum()))
+            ->toArrayAssoc();
+        
+        //then
+        self::assertSame([
+            'foo' => 9 + 6 + 8 + 7 + 6,
+            'bar' => 4 + 7 + 5 + 2 + 5,
+        ], $result);
+    }
+    
+    public function test_generate_decreasing_trend_with_help_of_Registry(): void
+    {
+        $threshold = Registry::new()->entry(Check::VALUE);
+        
+        $result = Stream::from([6, 5, 8, 5, 2, 3, 5, 2, 7, 1, 3, 5, 1, 2, 2, 5, 3, 5])
+            ->callOnce($threshold)
+            ->filter(static fn(int $v): bool => $v <= $threshold->get())
+            ->remember($threshold)
+            ->toArray();
+        
+        self::assertSame([6, 5, 5, 2, 2, 1, 1], $result);
     }
 }

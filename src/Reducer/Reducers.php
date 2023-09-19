@@ -2,18 +2,14 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Condition\Condition;
-use FiiSoft\Jackdaw\Discriminator\Discriminator;
-use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Mapper\Mapper;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Reducer\Internal\MultiReducer;
 
 final class Reducers
 {
     /**
-     * @param Reducer|callable|array $reducer
+     * @param Reducer|callable|array $reducer callable must accepts two arguments: accumulator and current value
      */
     public static function getAdapter($reducer): Reducer
     {
@@ -44,7 +40,7 @@ final class Reducers
                 }
             }
             
-            return self::generic($reducer);
+            return new GenericReducer($reducer);
         }
         
         if (\is_array($reducer)) {
@@ -52,14 +48,6 @@ final class Reducers
         }
     
         throw new \InvalidArgumentException('Invalid param reducer');
-    }
-    
-    /**
-     * @param callable $reducer This accepts two arguments: accumulator and current value
-     */
-    public static function generic(callable $reducer): Reducer
-    {
-        return new GenericReducer($reducer);
     }
     
     public static function sum(): Reducer
@@ -108,7 +96,7 @@ final class Reducers
     }
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array|null $discriminator
+     * @param DiscriminatorReady|callable|array|null $discriminator
      */
     public static function countUnique($discriminator = null, int $mode = Check::VALUE): Reducer
     {

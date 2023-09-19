@@ -2,7 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
-interface ResultCaster
+use FiiSoft\Jackdaw\Mapper\MapperReady;
+use FiiSoft\Jackdaw\Producer\ProducerReady;
+
+interface ResultCaster extends ProducerReady, MapperReady
 {
     public function toString(string $separator = ','): string;
     

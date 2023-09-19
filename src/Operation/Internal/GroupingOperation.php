@@ -2,16 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
-use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Discriminator\ByKey;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
+use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
-use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Mapper\Mapper;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Producer\Producer;
 
 abstract class GroupingOperation extends BaseOperation implements DataCollector
@@ -22,7 +19,7 @@ abstract class GroupingOperation extends BaseOperation implements DataCollector
     private Discriminator $discriminator;
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array|string|int $discriminator
      */
     public function __construct($discriminator, ?bool $reindex = null)
     {

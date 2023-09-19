@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\Mapper\Mapper;
 
 abstract class BaseMapper implements Mapper
 {
-    protected bool $itIsValueMapper = true;
+    protected bool $isValueMapper = true;
     
     /**
      * @inheritDoc
@@ -24,7 +24,7 @@ abstract class BaseMapper implements Mapper
     public function makeKeyMapper(): Mapper
     {
         $copy = clone $this;
-        $copy->itIsValueMapper = false;
+        $copy->isValueMapper = false;
         
         return $copy;
     }

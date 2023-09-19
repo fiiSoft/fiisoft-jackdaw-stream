@@ -3,13 +3,15 @@
 namespace FiiSoft\Jackdaw\Consumer;
 
 use FiiSoft\Jackdaw\Consumer\Adapter\ReducerAdapter;
+use FiiSoft\Jackdaw\Consumer\Adapter\RegWriterAdapter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Reducer\Reducer;
+use FiiSoft\Jackdaw\Registry\RegWriter;
 
 final class Consumers
 {
     /**
-     * @param Consumer|Reducer|callable|resource $consumer
+     * @param ConsumerReady|callable|resource $consumer
      */
     public static function getAdapter($consumer): Consumer
     {
@@ -18,7 +20,7 @@ final class Consumers
         }
     
         if (\is_callable($consumer)) {
-            return self::generic($consumer);
+            return new GenericConsumer($consumer);
         }
     
         if (\is_resource($consumer)) {
@@ -28,13 +30,12 @@ final class Consumers
         if ($consumer instanceof Reducer) {
             return new ReducerAdapter($consumer);
         }
+        
+        if ($consumer instanceof RegWriter) {
+            return new RegWriterAdapter($consumer);
+        }
     
         throw new \InvalidArgumentException('Invalid param consumer');
-    }
-    
-    public static function generic(callable $consumer): Consumer
-    {
-        return new GenericConsumer($consumer);
     }
     
     public static function counter(): Counter

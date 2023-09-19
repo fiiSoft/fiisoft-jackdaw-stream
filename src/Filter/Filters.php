@@ -2,7 +2,6 @@
 
 namespace FiiSoft\Jackdaw\Filter;
 
-use FiiSoft\Jackdaw\Filter\Adapter\PredicateAdapter;
 use FiiSoft\Jackdaw\Filter\Internal\LengthFactory;
 use FiiSoft\Jackdaw\Filter\Internal\NumberFactory;
 use FiiSoft\Jackdaw\Filter\Internal\StringFactory;
@@ -11,12 +10,11 @@ use FiiSoft\Jackdaw\Filter\Logic\FilterNOT;
 use FiiSoft\Jackdaw\Filter\Logic\FilterOR;
 use FiiSoft\Jackdaw\Filter\Logic\FilterXOR;
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class Filters
 {
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public static function getAdapter($filter): Filter
     {
@@ -50,23 +48,14 @@ final class Filters
                 }
             }
             
-            return self::generic($filter);
+            return new GenericFilter($filter);
         }
     
         if (\is_object($filter)) {
-            if ($filter instanceof Predicate) {
-                return new PredicateAdapter($filter);
-            }
-            
             throw Helper::invalidParamException('filter', $filter);
         }
         
         return self::same($filter);
-    }
-    
-    public static function generic(callable $filter): Filter
-    {
-        return new GenericFilter($filter);
     }
     
     public static function length(): LengthFactory
@@ -97,6 +86,16 @@ final class Filters
     public static function onlyIn(array $values): Filter
     {
         return new OnlyIn($values);
+    }
+    
+    /**
+     * Alias for same() for convenient use.
+     *
+     * @param mixed $value
+     */
+    public static function equals($value): Filter
+    {
+        return self::same($value);
     }
     
     /**
@@ -166,7 +165,7 @@ final class Filters
     
     /**
      * @param string|int $field
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public static function filterBy($field, $filter): Filter
     {
@@ -202,7 +201,7 @@ final class Filters
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed ...$filters
+     * @param Filter|callable|mixed ...$filters
      */
     public static function AND(...$filters): Filter
     {
@@ -210,7 +209,7 @@ final class Filters
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed ...$filters
+     * @param Filter|callable|mixed ...$filters
      */
     public static function OR(...$filters): Filter
     {
@@ -218,8 +217,8 @@ final class Filters
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed $first
-     * @param Filter|Predicate|callable|mixed $second
+     * @param Filter|callable|mixed $first
+     * @param Filter|callable|mixed $second
      */
     public static function XOR($first, $second): Filter
     {
@@ -227,7 +226,7 @@ final class Filters
     }
     
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public static function NOT($filter): Filter
     {
@@ -239,6 +238,6 @@ final class Filters
      */
     public static function hasField($field): Filter
     {
-        return self::generic(static fn($row): bool => \is_array($row) && isset($row[$field]));
+        return self::getAdapter(static fn($row): bool => \is_array($row) && isset($row[$field]));
     }
 }

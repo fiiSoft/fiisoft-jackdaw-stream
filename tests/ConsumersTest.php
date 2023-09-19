@@ -4,6 +4,7 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Registry\Registry;
 use PHPUnit\Framework\TestCase;
 
 final class ConsumersTest extends TestCase
@@ -19,7 +20,7 @@ final class ConsumersTest extends TestCase
     {
         $collector = [];
         
-        Consumers::generic(static function ($v) use (&$collector): void {
+        Consumers::getAdapter(static function ($v) use (&$collector): void {
             $collector[] = $v;
         })->consume(15, 2);
         
@@ -30,7 +31,7 @@ final class ConsumersTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        Consumers::generic(static fn($a,$b,$c): bool => true)->consume(2, 1);
+        Consumers::getAdapter(static fn($a,$b,$c): bool => true)->consume(2, 1);
     }
     
     /**
@@ -156,5 +157,18 @@ final class ConsumersTest extends TestCase
         $output = \ob_get_clean();
         
         self::assertSame('1:foo', $output);
+    }
+    
+    public function test_Registry_can_be_used_as_Consumer(): void
+    {
+        //given
+        $reg = Registry::new();
+        $consumer = Consumers::getAdapter($reg->value('foo'));
+        
+        //when
+        $consumer->consume(123, 'zoo');
+        
+        //then
+        self::assertSame(123, $reg->read('foo')->read());
     }
 }

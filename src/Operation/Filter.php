@@ -9,7 +9,6 @@ use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\FilterSingle;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class Filter extends BaseOperation implements FilterSingle
 {
@@ -19,7 +18,7 @@ final class Filter extends BaseOperation implements FilterSingle
     private int $mode;
     
     /**
-     * @param FilterStrategy|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      * @param bool $negation
      * @param int $mode
      */

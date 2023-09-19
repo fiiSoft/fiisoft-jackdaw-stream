@@ -2,15 +2,12 @@
 
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
-use FiiSoft\Jackdaw\Collector\Collector;
-use FiiSoft\Jackdaw\Consumer\Consumer;
-use FiiSoft\Jackdaw\Internal\ResultApi;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\Handler;
+use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\HandlerReady;
 use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\Handlers;
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 
 abstract class StreamPipeOperation extends StreamPipe implements Operation
@@ -24,7 +21,7 @@ abstract class StreamPipeOperation extends StreamPipe implements Operation
     protected array $streams = [];
     
     /**
-     * @param array<Stream|LastOperation|ResultApi|Collector|Consumer|Reducer> $handlers
+     * @param HandlerReady[] $handlers
      */
     public function __construct(array $handlers)
     {

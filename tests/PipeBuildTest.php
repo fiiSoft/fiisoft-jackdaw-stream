@@ -6,7 +6,6 @@ use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
-use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Reverse;
 use FiiSoft\Jackdaw\Operation\Shuffle;
@@ -1160,6 +1159,16 @@ final class PipeBuildTest extends TestCase
         $result = Stream::from($data)->unpackTuple()->makeTuple()->toArrayAssoc();
         
         self::assertSame($data, $result);
+    }
+    
+    public function test_while_with_negation(): void
+    {
+        self::assertSame(['a', 'b'], Stream::from(['a', 'b', 1, 'c'])->while(Filters::NOT('is_int'))->toArray());
+    }
+    
+    public function test_until_with_negation(): void
+    {
+        self::assertSame(['a', 'b'], Stream::from(['a', 'b', 1, 'c'])->until(Filters::NOT('is_string'))->toArray());
     }
     
     private static function buildReindexReindexableTestData(array $normal, array $reindexed, array $custom): array

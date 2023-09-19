@@ -17,7 +17,7 @@ final class Remember extends BaseOperation
     
     public function handle(Signal $signal): void
     {
-        $this->registry->remember($signal->item);
+        $this->registry->write($signal->item->value, $signal->item->key);
         
         $this->next->handle($signal);
     }

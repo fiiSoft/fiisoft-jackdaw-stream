@@ -7,11 +7,13 @@ use FiiSoft\Jackdaw\Producer\Adapter\ArrayAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayIteratorAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\CallableAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\IteratorAdapter;
+use FiiSoft\Jackdaw\Producer\Adapter\ReferenceAdapter;
+use FiiSoft\Jackdaw\Producer\Adapter\RegistryAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ResultCasterAdapter;
 use FiiSoft\Jackdaw\Producer\Generator\CollatzGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
-use FiiSoft\Jackdaw\Producer\Generator\Flattener;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedGeneral;
+use FiiSoft\Jackdaw\Producer\Generator\Flattener;
 use FiiSoft\Jackdaw\Producer\Generator\RandomInt;
 use FiiSoft\Jackdaw\Producer\Generator\RandomString;
 use FiiSoft\Jackdaw\Producer\Generator\RandomUuid;
@@ -20,12 +22,12 @@ use FiiSoft\Jackdaw\Producer\Generator\Tokenizer;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidGenerator;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
 use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
-use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\Registry\RegReader;
 
 final class Producers
 {
     /**
-     * @param array<Stream|Producer|ResultCaster|UuidGenerator|\Traversable|\PDOStatement|callable|resource|array|scalar> $elements
+     * @param array<ProducerReady|resource|callable|iterable|scalar> $elements
      */
     public static function from(array $elements): Producer
     {
@@ -37,7 +39,7 @@ final class Producers
     }
     
     /**
-     * @param array<Stream|Producer|ResultCaster|UuidGenerator|\Traversable|\PDOStatement|callable|resource|array|scalar> $elements
+     * @param array<ProducerReady|resource|callable|iterable|scalar> $elements
      * @return Producer[]
      */
     public static function prepare(array $elements): array
@@ -48,12 +50,7 @@ final class Producers
         
         foreach ($elements as $item) {
             if (\is_object($item)) {
-                if ($item instanceof \Traversable
-                    || $item instanceof ResultCaster
-                    || $item instanceof Producer
-                    || $item instanceof UuidGenerator
-                    || \is_callable($item)
-                ) {
+                if ($item instanceof ProducerReady || $item instanceof \Traversable || \is_callable($item)) {
                     $mode = 1;
                 } elseif ($mode === 1) {
                     $mode = 2;
@@ -78,12 +75,12 @@ final class Producers
     }
     
     /**
-     * @param Stream|Producer|ResultCaster|UuidGenerator|\Traversable|\PDOStatement|callable|resource|array $producer
+     * @param ProducerReady|resource|callable|iterable $producer
      */
     public static function getAdapter($producer): Producer
     {
         if (\is_array($producer)) {
-            return self::fromArray($producer);
+            return new ArrayAdapter($producer);
         }
         
         if ($producer instanceof Producer) {
@@ -91,7 +88,7 @@ final class Producers
         }
         
         if ($producer instanceof ResultCaster) {
-            return self::fromResult($producer);
+            return new ResultCasterAdapter($producer);
         }
         
         if ($producer instanceof \PDOStatement) {
@@ -99,15 +96,19 @@ final class Producers
         }
         
         if ($producer instanceof \ArrayIterator) {
-            return self::fromArrayIterator($producer);
+            return new ArrayIteratorAdapter($producer);
         }
         
         if ($producer instanceof \Traversable) {
-            return self::fromIterator($producer);
+            return new IteratorAdapter($producer);
         }
         
         if ($producer instanceof UuidGenerator) {
             return self::uuidFrom($producer);
+        }
+        
+        if ($producer instanceof RegReader) {
+            return new RegistryAdapter($producer);
         }
         
         if (\is_resource($producer)) {
@@ -115,14 +116,14 @@ final class Producers
         }
         
         if (\is_callable($producer)) {
-            return self::fromCallable($producer);
+            return new CallableAdapter($producer);
         }
         
         throw new \InvalidArgumentException('Invalid param producer');
     }
     
     /**
-     * @param Stream|Producer|ResultCaster|UuidGenerator|\Traversable|\PDOStatement|resource|array $producers
+     * @param ProducerReady|resource|callable|iterable ...$producers
      */
     public static function multiSourced(...$producers): Producer
     {
@@ -131,42 +132,14 @@ final class Producers
         );
     }
     
-    public static function fromArray(array $array): Producer
-    {
-        return new ArrayAdapter($array);
-    }
-    
-    public static function fromIterator(\Traversable $iterator): Producer
-    {
-        return new IteratorAdapter($iterator);
-    }
-    
-    public static function fromArrayIterator(\ArrayIterator $iterator): Producer
-    {
-        return new ArrayIteratorAdapter($iterator);
-    }
-    
-    public static function fromResult(ResultCaster $result): Producer
-    {
-        return new ResultCasterAdapter($result);
-    }
-    
     public static function fromPDOStatement(\PDOStatement $statement, ?int $fetchMode = null): Producer
     {
         return new PDOStatementAdapter($statement, $fetchMode);
     }
     
     /**
-     * @param callable $factory it MUST produce anything iterable with valid keys and values
-     */
-    public static function fromCallable(callable $factory): Producer
-    {
-        return new CallableAdapter($factory);
-    }
-    
-    /**
-     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array $keys
-     * @param Stream|Producer|ResultCaster|\Traversable|\PDOStatement|callable|resource|array $values
+     * @param ProducerReady|resource|callable|iterable $keys
+     * @param ProducerReady|resource|callable|iterable $values
      */
     public static function combinedFrom($keys, $values): Producer
     {
@@ -233,5 +206,13 @@ final class Producers
     public static function queue(array $elements = []): QueueProducer
     {
         return new QueueProducer($elements);
+    }
+    
+    /**
+     * @param mixed $variable REFERENCE
+     */
+    public static function readFrom(&$variable): Producer
+    {
+        return new ReferenceAdapter($variable);
     }
 }

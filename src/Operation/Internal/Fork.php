@@ -2,15 +2,12 @@
 
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
-use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
+use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
-use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\ForkCollaborator;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Mapper\Mapper;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Stream;
 
@@ -23,7 +20,7 @@ final class Fork extends StreamCollaborator
     private array $streams = [];
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array $discriminator
      */
     public function __construct($discriminator, ForkCollaborator $prototype)
     {
@@ -64,7 +61,7 @@ final class Fork extends StreamCollaborator
             return $this->next->acceptSimpleData($data, $signal, false);
         }
         
-        $signal->restartWith(Producers::fromArray($data), $this->next);
+        $signal->restartWith(Producers::getAdapter($data), $this->next);
         
         return true;
     }

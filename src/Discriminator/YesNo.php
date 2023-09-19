@@ -2,11 +2,6 @@
 
 namespace FiiSoft\Jackdaw\Discriminator;
 
-use FiiSoft\Jackdaw\Condition\Condition;
-use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Mapper\Mapper;
-use FiiSoft\Jackdaw\Predicate\Predicate;
-
 /**
  * This discriminator can only work with other discriminator which returns boolean values.
  */
@@ -21,7 +16,7 @@ final class YesNo implements Discriminator
     private $no;
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|string|int $discriminator
+     * @param DiscriminatorReady|callable|array|string|int $discriminator
      * @param string|int $yes
      * @param string|int $no value of it must be different than value of $yes
      */

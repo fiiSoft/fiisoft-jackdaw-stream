@@ -8,7 +8,6 @@ use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class Accumulate extends BaseOperation implements Reindexable
 {
@@ -22,7 +21,7 @@ final class Accumulate extends BaseOperation implements Reindexable
     private array $data = [];
     
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public function __construct($filter, int $mode = Check::VALUE, bool $reindex = false, bool $reverse = false)
     {

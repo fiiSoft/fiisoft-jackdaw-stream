@@ -8,7 +8,6 @@ use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\AssertionFailed;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class Assert extends BaseOperation
 {
@@ -17,7 +16,7 @@ final class Assert extends BaseOperation
     private int $mode;
     
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      * @param int $mode
      */
     public function __construct($filter, int $mode = Check::VALUE)

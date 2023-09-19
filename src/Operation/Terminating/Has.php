@@ -3,29 +3,27 @@
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\SimpleFinalOperation;
-use FiiSoft\Jackdaw\Predicate\Predicate;
-use FiiSoft\Jackdaw\Predicate\Predicates;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Stream;
 
 final class Has extends SimpleFinalOperation
 {
-    private Predicate $predicate;
+    private Filter $filter;
+    
     private bool $has = false;
     private int $mode;
     
     /**
-     * @param Stream $stream
-     * @param Predicate|Filter|callable|mixed $predicate
-     * @param int $mode
+     * @param Filter|callable|mixed $predicate
      */
     public function __construct(Stream $stream, $predicate, int $mode = Check::VALUE)
     {
-        $this->predicate = Predicates::getAdapter($predicate);
+        $this->filter = Filters::getAdapter($predicate);
         $this->mode = Check::getMode($mode);
         
         parent::__construct($stream);
@@ -33,7 +31,7 @@ final class Has extends SimpleFinalOperation
     
     public function handle(Signal $signal): void
     {
-        if ($this->predicate->isSatisfiedBy($signal->item->value, $signal->item->key, $this->mode)) {
+        if ($this->filter->isAllowed($signal->item->value, $signal->item->key, $this->mode)) {
             $this->has = true;
             $signal->stop();
         }
@@ -54,7 +52,7 @@ final class Has extends SimpleFinalOperation
         $item = $signal->item;
         
         foreach ($producer->feed($item) as $_) {
-            if ($this->predicate->isSatisfiedBy($item->value, $item->key, $this->mode)) {
+            if ($this->filter->isAllowed($item->value, $item->key, $this->mode)) {
                 $this->has = true;
                 $signal->stop();
                 break;
@@ -69,7 +67,7 @@ final class Has extends SimpleFinalOperation
         $item = $signal->item;
         
         foreach ($data as $item->key => $item->value) {
-            if ($this->predicate->isSatisfiedBy($item->value, $item->key, $this->mode)) {
+            if ($this->filter->isAllowed($item->value, $item->key, $this->mode)) {
                 $this->has = true;
                 $signal->stop();
                 break;
@@ -85,7 +83,7 @@ final class Has extends SimpleFinalOperation
     public function acceptCollectedItems(array $items, Signal $signal, bool $reindexed): bool
     {
         foreach ($items as $item) {
-            if ($this->predicate->isSatisfiedBy($item->value, $item->key, $this->mode)) {
+            if ($this->filter->isAllowed($item->value, $item->key, $this->mode)) {
                 $this->has = true;
                 $signal->stop();
                 break;
@@ -99,5 +97,4 @@ final class Has extends SimpleFinalOperation
         
         return $this->streamingFinished($signal);
     }
-    
 }

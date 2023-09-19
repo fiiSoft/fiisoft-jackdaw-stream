@@ -19,7 +19,7 @@ final class Unique extends BaseOperation
     private Comparison $comparison;
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function __construct($comparison = null)
     {

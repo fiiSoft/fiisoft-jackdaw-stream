@@ -26,7 +26,7 @@ abstract class Comparison implements ComparisonSpec
     }
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public static function prepare($comparison): self
     {

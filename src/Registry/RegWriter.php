@@ -2,9 +2,18 @@
 
 namespace FiiSoft\Jackdaw\Registry;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 
-interface RegWriter
+interface RegWriter extends ConsumerReady
 {
-    public function remember(Item $item): void;
+    /**
+     * @param mixed $value
+     * @param mixed $key
+     */
+    public function write($value, $key): void;
+    
+    /**
+     * @param mixed $value
+     */
+    public function set($value): void;
 }

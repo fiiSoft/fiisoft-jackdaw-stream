@@ -9,7 +9,6 @@ use FiiSoft\Jackdaw\Filter\Logic\FilterOR;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Mapper\Mapper;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class ConditionalExtract extends BaseMapper
 {
@@ -18,7 +17,7 @@ final class ConditionalExtract extends BaseMapper
     private bool $negate;
     
     /**
-     * @param Filter|Predicate|callable|mixed $filter
+     * @param Filter|callable|mixed $filter
      */
     public function __construct($filter, int $mode = Check::VALUE, bool $negate = false)
     {

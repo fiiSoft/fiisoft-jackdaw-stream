@@ -2,13 +2,25 @@
 
 namespace FiiSoft\Jackdaw\Registry;
 
+use FiiSoft\Jackdaw\Registry\Reader\DefaultReader;
 use FiiSoft\Jackdaw\Registry\Writer\FullWriter;
 use FiiSoft\Jackdaw\Registry\Writer\KeyWriter;
 use FiiSoft\Jackdaw\Registry\Writer\ValueWriter;
 
 final class Registry
 {
+    private static ?self $shared = null;
+    
     private Storage $storage;
+    
+    public static function shared(): self
+    {
+        if (self::$shared === null) {
+            self::$shared = new self();
+        }
+        
+        return self::$shared;
+    }
     
     public static function new(): self
     {
@@ -40,7 +52,7 @@ final class Registry
      */
     public function read(string $name, $orElse = null): RegReader
     {
-        return new RegReader($this->storage, $name, $orElse);
+        return new DefaultReader($this->storage, $name, $orElse);
     }
     
     /**
@@ -65,5 +77,13 @@ final class Registry
         $this->storage->registered[$name] = $value;
         
         return $this;
+    }
+    
+    /**
+     * @param mixed $initialValue
+     */
+    public function entry(int $mode, $initialValue = null): RegEntry
+    {
+        return new RegEntry($this->storage, $mode, $initialValue);
     }
 }

@@ -18,6 +18,9 @@ final class GenericFilter implements Filter
         $this->numOfArgs = Helper::getNumOfArgs($filter);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function isAllowed($value, $key, int $mode = Check::VALUE): bool
     {
         $isAllowed = $this->filter;

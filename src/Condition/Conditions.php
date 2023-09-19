@@ -3,15 +3,13 @@
 namespace FiiSoft\Jackdaw\Condition;
 
 use FiiSoft\Jackdaw\Condition\Adapter\FilterAdapter;
-use FiiSoft\Jackdaw\Condition\Adapter\PredicateAdapter;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class Conditions
 {
     /**
-     * @param Condition|Predicate|Filter|callable $condition
+     * @param ConditionReady|callable $condition
      */
     public static function getAdapter($condition, int $mode = Check::VALUE): Condition
     {
@@ -20,33 +18,14 @@ final class Conditions
         }
     
         if (\is_callable($condition)) {
-            return self::generic($condition);
+            return new GenericCondition($condition);
         }
     
         if ($condition instanceof Filter) {
-            return self::filter($condition, $mode);
+            return new FilterAdapter($condition, $mode);
         }
     
-        if ($condition instanceof Predicate) {
-            return self::predicate($condition, $mode);
-        }
-        
         throw new \InvalidArgumentException('Invalid param condition');
-    }
-    
-    public static function generic(callable $condition): Condition
-    {
-        return new GenericCondition($condition);
-    }
-    
-    public static function filter(Filter $filter, int $mode = Check::VALUE): Condition
-    {
-        return new FilterAdapter($filter, $mode);
-    }
-    
-    public static function predicate(Predicate $predicate, int $mode = Check::VALUE): Condition
-    {
-        return new PredicateAdapter($predicate, $mode);
     }
     
     /**
@@ -54,6 +33,6 @@ final class Conditions
      */
     public static function keyEquals($condition): Condition
     {
-        return self::generic(static fn($_, $key): bool => $key === $condition);
+        return self::getAdapter(static fn($_, $key): bool => $key === $condition);
     }
 }

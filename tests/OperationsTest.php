@@ -1395,14 +1395,6 @@ final class OperationsTest extends TestCase
         Handlers::getAdapter(ResultItem::createNotFound());
     }
     
-    public function test_Dispatcher_handlers_factory_throws_exception_when_handler_is_unsupported(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param handler - it cannot be string');
-        
-        Handlers::getAdapter('wrong');
-    }
-    
     public function test_Classify_throws_exception_when_Discriminator_returns_invalid_value(): void
     {
         //Assert

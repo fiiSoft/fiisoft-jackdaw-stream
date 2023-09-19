@@ -3,10 +3,10 @@
 namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Consumer\Consumer;
+use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class SendToMax extends BaseOperation
 {
@@ -17,7 +17,7 @@ final class SendToMax extends BaseOperation
     
     /**
      * @param int $times how many times consumer can be called
-     * @param Consumer|Reducer|callable|resource $consumer
+     * @param ConsumerReady|callable|resource $consumer
      */
     public function __construct(int $times, $consumer)
     {

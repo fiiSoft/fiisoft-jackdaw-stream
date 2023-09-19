@@ -25,6 +25,6 @@ final class GeneratorAdapter extends BaseMapper
             return $value;
         }
         
-        return $this->itIsValueMapper ? $value : $key;
+        return $this->isValueMapper ? $value : $key;
     }
 }

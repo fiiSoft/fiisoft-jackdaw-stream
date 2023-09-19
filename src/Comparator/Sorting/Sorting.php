@@ -14,7 +14,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 abstract class Sorting implements ComparisonSpec
 {
     /**
-     * @param Sorting|Comparable|callable|null $sorting
+     * @param Comparable|callable|null $sorting
      */
     public static function prepare($sorting): self
     {
@@ -22,7 +22,7 @@ abstract class Sorting implements ComparisonSpec
     }
     
     /**
-     * @param Sorting|Comparable|callable|null $sorting
+     * @param Comparable|callable|null $sorting
      */
     public static function reverse($sorting = null, int $mode = Check::VALUE): self
     {
@@ -30,7 +30,7 @@ abstract class Sorting implements ComparisonSpec
     }
     
     /**
-     * @param Sorting|Comparable|callable|null $sorting
+     * @param Comparable|callable|null $sorting
      */
     public static function create(bool $reversed = false, $sorting = null, int $mode = Check::VALUE): self
     {

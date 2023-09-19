@@ -22,7 +22,7 @@ final class Uptrends extends BaseOperation implements Reindexable
     private bool $reindex, $downtrend;
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function __construct(bool $reindex = false, bool $downtrend = false, $comparison = null)
     {

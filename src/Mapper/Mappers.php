@@ -8,21 +8,18 @@ use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Mapper\Adapter\DiscriminatorAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\GeneratorAdapter;
-use FiiSoft\Jackdaw\Mapper\Adapter\PredicateAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ProducerAdadpter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\RegistryAdapter;
 use FiiSoft\Jackdaw\Mapper\Internal\MultiMapper;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Registry\RegReader;
-use FiiSoft\Jackdaw\Stream;
 
 final class Mappers
 {
     /**
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|Producer|Stream|ResultCaster|\Traversable|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public static function getAdapter($mapper): Mapper
     {
@@ -73,7 +70,7 @@ final class Mappers
                 }
             }
             
-            return self::generic($mapper);
+            return new GenericMapper($mapper);
         }
     
         if ($mapper instanceof Reducer) {
@@ -84,10 +81,6 @@ final class Mappers
             return new FilterAdapter($mapper);
         }
     
-        if ($mapper instanceof Predicate) {
-            return new PredicateAdapter($mapper);
-        }
-        
         if ($mapper instanceof RegReader) {
             return new RegistryAdapter($mapper);
         }
@@ -125,11 +118,6 @@ final class Mappers
         }
         
         return self::simple($mapper);
-    }
-    
-    public static function generic(callable $mapper): Mapper
-    {
-        return new GenericMapper($mapper);
     }
     
     /**
@@ -222,7 +210,7 @@ final class Mappers
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public static function append($field, $mapper): Mapper
     {
@@ -231,7 +219,7 @@ final class Mappers
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public static function complete($field, $mapper): Mapper
     {
@@ -275,7 +263,7 @@ final class Mappers
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public static function mapField($field, $mapper): Mapper
     {
@@ -336,6 +324,16 @@ final class Mappers
      */
     public static function arrayColumn($column, $index = null): Mapper
     {
-        return self::generic(static fn(array $rows): array => \array_column($rows, $column, $index));
+        return self::getAdapter(static fn(array $rows): array => \array_column($rows, $column, $index));
+    }
+    
+    public static function increment(int $step = 1): Mapper
+    {
+        return new Increment($step);
+    }
+    
+    public static function decrement(int $step = 1): Mapper
+    {
+        return new Increment(-$step);
     }
 }

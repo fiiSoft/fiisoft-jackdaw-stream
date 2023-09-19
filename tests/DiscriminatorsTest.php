@@ -7,7 +7,6 @@ use FiiSoft\Jackdaw\Discriminator\Alternately;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Predicate\Predicates;
 use PHPUnit\Framework\TestCase;
 
 final class DiscriminatorsTest extends TestCase
@@ -41,12 +40,12 @@ final class DiscriminatorsTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        Discriminators::generic(static fn($a,$b,$c): bool => true)->classify(15, 1);
+        Discriminators::getAdapter(static fn($a,$b,$c): bool => true)->classify(15, 1);
     }
     
     public function test_GenericDiscriminator_can_call_callable_with_two_arguments(): void
     {
-        self::assertSame('151', Discriminators::generic(static fn($a, $b): string => $a.$b)->classify(15, 1));
+        self::assertSame('151', Discriminators::getAdapter(static fn($a, $b): string => $a.$b)->classify(15, 1));
     }
     
     public function test_EvenOdd_throws_exception_when_checked_value_is_not_integer(): void
@@ -75,15 +74,7 @@ final class DiscriminatorsTest extends TestCase
     
     public function test_Condition_can_be_used_as_Discriminator(): void
     {
-        $discriminator = Discriminators::getAdapter(Conditions::generic(static fn(int $v): bool => $v === 1));
-        
-        self::assertTrue($discriminator->classify(1, 1));
-        self::assertFalse($discriminator->classify(2, 1));
-    }
-    
-    public function test_Predicate_can_be_used_as_Discriminator(): void
-    {
-        $discriminator = Discriminators::getAdapter(Predicates::getAdapter(static fn(int $v): bool => $v === 1));
+        $discriminator = Discriminators::getAdapter(Conditions::getAdapter(static fn(int $v): bool => $v === 1));
         
         self::assertTrue($discriminator->classify(1, 1));
         self::assertFalse($discriminator->classify(2, 1));

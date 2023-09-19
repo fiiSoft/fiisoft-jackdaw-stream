@@ -3,10 +3,10 @@
 namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Consumer\Consumer;
+use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class SendTo extends BaseOperation
 {
@@ -14,7 +14,7 @@ final class SendTo extends BaseOperation
     private array $consumers = [];
     
     /**
-     * @param Consumer|Reducer|callable|resource $consumers
+     * @param ConsumerReady|callable|resource $consumers
      */
     public function __construct(...$consumers)
     {

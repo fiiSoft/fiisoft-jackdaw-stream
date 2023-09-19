@@ -2,7 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Producer\Generator\Uuid;
 
-interface UuidGenerator
+use FiiSoft\Jackdaw\Producer\ProducerReady;
+
+interface UuidGenerator extends ProducerReady
 {
     public function create(): string;
 }

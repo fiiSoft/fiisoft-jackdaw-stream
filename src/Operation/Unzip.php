@@ -2,15 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Collector\Collector;
-use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Internal\ResultApi;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\LastOperation;
+use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\HandlerReady;
 use FiiSoft\Jackdaw\Operation\Internal\StreamPipeOperation;
-use FiiSoft\Jackdaw\Reducer\Reducer;
-use FiiSoft\Jackdaw\Stream;
 
 final class Unzip extends StreamPipeOperation
 {
@@ -19,7 +14,7 @@ final class Unzip extends StreamPipeOperation
     private int $count;
     
     /**
-     * @param array<Stream|LastOperation|ResultApi|Collector|Consumer|Reducer> $consumers
+     * @param HandlerReady[] $consumers
      */
     public function __construct(array $consumers)
     {

@@ -33,7 +33,7 @@ final class Comparators
         }
         
         if (\is_callable($comparator)) {
-            return self::generic($comparator);
+            return new GenericComparator($comparator);
         }
         
         if ($comparator === null) {
@@ -51,11 +51,6 @@ final class Comparators
     public static function reverse(): Comparator
     {
         return new ReverseComparator();
-    }
-    
-    public static function generic(callable $comparator): Comparator
-    {
-        return new GenericComparator($comparator);
     }
     
     /**

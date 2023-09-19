@@ -17,7 +17,6 @@ use FiiSoft\Jackdaw\Internal\SignalHandler;
 use FiiSoft\Jackdaw\Mapper\Internal\StatelessMapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Internal\LastOperation;
-use FiiSoft\Jackdaw\Predicate\Predicates;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
@@ -737,9 +736,9 @@ final class StreamTest extends TestCase
         self::assertTrue(Stream::from(['1', 2, '3'])->has($predicate)->get());
     }
     
-    public function test_has_can_accept_Predicate_instance(): void
+    public function test_has_can_accept_Filter(): void
     {
-        $predicate = Predicates::value(2);
+        $predicate = Filters::AND('is_int', Filters::greaterThan(1));
         
         self::assertFalse(Stream::from(['1', '2', '3'])->has($predicate)->get());
         self::assertTrue(Stream::from(['1', 2, '3'])->has($predicate)->get());
@@ -1842,10 +1841,10 @@ final class StreamTest extends TestCase
         self::assertSame(['A', 2, 'B', 4, 'C', 6], $result);
     }
     
-    public function test_mapWhen_with_Predicate(): void
+    public function test_mapWhen_with_Filter(): void
     {
         $result = Stream::from([1, 2, 3])
-            ->mapWhen(Predicates::inArray([1, 3]), static fn(int $n): int => $n * 2)
+            ->mapWhen(Filters::onlyIn([1, 3]), static fn(int $n): int => $n * 2)
             ->toArray();
         
         self::assertSame([2, 2, 6], $result);

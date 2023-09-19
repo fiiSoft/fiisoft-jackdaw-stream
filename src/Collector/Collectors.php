@@ -72,16 +72,19 @@ final class Collectors
         throw Helper::invalidParamException('collector', $collector);
     }
     
+    public static function values(): IterableCollector
+    {
+        return self::default(false);
+    }
+    
     public static function default(bool $allowsKeys = true): IterableCollector
     {
         return new DefaultCollector([], $allowsKeys);
     }
     
-    public static function values(): IterableCollector
-    {
-        return new DefaultCollector([], false);
-    }
-    
+    /**
+     * @param array $storage REFERENCE
+     */
     public static function array(array &$storage, bool $allowsKeys = true): IterableCollector
     {
         return new ArrayAdapter($storage, $allowsKeys);

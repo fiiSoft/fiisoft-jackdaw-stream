@@ -41,7 +41,7 @@ final class Gather extends BaseOperation implements DataCollector, Reindexable
             return $this->next->acceptSimpleData([$this->data], $signal, true);
         }
         
-        $signal->restartWith(Producers::fromArray([$this->data]), $this->next);
+        $signal->restartWith(Producers::getAdapter([$this->data]), $this->next);
         
         return true;
     }

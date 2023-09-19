@@ -17,6 +17,9 @@ final class Same implements Filter
         $this->value = $value;
     }
     
+    /**
+     * @inheritDoc
+     */
     public function isAllowed($value, $key, int $mode = Check::VALUE): bool
     {
         switch ($mode) {

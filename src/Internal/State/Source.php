@@ -6,13 +6,13 @@ use FiiSoft\Jackdaw\Internal\Collaborator;
 use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Pipe;
-use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Producer\Internal\PushProducer;
-use FiiSoft\Jackdaw\Producer\Tech\MultiSourcedProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Producer\Producers;
+use FiiSoft\Jackdaw\Producer\Tech\MultiSourcedProducer;
 use FiiSoft\Jackdaw\Stream;
 
 abstract class Source extends Collaborator implements Destroyable
@@ -44,7 +44,7 @@ abstract class Source extends Collaborator implements Destroyable
     }
     
     /**
-     * @param array<Stream|Producer|ResultCaster|\Iterator|\PDOStatement|callable|resource|array> $producers
+     * @param array<ProducerReady|resource|callable|iterable> $producers
      */
     final public function addProducers(array $producers): void
     {

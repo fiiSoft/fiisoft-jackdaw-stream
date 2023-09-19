@@ -2,9 +2,12 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
+use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Internal\ResultProvider;
+use FiiSoft\Jackdaw\Mapper\MapperReady;
+use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\HandlerReady;
 
-interface Reducer extends ResultProvider
+interface Reducer extends ResultProvider, ConsumerReady, MapperReady, HandlerReady
 {
     /**
      * @param mixed $value

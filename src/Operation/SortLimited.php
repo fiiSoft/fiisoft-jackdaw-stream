@@ -23,7 +23,7 @@ final class SortLimited extends BaseOperation implements Limitable, DataCollecto
     private int $limit;
     
     /**
-     * @param Sorting|Comparable|callable|null $sorting
+     * @param Comparable|callable|null $sorting
      */
     public function __construct(int $limit, $sorting = null)
     {

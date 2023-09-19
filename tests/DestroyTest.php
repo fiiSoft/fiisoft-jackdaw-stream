@@ -36,7 +36,7 @@ final class DestroyTest extends TestCase
         $onlyNumbers = Stream::empty()->onlyIntegers()->reduce(Reducers::sum());
         
         $reversedChars = Stream::empty()->reverse()->reduce(Reducers::concat('|'));
-        $multiplyNumbers = Reducers::generic(static fn(int $acc, int $v): int => $acc * $v);
+        $multiplyNumbers = Reducers::getAdapter(static fn(int $acc, int $v): int => $acc * $v);
         
         $stream = Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e'])
             ->feed($onlyChars, $onlyNumbers)
@@ -151,7 +151,7 @@ final class DestroyTest extends TestCase
     {
         return [
             'QueueProducer' => [Producers::queue(['a', 'b', 'c'])],
-            'MultiProducer' => [Producers::multiSourced(Producers::queue(['a', 'b']), Producers::fromArray(['c']))],
+            'MultiProducer' => [Producers::multiSourced(Producers::queue(['a', 'b']), Producers::getAdapter(['c']))],
             'BucketListIterator' => [new BucketListIterator([new Bucket(), new Bucket(), new Bucket()])],
             'CircularBufferIterator' => [new CircularBufferIterator(['a', 'b', 'c'], 3, 1)],
             'ForwardItemsIterator' => [new ForwardItemsIterator(self::convertToItems([1, 2, 3]))],
@@ -159,7 +159,7 @@ final class DestroyTest extends TestCase
             'ReverseItemsIterator' => [new ReverseItemsIterator(self::convertToItems(['a', 'b', 'c']))],
             'ReverseNumericalArrayIterator' => [new ReverseNumericalArrayIterator(['a', 'b', 'c'])],
             'ArrayIteratorAdapter' => [Producers::getAdapter(new \ArrayIterator(['a', 'b', 'c']))],
-            'IteratorAdapter' => [Producers::fromIterator(new \ArrayObject(['a', 'b', 'c']))],
+            'IteratorAdapter' => [Producers::getAdapter(new \ArrayObject(['a', 'b', 'c']))],
         ];
     }
     
@@ -270,7 +270,7 @@ final class DestroyTest extends TestCase
     public function test_ResultAdapter_destroy(): void
     {
         //given
-        $producer = Producers::fromResult(Stream::from(['a', 'b', 'c'])->collect());
+        $producer = Producers::getAdapter(Stream::from(['a', 'b', 'c'])->collect());
         
         self::assertSame(3, $producer->stream()->count()->get());
         self::assertSame(3, $producer->stream()->count()->get());
@@ -383,7 +383,7 @@ final class DestroyTest extends TestCase
     {
         $stream = Stream::from(['a', 'b', 'c', 'd', 'e'])
             ->onError(OnError::abort())
-            ->callWhen(Filters::same('e'), static function () {
+            ->callWhen(Filters::equals('e'), static function () {
                 throw new \RuntimeException('force break');
             })
             ->fork(
@@ -433,7 +433,7 @@ final class DestroyTest extends TestCase
     {
         $stream = Stream::from(['a', 'b', 'c', 'd', 'e'])
             ->onError(OnError::abort())
-            ->callWhen(Filters::same('e'), static function () {
+            ->callWhen(Filters::equals('e'), static function () {
                 throw new \RuntimeException('force break');
             })
             ->best(3);

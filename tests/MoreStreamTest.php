@@ -2085,7 +2085,7 @@ final class MoreStreamTest extends TestCase
             ->dispatch(Discriminators::byKey(), [
                 'female' => Stream::empty()
                     ->map(Mappers::arrayColumn('age', 'id'))
-                    ->map(Filters::generic($isAdult))
+                    ->map(Filters::getAdapter($isAdult))
                     ->map('\array_keys')
                     ->putIn($women),
                 'male' => Stream::empty()
@@ -2737,7 +2737,7 @@ final class MoreStreamTest extends TestCase
             [$valueComparator, $valueAsc],
 
             2 => [Comparators::default(), $valueAsc],
-            [Comparators::generic($valueComparator), $valueAsc],
+            [Comparators::getAdapter($valueComparator), $valueAsc],
             [Comparators::getAdapter($valueComparator), $valueAsc],
 
             5 => [By::value(), $valueAsc],
@@ -2748,7 +2748,7 @@ final class MoreStreamTest extends TestCase
             [By::valueAsc(Comparators::default()), $valueAsc],
             
             11 => [$valueAndKeyComparator, $valueAscKeyDesc],
-            [Comparators::generic($valueAndKeyComparator), $valueAscKeyDesc],
+            [Comparators::getAdapter($valueAndKeyComparator), $valueAscKeyDesc],
             [Comparators::getAdapter($valueAndKeyComparator), $valueAscKeyDesc],
             
             15 => [By::assoc($valueAndKeyComparator), $valueAscKeyDesc],

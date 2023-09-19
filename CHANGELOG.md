@@ -2,6 +2,27 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 6.0.0
+
+Backward-incompatible changes:
+- rewriten Registry module with some canges in API
+- removed module Predicate with all classes and interfaces 
+- removed various factory methods (use theirs getAdapter() instead): 
+  - Producers::fromArray(), Producers::fromIterator(), Producers::fromArrayIterator(), Producers::fromResult(), Producers::fromCallable()
+  - Conditions::generic(), Conditions::predicate(), Conditions::filter()
+  - Discriminators::generic()
+  - Comparators::generic()
+  - Consumers::generic()
+  - Reducers::generic()
+  - Mappers::generic()
+  - Filters::generic()
+
+New features:
+ - Registry\RegWriter can be used as Consumer
+ - Registry\RegReader can be used as Producer and Discriminator
+ - variable can be used as Producer through reference thanks to factory method Producers::readFrom()
+ - added mapper Increment via Mappers::increment() and Mappers::decrement()
+
 ## 5.0.0
 
 Several significant changes incompatible with previous version: 

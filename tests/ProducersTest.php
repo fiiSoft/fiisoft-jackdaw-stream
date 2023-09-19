@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
@@ -19,6 +20,7 @@ use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
 use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
 use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
+use FiiSoft\Jackdaw\Registry\Registry;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\UuidInterface as RamseyUuid;
@@ -367,7 +369,7 @@ final class ProducersTest extends TestCase
     
     public function test_reusable_Producer_can_crate_Stream_multiple_times(): void
     {
-        $producer = Producers::fromArray(['a', 1, 'b', 2, 'c', 3]);
+        $producer = Producers::getAdapter(['a', 1, 'b', 2, 'c', 3]);
         
         self::assertSame([1, 2, 3], $producer->stream()->filter('\is_int')->toArray());
         self::assertSame(['a', 'b', 'c'], $producer->stream()->filter('\is_string')->toArray());
@@ -1090,5 +1092,72 @@ final class ProducersTest extends TestCase
         }
         
         return $items;
+    }
+    
+    public function test_ReferenceAdapter_can_use_variable_as_source_of_data_for_stream(): void
+    {
+        $var = 11;
+        $numbers = [];
+        
+        Producers::readFrom($var)
+            ->stream()
+            ->while(Filters::greaterThan(0))
+            ->storeIn($numbers)
+            ->map(static fn(int $v): int => (int) ($v / 2))
+            ->putIn($var)
+            ->run();
+        
+        self::assertSame([11, 5, 2, 1], $numbers);
+    }
+    
+    public function test_ReferenceAdapter_stops_iterating_when_value_of_variable_is_null(): void
+    {
+        $var = 3;
+        $values = [];
+        
+        $count = Producers::readFrom($var)
+            ->stream()
+            ->call(static function () use (&$var, &$values) {
+                $values[] = $var;
+                if (--$var === 0) {
+                    $var = null;
+                }
+            })
+            ->count();
+        
+        self::assertSame(3, $count->get());
+        self::assertSame([3, 2, 1], $values);
+    }
+    
+    public function test_RegistryAdapter_allows_to_use_Registry_as_source_of_stream(): void
+    {
+        $reg = Registry::new()->set('val', 11);
+        $numbers = [];
+        
+        Producers::getAdapter($reg->read('val'))
+            ->stream()
+            ->while(Filters::greaterThan(0))
+            ->storeIn($numbers)
+            ->map(static fn(int $v): int => (int) ($v / 2))
+            ->remember($reg->value('val'))
+            ->run();
+        
+        self::assertSame([11, 5, 2, 1], $numbers);
+    }
+    
+    public function test_RegistryAdapter_stops_iterating_when_read_value_is_null(): void
+    {
+        $reg = Registry::new()->set('val', 3);
+        $values = [];
+        
+        $count = Producers::getAdapter($reg->read('val'))
+            ->stream()
+            ->storeIn($values)
+            ->map(static fn(int $v): ?int => --$v !== 0 ? $v : null)
+            ->remember($reg->value('val'))
+            ->count();
+        
+        self::assertSame(3, $count->get());
+        self::assertSame([3, 2, 1], $values);
     }
 }

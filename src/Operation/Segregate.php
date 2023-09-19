@@ -29,7 +29,7 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable, D
     
     /**
      * @param int|null $buckets null means collect all elements
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function __construct(?int $buckets = null, bool $reindex = false, $comparison = null)
     {

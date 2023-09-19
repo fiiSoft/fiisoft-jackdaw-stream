@@ -6,16 +6,16 @@ use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Discriminator\Adapter\ConditionAdapter;
 use FiiSoft\Jackdaw\Discriminator\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Discriminator\Adapter\MapperAdapter;
-use FiiSoft\Jackdaw\Discriminator\Adapter\PredicateAdapter;
+use FiiSoft\Jackdaw\Discriminator\Adapter\RegistryAdapter;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mapper;
-use FiiSoft\Jackdaw\Predicate\Predicate;
+use FiiSoft\Jackdaw\Registry\RegReader;
 
 final class Discriminators
 {
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array $discriminator
      */
     public static function getAdapter($discriminator, int $mode = Check::VALUE): Discriminator
     {
@@ -24,7 +24,7 @@ final class Discriminators
         }
         
         if (\is_callable($discriminator)) {
-            return self::generic($discriminator);
+            return new GenericDiscriminator($discriminator);
         }
         
         if (\is_array($discriminator) && !empty($discriminator)) {
@@ -39,30 +39,25 @@ final class Discriminators
             return new FilterAdapter($discriminator, $mode);
         }
     
-        if ($discriminator instanceof Predicate) {
-            return new PredicateAdapter($discriminator, $mode);
-        }
-    
         if ($discriminator instanceof Condition) {
             return new ConditionAdapter($discriminator);
+        }
+        
+        if ($discriminator instanceof RegReader) {
+            return new RegistryAdapter($discriminator);
         }
         
         throw new \InvalidArgumentException('Invalid param discriminator');
     }
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array|string|int $discriminator
      */
     public static function prepare($discriminator, int $mode = Check::VALUE): Discriminator
     {
         return (\is_string($discriminator) && !\is_callable($discriminator)) || \is_int($discriminator)
             ? self::byField($discriminator)
             : self::getAdapter($discriminator, $mode);
-    }
-    
-    public static function generic(callable $discriminator): Discriminator
-    {
-        return new GenericDiscriminator($discriminator);
     }
     
     public static function evenOdd(int $mode = Check::VALUE): Discriminator
@@ -95,7 +90,7 @@ final class Discriminators
     }
     
     /**
-     * @param Discriminator|Condition|Predicate|Filter|Mapper|callable|string|int $discriminator
+     * @param DiscriminatorReady|callable|array|string|int $discriminator
      * @param string|int $yes
      * @param string|int $no value of it must be different than value of $yes
      */

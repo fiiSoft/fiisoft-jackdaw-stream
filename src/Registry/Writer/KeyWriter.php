@@ -2,24 +2,21 @@
 
 namespace FiiSoft\Jackdaw\Registry\Writer;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Registry\RegWriter;
-use FiiSoft\Jackdaw\Registry\Storage;
-
-final class KeyWriter implements RegWriter
+final class KeyWriter extends SingleWriter
 {
-    private Storage $storage;
-    
-    private string $name;
-    
-    public function __construct(Storage $storage, string $name)
+    /**
+     * @inheritDoc
+     */
+    public function write($value, $key): void
     {
-        $this->storage = $storage;
-        $this->name = $name;
+        $this->storage->registered[$this->name] = $key;
     }
     
-    public function remember(Item $item): void
+    /**
+     * @inheritDoc
+     */
+    public function set($value): void
     {
-        $this->storage->registered[$this->name] = $item->key;
+        $this->storage->registered[$this->name] = $value;
     }
 }

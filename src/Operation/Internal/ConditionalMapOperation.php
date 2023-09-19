@@ -3,14 +3,12 @@
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
 use FiiSoft\Jackdaw\Condition\Condition;
+use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Condition\Conditions;
-use FiiSoft\Jackdaw\Discriminator\Discriminator;
-use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Mapper\Mapper;
+use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Mapper\Value;
-use FiiSoft\Jackdaw\Predicate\Predicate;
-use FiiSoft\Jackdaw\Reducer\Reducer;
 
 abstract class ConditionalMapOperation extends BaseOperation
 {
@@ -20,9 +18,9 @@ abstract class ConditionalMapOperation extends BaseOperation
     protected ?Mapper $elseMapper = null;
     
     /**
-     * @param Condition|Predicate|Filter|callable $condition
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $elseMapper
+     * @param ConditionReady|callable $condition
+     * @param MapperReady|callable|iterable|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
     public function __construct($condition, $mapper, $elseMapper = null)
     {

@@ -3,14 +3,13 @@
 namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Condition\Condition;
+use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Condition\Conditions;
 use FiiSoft\Jackdaw\Consumer\Consumer;
+use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Consumer\Consumers;
-use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Predicate\Predicate;
-use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class SendWhen extends BaseOperation
 {
@@ -20,9 +19,9 @@ final class SendWhen extends BaseOperation
     private ?Consumer $elseConsumer = null;
     
     /**
-     * @param Condition|Predicate|Filter|callable $condition
-     * @param Consumer|Reducer|callable|resource $consumer
-     * @param Consumer|Reducer|callable|resource|null $elseConsumer
+     * @param ConditionReady|callable $condition
+     * @param ConsumerReady|callable|resource $consumer
+     * @param ConsumerReady|callable|resource|null $elseConsumer
      */
     public function __construct($condition, $consumer, $elseConsumer = null)
     {

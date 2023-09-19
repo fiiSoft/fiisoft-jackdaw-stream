@@ -2,16 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
-use FiiSoft\Jackdaw\Condition\Condition;
-use FiiSoft\Jackdaw\Discriminator\Discriminator;
-use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mapper;
+use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Internal\ConditionalMapOperation;
-use FiiSoft\Jackdaw\Predicate\Predicate;
-use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class MapFieldWhen extends ConditionalMapOperation
 {
@@ -20,9 +17,9 @@ final class MapFieldWhen extends ConditionalMapOperation
     
     /**
      * @param string|int $field
-     * @param Condition|Predicate|Filter|callable $condition
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $elseMapper
+     * @param ConditionReady|callable $condition
+     * @param MapperReady|callable|iterable|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
     public function __construct($field, $condition, $mapper, $elseMapper = null)
     {

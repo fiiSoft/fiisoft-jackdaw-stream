@@ -2,12 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Discriminator\Discriminator;
-use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
-use FiiSoft\Jackdaw\Predicate\Predicate;
-use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class Append extends BaseMapper
 {
@@ -18,7 +14,7 @@ final class Append extends BaseMapper
     
     /**
      * @param string|int $field
-     * @param Mapper|Reducer|Predicate|Filter|Discriminator|callable|array|mixed $mapper
+     * @param MapperReady|callable|iterable|mixed $mapper
      */
     public function __construct($field, $mapper)
     {

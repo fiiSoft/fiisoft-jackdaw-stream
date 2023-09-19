@@ -7,7 +7,6 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class SkipWhile extends BaseOperation
 {
@@ -16,13 +15,13 @@ final class SkipWhile extends BaseOperation
     private bool $doWhile;
     
     /**
-     * @param Filter|Predicate|callable|mixed $condition
+     * @param Filter|callable|mixed $filter
      * @param int $mode
      * @param bool $until
      */
-    public function __construct($condition, int $mode = Check::VALUE, bool $until = false)
+    public function __construct($filter, int $mode = Check::VALUE, bool $until = false)
     {
-        $this->filter = Filters::getAdapter($condition);
+        $this->filter = Filters::getAdapter($filter);
         $this->mode = $mode;
         $this->doWhile = !$until;
     }

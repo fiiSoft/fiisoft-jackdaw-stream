@@ -18,7 +18,7 @@ final class OmitReps extends BaseOperation
     private ?Item $previous = null;
     
     /**
-     * @param Comparison|Comparable|callable|null $comparison
+     * @param Comparable|callable|null $comparison
      */
     public function __construct($comparison = null)
     {

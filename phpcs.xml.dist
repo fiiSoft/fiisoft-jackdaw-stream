@@ -132,4 +132,12 @@
     <rule ref="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseBrace">
         <exclude-pattern>*.php</exclude-pattern>
     </rule>
+
+    <rule ref="PSR12.Namespaces.CompoundNamespaceDepth.TooDeep">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.Classes.ClassDeclaration.ImplementsLine">
+        <exclude-pattern>*.php</exclude-pattern>
+    </rule>
 </ruleset>

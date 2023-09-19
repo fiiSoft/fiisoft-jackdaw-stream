@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Condition\Condition;
+use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Condition\Conditions;
 use FiiSoft\Jackdaw\Filter\Filter as FilterStrategy;
 use FiiSoft\Jackdaw\Filter\Filters;
@@ -11,7 +12,6 @@ use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\FilterSingle;
-use FiiSoft\Jackdaw\Predicate\Predicate;
 
 final class FilterWhen extends BaseOperation implements FilterSingle
 {
@@ -22,8 +22,8 @@ final class FilterWhen extends BaseOperation implements FilterSingle
     private int $mode;
     
     /**
-     * @param Condition|Predicate|FilterStrategy|callable $condition
-     * @param FilterStrategy|Predicate|callable|mixed $filter
+     * @param ConditionReady|callable $condition
+     * @param FilterStrategy|callable|mixed $filter
      */
     public function __construct($condition, $filter, bool $negation = false, int $mode = Check::VALUE)
     {

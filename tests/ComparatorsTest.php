@@ -5,8 +5,8 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
-use FiiSoft\Jackdaw\Comparator\Comparison\Comparer\Single\AssocComparer;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparer\ComparerFactory;
+use FiiSoft\Jackdaw\Comparator\Comparison\Comparer\Single\AssocComparer;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Comparator\Comparison\Specs\DoubleComparison;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
@@ -34,7 +34,7 @@ final class ComparatorsTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         
-        Comparators::generic(static fn($v, $k, $n): bool => true);
+        Comparators::getAdapter(static fn($v, $k, $n): bool => true);
     }
     
     public function test_MultiComparator_throws_exception_when_list_of_comparators_is_empty(): void
@@ -155,7 +155,7 @@ final class ComparatorsTest extends TestCase
     public function test_GenericComparator_throws_exception_when_wrong_callable_is_used(): void
     {
         try {
-            Comparators::generic(static fn($a, $b, $c, $d): bool => true)->compare(1, 2);
+            Comparators::getAdapter(static fn($a, $b, $c, $d): bool => true)->compare(1, 2);
             self::fail('Expected exception #1 was not thrown');
         } catch (AssertionFailedError $e) {
             throw $e;
@@ -165,7 +165,7 @@ final class ComparatorsTest extends TestCase
         }
         
         try {
-            Comparators::generic(static fn($a, $b, $c): bool => true)->compareAssoc(1, 2, 3, 4);
+            Comparators::getAdapter(static fn($a, $b, $c): bool => true)->compareAssoc(1, 2, 3, 4);
             self::fail('Expected exception #2 was not thrown');
         } catch (AssertionFailedError $e) {
             throw $e;
@@ -518,16 +518,16 @@ final class ComparatorsTest extends TestCase
     
     public function test_GenericComparator_always_returns_itself_from_method_comparator(): void
     {
-        $comparator = Comparators::generic('strcmp');
+        $comparator = Comparators::getAdapter('strcmp');
         
         self::assertSame($comparator, $comparator->comparator());
     }
     
     public function test_GenericComparator_returns_mode_dependend_on_wrapped_callback(): void
     {
-        self::assertSame(Check::VALUE, Comparators::generic('strcmp')->mode());
+        self::assertSame(Check::VALUE, Comparators::getAdapter('strcmp')->mode());
         
-        self::assertSame(Check::BOTH, Comparators::generic(static fn($a, $b, $c, $d) => -1)->mode());
+        self::assertSame(Check::BOTH, Comparators::getAdapter(static fn($a, $b, $c, $d) => -1)->mode());
     }
     
     public function test_BaseComparator_mode_is_VALUE(): void
