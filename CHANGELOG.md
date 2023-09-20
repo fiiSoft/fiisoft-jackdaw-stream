@@ -2,6 +2,12 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 6.1.0
+
+Added new Stream methods: filterWhile(), filterUntil(), mapWhile(), mapUntil(), callWhile(), callUntil().
+
+These "while" operations work in a similar way to other "while" functions already available. As long as the condition is met, the corresponding operation is performed, but the first time the condition is not met, this operation is removed from the call chain and is no longer executed (nor condition checked). Obviously, "until" operations work in the opposite way than "while".
+
 ## 6.0.0
 
 Backward-incompatible changes:

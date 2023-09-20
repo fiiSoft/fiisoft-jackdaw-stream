@@ -15,4 +15,12 @@ final class Counter implements Consumer
     {
         return $this->count;
     }
+    
+    /**
+     * Alias for count for convenient use.
+     */
+    public function get(): int
+    {
+        return $this->count;
+    }
 }

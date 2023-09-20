@@ -5,6 +5,7 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Comparator\Sorting\By;
+use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
@@ -470,5 +471,69 @@ final class EvenMoreStreamTest extends TestCase
             ->toArray();
         
         self::assertSame([6, 5, 5, 2, 2, 1, 1], $result);
+    }
+    
+    public function test_filter_while(): void
+    {
+        $result = Stream::from([4, -5, 2, -1, 3, -3, 'a', 3, -2, 4, 'b', -3])
+            ->filterWhile('is_int', Filters::greaterThan(0))
+            ->toArray();
+        
+        self::assertSame([4, 2, 3, 'a', 3, -2, 4, 'b', -3], $result);
+    }
+    
+    public function test_filter_until(): void
+    {
+        $result = Stream::from([4, -5, 2, -1, 3, -3, 'a', 3, -2, 4, 'b', -3])
+            ->filterUntil('is_string', Filters::greaterThan(0))
+            ->toArray();
+        
+        self::assertSame([4, 2, 3, 'a', 3, -2, 4, 'b', -3], $result);
+    }
+    
+    public function test_map_while(): void
+    {
+        $result = Stream::from([4, -5, 2, -1, 3, -3, 'a', 3, -2, 4, 'b', -3])
+            ->mapWhile('is_int', static fn(int $v): int => $v * 2)
+            ->toArray();
+        
+        self::assertSame([8, -10, 4, -2, 6, -6, 'a', 3, -2, 4, 'b', -3], $result);
+    }
+    
+    public function test_map_until(): void
+    {
+        $result = Stream::from([4, -5, 2, -1, 3, -3, 'a', 3, -2, 4, 'b', -3])
+            ->mapUntil('is_string', static fn(int $v): int => $v * 2)
+            ->toArray();
+        
+        self::assertSame([8, -10, 4, -2, 6, -6, 'a', 3, -2, 4, 'b', -3], $result);
+    }
+    
+    public function test_call_while(): void
+    {
+        $countIntsAtTheBeginning = Consumers::counter();
+        $countAllInts = Consumers::counter();
+        
+        Stream::from([4, -5, 2, -1, 3, -3, 'a', 3, -2, 4, 'b', -3])
+            ->callWhile('is_int', $countIntsAtTheBeginning)
+            ->callWhen('is_int', $countAllInts)
+            ->run();
+        
+        self::assertSame(10, $countAllInts->get());
+        self::assertSame(6, $countIntsAtTheBeginning->get());
+    }
+    
+    public function test_call_until(): void
+    {
+        $countIntsAtTheBeginning = Consumers::counter();
+        $countAllInts = Consumers::counter();
+        
+        Stream::from([4, -5, 2, -1, 3, -3, 'a', 3, -2, 4, 'b', -3])
+            ->callUntil('is_string', $countIntsAtTheBeginning)
+            ->callWhen('is_int', $countAllInts)
+            ->run();
+        
+        self::assertSame(10, $countAllInts->get());
+        self::assertSame(6, $countIntsAtTheBeginning->get());
     }
 }

@@ -14,14 +14,15 @@ use FiiSoft\Jackdaw\Internal\{Check, Collaborator, Collection\BaseStreamCollecti
     State\Source, State\SourceNotReady, State\Stack, StreamPipe};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, MapperReady, Mappers};
 use FiiSoft\Jackdaw\Operation\{Accumulate, Aggregate, Assert, Categorize, Chunk, ChunkBy, Classify, CollectIn,
-    CollectKeysIn, CountIn, Dispatch, Extrema, Filter as OperationFilter, FilterWhen, Flat, Flip, Gather, Increasing,
-    Internal\AssertionFailed, Internal\Dispatcher\HandlerReady, Internal\Feed, Internal\FeedMany,
+    CollectKeysIn, CountIn, Dispatch, Extrema, Filter as OperationFilter, FilterWhen, FilterWhile, Flat, Flip, Gather,
+    Increasing, Internal\AssertionFailed, Internal\Dispatcher\HandlerReady, Internal\Feed, Internal\FeedMany,
     Internal\FinalOperation, Internal\Fork, Internal\Iterate, Internal\LastOperation, Limit, Map, MapFieldWhen, MapKey,
-    MapKeyValue, MapWhen, Maxima, OmitReps, Operation, Reindex, Remember, Reverse, Scan, Segregate, SendTo, SendToMax,
-    SendWhen, Shuffle, Skip, SkipWhile, Sort, SortLimited, StoreIn, Tail, Terminating\Collect, Terminating\CollectKeys,
-    Terminating\Count, Terminating\Find, Terminating\First, Terminating\Fold, Terminating\GroupBy, Terminating\Has,
-    Terminating\HasEvery, Terminating\HasOnly, Terminating\IsEmpty, Terminating\Last, Terminating\Reduce,
-    Terminating\Until, Tokenize, Tuple, Unique, UnpackTuple, Unzip, Uptrends, Zip};
+    MapKeyValue, MapWhen, MapWhile, Maxima, OmitReps, Operation, Reindex, Remember, Reverse, Scan, Segregate, SendTo,
+    SendToMax, SendWhen, SendWhile, Shuffle, Skip, SkipWhile, Sort, SortLimited, StoreIn, Tail, Terminating\Collect,
+    Terminating\CollectKeys, Terminating\Count, Terminating\Find, Terminating\First, Terminating\Fold,
+    Terminating\GroupBy, Terminating\Has, Terminating\HasEvery, Terminating\HasOnly, Terminating\IsEmpty,
+    Terminating\Last, Terminating\Reduce, Terminating\Until, Tokenize, Tuple, Unique, UnpackTuple, Unzip, Uptrends,
+    Zip};
 use FiiSoft\Jackdaw\Producer\{Internal\PushProducer, Producer, ProducerReady, Producers};
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Registry\{RegWriter};
@@ -298,6 +299,26 @@ final class Stream extends Collaborator
     }
     
     /**
+     * @param ConditionReady|callable $condition
+     * @param Filter|callable|mixed $filter
+     */
+    public function filterWhile($condition, $filter, int $mode = Check::VALUE): Stream
+    {
+        $this->chainOperation(new FilterWhile($condition, $filter, $mode));
+        return $this;
+    }
+    
+    /**
+     * @param ConditionReady|callable $condition
+     * @param Filter|callable|mixed $filter
+     */
+    public function filterUntil($condition, $filter, int $mode = Check::VALUE): Stream
+    {
+        $this->chainOperation(new FilterWhile($condition, $filter, $mode, true));
+        return $this;
+    }
+    
+    /**
      * @param string|int $field
      * @param Filter|callable|mixed $filter
      */
@@ -433,6 +454,26 @@ final class Stream extends Collaborator
     }
     
     /**
+     * @param ConditionReady|callable $condition
+     * @param MapperReady|callable|iterable|mixed $mapper
+     */
+    public function mapWhile($condition, $mapper): Stream
+    {
+        $this->chainOperation(new MapWhile($condition, $mapper));
+        return $this;
+    }
+    
+    /**
+     * @param ConditionReady|callable $condition
+     * @param MapperReady|callable|iterable|mixed $mapper
+     */
+    public function mapUntil($condition, $mapper): Stream
+    {
+        $this->chainOperation(new MapWhile($condition, $mapper, true));
+        return $this;
+    }
+    
+    /**
      * It works very similarly to mapKey - the difference is that it uses Discriminator as mapper
      * and guarantees that key is string, int or bool.
      *
@@ -554,6 +595,26 @@ final class Stream extends Collaborator
     public function callWhen($condition, $consumer, $elseConsumer = null): Stream
     {
         $this->chainOperation(new SendWhen($condition, $consumer, $elseConsumer));
+        return $this;
+    }
+    
+    /**
+     * @param ConditionReady|callable $condition
+     * @param ConsumerReady|callable|resource $consumer
+     */
+    public function callWhile($condition, $consumer): Stream
+    {
+        $this->chainOperation(new SendWhile($condition, $consumer));
+        return $this;
+    }
+    
+    /**
+     * @param ConditionReady|callable $condition
+     * @param ConsumerReady|callable|resource $consumer
+     */
+    public function callUntil($condition, $consumer): Stream
+    {
+        $this->chainOperation(new SendWhile($condition, $consumer, true));
         return $this;
     }
     
