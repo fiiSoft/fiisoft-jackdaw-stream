@@ -14,15 +14,15 @@ use FiiSoft\Jackdaw\Internal\{Check, Collaborator, Collection\BaseStreamCollecti
     State\Source, State\SourceNotReady, State\Stack, StreamPipe};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, MapperReady, Mappers};
 use FiiSoft\Jackdaw\Operation\{Accumulate, Aggregate, Assert, Categorize, Chunk, ChunkBy, Classify, CollectIn,
-    CollectKeysIn, CountIn, Dispatch, Extrema, Filter as OperationFilter, FilterWhen, FilterWhile, Flat, Flip, Gather,
-    Increasing, Internal\AssertionFailed, Internal\Dispatcher\HandlerReady, Internal\Feed, Internal\FeedMany,
+    CollectKeysIn, CountIn, Dispatch, EveryNth, Extrema, Filter as OperationFilter, FilterWhen, FilterWhile, Flat, Flip,
+    Gather, Increasing, Internal\AssertionFailed, Internal\Dispatcher\HandlerReady, Internal\Feed, Internal\FeedMany,
     Internal\FinalOperation, Internal\Fork, Internal\Iterate, Internal\LastOperation, Limit, Map, MapFieldWhen, MapKey,
     MapKeyValue, MapWhen, MapWhile, Maxima, OmitReps, Operation, Reindex, Remember, Reverse, Scan, Segregate, SendTo,
-    SendToMax, SendWhen, SendWhile, Shuffle, Skip, SkipWhile, Sort, SortLimited, StoreIn, Tail, Terminating\Collect,
-    Terminating\CollectKeys, Terminating\Count, Terminating\Find, Terminating\First, Terminating\Fold,
-    Terminating\GroupBy, Terminating\Has, Terminating\HasEvery, Terminating\HasOnly, Terminating\IsEmpty,
-    Terminating\Last, Terminating\Reduce, Terminating\Until, Tokenize, Tuple, Unique, UnpackTuple, Unzip, Uptrends,
-    Zip};
+    SendToMany, SendToMax, SendWhen, SendWhile, Shuffle, Skip, SkipWhile, Sort, SortLimited, StoreIn, Tail,
+    Terminating\Collect, Terminating\CollectKeys, Terminating\Count, Terminating\Find, Terminating\First,
+    Terminating\Fold, Terminating\GroupBy, Terminating\Has, Terminating\HasEvery, Terminating\HasOnly,
+    Terminating\IsEmpty, Terminating\Last, Terminating\Reduce, Terminating\Until, Tokenize, Tuple, Unique, UnpackTuple,
+    Unzip, Uptrends, Window, Zip};
 use FiiSoft\Jackdaw\Producer\{Internal\PushProducer, Producer, ProducerReady, Producers};
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Registry\{RegWriter};
@@ -566,7 +566,11 @@ final class Stream extends Collaborator
      */
     public function call(...$consumers): Stream
     {
-        $this->chainOperation(new SendTo(...$consumers));
+        if (\count($consumers) === 1) {
+            $this->chainOperation(new SendTo(...$consumers));
+        } else {
+            $this->chainOperation(new SendToMany(...$consumers));
+        }
         return $this;
     }
     
@@ -794,6 +798,18 @@ final class Stream extends Collaborator
     public function chunkBy($discriminator, bool $reindex = false): Stream
     {
         $this->chainOperation(new ChunkBy(Discriminators::prepare($discriminator), $reindex));
+        return $this;
+    }
+    
+    public function window(int $size, int $step = 1, bool $reindex = false): Stream
+    {
+        $this->chainOperation(new Window($size, $step, $reindex));
+        return $this;
+    }
+    
+    public function everyNth(int $num): Stream
+    {
+        $this->chainOperation(new EveryNth($num));
         return $this;
     }
     

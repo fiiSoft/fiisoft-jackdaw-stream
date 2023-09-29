@@ -18,6 +18,7 @@ use FiiSoft\Jackdaw\Operation\Chunk;
 use FiiSoft\Jackdaw\Operation\ChunkBy;
 use FiiSoft\Jackdaw\Operation\Classify;
 use FiiSoft\Jackdaw\Operation\CollectIn;
+use FiiSoft\Jackdaw\Operation\EveryNth;
 use FiiSoft\Jackdaw\Operation\Filter;
 use FiiSoft\Jackdaw\Operation\FilterMany;
 use FiiSoft\Jackdaw\Operation\Flat;
@@ -41,6 +42,7 @@ use FiiSoft\Jackdaw\Operation\Reverse;
 use FiiSoft\Jackdaw\Operation\Scan;
 use FiiSoft\Jackdaw\Operation\Segregate;
 use FiiSoft\Jackdaw\Operation\SendTo;
+use FiiSoft\Jackdaw\Operation\SendToMany;
 use FiiSoft\Jackdaw\Operation\Shuffle;
 use FiiSoft\Jackdaw\Operation\Skip;
 use FiiSoft\Jackdaw\Operation\Sort;
@@ -62,6 +64,7 @@ use FiiSoft\Jackdaw\Operation\Tuple;
 use FiiSoft\Jackdaw\Operation\Unique;
 use FiiSoft\Jackdaw\Operation\UnpackTuple;
 use FiiSoft\Jackdaw\Operation\Uptrends;
+use FiiSoft\Jackdaw\Operation\Window;
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
@@ -111,8 +114,15 @@ final class PipeTest extends TestCase
         yield 'Aggregate_Reindex_custom' => [new Aggregate(['a']), new Reindex(1), Aggregate::class, Reindex::class];
         yield 'Aggregate_Reindex_default' => [new Aggregate(['a']), new Reindex(), Aggregate::class];
         
+        yield 'Chunk_Flat_1' => [new Chunk(1), new Flat(1)];
+        yield 'Chunk_Flat_3' => [new Chunk(2, true), new Flat(1), Chunk::class, Flat::class];
+        yield 'Chunk_Flat_2' => [new Chunk(3), new Flat(), Flat::class];
+        yield 'Chunk_Flat_4' => [new Chunk(4, true), new Flat(), Chunk::class, Flat::class];
         yield 'Chunk_Reindex_custom' => [new Chunk(2), new Reindex(1), Chunk::class, Reindex::class];
         yield 'Chunk_Reindex_default' => [new Chunk(2), new Reindex(), Chunk::class];
+        
+        yield 'EveryNth_1' => [new EveryNth(1)];
+        yield 'EveryNth_2' => [new EveryNth(2), EveryNth::class];
         
         yield 'Feed_Feed' => [new Feed($stream), new Feed($stream), FeedMany::class];
         
@@ -213,7 +223,16 @@ final class PipeTest extends TestCase
         yield 'Segregate_Reindex_custom' => [new Segregate(2), new Reindex(1), Segregate::class, Reindex::class];
         yield 'Segregate_Reindex_default' => [new Segregate(2), new Reindex(), Segregate::class];
         
-        yield 'SendTo_SendTo' => [new SendTo(Consumers::counter()), new SendTo(Consumers::counter()), SendTo::class];
+        yield 'SendTo_SendTo' => [new SendTo(Consumers::counter()), new SendTo(Consumers::counter()), SendToMany::class];
+        yield 'SendTo_SendToMany' => [
+            new SendTo(Consumers::counter()), new SendToMany(Consumers::counter()), SendToMany::class
+        ];
+        yield 'SendToMany_SendTo' => [
+            new SendToMany(Consumers::counter()), new SendTo(Consumers::counter()), SendToMany::class
+        ];
+        yield 'SendToMany_SendToMany' => [
+            new SendToMany(Consumers::counter()), new SendToMany(Consumers::counter()), SendToMany::class
+        ];
         
         yield 'Shuffle_Count' => [new Shuffle(), new Count($stream), Count::class];
         yield 'Shuffle_Find' => [new Shuffle(), new Find($stream, 'foo'), Find::class];
@@ -253,6 +272,18 @@ final class PipeTest extends TestCase
         yield 'Unique' => [new Unique(), OmitReps::class, Unique::class];
         
         yield 'UnpackTuple_MakeTuple' => [new UnpackTuple(), new Tuple()];
+        
+        yield 'Window_normal' => [new Window(2), Window::class];
+        yield 'Window_reindex' => [new Window(2, 1, true), Window::class];
+        yield 'Window_as_Chunk' => [new Window(1, 1), Chunk::class];
+        yield 'Window_Flat_1_normal' => [new Window(1, 1), new Flat(1)];
+        yield 'Window_Flat_1_reindex' => [new Window(1, 1, true), new Flat(1), Chunk::class, Flat::class];
+        yield 'Window_Flat_2_normal' => [new Window(1, 1), new Flat(), Flat::class];
+        yield 'Window_Flat_2_reindex' => [new Window(1, 1, true), new Flat(), Chunk::class, Flat::class];
+        yield 'Window_Flat_3_normal' => [new Window(2, 1), new Flat(), Window::class, Flat::class];
+        yield 'Window_Flat_3_reindex' => [new Window(2, 1, true), new Flat(), Window::class, Flat::class];
+        yield 'Window_Flat_4_normal' => [new Window(2, 1), new Flat(1), Window::class, Flat::class];
+        yield 'Window_Flat_4_reindex' => [new Window(2, 1, true), new Flat(1), Window::class, Flat::class];
         
         //special cases
         
@@ -574,6 +605,18 @@ final class PipeTest extends TestCase
         //then
         self::assertSame([], $pipe->stack);
         $this->assertPipeContainsOperations($pipe, Sort::class, Map::class);
+    }
+    
+    public function test_SendToMany_in_one_call_method(): void
+    {
+        //given
+        [$stream, $pipe] = $this->prepare();
+        
+        //when
+        $stream->call(Consumers::counter(), Consumers::counter());
+        
+        //then
+        $this->assertPipeContainsOperations($pipe, SendToMany::class);
     }
     
     public function test_Until_with_FilterNOT(): void

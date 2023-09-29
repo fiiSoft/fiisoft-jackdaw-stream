@@ -94,7 +94,6 @@ final class Helper
     
     /**
      * @param mixed $value
-     * @return string
      */
     public static function describe($value): string
     {
@@ -106,16 +105,24 @@ final class Helper
             return $value ? 'TRUE' : 'FALSE';
         }
         
+        if (\is_int($value)) {
+            return 'int '.$value;
+        }
+        
+        if (\is_float($value)) {
+            return 'float '.$value;
+        }
+        
         if (\is_numeric($value)) {
-            return (string) $value;
+            return 'numeric '.$value;
         }
         
         if (\is_string($value)) {
-            return \mb_strlen($value) > 50 ? \mb_substr($value, 0, 47).'...' : $value;
+            return 'string '.(\mb_strlen($value) > 50 ? \mb_substr($value, 0, 47).'...' : $value);
         }
         
         if (\is_array($value)) {
-            $desc = 'array of length: '.\count($value);
+            $desc = 'array of length '.\count($value);
             
             $json = \json_encode($value);
             if ($json !== false) {
@@ -130,7 +137,7 @@ final class Helper
         }
         
         if (\is_object($value)) {
-            return 'object of class: '.\get_class($value);
+            return 'object of class '.\get_class($value);
         }
         
         return \gettype($value);

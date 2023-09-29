@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Operation\State\Tail;
+namespace FiiSoft\Jackdaw\Operation\State\ItemBuffer;
 
 use FiiSoft\Jackdaw\Internal\Item;
 
-final class BufferFull extends State
+final class CircularItemBufferFull extends CircularItemBuffer
 {
     private Item $current;
     
@@ -15,13 +15,18 @@ final class BufferFull extends State
         $this->current->key = $item->key;
         $this->current->value = $item->value;
     
-        if (++$this->index === $this->length) {
+        if (++$this->index === $this->size) {
             $this->index = 0;
         }
     }
     
     public function count(): int
     {
-        return $this->length;
+        return $this->size;
+    }
+    
+    public function clear(): void
+    {
+        $this->client->setItemBuffer(self::initial($this->client, $this->size));
     }
 }

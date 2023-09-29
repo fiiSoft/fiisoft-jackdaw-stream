@@ -217,6 +217,31 @@ final class OtherTest extends TestCase
         );
     }
     
+    /**
+     * @dataProvider getDataForTestHelperCanDescribeValues
+     */
+    public function test_Helper_can_describe_values($value, string $expected): void
+    {
+        self::assertSame($expected, Helper::describe($value));
+    }
+    
+    public static function getDataForTestHelperCanDescribeValues(): array
+    {
+        return [
+            //value, expected
+            [null, 'NULL'],
+            [false, 'FALSE'],
+            [true, 'TRUE'],
+            [8, 'int 8'],
+            [12.0, 'float 12'],
+            ['20', 'numeric 20'],
+            ['foo', 'string foo'],
+            [['a', 'b', 'c'], 'array of length 3 ["a","b","c"]'],
+            [new \stdClass(), 'object of class stdClass'],
+            [\fopen('php://temp', 'r'), 'resource'],
+        ];
+    }
+    
     public function test_use_count_as_callback_in_array_map(): void
     {
         $data = [
@@ -404,5 +429,25 @@ final class OtherTest extends TestCase
         
         //Act
         new FullAssocChecker($comparator);
+    }
+    
+    public function test_array_shift_does_not_preserve_numerical_keys(): void
+    {
+        $arr = ['a' => 1, 'b' => 2, 0 => 'c', 1 => 'd', 'e' => 3];
+        
+        \array_shift($arr);
+        self::assertSame(['b' => 2, 0 => 'c', 1 => 'd', 'e' => 3], $arr);
+        
+        \array_shift($arr);
+        self::assertSame([0 => 'c', 1 => 'd', 'e' => 3], $arr);
+        
+        \array_shift($arr);
+        self::assertSame([0 => 'd', 'e' => 3], $arr);
+        
+        \array_shift($arr);
+        self::assertSame(['e' => 3], $arr);
+        
+        \array_shift($arr);
+        self::assertSame([], $arr);
     }
 }

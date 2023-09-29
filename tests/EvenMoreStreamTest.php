@@ -6,6 +6,7 @@ use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Comparator\Sorting\By;
 use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
@@ -535,5 +536,114 @@ final class EvenMoreStreamTest extends TestCase
         
         self::assertSame(10, $countAllInts->get());
         self::assertSame(6, $countIntsAtTheBeginning->get());
+    }
+    
+    /**
+     * @dataProvider getDataForTestWindow
+     */
+    public function test_window_with_reindex(int $size, int $step, $expected): void
+    {
+        if ($expected instanceof \Exception) {
+            $this->expectExceptionObject($expected);
+        }
+
+        $result = Stream::from(['a', 'b', 'c', 'd', 'e', 'f', 'g'])->window($size, $step, true)->toArrayAssoc();
+
+        self::assertSame($expected, $result);
+    }
+
+    public static function getDataForTestWindow(): array
+    {
+        return [
+            //size, step, expected
+            0 => [0, 1, new \InvalidArgumentException('Invalid param size')],
+                [1, 0, new \InvalidArgumentException('Invalid param step')],
+                [1, 1, [['a'], ['b'], ['c'], ['d'], ['e'], ['f'], ['g']]],
+                [1, 2, [['a'], ['c'], ['e'], ['g']]],
+                [1, 3, [['a'], ['d'], ['g']]],
+            5 => [1, 4, [['a'], ['e']]],
+                [1, 5, [['a'], ['f']]],
+                [1, 6, [['a'], ['g']]],
+                [1, 7, [['a']]],
+                [2, 1, [['a', 'b'], ['b', 'c'], ['c', 'd'], ['d', 'e'], ['e', 'f'], ['f', 'g']]],
+            10 => [2, 2, [['a', 'b'], ['c', 'd'], ['e', 'f'], ['g']]],
+                [2, 3, [['a', 'b'], ['d', 'e'], ['g']]],
+                [2, 4, [['a', 'b'], ['e', 'f']]],
+                [2, 5, [['a', 'b'], ['f', 'g']]],
+                [2, 6, [['a', 'b'], ['g']]],
+            15 => [2, 7, [['a', 'b']]],
+                [3, 1, [
+                    ['a', 'b', 'c'], ['b', 'c', 'd'], ['c', 'd', 'e'], ['d', 'e', 'f'], ['e', 'f', 'g']
+                ]],
+                [3, 2, [['a', 'b', 'c'], ['c', 'd', 'e'], ['e', 'f', 'g']]],
+                [3, 3, [['a', 'b', 'c'], ['d', 'e', 'f'], ['g']]],
+                [3, 4, [['a', 'b', 'c'], ['e', 'f', 'g']]],
+            20 => [3, 5, [['a', 'b', 'c'], ['f', 'g']]],
+                [3, 6, [['a', 'b', 'c'], ['g']]],
+                [4, 1, [['a', 'b', 'c', 'd'], ['b', 'c', 'd', 'e'], ['c', 'd', 'e', 'f'], ['d', 'e', 'f', 'g']]],
+                [4, 2, [['a', 'b', 'c', 'd'], ['c', 'd', 'e', 'f'], ['e', 'f', 'g']]],
+                [4, 3, [['a', 'b', 'c', 'd'], ['d', 'e', 'f', 'g']]],
+            25 => [4, 4, [['a', 'b', 'c', 'd'], ['e', 'f', 'g']]],
+                [4, 5, [['a', 'b', 'c', 'd'], ['f', 'g']]],
+                [4, 6, [['a', 'b', 'c', 'd'], ['g']]],
+                [4, 7, [['a', 'b', 'c', 'd']]],
+                [7, 1, [['a', 'b', 'c', 'd', 'e', 'f', 'g']]],
+            30 => [7, 2, [['a', 'b', 'c', 'd', 'e', 'f', 'g']]],
+                [8, 1, [['a', 'b', 'c', 'd', 'e', 'f', 'g']]],
+        ];
+    }
+
+    public function test_window_with_preserve_keys(): void
+    {
+        $result = Stream::from(['a', 'b', 'c', 'd', 'e', 'f'])->window(3, 2)->toArrayAssoc();
+
+        $expected = [
+            [0 => 'a', 'b', 'c'],
+            [2 => 'c', 'd', 'e'],
+            [4 => 'e', 'f'],
+        ];
+
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_fork_window(): void
+    {
+        $result = Stream::from(['a', 1, 'b', 2, 'c', 3, 4, 'd'])
+            ->fork(
+                Discriminators::yesNo('is_string', 'strings', 'integers'),
+                Stream::empty()->window(2)->collect()
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'strings' => [
+                [0 => 'a', 2 => 'b'],
+                [2 => 'b', 4 => 'c'],
+                [4 => 'c', 7 => 'd'],
+            ],
+            'integers' => [
+                [1 => 1, 3 => 2],
+                [3 => 2, 5 => 3],
+                [5 => 3, 6 => 4],
+            ],
+        ], $result);
+    }
+    
+    /**
+     * @dataProvider getDataForTestEveryNthElement
+     */
+    public function test_everyNth_element(int $num, array $expected): void
+    {
+        self::assertSame($expected, Stream::from(['a', 'b', 'c', 'd'])->everyNth($num)->toArrayAssoc());
+    }
+    
+    public static function getDataForTestEveryNthElement(): array
+    {
+        return [
+            [1, ['a', 'b', 'c', 'd']],
+            [2, ['a', 2 => 'c']],
+            [3, ['a', 3 => 'd']],
+            [4, ['a']],
+        ];
     }
 }

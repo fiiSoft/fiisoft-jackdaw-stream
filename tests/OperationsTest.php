@@ -20,6 +20,7 @@ use FiiSoft\Jackdaw\Operation\Chunk;
 use FiiSoft\Jackdaw\Operation\Classify;
 use FiiSoft\Jackdaw\Operation\CollectIn;
 use FiiSoft\Jackdaw\Operation\Dispatch;
+use FiiSoft\Jackdaw\Operation\EveryNth;
 use FiiSoft\Jackdaw\Operation\Flat;
 use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\Handlers;
 use FiiSoft\Jackdaw\Operation\Internal\Ending;
@@ -1474,6 +1475,13 @@ final class OperationsTest extends TestCase
             ->toArrayAssoc();
         
         self::assertSame($data, $result);
+    }
+    
+    public function test_EveryNth_throws_exception_when_param_num_is_invalid(): void
+    {
+        $this->expectExceptionObject(new \InvalidArgumentException('Invalid param num'));
+        
+        new EveryNth(0);
     }
     
     /**

@@ -11,6 +11,7 @@ use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Operation\Segregate\Bucket;
+use FiiSoft\Jackdaw\Operation\State\ItemBuffer\SingleItemBuffer;
 use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
@@ -614,6 +615,48 @@ final class DestroyTest extends TestCase
         self::assertSame(['a' => 0, 2 => '2'], $producer->stream()->toArrayAssoc());
         
         $producer->destroy();
+    }
+    
+    public function test_SendToMany_destroy(): void
+    {
+        $counter1 = Consumers::counter();
+        $counter2 = Consumers::counter();
+        
+        $stream = Stream::from([1, 2, 3])->call($counter1, $counter2);
+        $stream->run();
+        
+        self::assertSame($counter1->get(), $counter2->get());
+        
+        $stream->destroy();
+    }
+    
+    public function test_Window_destroy(): void
+    {
+        $stream = Stream::from(['a', 'b', 'c'])->window(2);
+        
+        self::assertSame([
+            [0 => 'a', 'b'],
+            [1 => 'b', 'c'],
+        ], $stream->toArray());
+        
+        $stream->destroy();
+    }
+    
+    public function test_SingleItemBuffer_destroy(): void
+    {
+        //given
+        $buffer = new SingleItemBuffer();
+        self::assertSame(0, $buffer->count());
+        
+        //when
+        $buffer->hold(new Item(3, 5));
+        //then
+        self::assertSame(1, $buffer->count());
+        
+        //when
+        $buffer->destroy();
+        //then
+        self::assertSame(0, $buffer->count());
     }
     
     /**

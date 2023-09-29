@@ -12,6 +12,7 @@ final class ConsumersTest extends TestCase
     public function test_getAdapter_throws_exception_on_invalid_argument(): void
     {
         $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid param consumer - int 15');
         
         Consumers::getAdapter(15);
     }

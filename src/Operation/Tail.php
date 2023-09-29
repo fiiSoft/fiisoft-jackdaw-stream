@@ -6,14 +6,15 @@ use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\DataCollector;
-use FiiSoft\Jackdaw\Operation\State\Tail\BufferNotFull;
-use FiiSoft\Jackdaw\Operation\State\Tail\State;
+use FiiSoft\Jackdaw\Operation\State\ItemBuffer\CircularItemBuffer;
+use FiiSoft\Jackdaw\Operation\State\ItemBuffer\ItemBuffer;
+use FiiSoft\Jackdaw\Operation\State\ItemBuffer\ItemBufferClient;
 use FiiSoft\Jackdaw\Producer\Producer;
 
-final class Tail extends BaseOperation implements DataCollector
+final class Tail extends BaseOperation implements DataCollector, ItemBufferClient
 {
-    private \SplFixedArray $buffer;
-    private State $state;
+    private ItemBuffer $buffer;
+    private int $length;
     
     public function __construct(int $length)
     {
@@ -21,28 +22,40 @@ final class Tail extends BaseOperation implements DataCollector
             throw new \InvalidArgumentException('Invalid param length');
         }
         
-        $this->buffer = new \SplFixedArray($length);
+        $this->length = $length;
         
-        $this->initializeState();
+        $this->prepareBuffer($this->length);
     }
     
-    private function initializeState(): void
+    protected function __clone()
     {
-        $this->state = new BufferNotFull($this, $this->buffer);
+        parent::__clone();
+        
+        $this->prepareBuffer($this->length);
+    }
+    
+    public function mergeWith(Tail $other): void
+    {
+        $this->prepareBuffer(\min($this->length(), $other->length()));
+    }
+    
+    private function prepareBuffer(int $size): void
+    {
+        $this->buffer = CircularItemBuffer::initial($this, $size);
     }
     
     public function handle(Signal $signal): void
     {
-        $this->state->hold($signal->item);
+        $this->buffer->hold($signal->item);
     }
     
     public function streamingFinished(Signal $signal): bool
     {
-        if ($this->state->count() === 0) {
+        if ($this->buffer->count() === 0) {
             return false;
         }
         
-        $producer = $this->state->bufferIterator();
+        $producer = $this->buffer->createProducer();
         
         if ($this->next instanceof DataCollector) {
             $signal->continueFrom($this->next);
@@ -55,36 +68,12 @@ final class Tail extends BaseOperation implements DataCollector
         return true;
     }
     
-    public function mergeWith(Tail $other): void
-    {
-        $this->state->setLength(\min($this->length(), $other->length()));
-    }
-    
-    public function length(): int
-    {
-        return $this->buffer->getSize();
-    }
-    
-    public function transitTo(State $state): void
-    {
-        $this->state = $state;
-    }
-    
-    protected function __clone()
-    {
-        $this->buffer = clone $this->buffer;
-        
-        parent::__clone();
-        
-        $this->initializeState();
-    }
-    
     public function collectDataFromProducer(Producer $producer, Signal $signal, bool $reindexed): bool
     {
         $item = $signal->item;
         
         foreach ($producer->feed($item) as $_) {
-            $this->state->hold($item);
+            $this->buffer->hold($item);
         }
         
         return $this->streamingFinished($signal);
@@ -107,7 +96,7 @@ final class Tail extends BaseOperation implements DataCollector
             
             $item = $signal->item;
             foreach ($tail as $item->key => $item->value) {
-                $this->state->hold($item);
+                $this->buffer->hold($item);
             }
         }
         
@@ -133,18 +122,27 @@ final class Tail extends BaseOperation implements DataCollector
             }
             
             foreach ($tail as $item) {
-                $this->state->hold($item);
+                $this->buffer->hold($item);
             }
         }
         
         return $this->streamingFinished($signal);
     }
     
+    public function setItemBuffer(ItemBuffer $buffer): void
+    {
+        $this->buffer = $buffer;
+    }
+    
+    public function length(): int
+    {
+        return $this->buffer->getLength();
+    }
+    
     public function destroy(): void
     {
         if (!$this->isDestroying) {
-            $this->state->destroy();
-            $this->buffer->setSize(0);
+            $this->buffer->destroy();
             
             parent::destroy();
         }

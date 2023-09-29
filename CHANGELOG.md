@@ -2,6 +2,11 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 6.2.0
+
+- added operations window() and everyNth()
+- minor internal changes and improvements
+
 ## 6.1.0
 
 Added new Stream methods: filterWhile(), filterUntil(), mapWhile(), mapUntil(), callWhile(), callUntil().

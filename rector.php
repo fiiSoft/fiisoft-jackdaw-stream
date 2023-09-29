@@ -34,6 +34,7 @@ use Rector\TypeDeclaration\Rector\ClassMethod\AddMethodCallBasedStrictParamTypeR
 use Rector\TypeDeclaration\Rector\ClassMethod\AddParamTypeBasedOnPHPUnitDataProviderRector;
 use Rector\TypeDeclaration\Rector\ClassMethod\AddReturnTypeDeclarationBasedOnParentClassMethodRector;
 use Rector\TypeDeclaration\Rector\ClassMethod\ParamTypeByParentCallTypeRector;
+use Rector\TypeDeclaration\Rector\ClassMethod\StrictStringParamConcatRector;
 use Rector\TypeDeclaration\Rector\Property\TypedPropertyFromAssignsRector;
 use Rector\TypeDeclaration\Rector\Property\TypedPropertyFromStrictConstructorRector;
 
@@ -85,5 +86,6 @@ return static function (RectorConfig $configurator): void {
         UnwrapFutureCompatibleIfPhpVersionRector::class,
         CallableThisArrayToAnonymousFunctionRector::class,
         ParenthesizeNestedTernaryRector::class,
+        StrictStringParamConcatRector::class,
     ]);
 };

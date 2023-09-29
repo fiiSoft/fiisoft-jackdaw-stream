@@ -79,7 +79,7 @@ final class OnErrorHandlersTest extends TestCase
         $output = \ob_get_clean();
         
         self::assertStringContainsString(
-            'Exception: RuntimeException, message: [456] Fake error, key: 1, value: foo',
+            'Exception: RuntimeException, message: [456] Fake error, key: int 1, value: string foo',
             $output
         );
     }
@@ -102,13 +102,13 @@ final class OnErrorHandlersTest extends TestCase
         
         return [
             //value, key, message
-            [null, 1, 'Exception: RuntimeException, key: 1, value: NULL'],
-            [true, 1, 'Exception: RuntimeException, key: 1, value: TRUE'],
-            [false, 1, 'Exception: RuntimeException, key: 1, value: FALSE'],
-            [[1,2,3], 1, 'Exception: RuntimeException, key: 1, value: array of length: 3 [1,2,3]'],
-            [$longArray, 1, 'Exception: RuntimeException, key: 1, value: array of length: 1 '.$json],
-            [new NullLogger(), 1, 'Exception: RuntimeException, key: 1, value: object of class: '.NullLogger::class],
-            [\fopen('php://memory', 'rb+'), 1, 'Exception: RuntimeException, key: 1, value: resource'],
+            [null, 1, 'Exception: RuntimeException, key: int 1, value: NULL'],
+            [true, 1, 'Exception: RuntimeException, key: int 1, value: TRUE'],
+            [false, 1, 'Exception: RuntimeException, key: int 1, value: FALSE'],
+            [[1,2,3], 1, 'Exception: RuntimeException, key: int 1, value: array of length 3 [1,2,3]'],
+            [$longArray, 1, 'Exception: RuntimeException, key: int 1, value: array of length 1 '.$json],
+            [new NullLogger(), 1, 'Exception: RuntimeException, key: int 1, value: object of class '.NullLogger::class],
+            [\fopen('php://memory', 'rb+'), 1, 'Exception: RuntimeException, key: int 1, value: resource'],
         ];
     }
     

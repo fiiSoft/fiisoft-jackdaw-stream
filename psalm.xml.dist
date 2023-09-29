@@ -67,5 +67,6 @@
         <MissingClosureParamType errorLevel="suppress" />
         <PropertyNotSetInConstructor errorLevel="suppress" />
         <MissingClosureReturnType errorLevel="suppress" />
+        <InvalidArrayOffset errorLevel="suppress" />
     </issueHandlers>
 </psalm>

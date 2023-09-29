@@ -812,6 +812,136 @@ final class PipeBuildTest extends TestCase
         ], $result);
     }
     
+    /**
+     * @dataProvider getDataForTestChunkKeysPreserveFlat
+     */
+    public function test_Chunk_keys_preserve_Flat(int $size, int $flatLevel, array $expected): void
+    {
+        self::assertSame(
+            $expected,
+            Stream::from([5 => 'a', 2 => 'b', 3 => 'c'])->chunk($size)->flat($flatLevel)->toArrayAssoc()
+        );
+    }
+    
+    public static function getDataForTestChunkKeysPreserveFlat(): array
+    {
+        $result = [5 => 'a', 2 => 'b', 3 => 'c'];
+        
+        return [
+            //chunkSize, flatLevel, expected
+            [1, 1, $result],
+            [2, 1, $result],
+            [3, 1, $result],
+            [1, 0, $result],
+            [2, 0, $result],
+            [3, 0, $result],
+        ];
+    }
+    
+    /**
+     * @dataProvider getDataForTestChunkKeysReindexFlat
+     */
+    public function test_Chunk_keys_reindex_Flat(int $size, int $flatLevel, array $expected): void
+    {
+        self::assertSame(
+            $expected,
+            Stream::from([5 => 'a', 2 => 'b', 3 => 'c'])
+                ->chunk($size, true)
+                ->flat($flatLevel)
+                ->makeTuple()
+                ->toArrayAssoc()
+        );
+    }
+    
+    public static function getDataForTestChunkKeysReindexFlat(): array
+    {
+        return [
+            //chunkSize, flatLevel, expected
+            [1, 1, [[0, 'a'], [0, 'b'], [0, 'c']]],
+            [2, 1, [[0, 'a'], [1, 'b'], [0, 'c']]],
+            [3, 1, [[0, 'a'], [1, 'b'], [2, 'c']]],
+            [1, 0, [[0, 'a'], [0, 'b'], [0, 'c']]],
+            [2, 0, [[0, 'a'], [1, 'b'], [0, 'c']]],
+            [3, 0, [[0, 'a'], [1, 'b'], [2, 'c']]],
+        ];
+    }
+    
+    public function test_EveryNth_one_element(): void
+    {
+        $data = ['a', 'b', 'c', 'd'];
+        
+        self::assertSame($data, Stream::from($data)->everyNth(1)->toArray());
+    }
+    
+    /**
+     * @dataProvider getDataForTestWindowKeysPreserveFlat
+     */
+    public function test_Window_keys_preserve_Flat(int $size, int $step, int $level, array $expected): void
+    {
+        self::assertSame(
+            $expected,
+            Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4])
+                ->window($size, $step)
+                ->flat($level)
+                ->makeTuple()
+                ->toArrayAssoc()
+        );
+    }
+    
+    public static function getDataForTestWindowKeysPreserveFlat(): array
+    {
+        $case1 = [['a', 1], ['b', 2], ['c', 3], ['d', 4]];
+        $case2 = [['a', 1], ['c', 3]];
+        $case3 = [['a', 1], ['b', 2], ['b', 2], ['c', 3], ['c', 3], ['d', 4]];
+        
+        return [
+            //windowSize, windowStep, flatLevel, expected
+            [1, 1, 1, $case1],
+            [1, 1, 0, $case1],
+            [1, 2, 1, $case2],
+            [1, 2, 0, $case2],
+            [2, 1, 1, $case3],
+            [2, 1, 0, $case3],
+            [2, 2, 1, $case1],
+            [2, 2, 0, $case1],
+        ];
+    }
+    
+    /**
+     * @dataProvider getDataForTestWindowKeysReindexFlat
+     */
+    public function test_Window_keys_reindex_Flat(int $size, int $step, int $level, array $expected): void
+    {
+        self::assertSame(
+            $expected,
+            Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4])
+                ->window($size, $step, true)
+                ->flat($level)
+                ->makeTuple()
+                ->toArrayAssoc()
+        );
+    }
+    
+    public static function getDataForTestWindowKeysReindexFlat(): array
+    {
+        $case1 = [[0, 1], [0, 2], [0, 3], [0, 4]];
+        $case2 = [[0, 1], [0, 3]];
+        $case3 = [[0, 1], [1, 2], [0, 2], [1, 3], [0, 3], [1, 4]];
+        $case4 = [[0, 1], [1, 2], [0, 3], [1, 4]];
+        
+        return [
+            //windowSize, windowStep, flatLevel, expected
+            0 => [1, 1, 1, $case1],
+                [1, 1, 0, $case1],
+                [1, 2, 1, $case2],
+                [1, 2, 0, $case2],
+                [2, 1, 1, $case3],
+            5 => [2, 1, 0, $case3],
+                [2, 2, 1, $case4],
+                [2, 2, 0, $case4],
+        ];
+    }
+    
     public function test_Segregate_Reindex_default(): void
     {
         $result = Stream::from([3, 1, 2, 1, 2])->segregate()->reindex()->toArrayAssoc();

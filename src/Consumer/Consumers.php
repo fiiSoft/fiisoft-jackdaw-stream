@@ -5,6 +5,7 @@ namespace FiiSoft\Jackdaw\Consumer;
 use FiiSoft\Jackdaw\Consumer\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Consumer\Adapter\RegWriterAdapter;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Registry\RegWriter;
 
@@ -35,7 +36,7 @@ final class Consumers
             return new RegWriterAdapter($consumer);
         }
     
-        throw new \InvalidArgumentException('Invalid param consumer');
+        throw new \InvalidArgumentException('Invalid param consumer - '.Helper::describe($consumer));
     }
     
     public static function counter(): Counter

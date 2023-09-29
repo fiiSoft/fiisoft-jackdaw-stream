@@ -12,6 +12,7 @@ use FiiSoft\Jackdaw\Operation\Categorize;
 use FiiSoft\Jackdaw\Operation\Chunk;
 use FiiSoft\Jackdaw\Operation\ChunkBy;
 use FiiSoft\Jackdaw\Operation\Classify;
+use FiiSoft\Jackdaw\Operation\EveryNth;
 use FiiSoft\Jackdaw\Operation\FilterMany;
 use FiiSoft\Jackdaw\Operation\Flat;
 use FiiSoft\Jackdaw\Operation\Flip;
@@ -39,6 +40,7 @@ use FiiSoft\Jackdaw\Operation\Reverse;
 use FiiSoft\Jackdaw\Operation\Scan;
 use FiiSoft\Jackdaw\Operation\Segregate;
 use FiiSoft\Jackdaw\Operation\SendTo;
+use FiiSoft\Jackdaw\Operation\SendToMany;
 use FiiSoft\Jackdaw\Operation\Shuffle;
 use FiiSoft\Jackdaw\Operation\Skip;
 use FiiSoft\Jackdaw\Operation\Sort;
@@ -59,6 +61,7 @@ use FiiSoft\Jackdaw\Operation\Tokenize;
 use FiiSoft\Jackdaw\Operation\Tuple;
 use FiiSoft\Jackdaw\Operation\Unique;
 use FiiSoft\Jackdaw\Operation\UnpackTuple;
+use FiiSoft\Jackdaw\Operation\Window;
 use FiiSoft\Jackdaw\Stream;
 
 final class Pipe extends ProtectedCloning implements Destroyable
@@ -333,10 +336,29 @@ final class Pipe extends ProtectedCloning implements Destroyable
                     $next->decreaseLevel();
                 }
             }
+            if ($this->last instanceof Chunk && !$this->last->isReindexed()) {
+                $this->last = $this->last->removeFromChain();
+                return !$next->isLevel(1);
+            }
         } elseif ($next instanceof SendTo) {
             if ($this->last instanceof SendTo) {
-                $this->last->mergeWith($next);
+                $sendToMany = $this->last->createSendToMany($next);
+                $this->last = $this->last->removeFromChain();
+                $this->append($sendToMany);
                 return false;
+            }
+            if ($this->last instanceof SendToMany) {
+                $this->last->addConsumers($next->consumer());
+                return false;
+            }
+        } elseif ($next instanceof SendToMany) {
+            if ($this->last instanceof SendToMany) {
+                $this->last->addConsumers(...$next->getConsumers());
+                return false;
+            }
+            if ($this->last instanceof SendTo) {
+                $next->addConsumers($this->last->consumer());
+                $this->last = $this->last->removeFromChain();
             }
         } elseif ($next instanceof Sort
             || $next instanceof SortLimited
@@ -470,6 +492,11 @@ final class Pipe extends ProtectedCloning implements Destroyable
             }
         } elseif ($next instanceof Until && $next->canBeInversed()) {
             $this->append($next->createInversed());
+            return false;
+        } elseif ($next instanceof Window && $next->isLikeChunk()) {
+            $stream->chunk($next->size(), $next->reindex());
+            return false;
+        } elseif ($next instanceof EveryNth && $next->num() === 1) {
             return false;
         }
         
