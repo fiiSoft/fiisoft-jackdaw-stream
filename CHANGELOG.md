@@ -2,6 +2,10 @@
 
 All important changes to `fiisoft-jackdaw-stream` will be documented in this file
 
+## 6.3.0
+
+Library ready for PHP 8.3
+
 ## 6.2.0
 
 - added operations window() and everyNth()

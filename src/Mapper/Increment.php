@@ -20,7 +20,7 @@ final class Increment extends BaseMapper
     /**
      * @inheritDoc
      */
-    public function map($value, $key)
+    public function map($value, $key): int
     {
         if (\is_int($value)) {
             return $value + $this->step;
