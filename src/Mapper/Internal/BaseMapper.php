@@ -16,16 +16,49 @@ abstract class BaseMapper implements Mapper
         return false;
     }
     
-    public function isStateless(): bool
+    /**
+     * @inheritDoc
+     */
+    public function equals(Mapper $other): bool
     {
-        return false;
+        return $this === $other
+            || (
+                $this instanceof $other
+                && $this->isStateless()
+                && $other instanceof BaseMapper
+                && $other->isStateless()
+            );
     }
     
-    public function makeKeyMapper(): Mapper
+    abstract protected function isStateless(): bool;
+    
+    /**
+     * @inheritDoc
+     */
+    final public function makeKeyMapper(): Mapper
     {
         $copy = clone $this;
         $copy->isValueMapper = false;
         
         return $copy;
+    }
+    
+    final public function buildStream(iterable $stream): iterable
+    {
+        return $this->isValueMapper ? $this->buildValueMapper($stream) : $this->buildKeyMapper($stream);
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => $this->map($value, $key);
+        }
+    }
+    
+    protected function buildKeyMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $this->map($value, $key) => $value;
+        }
     }
 }

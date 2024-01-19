@@ -8,9 +8,14 @@ use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Mapper\Adapter\DiscriminatorAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\GeneratorAdapter;
-use FiiSoft\Jackdaw\Mapper\Adapter\ProducerAdadpter;
+use FiiSoft\Jackdaw\Mapper\Adapter\ProducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\RegistryAdapter;
+use FiiSoft\Jackdaw\Mapper\Cast\ToArray;
+use FiiSoft\Jackdaw\Mapper\Cast\ToBool;
+use FiiSoft\Jackdaw\Mapper\Cast\ToFloat;
+use FiiSoft\Jackdaw\Mapper\Cast\ToInt;
+use FiiSoft\Jackdaw\Mapper\Cast\ToString;
 use FiiSoft\Jackdaw\Mapper\Internal\MultiMapper;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
@@ -70,7 +75,7 @@ final class Mappers
                 }
             }
             
-            return new GenericMapper($mapper);
+            return GenericMapper::create($mapper);
         }
     
         if ($mapper instanceof Reducer) {
@@ -98,7 +103,7 @@ final class Mappers
         }
         
         if ($mapper instanceof Producer) {
-            return new ProducerAdadpter($mapper);
+            return new ProducerAdapter($mapper);
         }
         
         if ($mapper instanceof \Generator) {
@@ -125,7 +130,7 @@ final class Mappers
      */
     public static function toInt($fields = null): Mapper
     {
-        return new ToInt($fields);
+        return ToInt::create($fields);
     }
     
     /**
@@ -133,7 +138,7 @@ final class Mappers
      */
     public static function toString($fields = null): Mapper
     {
-        return new ToString($fields);
+        return ToString::create($fields);
     }
     
     /**
@@ -141,7 +146,7 @@ final class Mappers
      */
     public static function toFloat($fields = null): Mapper
     {
-        return new ToFloat($fields);
+        return ToFloat::create($fields);
     }
     
     /**
@@ -149,7 +154,7 @@ final class Mappers
      */
     public static function toBool($fields = null): Mapper
     {
-        return new ToBool($fields);
+        return ToBool::create($fields);
     }
     
     public static function toArray(bool $appendKey = false): Mapper
@@ -205,7 +210,7 @@ final class Mappers
      */
     public static function extract($fields, $orElse = null): Mapper
     {
-        return new Extract($fields, $orElse);
+        return Extract::create($fields, $orElse);
     }
     
     /**
@@ -242,12 +247,12 @@ final class Mappers
         return new Remove($fields);
     }
     
-    public static function jsonEncode(int $flags = 0): Mapper
+    public static function jsonEncode(?int $flags = null): Mapper
     {
         return new JsonEncode($flags);
     }
     
-    public static function jsonDecode(int $flags = 0, bool $associative = true): Mapper
+    public static function jsonDecode(?int $flags = null, bool $associative = true): Mapper
     {
         return new JsonDecode($flags, $associative);
     }
@@ -258,7 +263,7 @@ final class Mappers
      */
     public static function moveTo($field, $key = null): Mapper
     {
-        return new MoveTo($field, $key);
+        return MoveTo::create($field, $key);
     }
     
     /**

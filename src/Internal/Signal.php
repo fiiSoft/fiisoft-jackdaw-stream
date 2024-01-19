@@ -44,11 +44,6 @@ final class Signal extends Collaborator
         $this->stream->continueWith($producer, $operation);
     }
     
-    public function continueFrom(Operation $operation): void
-    {
-        $this->stream->continueFrom($operation);
-    }
-    
     public function forget(Operation $operation): void
     {
         $this->stream->forget($operation);

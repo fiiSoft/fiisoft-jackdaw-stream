@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class Concat extends BaseMapper
+final class Concat extends StateMapper
 {
     private string $separator;
     
@@ -13,12 +13,18 @@ final class Concat extends BaseMapper
         $this->separator = $separator;
     }
     
-    public function map($value, $key): string
+    /**
+     * @inheritDoc
+     */
+    public function map($value, $key = null): string
     {
-        if (\is_array($value)) {
-            return \implode($this->separator, $value);
-        }
+        return \implode($this->separator, $value);
+    }
     
-        throw new \LogicException('Unable to concat something which is not an array');
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => \implode($this->separator, $value);
+        }
     }
 }

@@ -4,21 +4,21 @@ namespace FiiSoft\Jackdaw\Discriminator\Adapter;
 
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Internal\Check;
 
 final class FilterAdapter implements Discriminator
 {
     private Filter $filter;
-    private int $mode;
     
-    public function __construct(Filter $filter, int $mode = Check::VALUE)
+    public function __construct(Filter $filter)
     {
         $this->filter = $filter;
-        $this->mode = Check::getMode($mode);
     }
     
-    public function classify($value, $key): bool
+    /**
+     * @inheritDoc
+     */
+    public function classify($value, $key = null): bool
     {
-        return $this->filter->isAllowed($value, $key, $this->mode);
+        return $this->filter->isAllowed($value, $key);
     }
 }

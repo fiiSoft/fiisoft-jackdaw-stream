@@ -4,12 +4,13 @@ namespace FiiSoft\Jackdaw\Producer;
 
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class QueueProducer extends CountableProducer implements Consumer
+final class QueueProducer extends BaseProducer implements Consumer
 {
     /** @var Item[] */
     private array $buffer = [];
+    
     private int $autoKey = 0;
     
     public function __construct(array $elements = [])
@@ -17,17 +18,14 @@ final class QueueProducer extends CountableProducer implements Consumer
         $this->appendMany($elements);
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         \reset($this->buffer);
         
         while (!empty($this->buffer)) {
             $first = \array_shift($this->buffer);
             
-            $item->key = $first->key;
-            $item->value = $first->value;
-            
-            yield;
+            yield $first->key => $first->value;
         }
     }
     
@@ -89,22 +87,6 @@ final class QueueProducer extends CountableProducer implements Consumer
     public function consume($value, $key): void
     {
         $this->buffer[] = new Item($key ?? $this->autoKey++, $value);
-    }
-    
-    public function count(): int
-    {
-        return \count($this->buffer);
-    }
-    
-    public function getLast(): ?Item
-    {
-        if (empty($this->buffer)) {
-            return null;
-        }
-        
-        $last = \array_key_last($this->buffer);
-        
-        return $this->buffer[$last]->copy();
     }
     
     public function destroy(): void

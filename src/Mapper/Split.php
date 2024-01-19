@@ -2,24 +2,34 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class Split extends BaseMapper
+final class Split extends StateMapper
 {
     private string $separator;
     
     public function __construct(string $separator = ' ')
     {
-        $this->separator = $separator;
+        if ($separator !== '') {
+            $this->separator = $separator;
+        } else {
+            throw InvalidParamException::byName('separator');
+        }
     }
     
-    public function map($value, $key): array
+    /**
+     * @inheritDoc
+     */
+    public function map($value, $key = null): array
     {
-        if (\is_string($value)) {
-            return \explode($this->separator, $value);
+        return \explode($this->separator, $value);
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => \explode($this->separator, $value);
         }
-        
-        throw new \LogicException('It is impossible to handle '.Helper::typeOfParam($value).' as string');
     }
 }

@@ -4,14 +4,11 @@ namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Stream;
-use FiiSoft\Jackdaw\StreamMaker;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
 
 final class ResultItem implements ResultApi
 {
-    private ?StreamMaker $stream = null;
-    
     private bool $found = false;
     private bool $isDestroying = false;
     
@@ -110,8 +107,6 @@ final class ResultItem implements ResultApi
                 : $this->rawValue;
         }
         
-        $this->stream = null;
-    
         return $this;
     }
     
@@ -206,11 +201,7 @@ final class ResultItem implements ResultApi
      */
     public function stream(): Stream
     {
-        if ($this->stream === null) {
-            $this->stream = StreamMaker::from($this->toArrayAssoc());
-        }
-        
-        return $this->stream->start();
+        return Stream::from($this);
     }
     
     /**
@@ -227,6 +218,23 @@ final class ResultItem implements ResultApi
         }
         
         return 0;
+    }
+    
+    public function getIterator(): \Iterator
+    {
+        if ($this->found || $this->finalValue !== null) {
+            if (\is_array($this->finalValue)) {
+                return new \ArrayIterator($this->finalValue);
+            }
+        
+            if ($this->finalValue instanceof \Iterator) {
+                return $this->finalValue;
+            }
+    
+            return new \ArrayIterator([$this->key ?? 0 => $this->finalValue]);
+        }
+        
+        return new \ArrayIterator([]);
     }
     
     private function asArray(bool $preserveKeys = true): ?array
@@ -257,12 +265,6 @@ final class ResultItem implements ResultApi
             
             $this->finalValue = null;
             $this->rawValue = null;
-            
-            if ($this->stream !== null) {
-                $temp = $this->stream;
-                $this->stream = null;
-                $temp->destroy();
-            }
         }
     }
 }

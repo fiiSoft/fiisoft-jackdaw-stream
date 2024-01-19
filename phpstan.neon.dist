@@ -1,27 +1,40 @@
 parameters:
-    level: 6
+    level: 7
     checkMissingIterableValueType: false
     treatPhpDocTypesAsCertain: false
     checkGenericClassInNonGenericObjectType: false
     excludePaths:
         analyse:
-            - src/*/FieldsComparator.php
-            - src/Internal/Collection/StreamCollection.php
-            - src/Internal/Iterator/StreamIterator.php
+            - src/Filter/OnlyIn/Mixed/MixedBothOnlyIn.php
     ignoreErrors:
         - '#Call to protected method*#'
+        - '#Parameter \#1 \$stream of class FiiSoft\\Jackdaw\\Operation\\Sending\\Feed constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
+        - '#Parameter \#1 ...\$streams of class FiiSoft\\Jackdaw\\Operation\\Sending\\FeedMany constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
+        - '#Property FiiSoft\\Jackdaw\\Consumer\\Reference::\$value is never read, only written.#'
+        - '#Property FiiSoft\\Jackdaw\\Consumer\\Reference::\$key is never read, only written.#'
+        - '#Parameter \#4 \$length of function substr_compare expects int, null given.#'
+        - '#Property FiiSoft\\Jackdaw\\Collector\\Adapter\\ArrayAccessAdapter::\$buffer is never read, only written.#'
         -
-            message: '#Parameter \#1 \$stream of class FiiSoft\\Jackdaw\\Operation\\Internal\\Feed constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
-            path: 'src/Stream.php'
+            message: '#Cannot assign offset int\|string to SplFixedArray.#'
+            path: 'src/Collector/Adapter/Iterable/SplFixedArrayAdapter.php'
         -
-            message: '#Parameter \#1 ...\$streams of class FiiSoft\\Jackdaw\\Operation\\Internal\\FeedMany constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
-            path: 'src/Stream.php'
+            message: '#Parameter \#1 \$function of class ReflectionFunction constructor expects Closure\|string, callable\(\): mixed given.#'
+            path: 'src/Internal/Helper.php'
         -
-            message: '#Property FiiSoft\\Jackdaw\\Operation\\StoreIn::\$buffer is never read, only written.#'
-            path: 'src/Operation/StoreIn.php'
+            message: '#Method FiiSoft\\Jackdaw\\Mapper\\JsonEncode::map\(\) should return string but returns string\|false.#'
+            path: 'src/Mapper/JsonEncode.php'
         -
-            message: '#Parameter \#4 \$length of function substr_compare expects int, null given.#'
-            path: 'src/Comparator/Basic/FieldsComparator.php'
+            message: '#Method FiiSoft\\Jackdaw\\Mapper\\Split::map\(\) should return array but returns array<int, string>\|false.#'
+            path: 'src/Mapper/Split.php'
         -
-            message: '#Property FiiSoft\\Jackdaw\\Collector\\Adapter\\ArrayAccessAdapter::\$buffer is never read, only written.#'
-            path: 'src/Collector/Adapter/ArrayAccessAdapter.php'
+            message: '#Parameter \#2 \$length of function fgets expects int<0, max>, int given.#'
+            path: 'src/Producer/Resource/TextFileReader.php'
+        -
+            message: '#Cannot access an offset on *#'
+            path: 'src/Producer/Producers.php'
+        -
+            message: '#Parameter \#1 \$operation of method FiiSoft\\Jackdaw\\Internal\\Pipe::replaceLastOperation\(\) expects FiiSoft\\Jackdaw\\Operation\\Operation, FiiSoft\\Jackdaw\\Operation\\Internal\\Limitable given.#'
+            path: 'src/Internal/Pipe.php'
+        -
+            message: '#Parameter \#1 \$buffer of class FiiSoft\\Jackdaw\\Producer\\Internal\\CircularBufferIterator constructor expects .*#'
+            path: 'src/Operation/Internal/ItemBuffer/CircularItemBuffer.php'

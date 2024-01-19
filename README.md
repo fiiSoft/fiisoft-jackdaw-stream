@@ -2,15 +2,16 @@
 
 Let's wrap native PHP array operations into stream-like wrappers, similar to Java and Scala. And... here we are! 
 
-Of course, it's not as fast as clean PHP - and will never be, because it's impossible - but is fast enough. 
+This library comes with tons of unique features not available elsewhere. Will you ever need them? No, never.  
+ 
 
-Previously was here: ~~this is the fastest library of its kind in complex scenarios which I've found so far~~ - but it's not so simple actually. Memory consumption and execution speed vary greatly not only from the type of data and the type of operations performed on it, but also from version of PHP, version of libraries and even if you run it as a native process or in a docker with the same version of PHP! So, it depends.
+### How to install?
 
-Is it bugged? I hope not. But even so, it's still great and fun to play. 
+Use composer (`fiisoft/jackdaw-stream`). Code is compatible with PHP 7.4 up to the newest version.
 
 ### How to start?
 
-It all starts with Stream::from(...). For example:
+Typically it starts with Stream::from(...). For example:
 
 ```php
 Stream::from(Producers::sequentialInt())
@@ -22,8 +23,14 @@ Stream::from(Producers::sequentialInt())
 
 Let it flow!
 
+### Documentation
+
+Does not exist. Sorry.
+
+Class Stream is the entry point to this code, so look at public methods of this class, and their typehints. Analyse examples and tests.
+
 ### Disclaimer
 
-I can change anything in this library without warning, although I'm trying to keep semantic versioning.
+I can change anything in this library without warning, although I try to keep semantic versioning.
 
-And as always: don't use it unless you're mentally strong enough to be immune to such bad code (and my bad English too). 
+And as always: don't use it unless you're mentally strong enough to be immune to such bad code (and my bed English too). 

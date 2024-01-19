@@ -2,11 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Mapper\Adapter;
 
-use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
-final class ReducerAdapter extends BaseMapper
+final class ReducerAdapter extends StateMapper
 {
     private Reducer $reducer;
     
@@ -18,18 +17,27 @@ final class ReducerAdapter extends BaseMapper
     /**
      * @inheritDoc
      */
-    public function map($value, $key)
+    public function map($value, $key = null)
     {
-        if (\is_iterable($value)) {
-            $this->reducer->reset();
-            
-            foreach ($value as $item) {
-                $this->reducer->consume($item);
-            }
-    
-            return $this->reducer->hasResult() ? $this->reducer->result() : null;
+        $this->reducer->reset();
+        
+        foreach ($value as $v) {
+            $this->reducer->consume($v);
         }
         
-        throw new \LogicException('Unable to reduce '.Helper::typeOfParam($value).' because it is not iterable');
+        return $this->reducer->hasResult() ? $this->reducer->result() : null;
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            $this->reducer->reset();
+            
+            foreach ($value as $v) {
+                $this->reducer->consume($v);
+            }
+            
+            yield $key => $this->reducer->hasResult() ? $this->reducer->result() : null;
+        }
     }
 }

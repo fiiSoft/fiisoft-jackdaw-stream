@@ -2,12 +2,11 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
-use FiiSoft\Jackdaw\Operation\Internal\ReduceFinalOperation;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 
-final class Fold extends ReduceFinalOperation
+final class Fold extends ReduceFinal
 {
     /**
      * @param Stream $stream

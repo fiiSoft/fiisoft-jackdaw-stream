@@ -2,7 +2,6 @@
 
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
-use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidProvider;
 use FiiSoft\Jackdaw\Producer\Tech\LimitedProducer;
@@ -18,21 +17,12 @@ final class RandomUuid extends LimitedProducer
         $this->provider = $provider ?? UuidProvider::default();
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         $count = 0;
         
         while ($count !== $this->limit) {
-            
-            $item->key = $count++;
-            $item->value = $this->provider->create();
-            
-            yield;
+            yield $count++ => $this->provider->create();
         }
-    }
-    
-    public function getLast(): ?Item
-    {
-        return null;
     }
 }

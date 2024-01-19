@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class FieldValue extends BaseMapper
+final class FieldValue extends StateMapper
 {
     /** @var string|int */
     private $field;
@@ -15,30 +15,22 @@ final class FieldValue extends BaseMapper
      */
     public function __construct($field)
     {
-        if (Helper::isFieldValid($field)) {
-            $this->field = $field;
-        } else {
-            throw new \InvalidArgumentException('Invalid param field');
-        }
+        $this->field = Helper::validField($field, 'field');
     }
     
-    public function map($value, $key)
+    /**
+     * @inheritDoc
+     */
+    public function map($value, $key = null)
     {
-        if (\is_array($value)) {
-            if (!\array_key_exists($this->field, $value)) {
-                throw new \RuntimeException('Cannot extract value of field '.$this->field);
-            }
-        } elseif ($value instanceof \ArrayAccess) {
-            if (!isset($value[$this->field])) {
-                throw new \RuntimeException('Cannot extract value of field '.$this->field);
-            }
-        } else {
-            throw new \LogicException(
-                'It is impossible to extract field '.$this->field.' from '.Helper::typeOfParam($value)
-            );
-        }
-        
         return $value[$this->field];
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => $value[$this->field];
+        }
     }
     
     public function mergeWith(Mapper $other): bool

@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class Simple extends BaseMapper
+final class Simple extends StateMapper
 {
     /** @var mixed */
     private $value;
@@ -17,9 +17,26 @@ final class Simple extends BaseMapper
         $this->value = $value;
     }
     
-    public function map($value, $key)
+    /**
+     * @inheritDoc
+     */
+    public function map($value, $key = null)
     {
         return $this->value;
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $_) {
+            yield $key => $this->value;
+        }
+    }
+    
+    protected function buildKeyMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $value) {
+            yield $this->value => $value;
+        }
     }
     
     public function mergeWith(Mapper $other): bool

@@ -2,10 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Producer\Adapter;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class ReferenceAdapter extends NonCountableProducer
+final class ReferenceAdapter extends BaseProducer
 {
     /** @var mixed */
     private $variable;
@@ -20,13 +19,10 @@ final class ReferenceAdapter extends NonCountableProducer
         $this->variable = &$variable;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         while ($this->variable !== null) {
-            $item->key = $this->index++;
-            $item->value = $this->variable;
-            
-            yield;
+            yield $this->index++ => $this->variable;
         }
     }
 }

@@ -8,8 +8,6 @@
         Default ruleset for project.
     </description>
 
-    <exclude-pattern>*PushProducer.php</exclude-pattern>
-
     <rule ref="rulesets/cleancode.xml">
         <exclude name="BooleanArgumentFlag"/>
         <exclude name="MissingImport"/>
@@ -22,6 +20,7 @@
         <exclude name="CouplingBetweenObjects"/>
         <exclude name="NumberOfChildren"/>
         <exclude name="GotoStatement"/>
+        <exclude name="DepthOfInheritance"/>
     </rule>
 
     <rule ref="rulesets/codesize.xml">
@@ -33,6 +32,7 @@
         <exclude name="TooManyMethods"/>
         <exclude name="ExcessiveClassLength"/>
         <exclude name="ExcessivePublicCount"/>
+        <exclude name="TooManyFields"/>
     </rule>
 
     <rule ref="rulesets/naming.xml">
@@ -44,6 +44,7 @@
     <rule ref="rulesets/unusedcode.xml">
         <exclude name="UnusedLocalVariable"/>
         <exclude name="UnusedFormalParameter"/>
+        <exclude name="UnusedPrivateMethod"/>
     </rule>
 
     <rule ref="rulesets/controversial.xml">

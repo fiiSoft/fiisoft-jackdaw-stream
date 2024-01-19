@@ -40,7 +40,7 @@ final class ArrayAdapter extends BaseIterableCollector
         $this->storage = [];
     }
     
-    public function getData(): array
+    public function toArray(): array
     {
         return $this->storage;
     }

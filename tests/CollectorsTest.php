@@ -2,9 +2,11 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Collector\Adapter\Exception\CollectorExceptionFactory;
 use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Collector\DefaultCollector;
 use FiiSoft\Jackdaw\Collector\IterableCollector;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
 
@@ -24,14 +26,14 @@ final class CollectorsTest extends TestCase
     
     public function test_getAdapter_throws_exception_on_invalid_argument(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('collector'));
         
         Collectors::getAdapter(15);
     }
     
-    public function test_ierable_throws_exception_on_invalid_argument(): void
+    public function test_iterable_throws_exception_on_invalid_argument(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('collector'));
         
         Collectors::iterable(15);
     }
@@ -62,21 +64,21 @@ final class CollectorsTest extends TestCase
         $collector2->add(9);
         
         //then
-        self::assertSame([1, 3, 5, 7, 9], $collector1->getData());
-        self::assertSame([1, 3, 5, 7, 9], $collector2->getData());
+        self::assertSame([1, 3, 5, 7, 9], $collector1->toArray());
+        self::assertSame([1, 3, 5, 7, 9], $collector2->toArray());
     }
     
     public function test_ArrayObject_collector_can_be_cleared(): void
     {
         //given
         $collector = Collectors::iterable(new \ArrayObject([1,3,5]));
-        self::assertSame([1, 3, 5], $collector->getData());
+        self::assertSame([1, 3, 5], $collector->toArray());
         
         //when
         $collector->clear();
         
         //then
-        self::assertEmpty($collector->getData());
+        self::assertEmpty($collector->toArray());
     }
     
     public function test_ArrayObject_collector_can_create_stream(): void
@@ -105,8 +107,8 @@ final class CollectorsTest extends TestCase
         $collector2->add('y');
         
         //then
-        self::assertSame(['a', 'b'], $collector1->getData());
-        self::assertSame(['x', 'y'], $collector2->getData());
+        self::assertSame(['a', 'b'], $collector1->toArray());
+        self::assertSame(['x', 'y'], $collector2->toArray());
     }
     
     public function test_default_collector_can_be_emptied(): void
@@ -115,13 +117,13 @@ final class CollectorsTest extends TestCase
         $collector = Collectors::default();
         $collector->add('a');
         
-        self::assertSame(['a'], $collector->getData());
+        self::assertSame(['a'], $collector->toArray());
         
         //when
         $collector->clear();
         
         //then
-        self::assertEmpty($collector->getData());
+        self::assertEmpty($collector->toArray());
     }
     
     public function test_default_collector_can_be_iterable(): void
@@ -234,7 +236,7 @@ final class CollectorsTest extends TestCase
         
         $expected = [8, 2, 5];
         
-        self::assertSame($expected, $collector->getData());
+        self::assertSame($expected, $collector->toArray());
         self::assertSame($expected, \iterator_to_array($collector));
         self::assertSame($expected, $collector->stream()->toArray());
         
@@ -250,7 +252,7 @@ final class CollectorsTest extends TestCase
         $collector->clear();
         
         self::assertSame(0, $collector->count());
-        self::assertEmpty($collector->getData());
+        self::assertEmpty($collector->toArray());
         self::assertSame('', $collector->toString());
         self::assertSame('[]', $collector->toJson());
         self::assertTrue($collector->stream()->isEmpty()->get());
@@ -279,10 +281,10 @@ final class CollectorsTest extends TestCase
             ->run();
         
         if ($wrapped instanceof DefaultCollector) {
-            self::assertSame($expected, $wrapped->getData());
+            self::assertSame($expected, $wrapped->toArray());
         } elseif ($wrapped instanceof \SplFixedArray) {
             if ($collector instanceof IterableCollector) {
-                self::assertSame($expected, $collector->getData());
+                self::assertSame($expected, $collector->toArray());
             }
         } elseif ($wrapped instanceof \Traversable) {
             self::assertSame($expected, \iterator_to_array($wrapped));
@@ -313,9 +315,9 @@ final class CollectorsTest extends TestCase
             ->run();
         
         if ($wrapped instanceof DefaultCollector) {
-            self::assertSame($expected, $wrapped->getData());
+            self::assertSame($expected, $wrapped->toArray());
         } elseif ($wrapped instanceof \SplFixedArray) {
-            self::assertSame($expected, $collector->getData());
+            self::assertSame($expected, $collector->toArray());
         } elseif ($wrapped instanceof \Traversable) {
             self::assertSame($expected, \iterator_to_array($wrapped, true));
         }
@@ -346,9 +348,9 @@ final class CollectorsTest extends TestCase
         $expected = ['b', 'c', 'a'];
         
         if ($wrapped instanceof DefaultCollector) {
-            self::assertSame($expected, $wrapped->getData());
+            self::assertSame($expected, $wrapped->toArray());
         } elseif ($wrapped instanceof \SplFixedArray) {
-            self::assertSame($expected, $collector->getData());
+            self::assertSame($expected, $collector->toArray());
         } elseif ($wrapped instanceof \Traversable) {
             self::assertSame($expected, \iterator_to_array($wrapped, true));
         }
@@ -361,9 +363,9 @@ final class CollectorsTest extends TestCase
             ->run();
         
         if ($wrapped instanceof DefaultCollector) {
-            self::assertSame($expected, $wrapped->getData());
+            self::assertSame($expected, $wrapped->toArray());
         } elseif ($wrapped instanceof \SplFixedArray) {
-            self::assertSame($expected, $collector->getData());
+            self::assertSame($expected, $collector->toArray());
         } elseif ($wrapped instanceof \ArrayIterator) {
             self::assertSame($expected, \iterator_to_array($wrapped, false));
         } elseif ($wrapped instanceof \Traversable) {
@@ -387,8 +389,7 @@ final class CollectorsTest extends TestCase
      */
     public function test_some_adapters_throw_exception_when_key_is_set($splObject): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('You cannot keep keys and values in '.\get_class($splObject));
+        $this->expectExceptionObject(CollectorExceptionFactory::cannotSetKeys($splObject));
         
         $collector = Collectors::getAdapter($splObject);
         $collector->set(1, 2);
@@ -469,12 +470,12 @@ final class CollectorsTest extends TestCase
         $collector = Collectors::default();
         
         Stream::from($data)->collectIn($collector)->run();
-        self::assertSame($data, $collector->getData());
+        self::assertSame($data, $collector->toArray());
         
         $collector->clear();
         $collector->allowKeys(false);
         
         Stream::from($data)->collectIn($collector)->run();
-        self::assertSame(\array_values($data), $collector->getData());
+        self::assertSame(\array_values($data), $collector->toArray());
     }
 }

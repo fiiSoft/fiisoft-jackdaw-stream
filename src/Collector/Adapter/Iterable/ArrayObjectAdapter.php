@@ -14,7 +14,7 @@ final class ArrayObjectAdapter extends BaseIterableCollector
         
         $this->buffer = $buffer;
     }
-
+    
     public function set($key, $value): void
     {
         $this->buffer[$key] = $value;
@@ -25,7 +25,7 @@ final class ArrayObjectAdapter extends BaseIterableCollector
         $this->buffer[] = $value;
     }
     
-    public function getData(): array
+    public function toArray(): array
     {
         return $this->buffer->getArrayCopy();
     }

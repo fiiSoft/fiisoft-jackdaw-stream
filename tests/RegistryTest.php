@@ -5,6 +5,7 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Producer\Producers;
+use FiiSoft\Jackdaw\Registry\Exception\RegistryExceptionFactory;
 use FiiSoft\Jackdaw\Registry\Registry;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
@@ -49,8 +50,7 @@ final class RegistryTest extends TestCase
     
     public function test_exception_is_thrown_when_name_of_value_and_key_are_the_same(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Parameters value and key cannot be the same');
+        $this->expectExceptionObject(RegistryExceptionFactory::parametersValueAndKeyCannotBeTheSame());
         
         Registry::new()->valueKey('foo', 'foo');
     }
@@ -91,6 +91,29 @@ final class RegistryTest extends TestCase
         self::assertSame([1 => 'g', 0 => 'F', 2 => 'd'], $result);
     }
     
+    public function test_Registry_allows_to_map_and_read_value(): void
+    {
+        $value = Registry::new()->entry(Check::VALUE, 0);
+        $keys = Producers::getAdapter(['a', 'B', 'c', 'd', 'E', 'F', 'g']);
+        
+        $result = Stream::from($value)
+            ->mapKey($keys)
+            ->while('is_string', Check::KEY)
+            ->callWhen(
+                static fn($_, string $k): bool => \strtoupper($k) === $k,
+                static function () use ($value) {
+                    $value->set(0);
+                },
+                static function () use ($value) {
+                    $value->set($value->get() + 1);
+                }
+            )
+            ->map($value)
+            ->toArrayAssoc();
+        
+        self::assertSame(['a' => 1, 'B' => 0, 'c' => 1, 'd' => 2, 'E' => 0, 'F' => 0, 'g' => 1], $result);
+    }
+    
     public function test_Registry_allows_to_create_keyValue_tuple_reader_writer(): void
     {
         $tuple = Registry::new()->entry(Check::BOTH, ['c', 5]);
@@ -119,8 +142,7 @@ final class RegistryTest extends TestCase
     
     public function test_TupleWriter_throws_exception_when_set_value_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param value - null or tuple [key,value] is required');
+        $this->expectExceptionObject(RegistryExceptionFactory::cannotSetValue());
         
         Registry::new()->entry(Check::BOTH, 'wrong value');
     }
@@ -155,8 +177,7 @@ final class RegistryTest extends TestCase
     
     public function test_FullWriter_throws_exception_when_set_value_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('FullWriter requires null or tuple [key,value] to set directly');
+        $this->expectExceptionObject(RegistryExceptionFactory::cannotSetValue());
         
         Registry::new()->valueKey('value', 'key')->set('wrong value');
     }

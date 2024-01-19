@@ -4,8 +4,8 @@ namespace FiiSoft\Jackdaw\Consumer;
 
 use FiiSoft\Jackdaw\Consumer\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Consumer\Adapter\RegWriterAdapter;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Registry\RegWriter;
 
@@ -21,7 +21,7 @@ final class Consumers
         }
     
         if (\is_callable($consumer)) {
-            return new GenericConsumer($consumer);
+            return GenericConsumer::create($consumer);
         }
     
         if (\is_resource($consumer)) {
@@ -36,7 +36,7 @@ final class Consumers
             return new RegWriterAdapter($consumer);
         }
     
-        throw new \InvalidArgumentException('Invalid param consumer - '.Helper::describe($consumer));
+        throw InvalidParamException::describe('consumer', $consumer);
     }
     
     public static function counter(): Counter
@@ -90,5 +90,10 @@ final class Consumers
     public static function sendValueKeyTo(&$value, &$key): Consumer
     {
         return new Reference($value, $key);
+    }
+    
+    public static function idle(): Consumer
+    {
+        return new Idle();
     }
 }

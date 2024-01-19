@@ -3,34 +3,31 @@
 namespace FiiSoft\Jackdaw\Transformer;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Transformer\Exception\TransformerExceptionFactory;
+use FiiSoft\Jackdaw\Transformer\Generic\OneArg;
+use FiiSoft\Jackdaw\Transformer\Generic\TwoArgs;
 
-final class GenericTransformer implements Transformer
+abstract class GenericTransformer implements Transformer
 {
     /** @var callable */
-    private $transformer;
+    protected $callable;
     
-    private int $numOfArgs;
-    
-    public function __construct(callable $transformer)
+    final public static function create(callable $transformer): self
     {
-        $this->transformer = $transformer;
-        $this->numOfArgs = Helper::getNumOfArgs($transformer);
+        $numOfArgs = Helper::getNumOfArgs($transformer);
+        
+        switch ($numOfArgs) {
+            case 1:
+                return new OneArg($transformer);
+            case 2:
+                return new TwoArgs($transformer);
+            default:
+                throw TransformerExceptionFactory::invalidParamTransformer($numOfArgs);
+        }
     }
     
-    /**
-     * @inheritDoc
-     */
-    public function transform($value, $key)
+    final protected function __construct(callable $transformer)
     {
-        $transformer = $this->transformer;
-        
-        switch ($this->numOfArgs) {
-            case 1:
-                return $transformer($value);
-            case 2:
-                return $transformer($value, $key);
-            default:
-                throw Helper::wrongNumOfArgsException('Transformer', $this->numOfArgs, 1, 2);
-        }
+        $this->callable = $transformer;
     }
 }

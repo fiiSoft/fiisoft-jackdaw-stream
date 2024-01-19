@@ -2,16 +2,32 @@
 
 namespace FiiSoft\Jackdaw\Filter\String;
 
-final class StartsWith extends StringFilter
+use FiiSoft\Jackdaw\Filter\String\StartsWith\AnyStartsWith;
+use FiiSoft\Jackdaw\Filter\String\StartsWith\BothStartsWith;
+use FiiSoft\Jackdaw\Filter\String\StartsWith\KeyStartsWith;
+use FiiSoft\Jackdaw\Filter\String\StartsWith\ValueStartsWith;
+use FiiSoft\Jackdaw\Internal\Check;
+
+abstract class StartsWith extends StringFilterSingle
 {
-    protected function test(string $value): bool
+    final public static function create(int $mode, string $value, bool $ignoreCase = false): self
     {
-        if ($this->length > \mb_strlen($value)) {
-            return false;
+        switch ($mode) {
+            case Check::VALUE:
+                return new ValueStartsWith($mode, $value, $ignoreCase);
+            case Check::KEY:
+                return new KeyStartsWith($mode, $value, $ignoreCase);
+            case Check::BOTH:
+                return new BothStartsWith($mode, $value, $ignoreCase);
+            case Check::ANY:
+                return new AnyStartsWith($mode, $value, $ignoreCase);
+            default:
+                throw Check::invalidModeException($mode);
         }
-        
-        return $this->ignoreCase
-            ? \mb_stripos($value, $this->value) === 0
-            : \mb_strpos($value, $this->value) === 0;
+    }
+    
+    final public function negate(): StringFilter
+    {
+        return NotStartsWith::create($this->negatedMode(), $this->value, $this->ignoreCase);
     }
 }

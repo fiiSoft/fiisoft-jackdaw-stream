@@ -3,29 +3,29 @@
 namespace FiiSoft\Jackdaw\Condition;
 
 use FiiSoft\Jackdaw\Condition\Adapter\FilterAdapter;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Internal\Check;
 
 final class Conditions
 {
     /**
      * @param ConditionReady|callable $condition
      */
-    public static function getAdapter($condition, int $mode = Check::VALUE): Condition
+    public static function getAdapter($condition, ?int $mode = null): Condition
     {
         if ($condition instanceof Condition) {
             return $condition;
         }
     
         if (\is_callable($condition)) {
-            return new GenericCondition($condition);
+            return GenericCondition::create($condition);
         }
     
         if ($condition instanceof Filter) {
             return new FilterAdapter($condition, $mode);
         }
     
-        throw new \InvalidArgumentException('Invalid param condition');
+        throw InvalidParamException::describe('condition', $condition);
     }
     
     /**

@@ -3,10 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper\Adapter;
 
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
-use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class DiscriminatorAdapter extends BaseMapper
+final class DiscriminatorAdapter extends StateMapper
 {
     private Discriminator $discriminator;
     
@@ -15,16 +14,25 @@ final class DiscriminatorAdapter extends BaseMapper
         $this->discriminator = $discriminator;
     }
     
-    public function map($value, $key)
+    /**
+     * @inheritDoc
+     */
+    public function map($value, $key = null)
     {
-        $classifier = $this->discriminator->classify($value, $key);
-        
-        if (\is_string($classifier) || \is_bool($classifier) || \is_int($classifier)) {
-            return $classifier;
+        return $this->discriminator->classify($value, $key);
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => $this->discriminator->classify($value, $key);
         }
-        
-        throw new \UnexpectedValueException(
-            'Unsupported value was returned from discriminator (got '.Helper::typeOfParam($classifier).')'
-        );
+    }
+    
+    protected function buildKeyMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $this->discriminator->classify($value, $key) => $value;
+        }
     }
 }

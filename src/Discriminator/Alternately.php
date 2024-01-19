@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Discriminator;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+
 final class Alternately implements Discriminator
 {
     private \Iterator $iterator;
@@ -11,7 +13,7 @@ final class Alternately implements Discriminator
     public function __construct(array $classifiers)
     {
         if (empty($classifiers)) {
-            throw new \InvalidArgumentException('Invalid param classifiers');
+            throw InvalidParamException::byName('classifiers');
         }
         
         $this->classifiers = $classifiers;
@@ -21,7 +23,7 @@ final class Alternately implements Discriminator
     /**
      * @inheritDoc
      */
-    public function classify($value, $key)
+    public function classify($value, $key = null)
     {
         $classifier = $this->iterator->current();
         $this->iterator->next();

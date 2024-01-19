@@ -2,9 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Comparator\ValueKeyCombined;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
 use FiiSoft\Jackdaw\Internal\Check;
 
 abstract class ValueKeyComparator implements Comparator
@@ -27,7 +28,7 @@ abstract class ValueKeyComparator implements Comparator
      */
     final public function compare($value1, $value2): int
     {
-        throw new \BadMethodCallException('Method '.__METHOD__.' should never be called');
+        throw ComparatorExceptionFactory::cannotCompareOnlyValues($this);
     }
     
     final public function comparator(): Comparator

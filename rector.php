@@ -6,6 +6,7 @@ use Rector\CodeQuality\Rector\Expression\InlineIfToExplicitIfRector;
 use Rector\CodeQuality\Rector\Foreach_\UnusedForeachValueToArrayKeysRector;
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\CodeQuality\Rector\If_\CombineIfRector;
+use Rector\CodeQuality\Rector\LogicalAnd\LogicalToBooleanRector;
 use Rector\CodingStyle\Rector\Assign\SplitDoubleAssignRector;
 use Rector\CodingStyle\Rector\Catch_\CatchExceptionNameMatchingTypeRector;
 use Rector\CodingStyle\Rector\ClassConst\SplitGroupedClassConstantsRector;
@@ -87,5 +88,12 @@ return static function (RectorConfig $configurator): void {
         CallableThisArrayToAnonymousFunctionRector::class,
         ParenthesizeNestedTernaryRector::class,
         StrictStringParamConcatRector::class,
+        LogicalToBooleanRector::class,
+    ]);
+    
+    $configurator->skip([
+        __DIR__ . '/src/Filter/OnlyIn/Mixed/MixedBothOnlyIn.php',
+        __DIR__ . '/src/Comparator/Comparison/Comparer/ComparerFactory.php',
+        __DIR__ . '/src/Producer/Generator/CombinedGeneral.php',
     ]);
 };

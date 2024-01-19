@@ -2,18 +2,32 @@
 
 namespace FiiSoft\Jackdaw\Filter\String;
 
-final class EndsWith extends StringFilter
+use FiiSoft\Jackdaw\Filter\String\EndsWith\AnyEndsWith;
+use FiiSoft\Jackdaw\Filter\String\EndsWith\BothEndsWith;
+use FiiSoft\Jackdaw\Filter\String\EndsWith\KeyEndsWith;
+use FiiSoft\Jackdaw\Filter\String\EndsWith\ValueEndsWith;
+use FiiSoft\Jackdaw\Internal\Check;
+
+abstract class EndsWith extends StringFilterSingle
 {
-    protected function test(string $value): bool
+    final public static function create(int $mode, string $value, bool $ignoreCase = false): self
     {
-        $length = \mb_strlen($value);
-        
-        if ($this->length > $length) {
-            return false;
+        switch ($mode) {
+            case Check::VALUE:
+                return new ValueEndsWith($mode, $value, $ignoreCase);
+            case Check::KEY:
+                return new KeyEndsWith($mode, $value, $ignoreCase);
+            case Check::BOTH:
+                return new BothEndsWith($mode, $value, $ignoreCase);
+            case Check::ANY:
+                return new AnyEndsWith($mode, $value, $ignoreCase);
+            default:
+                throw Check::invalidModeException($mode);
         }
-        
-        return $this->ignoreCase
-            ? \mb_stripos($value, $this->value, $length - $this->length) !== false
-            : \mb_strpos($value, $this->value, $length - $this->length) !== false;
+    }
+    
+    final public function negate(): StringFilter
+    {
+        return NotEndsWith::create($this->negatedMode(), $this->value, $this->ignoreCase);
     }
 }

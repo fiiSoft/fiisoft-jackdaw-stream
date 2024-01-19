@@ -2,11 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Producer\Internal;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Operation\Segregate\Bucket;
-use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
+use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class BucketListIterator extends CountableProducer
+final class BucketListIterator extends BaseProducer
 {
     /** @var Bucket[] */
     private array $buckets;
@@ -19,31 +18,13 @@ final class BucketListIterator extends CountableProducer
         $this->buckets = $buckets;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         $index = 0;
         
         foreach ($this->buckets as $bucket) {
-            $item->key = $index++;
-            $item->value = $bucket->data;
-            yield;
+            yield $index++ => $bucket->data;
         }
-    }
-    
-    public function count(): int
-    {
-        return \count($this->buckets);
-    }
-    
-    public function getLast(): ?Item
-    {
-        if (empty($this->buckets)) {
-            return null;
-        }
-        
-        $key = \array_key_last($this->buckets);
-        
-        return new Item($key, $this->buckets[$key]->data);
     }
     
     public function destroy(): void

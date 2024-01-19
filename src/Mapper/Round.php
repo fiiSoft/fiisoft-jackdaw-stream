@@ -2,17 +2,18 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Mapper\Exception\MapperExceptionFactory;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class Round extends BaseMapper
+final class Round extends StateMapper
 {
     private int $precision;
     
     public function __construct(int $precision = 2)
     {
         if ($precision < 0 || $precision > 16) {
-            throw new \InvalidArgumentException('Invalid param precision');
+            throw InvalidParamException::describe('precision', $precision);
         }
         
         $this->precision = $precision;
@@ -21,7 +22,7 @@ final class Round extends BaseMapper
     /**
      * @inheritDoc
      */
-    public function map($value, $key)
+    public function map($value, $key = null)
     {
         if (\is_float($value)) {
             return \round($value, $this->precision);
@@ -35,7 +36,22 @@ final class Round extends BaseMapper
             return \round((float) $value, $this->precision);
         }
         
-        throw new \LogicException('Unable to round non-number value '.Helper::typeOfParam($value));
+        throw MapperExceptionFactory::unableToRoundValue($value);
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            if (\is_float($value)) {
+                yield $key => \round($value, $this->precision);
+            } elseif (\is_int($value)) {
+                yield $key => $value;
+            } elseif (\is_numeric($value)) {
+                yield $key => \round((float) $value, $this->precision);
+            } else {
+                throw MapperExceptionFactory::unableToRoundValue($value);
+            }
+        }
     }
     
     public function mergeWith(Mapper $other): bool

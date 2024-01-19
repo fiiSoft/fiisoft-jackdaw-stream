@@ -2,10 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Producer\Resource;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class PDOStatementAdapter extends NonCountableProducer
+final class PDOStatementAdapter extends BaseProducer
 {
     private \PDOStatement $statement;
     private ?int $fetchMode;
@@ -16,7 +15,7 @@ final class PDOStatementAdapter extends NonCountableProducer
         $this->fetchMode = $fetchMode ?? \PDO::FETCH_ASSOC;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         $count = 0;
         
@@ -24,9 +23,7 @@ final class PDOStatementAdapter extends NonCountableProducer
             $row = $this->statement->fetch($this->fetchMode);
             
             if ($row !== false) {
-                $item->key = $count++;
-                $item->value = $row;
-                yield;
+                yield $count++ => $row;
             } else {
                 break;
             }

@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Producer\Internal;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class ForwardItemsIterator extends CountableProducer
+final class ForwardItemsIterator extends BaseProducer
 {
     /** @var Item[] */
     private array $items;
@@ -18,13 +18,10 @@ final class ForwardItemsIterator extends CountableProducer
         $this->items = $items;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         foreach ($this->items as $x) {
-            $item->key = $x->key;
-            $item->value = $x->value;
-            
-            yield;
+            yield $x->key => $x->value;
         }
         
         $this->items = [];
@@ -35,22 +32,6 @@ final class ForwardItemsIterator extends CountableProducer
         $this->items = $items;
         
         return $this;
-    }
-    
-    public function count(): int
-    {
-        return \count($this->items);
-    }
-    
-    public function getLast(): ?Item
-    {
-        if (empty($this->items)) {
-            return null;
-        }
-        
-        $last = \array_key_last($this->items);
-        
-        return $this->items[$last]->copy();
     }
     
     public function destroy(): void

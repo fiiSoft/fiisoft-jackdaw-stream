@@ -2,16 +2,32 @@
 
 namespace FiiSoft\Jackdaw\Filter\String;
 
-final class Contains extends StringFilter
+use FiiSoft\Jackdaw\Filter\String\Contains\AnyContains;
+use FiiSoft\Jackdaw\Filter\String\Contains\BothContains;
+use FiiSoft\Jackdaw\Filter\String\Contains\KeyContains;
+use FiiSoft\Jackdaw\Filter\String\Contains\ValueContains;
+use FiiSoft\Jackdaw\Internal\Check;
+
+abstract class Contains extends StringFilterSingle
 {
-    protected function test(string $value): bool
+    final public static function create(int $mode, string $value, bool $ignoreCase = false): self
     {
-        if ($this->length > \mb_strlen($value)) {
-            return false;
+        switch ($mode) {
+            case Check::VALUE:
+                return new ValueContains($mode, $value, $ignoreCase);
+            case Check::KEY:
+                return new KeyContains($mode, $value, $ignoreCase);
+            case Check::BOTH:
+                return new BothContains($mode, $value, $ignoreCase);
+            case Check::ANY:
+                return new AnyContains($mode, $value, $ignoreCase);
+            default:
+                throw Check::invalidModeException($mode);
         }
-        
-        return $this->ignoreCase
-            ? \mb_stripos($value, $this->value) !== false
-            : \mb_strpos($value, $this->value) !== false;
+    }
+    
+    final public function negate(): StringFilter
+    {
+        return NotContains::create($this->negatedMode(), $this->value, $this->ignoreCase);
     }
 }

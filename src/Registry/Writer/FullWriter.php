@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Registry\Writer;
 
+use FiiSoft\Jackdaw\Registry\Exception\RegistryExceptionFactory;
 use FiiSoft\Jackdaw\Registry\RegWriter;
 use FiiSoft\Jackdaw\Registry\Storage;
 
@@ -15,7 +16,7 @@ final class FullWriter implements RegWriter
     public function __construct(Storage $storage, string $value, string $key)
     {
         if ($key === $value) {
-            throw new \InvalidArgumentException('Parameters value and key cannot be the same');
+            throw RegistryExceptionFactory::parametersValueAndKeyCannotBeTheSame();
         }
         
         $this->storage = $storage;
@@ -45,7 +46,7 @@ final class FullWriter implements RegWriter
             $this->storage->registered[$this->key] = $key;
             $this->storage->registered[$this->value] = $value;
         } else {
-            throw new \InvalidArgumentException('FullWriter requires null or tuple [key,value] to set directly');
+            throw RegistryExceptionFactory::cannotSetValue();
         }
     }
 }

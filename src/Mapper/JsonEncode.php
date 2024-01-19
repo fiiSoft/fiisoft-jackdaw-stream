@@ -2,19 +2,29 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class JsonEncode extends BaseMapper
+final class JsonEncode extends StateMapper
 {
     private int $flags;
     
-    public function __construct(int $flags = 0)
+    public function __construct(?int $flags = null)
     {
-        $this->flags = $flags;
+        $this->flags = $flags ?? \JSON_THROW_ON_ERROR;
     }
     
-    public function map($value, $key): string
+    /**
+     * @inheritDoc
+     */
+    public function map($value, $key = null): string
     {
-        return \json_encode($value, \JSON_THROW_ON_ERROR | $this->flags);
+        return \json_encode($value, $this->flags);
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => \json_encode($value, $this->flags);
+        }
     }
 }

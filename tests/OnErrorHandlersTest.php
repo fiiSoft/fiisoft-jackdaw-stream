@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Handler\Exception\HandlerExceptionFactory;
 use FiiSoft\Jackdaw\Handler\Logger\LogFormatter;
 use FiiSoft\Jackdaw\Handler\Logger\Loggers;
 use FiiSoft\Jackdaw\Handler\OnError;
@@ -45,8 +47,7 @@ final class OnErrorHandlersTest extends TestCase
     
     public function test_GenericErrorHandler_throws_exception_when_callable_requires_invalid_number_of_params(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('ErrorHandler have to accept 0, 1, 2 or 3 arguments, but requires 4');
+        $this->expectExceptionObject(HandlerExceptionFactory::invalidParamErrorHandler(4));
     
         OnError::call(static fn($a, $b, $c, $d): bool => true)->handle(new \RuntimeException('Fake error'), 1, 'foo');
     }
@@ -64,8 +65,7 @@ final class OnErrorHandlersTest extends TestCase
     
     public function test_exception_is_thrown_when_provided_logger_is_not_supported(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param logger');
+        $this->expectExceptionObject(InvalidParamException::byName('logger'));
         
         OnError::log(Loggers::getAdapter('unknown logger'));
     }

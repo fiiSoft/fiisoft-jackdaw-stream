@@ -17,20 +17,31 @@ final class SourceReady extends Source
         Signal $signal,
         Pipe $pipe,
         Stack $stack,
-        \Generator $currentSource
+        \Iterator $currentSource,
+        ?NextValue $nextValue = null
     ) {
-        parent::__construct($isLoop, $stream, $producer, $signal, $pipe, $stack);
+        parent::__construct($isLoop, $stream, $producer, $signal, $pipe, $stack, $nextValue);
         
         $this->currentSource = $currentSource;
     }
     
-    public function setNextValue(Item $item): void
+    public function setNextItem(Item $item): void
     {
-        $this->currentSource->send($item);
+        $this->nextValue->isSet = true;
+        $this->nextValue->key = $item->key;
+        $this->nextValue->value = $item->value;
     }
     
     public function hasNextItem(): bool
     {
+        if ($this->nextValue->isSet) {
+            $this->item->key = $this->nextValue->key;
+            $this->item->value = $this->nextValue->value;
+            $this->nextValue->isSet = false;
+            
+            return true;
+        }
+        
         $this->currentSource->next();
         
         return $this->currentSource->valid();

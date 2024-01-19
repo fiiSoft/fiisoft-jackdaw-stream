@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Collector;
 
-use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\HandlerReady;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 
 interface Collector extends HandlerReady
 {

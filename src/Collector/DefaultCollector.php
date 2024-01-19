@@ -32,7 +32,7 @@ final class DefaultCollector extends BaseIterableCollector
         $this->buffer[] = $value;
     }
     
-    public function getData(): array
+    public function toArray(): array
     {
         return $this->buffer;
     }

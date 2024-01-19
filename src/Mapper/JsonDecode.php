@@ -2,26 +2,31 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class JsonDecode extends BaseMapper
+final class JsonDecode extends StateMapper
 {
     private bool $associative;
     private int $flags;
     
-    public function __construct(int $flags = 0, bool $associative = true)
+    public function __construct(?int $flags = null, bool $associative = true)
     {
         $this->associative = $associative;
-        $this->flags = $flags;
+        $this->flags = $flags ?? \JSON_THROW_ON_ERROR;
     }
     
-    public function map($value, $key)
+    /**
+     * @inheritDoc
+     */
+    public function map($value, $key = null)
     {
-        if (\is_string($value)) {
-            return \json_decode($value, $this->associative, 512, \JSON_THROW_ON_ERROR | $this->flags);
+        return \json_decode($value, $this->associative, 512, $this->flags);
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => \json_decode($value, $this->associative, 512, $this->flags);
         }
-        
-        throw new \LogicException('You cannot decode '.Helper::typeOfParam($value).' to JSON');
     }
 }

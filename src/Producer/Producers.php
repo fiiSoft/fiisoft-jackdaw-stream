@@ -2,14 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Producer;
 
-use FiiSoft\Jackdaw\Internal\ResultCaster;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayIteratorAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\CallableAdapter;
-use FiiSoft\Jackdaw\Producer\Adapter\IteratorAdapter;
+use FiiSoft\Jackdaw\Producer\Adapter\TraversableAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ReferenceAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\RegistryAdapter;
-use FiiSoft\Jackdaw\Producer\Adapter\ResultCasterAdapter;
 use FiiSoft\Jackdaw\Producer\Generator\CollatzGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedGeneral;
@@ -40,7 +39,6 @@ final class Producers
     
     /**
      * @param array<ProducerReady|resource|callable|iterable|scalar> $elements
-     * @return Producer[]
      */
     public static function prepare(array $elements): array
     {
@@ -87,10 +85,6 @@ final class Producers
             return $producer;
         }
         
-        if ($producer instanceof ResultCaster) {
-            return new ResultCasterAdapter($producer);
-        }
-        
         if ($producer instanceof \PDOStatement) {
             return self::fromPDOStatement($producer);
         }
@@ -100,7 +94,7 @@ final class Producers
         }
         
         if ($producer instanceof \Traversable) {
-            return new IteratorAdapter($producer);
+            return new TraversableAdapter($producer);
         }
         
         if ($producer instanceof UuidGenerator) {
@@ -119,7 +113,7 @@ final class Producers
             return new CallableAdapter($producer);
         }
         
-        throw new \InvalidArgumentException('Invalid param producer');
+        throw InvalidParamException::describe('producer', $producer);
     }
     
     /**

@@ -2,50 +2,31 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Extract\MultiExtract;
+use FiiSoft\Jackdaw\Mapper\Extract\SingleExtract;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class Extract extends BaseMapper
+abstract class Extract extends StateMapper
 {
-    /** @var array|string|int */
-    private $fields;
-    
     /** @var mixed|null */
-    private $orElse;
-    
-    private bool $single;
+    protected $orElse;
     
     /**
      * @param array|string|int $fields
      * @param mixed|null $orElse
      */
-    public function __construct($fields, $orElse = null)
+    final public static function create($fields, $orElse = null): self
     {
-        if (!Helper::areFieldsValid($fields)) {
-            throw new \InvalidArgumentException('Invalid param fields');
-        }
-        
-        $this->fields = $fields;
-        $this->orElse = $orElse;
-        
-        $this->single = !\is_array($this->fields);
+        return \is_array($fields)
+            ? new MultiExtract($fields, $orElse)
+            : new SingleExtract($fields, $orElse);
     }
     
-    public function map($value, $key)
+    /**
+     * @param mixed|null $orElse
+     */
+    protected function __construct($orElse = null)
     {
-        if (\is_array($value) || $value instanceof \ArrayAccess) {
-            if ($this->single) {
-                return $value[$this->fields] ?? $this->orElse;
-            }
-            
-            $result = [];
-            foreach ($this->fields as $field) {
-                $result[$field] = $value[$field] ?? $this->orElse;
-            }
-    
-            return $result;
-        }
-    
-        throw new \LogicException('It is impossible to extract field(s) from '.Helper::typeOfParam($value));
+        $this->orElse = $orElse;
     }
 }

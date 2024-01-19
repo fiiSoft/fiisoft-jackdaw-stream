@@ -2,10 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class Tokenizer extends NonCountableProducer
+final class Tokenizer extends BaseProducer
 {
     private string $tokens;
     private string $string;
@@ -19,7 +18,7 @@ final class Tokenizer extends NonCountableProducer
         $this->string = $string;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         if (!$this->keepIndex) {
             $this->index = 0;
@@ -28,21 +27,24 @@ final class Tokenizer extends NonCountableProducer
         $value = \strtok($this->string, $this->tokens);
         
         while ($value !== false) {
-            $item->key = $this->index++;
-            $item->value = $value;
-            yield;
+            yield $this->index++ => $value;
         
             $value = \strtok($this->tokens);
         }
     }
     
-    public function restartWith(string $string, ?string $tokens = null): void
+    /**
+     * @return $this fluent interface
+     */
+    public function restartWith(string $string, ?string $tokens = null): self
     {
         $this->string = $string;
     
         if ($tokens !== null) {
             $this->tokens = $tokens;
         }
+        
+        return $this;
     }
     
     public function keepIndex(): void

@@ -6,11 +6,12 @@ use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Operation\Reverse;
-use FiiSoft\Jackdaw\Operation\Shuffle;
-use FiiSoft\Jackdaw\Operation\Sort;
-use FiiSoft\Jackdaw\Operation\SortLimited;
+use FiiSoft\Jackdaw\Operation\Collecting\Reverse;
+use FiiSoft\Jackdaw\Operation\Internal\Shuffle;
+use FiiSoft\Jackdaw\Operation\Collecting\Sort;
+use FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
@@ -190,10 +191,10 @@ final class PipeBuildTest extends TestCase
     public static function getDataForTestShuffleReverseSortingOperation(): array
     {
         return [
-            'Shuffle-Sort' => [new Shuffle(), new Sort()],
-            'Shuffle-SortLimited' => [new Shuffle(), new SortLimited(100)],
+            'Shuffle-Sort' => [Shuffle::create(), new Sort()],
+            'Shuffle-SortLimited' => [Shuffle::create(), SortLimited::create(100)],
             'Reverse-Sort' => [new Reverse(), new Sort()],
-            'Reverse-SortLimited' => [new Reverse(), new SortLimited(100)],
+            'Reverse-SortLimited' => [new Reverse(), SortLimited::create(100)],
         ];
     }
     
@@ -221,6 +222,17 @@ final class PipeBuildTest extends TestCase
         $result = Stream::from([4, 2, 3, 1, 5, 2, 3, 1, 5, 2, 4])->segregate()->first()->toArrayAssoc();
         
         self::assertSame([3 => 1, 7 => 1], $result);
+    }
+    
+    public function test_Segregate_Last_with_onerror_handler(): void
+    {
+        $result = Stream::from([4, 2, 3, 1, 5, 2, 3, 1, 5, 2, 4])
+            ->onError(OnError::skip())
+            ->segregate()
+            ->last()
+            ->toArrayAssoc();
+        
+        self::assertSame([4 => 5, 8 => 5], $result);
     }
     
     /**
@@ -1309,5 +1321,10 @@ final class PipeBuildTest extends TestCase
             'custom_default' => [1, 2, false, $custom],
             'custom_reindex' => [1, 2, true, $reindexed],
         ];
+    }
+    
+    public function test_Filter_First(): void
+    {
+        self::assertSame('a', Stream::from([1, 'a', 2, 'b'])->onlyStrings()->first()->get());
     }
 }

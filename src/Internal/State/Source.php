@@ -2,8 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Internal\State;
 
-use FiiSoft\Jackdaw\Internal\Collaborator;
 use FiiSoft\Jackdaw\Internal\Destroyable;
+use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Pipe;
 use FiiSoft\Jackdaw\Internal\Signal;
@@ -15,16 +15,20 @@ use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Producer\Tech\MultiSourcedProducer;
 use FiiSoft\Jackdaw\Stream;
 
-abstract class Source extends Collaborator implements Destroyable
+abstract class Source extends StreamSource implements Destroyable
 {
-    protected \Generator $currentSource;
-    protected Producer $producer;
+    public Producer $producer;
+    
+    protected \Iterator $currentSource;
+    protected NextValue $nextValue;
     protected Stream $stream;
     protected Signal $signal;
     protected Stack $stack;
     protected Pipe $pipe;
+    protected Item $item;
     
     protected bool $isLoop;
+    
     private bool $isDestroying = false;
     
     public function __construct(
@@ -33,7 +37,8 @@ abstract class Source extends Collaborator implements Destroyable
         Producer $producer,
         Signal $signal,
         Pipe $pipe,
-        Stack $stack
+        Stack $stack,
+        ?NextValue $nextValue = null
     ) {
         $this->producer = $producer;
         $this->isLoop = $isLoop;
@@ -41,6 +46,9 @@ abstract class Source extends Collaborator implements Destroyable
         $this->signal = $signal;
         $this->stack = $stack;
         $this->pipe = $pipe;
+        $this->nextValue = $nextValue ?? new NextValue();
+        
+        $this->item = $this->signal->item;
     }
     
     /**
@@ -73,7 +81,7 @@ abstract class Source extends Collaborator implements Destroyable
     
     final protected function initializeSource(): void
     {
-        $this->currentSource = $this->producer->feed($this->signal->item);
+        $this->currentSource = Helper::createItemProducer($this->item, $this->producer);
     }
     
     final protected function restartWith(Producer $producer, Operation $operation): void
@@ -90,11 +98,6 @@ abstract class Source extends Collaborator implements Destroyable
         $this->pipe->head = $operation;
         
         $this->sourceIsNotReady($producer);
-    }
-    
-    final protected function continueFrom(Operation $operation): void
-    {
-        $this->pipe->head = $operation;
     }
     
     final protected function forget(Operation $operation): void
@@ -135,13 +138,9 @@ abstract class Source extends Collaborator implements Destroyable
             }
             
             $this->isLoop = $isLoop;
-            $this->sourceIsNotReady(new PushProducer($isLoop, $this->producer));
+            $this->sourceIsNotReady(new PushProducer($this->producer));
         }
     }
-    
-    abstract public function hasNextItem(): bool;
-    
-    abstract public function setNextValue(Item $item): void;
     
     private function sourceIsNotReady(Producer $producer): void
     {
@@ -150,7 +149,11 @@ abstract class Source extends Collaborator implements Destroyable
         ));
     }
     
-    public function destroy(): void
+    abstract public function hasNextItem(): bool;
+    
+    abstract public function setNextItem(Item $item): void;
+    
+    final public function destroy(): void
     {
         if (!$this->isDestroying) {
             $this->isDestroying = true;

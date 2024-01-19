@@ -5,6 +5,7 @@ namespace FiiSoft\Jackdaw\Comparator\Sorting;
 use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
 use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
 use FiiSoft\Jackdaw\Internal\Check;
 
 final class Value
@@ -33,7 +34,7 @@ final class Value
         $comparator = Comparators::getAdapter($comparator);
         
         if ($comparator instanceof GenericComparator && $comparator->isFullAssoc()) {
-            throw new \LogicException('Cannot sort by value with callable that requires four arguments');
+            throw ComparatorExceptionFactory::invalidSortingCallable('value');
         }
         
         return Sorting::create($reversed, $comparator, Check::VALUE);

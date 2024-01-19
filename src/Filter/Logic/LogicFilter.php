@@ -2,25 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Filter\Logic;
 
-use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Filter\AbstractFilter;
 
-abstract class LogicFilter implements Filter
+abstract class LogicFilter extends AbstractFilter
 {
-    /** @var Filter[] */
-    protected array $filters = [];
-    
-    /**
-     * @param array<Filter|callable|mixed> $filters
-     */
-    public function __construct(array $filters)
-    {
-        if (empty($filters)) {
-            throw new \InvalidArgumentException('Param filters cannot be empty');
-        }
-        
-        foreach ($filters as $filter) {
-            $this->filters[] = Filters::getAdapter($filter);
-        }
-    }
+    //empty class for convenience to group all logic filters
 }

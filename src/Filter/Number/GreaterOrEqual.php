@@ -2,21 +2,36 @@
 
 namespace FiiSoft\Jackdaw\Filter\Number;
 
-final class GreaterOrEqual extends NumberFilter
+use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual\AnyGreaterOrEqual;
+use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual\BothGreaterOrEqual;
+use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual\KeyGreaterOrEqual;
+use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual\ValueGreaterOrEqual;
+use FiiSoft\Jackdaw\Internal\Check;
+
+abstract class GreaterOrEqual extends SingleArg
 {
     /**
-     * @inheritdoc
+     * @param float|int $value
      */
-    protected function test($value): bool
+    final public static function create(int $mode, $value): self
     {
-        if (\is_int($value) || \is_float($value)) {
-            return $value >= $this->value;
+        switch ($mode) {
+            case Check::VALUE:
+                return new ValueGreaterOrEqual($mode, $value);
+            case Check::KEY:
+                return new KeyGreaterOrEqual($mode, $value);
+            case Check::BOTH:
+                return new BothGreaterOrEqual($mode, $value);
+            case Check::ANY:
+                return new AnyGreaterOrEqual($mode, $value);
+            default:
+                throw Check::invalidModeException($mode);
         }
+    }
     
-        if (\is_numeric($value)) {
-            return (float) $value >= (float) $this->value;
-        }
-    
-        throw new \LogicException('Cannot compare value which is not a number');
+    final public function negate(): Filter
+    {
+        return LessThan::create($this->negatedMode(), $this->number);
     }
 }

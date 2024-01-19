@@ -2,45 +2,42 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparer\ComparerFactory;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparer\Single\AssocComparer;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
-use FiiSoft\Jackdaw\Comparator\Comparison\Specs\DoubleComparison;
+use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
 use FiiSoft\Jackdaw\Comparator\Sorting\By;
 use FiiSoft\Jackdaw\Comparator\Sorting\Key;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
-use FiiSoft\Jackdaw\Comparator\Sorting\Specs\DoubleSorting;
 use FiiSoft\Jackdaw\Comparator\Sorting\Value;
 use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueKeyComparator;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
-use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 
 final class ComparatorsTest extends TestCase
 {
     public function test_getAdapter_throws_exception_on_invalid_argument(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('comparator'));
         
         Comparators::getAdapter(15);
     }
     
     public function test_GenericComparator_throws_exception_when_callable_accepts_wrong_number_of_arguments(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectExceptionObject(ComparatorExceptionFactory::invalidParamComparator(3));
         
         Comparators::getAdapter(static fn($v, $k, $n): bool => true);
     }
     
     public function test_MultiComparator_throws_exception_when_list_of_comparators_is_empty(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param comparators');
+        $this->expectExceptionObject(InvalidParamException::byName('comparators'));
         
         Comparators::multi();
     }
@@ -152,52 +149,11 @@ final class ComparatorsTest extends TestCase
         self::assertGreaterThan(0, $comp->compareAssoc(3, 4, 2, 5));
     }
     
-    public function test_GenericComparator_throws_exception_when_wrong_callable_is_used(): void
+    public function test_GenericComparator_throws_exception_when_wrong_callable_is_used_1(): void
     {
-        try {
-            Comparators::getAdapter(static fn($a, $b, $c, $d): bool => true)->compare(1, 2);
-            self::fail('Expected exception #1 was not thrown');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('Cannot compare two values because comparator requires 4 arguments', $e->getMessage());
-        }
+        $this->expectExceptionObject(ComparatorExceptionFactory::cannotCompareTwoValues());
         
-        try {
-            Comparators::getAdapter(static fn($a, $b, $c): bool => true)->compareAssoc(1, 2, 3, 4);
-            self::fail('Expected exception #2 was not thrown');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('Comparator have to accept 1, 2 or 4 arguments, but requires 3', $e->getMessage());
-        }
-    }
-    
-    public function test_SortBy_throws_exception_when_value_is_not_array(): void
-    {
-        $comparator = Comparators::fields(['id']);
-    
-        try {
-            $comparator->compare(5, [6]);
-            self::fail('Expected exception #1 was not thrown');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('FieldsComparator comparator can compare only arrays', $e->getMessage());
-        }
-    
-        try {
-            $comparator->compare([6], 5);
-            self::fail('Expected exception #2 was not thrown');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('FieldsComparator comparator can compare only arrays', $e->getMessage());
-        }
+        Comparators::getAdapter(static fn($a, $b, $c, $d): bool => true)->compare(1, 2);
     }
     
     public function test_FieldsComparator(): void
@@ -207,21 +163,21 @@ final class ComparatorsTest extends TestCase
     
     public function test_FieldsComparator_throws_exception_when_fields_is_empty(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(ComparatorExceptionFactory::paramFieldsCannotBeEmpty());
         
         Comparators::fields([]);
     }
     
     public function test_FieldsComparator_throws_exception_when_fields_contains_invalid_value(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(ComparatorExceptionFactory::paramFieldsIsInvalid());
         
         Comparators::fields([true]);
     }
     
     public function test_FieldsComparator_compareAssoc_is_not_implemented_and_cannot_be_called(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectExceptionObject(ComparatorExceptionFactory::compareAssocIsNotImplemented());
         
         Comparators::fields(['a'])->compareAssoc(1, 2, 3, 4);
     }
@@ -235,9 +191,9 @@ final class ComparatorsTest extends TestCase
         self::assertGreaterThan(0, $comparator->compare([5, 2, 1], [3, 6]));
     }
     
-    public function test_SizeComparator_can_compare_length_of_strings(): void
+    public function test_LengthComparator_can_compare_length_of_strings(): void
     {
-        $comparator = Comparators::size();
+        $comparator = Comparators::length();
         
         self::assertSame(0, $comparator->compare('agd', 'trh'));
         self::assertLessThan(0, $comparator->compare('agd', 'trhb'));
@@ -253,17 +209,20 @@ final class ComparatorsTest extends TestCase
         self::assertGreaterThan(0, $comparator->compare(new \ArrayObject([2, 4,7]), new \ArrayObject([2,9])));
     }
     
-    public function test_SizeComparator_throws_exception_when_cannot_compare_values(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Cannot compute size of integer');
-        
-        Comparators::size()->compare(15, 15);
-    }
-    
     public function test_SizeComparator_can_compare_values_and_keys(): void
     {
         $comparator = Comparators::size();
+        
+        self::assertSame(0, $comparator->compareAssoc([1,2,3], [4,5,6], 0, 0));
+        self::assertGreaterThan(0, $comparator->compareAssoc([1,2,3], [4,5,6], 1, 0));
+        self::assertLessThan(0, $comparator->compareAssoc([1,2,3], [4,5,6,7], 1, 0));
+        self::assertLessThan(0, $comparator->compareAssoc([1,2,3], [4,5,6], 1, 2));
+        self::assertGreaterThan(0, $comparator->compareAssoc([1,2,3,4], [5,6,7], 1, 2));
+    }
+    
+    public function test_LengthComparator_can_compare_values_and_keys(): void
+    {
+        $comparator = Comparators::length();
         
         self::assertSame(0, $comparator->compareAssoc('trg', 'rsh', 0, 0));
         self::assertGreaterThan(0, $comparator->compareAssoc('trg', 'rsh', 1, 0));
@@ -288,6 +247,7 @@ final class ComparatorsTest extends TestCase
     
     public static function getDataForTestItemComparator(): \Generator
     {
+        //sorting, first(k,v), second(k,v), expected
         yield [By::valueAsc(), [0, 1], [2, 1], 0];
         yield [By::valueAsc(), [0, 1], [2, 2], -1];
         yield [By::valueAsc(), [0, 3], [2, 2], 1];
@@ -349,11 +309,22 @@ final class ComparatorsTest extends TestCase
         yield [By::bothDesc('strnatcmp'), ['b', 'c'], ['b', 'b'], -1];
     }
     
+    public function test_sort_by_custom_reversed_assoc(): void
+    {
+        $comparator = ItemComparatorFactory::getForSorting(By::assocDesc(
+            static fn($v1, $v2, $k1, $k2): int => $v1 <=> $v2 ?: $k1 <=> $k2
+        ));
+        
+        $first = new Item(2, 5);
+        $second = new Item(1, 5);
+        
+        $actual = $comparator->compare($first, $second);
+        
+        self::assertSame(-1, $actual);
+    }
+    
     public function test_ValueKeyComparator_throws_exception_when_method_compare_is_called(): void
     {
-        //Assert
-        $this->expectException(\BadMethodCallException::class);
-        
         //Arrange
         $comparator = new class extends ValueKeyComparator {
             public function compareAssoc($value1, $value2, $key1, $key2): int {
@@ -361,82 +332,60 @@ final class ComparatorsTest extends TestCase
             }
         };
         
+        //Assert
+        $this->expectExceptionObject(ComparatorExceptionFactory::cannotCompareOnlyValues($comparator));
+        
         //Act
         $comparator->compare(1, 2);
     }
     
-    public function test_assoc_Comparator_wrapped_by_nonassoc_Sorting_throws_exception(): void
+    public function test_assoc_Comparator_wrapped_by_nonassoc_Sorting_throws_exception_1(): void
     {
-        $assocComparator = static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k2 <=> $k1;
+        $this->expectExceptionObject(ComparatorExceptionFactory::invalidSortingCallable('value'));
         
-        try {
-            By::value($assocComparator);
-            self::fail('Expected exception #1 not thrown by By::value()');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('Cannot sort by value with callable that requires four arguments', $e->getMessage());
-        }
-        
-        try {
-            By::key($assocComparator);
-            self::fail('Expected exception #2 not thrown by By::key()');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('Cannot sort by key with callable that requires four arguments', $e->getMessage());
-        }
+        By::value(static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k2 <=> $k1);
     }
     
-    public function test_assoc_Comparator_wrapped_by_nonassoc_Comparison_throws_exception(): void
+    public function test_assoc_Comparator_wrapped_by_nonassoc_Sorting_throws_exception_2(): void
     {
-        $assocComparator = static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k2 <=> $k1;
+        $this->expectExceptionObject(ComparatorExceptionFactory::invalidSortingCallable('key'));
         
-        try {
-            Compare::values($assocComparator);
-            self::fail('Expected exception #1 not thrown by Compare::values()');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('Cannot compare by values with callable that requires four arguments', $e->getMessage());
-        }
+        By::key(static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k2 <=> $k1);
+    }
+    
+    public function test_assoc_Comparator_wrapped_by_nonassoc_Comparison_throws_exception_1(): void
+    {
+        $this->expectExceptionObject(ComparatorExceptionFactory::wrongComparisonCallable(Check::VALUE));
         
-        try {
-            Compare::keys($assocComparator);
-            self::fail('Expected exception #2 not thrown by Compare::keys()');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('Cannot compare by keys with callable that requires four arguments', $e->getMessage());
-        }
+        Compare::values(static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k2 <=> $k1);
+    }
+    
+    public function test_assoc_Comparator_wrapped_by_nonassoc_Comparison_throws_exception_2(): void
+    {
+        $this->expectExceptionObject(ComparatorExceptionFactory::wrongComparisonCallable(Check::KEY));
+        
+        Compare::keys(static fn(string $v1, string $v2, int $k1, int $k2): int => $v1 <=> $v2 ?: $k2 <=> $k1);
     }
     
     public function test_DoubleSorting_specification_throws_exception_when_first_spec_is_not_valid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param first');
+        $this->expectExceptionObject(InvalidParamException::byName('first'));
         
-        new DoubleSorting(Sorting::create(false, null, Check::BOTH), Sorting::create(false, null, Check::KEY));
+        Sorting::double(Sorting::create(false, null, Check::BOTH), Sorting::create(false, null, Check::KEY));
     }
     
     public function test_DoubleSorting_specification_throws_exception_when_second_spec_is_not_valid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param second');
+        $this->expectExceptionObject(InvalidParamException::byName('second'));
         
-        new DoubleSorting(Sorting::create(false, null, Check::VALUE), Sorting::create(false, null, Check::ANY));
+        Sorting::double(Sorting::create(false, null, Check::VALUE), Sorting::create(false, null, Check::ANY));
     }
     
     public function test_DoubleSorting_spec_throws_exception_when_mode_of_first_and_second_specs_are_the_same(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Sorting specifications cannot be of the same type');
+        $this->expectExceptionObject(ComparatorExceptionFactory::sortingsCannotBeTheSame());
         
-        new DoubleSorting(Sorting::create(false, null, Check::VALUE), Sorting::create(false, null, Check::VALUE));
+        Sorting::double(Sorting::create(false, null, Check::VALUE), Sorting::create(false, null, Check::VALUE));
     }
     
     public function test_compare_in_various_modes(): void
@@ -489,10 +438,9 @@ final class ComparatorsTest extends TestCase
     
     public function test_DoubleComparison_throws_exception_when_param_mode_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param mode');
+        $this->expectExceptionObject(Check::invalidModeException(Check::VALUE));
         
-        new DoubleComparison(Check::VALUE);
+        Comparison::double(Check::VALUE);
     }
     
     public function test_getAdapter_can_return_comparator_wrapped_by_Comparable_instance(): void
@@ -542,51 +490,5 @@ final class ComparatorsTest extends TestCase
         $comparator = Comparators::default();
         
         self::assertSame($comparator, $comparator->comparator());
-    }
-    
-    public function test_ComparerFactory_throws_exception_when_number_of_comparators_is_invalid(): void
-    {
-        //expect
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessage('Unexpected number of comparators returned from Comparison');
-        
-        //prepare
-        $comparison = new class extends Comparison {
-            public function comparator(): ?Comparator {
-                return null;
-            }
-            public function getComparators(): array {
-                return [];
-            }
-            public function mode(): int {
-                return Check::VALUE;
-            }
-        };
-        
-        //act
-        ComparerFactory::createComparer($comparison);
-    }
-    
-    public function test_ComparerFactory_throws_exception_when_mode_is_invalid_for_two_comparators(): void
-    {
-        //expect
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessage('Unexpected value of mode ('.Check::KEY.')');
-        
-        //prepare
-        $comparison = new class extends Comparison {
-            public function comparator(): ?Comparator {
-                return null;
-            }
-            public function getComparators(): array {
-                return [null, null];
-            }
-            public function mode(): int {
-                return Check::KEY;
-            }
-        };
-        
-        //act
-        ComparerFactory::createComparer($comparison);
     }
 }

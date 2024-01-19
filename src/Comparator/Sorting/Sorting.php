@@ -16,7 +16,7 @@ abstract class Sorting implements ComparisonSpec
     /**
      * @param Comparable|callable|null $sorting
      */
-    public static function prepare($sorting): self
+    final public static function prepare($sorting): self
     {
         return $sorting instanceof self ? $sorting : self::create(false, $sorting);
     }
@@ -24,7 +24,7 @@ abstract class Sorting implements ComparisonSpec
     /**
      * @param Comparable|callable|null $sorting
      */
-    public static function reverse($sorting = null, int $mode = Check::VALUE): self
+    final public static function reverse($sorting = null, int $mode = Check::VALUE): self
     {
         return self::create(true, $sorting, $mode);
     }
@@ -32,7 +32,7 @@ abstract class Sorting implements ComparisonSpec
     /**
      * @param Comparable|callable|null $sorting
      */
-    public static function create(bool $reversed = false, $sorting = null, int $mode = Check::VALUE): self
+    final public static function create(bool $reversed = false, $sorting = null, int $mode = Check::VALUE): self
     {
         if ($sorting instanceof self) {
             return $reversed ? $sorting->getReversed() : $sorting;
@@ -49,9 +49,13 @@ abstract class Sorting implements ComparisonSpec
         return new SingleSorting($reversed, $comparator, $mode);
     }
     
-    public static function double(Sorting $first, Sorting $second): self
+    final public static function double(Sorting $first, Sorting $second): self
     {
         return new DoubleSorting($first, $second);
+    }
+    
+    protected function __construct()
+    {
     }
     
     abstract public function isReversed(): bool;

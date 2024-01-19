@@ -2,20 +2,20 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
-use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
+use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
 
-final class Result extends StreamPipe implements ResultApi, Executable
+final class Result extends StreamPipe implements ResultApi
 {
     private Stream $stream;
     private FinalOperation $resultProvider;
     private ?ResultItem $resultItem = null;
     private ?Transformer $transformer = null;
     
-    private bool $isExecuted = false;
     private bool $isDestroying = false;
+    private bool $createResult = true;
     
     /** @var callable|mixed|null */
     private $orElse;
@@ -30,17 +30,12 @@ final class Result extends StreamPipe implements ResultApi, Executable
         $this->orElse = $orElse;
     }
     
-    public function run(): void
-    {
-        $this->execute();
-    }
-    
     /**
      * @inheritDoc
      */
     public function found(): bool
     {
-        return $this->execute()->found();
+        return $this->do()->found();
     }
     
     /**
@@ -48,7 +43,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function notFound(): bool
     {
-        return $this->execute()->notFound();
+        return $this->do()->notFound();
     }
     
     /**
@@ -56,7 +51,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function get()
     {
-        return $this->execute()->get();
+        return $this->do()->get();
     }
     
     /**
@@ -66,7 +61,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
     {
         $this->transformer = Transformers::getAdapter($transformer);
     
-        if ($this->isExecuted) {
+        if ($this->resultItem !== null) {
             $this->resultItem->transform($this->transformer);
         }
         
@@ -78,7 +73,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function getOrElse($orElse)
     {
-        return $this->execute()->getOrElse($orElse);
+        return $this->do()->getOrElse($orElse);
     }
     
     /**
@@ -86,7 +81,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function key()
     {
-        return $this->execute()->key();
+        return $this->do()->key();
     }
     
     /**
@@ -94,7 +89,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function toString(string $separator = ','): string
     {
-        return $this->execute()->toString($separator);
+        return $this->do()->toString($separator);
     }
     
     /**
@@ -102,7 +97,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function toJson(int $flags = 0, bool $preserveKeys = false): string
     {
-        return $this->execute()->toJson($flags, $preserveKeys);
+        return $this->do()->toJson($flags, $preserveKeys);
     }
     
     /**
@@ -110,7 +105,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function toJsonAssoc(int $flags = 0): string
     {
-        return $this->execute()->toJsonAssoc($flags);
+        return $this->do()->toJsonAssoc($flags);
     }
     
     /**
@@ -118,7 +113,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function toArray(bool $preserveKeys = false): array
     {
-        return $this->execute()->toArray($preserveKeys);
+        return $this->do()->toArray($preserveKeys);
     }
     
     /**
@@ -126,7 +121,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function toArrayAssoc(): array
     {
-        return $this->execute()->toArrayAssoc();
+        return $this->do()->toArrayAssoc();
     }
     
     /**
@@ -134,7 +129,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function tuple(): array
     {
-        return $this->execute()->tuple();
+        return $this->do()->tuple();
     }
     
     /**
@@ -142,7 +137,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function call($consumer): void
     {
-        $this->execute()->call($consumer);
+        $this->do()->call($consumer);
     }
     
     /**
@@ -150,7 +145,7 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function stream(): Stream
     {
-        return $this->execute()->stream();
+        return Stream::from($this);
     }
     
     /**
@@ -158,24 +153,36 @@ final class Result extends StreamPipe implements ResultApi, Executable
      */
     public function count(): int
     {
-        return $this->execute()->count();
+        return $this->do()->count();
     }
     
-    private function execute(): ResultItem
+    public function getIterator(): \Iterator
     {
-        if (!$this->isExecuted) {
-            $this->stream->run();
+        return $this->do()->getIterator();
+    }
     
-            if ($this->resultProvider->hasResult()) {
-                $this->resultItem = ResultItem::createFound($this->resultProvider->getResult(), $this->transformer);
-            } else {
-                $this->resultItem = ResultItem::createNotFound($this->orElse);
-            }
-            
-            $this->isExecuted = true;
+    private function do(): ResultItem
+    {
+        if ($this->resultItem === null && $this->stream->isNotStartedYet()) {
+            $this->stream->execute();
+        }
+        
+        if ($this->createResult) {
+            $this->createResultItem();
         }
         
         return $this->resultItem;
+    }
+    
+    private function createResultItem(): void
+    {
+        if ($this->resultProvider->hasResult()) {
+            $this->resultItem = ResultItem::createFound($this->resultProvider->getResult(), $this->transformer);
+        } else {
+            $this->resultItem = ResultItem::createNotFound($this->orElse);
+        }
+        
+        $this->createResult = false;
     }
     
     protected function prepareSubstream(bool $isLoop): void
@@ -188,9 +195,9 @@ final class Result extends StreamPipe implements ResultApi, Executable
         return $this->stream->process($signal);
     }
     
-    protected function continueIteration(bool $once = false): bool
+    protected function refreshResult(): void
     {
-        return $this->stream->continueIteration($once);
+        $this->createResult = true;
     }
     
     public function destroy(): void

@@ -2,70 +2,48 @@
 
 namespace FiiSoft\Jackdaw\Comparator\Basic;
 
+use FiiSoft\Jackdaw\Comparator\Basic\Generic\FourArgsGenericComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\Generic\TwoArgsGenericComparator;
 use FiiSoft\Jackdaw\Comparator\Comparator;
-use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
 use FiiSoft\Jackdaw\Internal\Helper;
 
-final class GenericComparator implements Comparator
+abstract class GenericComparator implements Comparator
 {
     /** @var callable */
-    private $comparator;
+    protected $comparator;
     
-    private int $numOfArgs;
-    
-    public function __construct(callable $comparator)
+    final public static function create(callable $comparator): self
     {
-        $this->numOfArgs = Helper::getNumOfArgs($comparator);
+        $numOfArgs = Helper::getNumOfArgs($comparator);
         
-        if ($this->numOfArgs === 1) {
-            $this->numOfArgs = 2;
-            $this->comparator = static fn($first, $second): int
+        if ($numOfArgs === 1) {
+            $numOfArgs = 2;
+            $comparator = static fn($first, $second): int
                 => \gettype($first) <=> \gettype($second) ?: $comparator($first) <=> $comparator($second);
-        } elseif ($this->numOfArgs === 2 || $this->numOfArgs === 4) {
-            $this->comparator = $comparator;
-        } else {
-            throw Helper::wrongNumOfArgsException('Comparator', $this->numOfArgs, 1, 2, 4);
-        }
-    }
-    
-    public function compare($value1, $value2): int
-    {
-        if ($this->numOfArgs === 2) {
-            $compare = $this->comparator;
-            return $compare($value1, $value2);
-        }
-    
-        throw new \LogicException('Cannot compare two values because comparator requires 4 arguments');
-    }
-    
-    public function compareAssoc($value1, $value2, $key1, $key2): int
-    {
-        $compare = $this->comparator;
-        
-        if ($this->numOfArgs === 2) {
-            return $compare($value1, $value2) ?: $compare($key1, $key2);
+        } elseif ($numOfArgs !== 2 && $numOfArgs !== 4) {
+            throw ComparatorExceptionFactory::invalidParamComparator($numOfArgs);
         }
         
-        return $compare($value1, $value2, $key1, $key2);
+        return $numOfArgs === 2
+            ? new TwoArgsGenericComparator($comparator)
+            : new FourArgsGenericComparator($comparator);
     }
     
-    public function isFullAssoc(): bool
+    final protected function __construct(callable $comparator)
     {
-        return $this->numOfArgs === 4;
+        $this->comparator = $comparator;
     }
     
-    public function comparator(): Comparator
+    final public function comparator(): Comparator
     {
         return $this;
     }
     
-    public function mode(): int
-    {
-        return $this->numOfArgs === 4 ? Check::BOTH : Check::VALUE;
-    }
-    
-    public function getWrappedCallable(): callable
+    final public function getWrappedCallable(): callable
     {
         return $this->comparator;
     }
+    
+    abstract public function isFullAssoc(): bool;
 }

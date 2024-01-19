@@ -2,10 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class Replace extends BaseMapper
+final class Replace extends StateMapper
 {
     /** @var array|string */
     private $search;
@@ -21,31 +21,31 @@ final class Replace extends BaseMapper
      */
     public function __construct($search, $replace)
     {
-        if (!\is_string($search) && !\is_array($search)) {
-            throw Helper::invalidParamException('search', $search);
+        if (\is_string($search) && $search !== '' || \is_array($search) && $search !== []) {
+            $this->search = $search;
+        } else {
+            throw InvalidParamException::describe('search', $search);
         }
         
-        if (!\is_string($replace) && !\is_array($replace)) {
-            throw Helper::invalidParamException('replace', $replace);
+        if (\is_string($replace) || \is_array($replace)) {
+            $this->replace = $replace;
+        } else {
+            throw InvalidParamException::describe('replace', $replace);
         }
-        
-        if ($search === '' || $search === []) {
-            throw new \InvalidArgumentException('Invalid param search');
-        }
-        
-        $this->search = $search;
-        $this->replace = $replace;
     }
     
     /**
      * @inheritDoc
      */
-    public function map($value, $key)
+    public function map($value, $key = null)
     {
-        if (\is_string($value)) {
-            return \str_replace($this->search, $this->replace, $value);
+        return \str_replace($this->search, $this->replace, $value);
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => \str_replace($this->search, $this->replace, $value);
         }
-        
-        throw new \LogicException('Unable to replace chars in '.Helper::typeOfParam($value));
     }
 }

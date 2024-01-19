@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class Tokenize extends BaseMapper
+final class Tokenize extends StateMapper
 {
     private string $tokens;
     
@@ -16,9 +16,22 @@ final class Tokenize extends BaseMapper
     /**
      * @inheritDoc
      */
-    public function map($value, $key)
+    public function map($value, $key = null): array
     {
-        if (\is_string($value)) {
+        $result = [];
+        
+        $token = \strtok($value, $this->tokens);
+        while ($token !== false) {
+            $result[] = $token;
+            $token = \strtok($this->tokens);
+        }
+        
+        return $result;
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
             $result = [];
             
             $token = \strtok($value, $this->tokens);
@@ -27,10 +40,8 @@ final class Tokenize extends BaseMapper
                 $token = \strtok($this->tokens);
             }
             
-            return $result;
+            yield $key => $result;
         }
-        
-        throw new \LogicException('Value must be a string to tokenize it');
     }
     
     public function tokens(): string

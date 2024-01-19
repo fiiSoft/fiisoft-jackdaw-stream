@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Reducer;
 
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Reducer\Exception\ReducerExceptionFactory;
 use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
 final class GenericReducer extends BaseReducer
@@ -25,7 +26,7 @@ final class GenericReducer extends BaseReducer
     
         $numOfArgs = Helper::getNumOfArgs($reducer);
         if ($numOfArgs !== 2) {
-            throw Helper::wrongNumOfArgsException('Reducer', $numOfArgs, 2);
+            throw ReducerExceptionFactory::invalidParamReducer($numOfArgs);
         }
     }
     

@@ -15,7 +15,6 @@ use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
-use FiiSoft\Jackdaw\StreamMaker;
 use PHPUnit\Framework\TestCase;
 
 final class StreamScenarioTest extends TestCase
@@ -54,14 +53,10 @@ final class StreamScenarioTest extends TestCase
         
         $stream = Stream::from([4, 7, 2, 'a', 8, null, 5, 3, 7])
             ->notNull()
-            ->call(static function () use (&$counter1): void {
-                ++$counter1;
-            })
+            ->countIn($counter1)
             ->limit(6)
-            ->filter('is_int')
-            ->call(static function () use (&$counter2): void {
-                ++$counter2;
-            })
+            ->onlyIntegers()
+            ->countIn($counter2)
             ->map(static fn(int $x) => $x ** 2)
             ->omit(Filters::greaterThan(50))
             ->collectIn($buffer, true);
@@ -83,22 +78,22 @@ final class StreamScenarioTest extends TestCase
     
         $inputData = [4, 'c' => 7, 2, 'a', 'z' => 8, null, 5, '', 3, 7];
         
-        $stream = StreamMaker::from(static fn(): Stream => Stream::from($inputData)
-            ->filter('is_int')
+        $producer = Producers::getAdapter(static fn(): Stream => Stream::from($inputData)
+            ->onlyIntegers()
             ->limit(5)
             ->skip(2)
         );
         
         //when
-        foreach ($stream->start() as $key => $value) {
+        foreach ($producer->stream() as $key => $value) {
             $buffer1[$key] = $value;
         }
         
         //or
-        $stream->start()->collectIn($buffer2, true)->run();
+        $producer->stream()->collectIn($buffer2, true)->run();
         
         //or
-        $buffer3 = $stream->start()->toArray();
+        $buffer3 = $producer->stream()->toArray();
         
         //then
         self::assertSame([1 => 2, 'z' => 8, 4 => 5], $buffer1);
@@ -149,18 +144,18 @@ final class StreamScenarioTest extends TestCase
     public function test_scenario_09(): void
     {
         $inputData = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6, 'g' => 7, 'h' => 8];
-        $stream = StreamMaker::from(static fn(): Stream => Stream::from($inputData)->limit(7)->chunk(3, true));
+        $producer = Producers::getAdapter(static fn(): Stream => Stream::from($inputData)->limit(7)->chunk(3, true));
     
-        self::assertSame('[[1,2,3],[4,5,6],[7]]', $stream->start()->limit(3)->toJson());
-        self::assertSame('[[1,2,3],[4,5,6]]', $stream->start()->limit(2)->toJson());
+        self::assertSame('[[1,2,3],[4,5,6],[7]]', $producer->stream()->limit(3)->toJson());
+        self::assertSame('[[1,2,3],[4,5,6]]', $producer->stream()->limit(2)->toJson());
         
         self::assertSame(
             '[[1,2,3],[4,5,6]]',
-            $stream->start()->filter(static fn($ch): bool => \count($ch) === 3)->toJson()
+            $producer->stream()->filter(static fn($ch): bool => \count($ch) === 3)->toJson()
         );
-        self::assertSame('[[1,2,3],[4,5,6]]', $stream->start()->filter(Filters::length()->eq(3))->toJson());
+        self::assertSame('[[1,2,3],[4,5,6]]', $producer->stream()->filter(Filters::size()->eq(3))->toJson());
         
-        self::assertSame('[[1,2,3],[4,5,6]]', $stream->start()->limit(2)->filter(Filters::length()->eq(3))->toJson());
+        self::assertSame('[[1,2,3],[4,5,6]]', $producer->stream()->limit(2)->filter(Filters::size()->eq(3))->toJson());
     }
     
     public function test_scenario_10(): void
@@ -381,8 +376,8 @@ final class StreamScenarioTest extends TestCase
             ->limit(2);
     
         self::assertSame([11, 42], $stream->toArray());
-        self::assertSame([4, 11], $ids->getData());
-        self::assertSame(['Chris', 'Joanna', 'Joe', 'Kate', 'Mike'], $names->getData());
+        self::assertSame([4, 11], $ids->toArray());
+        self::assertSame(['Chris', 'Joanna', 'Joe', 'Kate', 'Mike'], $names->toArray());
         self::assertSame(11, $allIds->stream()->reduce('max')->get());
     }
     
@@ -576,9 +571,6 @@ final class StreamScenarioTest extends TestCase
         
         $result = $stream->reduce(Reducers::average(0));
         
-        //when
-        $result->run();
-        
         //then
         self::assertSame(3, $counter->count());
         self::assertSame(53.0, $result->get());
@@ -649,7 +641,7 @@ final class StreamScenarioTest extends TestCase
             ->collectIn($buffer)
             ->run();
         
-        self::assertSame(['foo', 123, 'bar', 456], $buffer->getData());
+        self::assertSame(['foo', 123, 'bar', 456], $buffer->toArray());
     }
     
     public function test_scenario_40(): void
@@ -667,7 +659,7 @@ final class StreamScenarioTest extends TestCase
             ->collectIn($buffer)
             ->run();
     
-        self::assertSame(['foo', 123, 'bar', 456, 'z', 'd', 'a', 'c'], $buffer->getData());
+        self::assertSame(['foo', 123, 'bar', 456, 'z', 'd', 'a', 'c'], $buffer->toArray());
     }
     
     public function test_scenario_41(): void
@@ -1708,15 +1700,13 @@ final class StreamScenarioTest extends TestCase
             ->onlyIntegers()
             ->count();
         
-        $countInts->run();
-        
         //Assert
         self::assertSame(5, $countInts->get());
         self::assertSame(27, $sumInts->result());
         self::assertSame(3, $countBools->count());
         self::assertSame(2, $countObjects->get());
-        self::assertSame([2.35, 4.16, 5.22, 3.94, 14.33], $collectFloats->getData());
-        self::assertSame([2, 6, 1], $idsOfAdultWomen->getData());
+        self::assertSame([2.35, 4.16, 5.22, 3.94, 14.33], $collectFloats->toArray());
+        self::assertSame([2, 6, 1], $idsOfAdultWomen->toArray());
         
         self::assertSame([
             'a' => 3, 'b' => 1, 'c' => 1, 'f' => 1, 'l' => 2, 'n' => 1, 'o' => 4, 'r' => 2, 'z' => 1,
@@ -1748,7 +1738,7 @@ final class StreamScenarioTest extends TestCase
             'second' => 29,
         ], $stream->toArrayAssoc());
         
-        self::assertSame([0 => 2, 2, 3 => 4, 5 => 6, 8, 8 => 8, 11 => 2, 14 => 4], $allEvenNumbers->getData());
+        self::assertSame([0 => 2, 2, 3 => 4, 5 => 6, 8, 8 => 8, 11 => 2, 14 => 4], $allEvenNumbers->toArray());
         self::assertSame(7, $countOddNumbers->count());
     }
     
@@ -1772,7 +1762,7 @@ final class StreamScenarioTest extends TestCase
             'Nathaniel' => [12],
         ], $namesAndIds->toArray());
         
-        $repeatedNames = $namesAndIds->stream()->filter(Filters::length()->gt(1))->toArrayAssoc();
+        $repeatedNames = $namesAndIds->stream()->filter(Filters::size()->gt(1))->toArrayAssoc();
         
         self::assertSame(['Chris' => [9, 5, 1, 4, 11, 13]], $repeatedNames);
     }
@@ -1884,8 +1874,8 @@ final class StreamScenarioTest extends TestCase
         self::assertSame(27, $sumInts->result());
         self::assertSame(5, $countBools->count());
         self::assertSame(2, $countObjects->get());
-        self::assertSame([2.35, 4.16, 5.22, 3.94, 14.33], $collectFloats->getData());
-        self::assertSame([2, 6], $idsOfAdultWomen->getData());
+        self::assertSame([2.35, 4.16, 5.22, 3.94, 14.33], $collectFloats->toArray());
+        self::assertSame([2, 6], $idsOfAdultWomen->toArray());
         
         self::assertSame([
             'a' => 3, 'b' => 1, 'c' => 1, 'f' => 1, 'l' => 2, 'n' => 1, 'o' => 4, 'r' => 2, 'z' => 1,

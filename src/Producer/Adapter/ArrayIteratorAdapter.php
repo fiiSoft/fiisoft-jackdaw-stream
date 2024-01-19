@@ -2,10 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Producer\Adapter;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class ArrayIteratorAdapter extends CountableProducer
+final class ArrayIteratorAdapter extends BaseProducer
 {
     private \ArrayIterator $iterator;
     
@@ -14,28 +13,9 @@ final class ArrayIteratorAdapter extends CountableProducer
         $this->iterator = $iterator;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Iterator
     {
-        foreach ($this->iterator as $item->key => $item->value) {
-            yield;
-        }
-    }
-    
-    public function count(): int
-    {
-        return $this->iterator->count();
-    }
-    
-    public function getLast(): ?Item
-    {
-        if ($this->iterator->count() > 0) {
-            $data = $this->iterator->getArrayCopy();
-            $last = \array_key_last($data);
-            
-            return new Item($last, $data[$last]);
-        }
-        
-        return null;
+        return $this->iterator;
     }
     
     public function destroy(): void

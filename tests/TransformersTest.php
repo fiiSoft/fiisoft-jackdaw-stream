@@ -2,12 +2,12 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
-use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Transformer\Adapter\MapperAdapter;
-use FiiSoft\Jackdaw\Transformer\Adapter\PhpSortingFunctionAdapter;
 use FiiSoft\Jackdaw\Transformer\Adapter\ReducerAdapter;
+use FiiSoft\Jackdaw\Transformer\Exception\TransformerExceptionFactory;
 use FiiSoft\Jackdaw\Transformer\GenericTransformer;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
@@ -20,7 +20,11 @@ final class TransformersTest extends TestCase
         $closure = static fn(int $v): int => $v;
         
         self::assertInstanceOf(GenericTransformer::class, Transformers::getAdapter($closure));
-        self::assertInstanceOf(GenericTransformer::class, Transformers::getAdapter(new GenericTransformer($closure)));
+        
+        self::assertInstanceOf(
+            GenericTransformer::class,
+            Transformers::getAdapter(GenericTransformer::create($closure))
+        );
         
         self::assertInstanceOf(ReducerAdapter::class, Transformers::getAdapter(Reducers::sum()));
         self::assertInstanceOf(MapperAdapter::class, Transformers::getAdapter(Mappers::reverse()));
@@ -33,8 +37,7 @@ final class TransformersTest extends TestCase
     
     public function test_getAdapter_throws_exception_when_param_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param transformer');
+        $this->expectExceptionObject(InvalidParamException::byName('transformer'));
         
         Transformers::getAdapter('this is not valid transformer');
     }
@@ -48,8 +51,7 @@ final class TransformersTest extends TestCase
     
     public function test_GenericTransformer_throws_exception_when_callable_requires_wrong_number_of_arguments(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Transformer have to accept 1 or 2 arguments, but requires 0');
+        $this->expectExceptionObject(TransformerExceptionFactory::invalidParamTransformer(0));
         
         Transformers::getAdapter(static fn(): int => 2)->transform(5, 3);
     }
@@ -82,30 +84,5 @@ final class TransformersTest extends TestCase
             [$minMax, ['min' => 1, 'max' => 3]],
             [$average, 2],
         ];
-    }
-    
-    public function test_ReducerAdapter_throws_exception_when_value_to_transform_is_not_iterable(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Param value must be iterable');
-        
-        Transformers::getAdapter(Reducers::sum())->transform('a', 5);
-    }
-    
-    public function test_FilterAdapter_throws_exception_when_value_to_transform_is_not_iterable(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Param value must be iterable');
-        
-        Transformers::getAdapter(Filters::greaterThan(1))->transform('a', 5);
-    }
-    
-    public function test_PhpSortingFunctionAdapter_throws_exception_when_value_to_transform_is_not_iterable(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Only arrays can be sorted');
-        
-        $transformer = new PhpSortingFunctionAdapter('sort');
-        $transformer->transform('a', 1);
     }
 }

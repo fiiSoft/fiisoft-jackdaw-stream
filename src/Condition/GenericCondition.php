@@ -2,34 +2,35 @@
 
 namespace FiiSoft\Jackdaw\Condition;
 
+use FiiSoft\Jackdaw\Condition\Exception\ConditionExceptionFactory;
+use FiiSoft\Jackdaw\Condition\Generic\OneArg;
+use FiiSoft\Jackdaw\Condition\Generic\TwoArgs;
+use FiiSoft\Jackdaw\Condition\Generic\ZeroArg;
 use FiiSoft\Jackdaw\Internal\Helper;
 
-final class GenericCondition implements Condition
+abstract class GenericCondition implements Condition
 {
     /** @var callable */
-    private $condition;
+    protected $callable;
     
-    private int $numOfArgs;
-    
-    public function __construct(callable $condition)
+    final public static function create(callable $condition): self
     {
-        $this->condition = $condition;
-        $this->numOfArgs = Helper::getNumOfArgs($condition);
+        $numOfArgs = Helper::getNumOfArgs($condition);
+        
+        switch ($numOfArgs) {
+            case 1:
+                return new OneArg($condition);
+            case 2:
+                return new TwoArgs($condition);
+            case 0:
+                return new ZeroArg($condition);
+            default:
+                throw ConditionExceptionFactory::invalidParamCondition($numOfArgs);
+        }
     }
     
-    /**
-     * @inheritDoc
-     */
-    public function isTrueFor($value, $key): bool
+    final protected function __construct(callable $condition)
     {
-        $condition = $this->condition;
-    
-        switch ($this->numOfArgs) {
-            case 1: return $condition($value);
-            case 2: return $condition($value, $key);
-            case 0: return $condition();
-            default:
-                throw Helper::wrongNumOfArgsException('Condition', $this->numOfArgs, 1, 2, 0);
-        }
+        $this->callable = $condition;
     }
 }

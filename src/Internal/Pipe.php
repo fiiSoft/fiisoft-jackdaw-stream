@@ -2,53 +2,65 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
+use FiiSoft\Jackdaw\Internal\Exception\PipeExceptionFactory;
 use FiiSoft\Jackdaw\Mapper\Key;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Mapper\Tokenize as TokenizeMapper;
 use FiiSoft\Jackdaw\Mapper\Value;
-use FiiSoft\Jackdaw\Operation\Accumulate;
-use FiiSoft\Jackdaw\Operation\Aggregate;
-use FiiSoft\Jackdaw\Operation\Categorize;
-use FiiSoft\Jackdaw\Operation\Chunk;
-use FiiSoft\Jackdaw\Operation\ChunkBy;
-use FiiSoft\Jackdaw\Operation\Classify;
-use FiiSoft\Jackdaw\Operation\EveryNth;
-use FiiSoft\Jackdaw\Operation\FilterMany;
-use FiiSoft\Jackdaw\Operation\Flat;
-use FiiSoft\Jackdaw\Operation\Flip;
-use FiiSoft\Jackdaw\Operation\Gather;
-use FiiSoft\Jackdaw\Operation\Internal\ConditionalMapOperation;
-use FiiSoft\Jackdaw\Operation\Internal\Feed;
-use FiiSoft\Jackdaw\Operation\Internal\FeedMany;
-use FiiSoft\Jackdaw\Operation\Internal\FilterSingle;
-use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
-use FiiSoft\Jackdaw\Operation\Internal\Initial;
-use FiiSoft\Jackdaw\Operation\Internal\LastOperation;
+use FiiSoft\Jackdaw\Operation\Collecting\Categorize;
+use FiiSoft\Jackdaw\Operation\Collecting\Gather;
+use FiiSoft\Jackdaw\Operation\Collecting\Reverse;
+use FiiSoft\Jackdaw\Operation\Collecting\Segregate;
+use FiiSoft\Jackdaw\Operation\Collecting\ShuffleAll;
+use FiiSoft\Jackdaw\Operation\Collecting\Sort;
+use FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
+use FiiSoft\Jackdaw\Operation\Collecting\Tail;
+use FiiSoft\Jackdaw\Operation\Filtering\EveryNth;
+use FiiSoft\Jackdaw\Operation\Filtering\Filter;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterBy;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterByMany;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterMany;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterSingle;
+use FiiSoft\Jackdaw\Operation\Mapping\Flip;
+use FiiSoft\Jackdaw\Operation\Filtering\OmitReps;
+use FiiSoft\Jackdaw\Operation\Filtering\Skip;
+use FiiSoft\Jackdaw\Operation\Filtering\SkipWhile;
+use FiiSoft\Jackdaw\Operation\Filtering\Unique;
 use FiiSoft\Jackdaw\Operation\Internal\Limitable;
+use FiiSoft\Jackdaw\Operation\Internal\Pipe\Initial;
 use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
-use FiiSoft\Jackdaw\Operation\Limit;
-use FiiSoft\Jackdaw\Operation\Map;
-use FiiSoft\Jackdaw\Operation\MapFieldWhen;
-use FiiSoft\Jackdaw\Operation\MapKey;
-use FiiSoft\Jackdaw\Operation\MapKeyValue;
-use FiiSoft\Jackdaw\Operation\MapMany;
-use FiiSoft\Jackdaw\Operation\MapWhen;
-use FiiSoft\Jackdaw\Operation\OmitReps;
+use FiiSoft\Jackdaw\Operation\Internal\Shuffle;
+use FiiSoft\Jackdaw\Operation\LastOperation;
+use FiiSoft\Jackdaw\Operation\Mapping\Accumulate;
+use FiiSoft\Jackdaw\Operation\Mapping\Aggregate;
+use FiiSoft\Jackdaw\Operation\Mapping\Chunk;
+use FiiSoft\Jackdaw\Operation\Mapping\ChunkBy;
+use FiiSoft\Jackdaw\Operation\Mapping\Classify;
+use FiiSoft\Jackdaw\Operation\Mapping\ConditionalMap;
+use FiiSoft\Jackdaw\Operation\Mapping\Flat;
+use FiiSoft\Jackdaw\Operation\Mapping\Map;
+use FiiSoft\Jackdaw\Operation\Mapping\MapFieldWhen;
+use FiiSoft\Jackdaw\Operation\Mapping\MapKey;
+use FiiSoft\Jackdaw\Operation\Mapping\MapKeyValue;
+use FiiSoft\Jackdaw\Operation\Mapping\MapMany;
+use FiiSoft\Jackdaw\Operation\Mapping\MapWhen;
+use FiiSoft\Jackdaw\Operation\Mapping\Reindex;
+use FiiSoft\Jackdaw\Operation\Mapping\Scan;
+use FiiSoft\Jackdaw\Operation\Mapping\Tokenize;
+use FiiSoft\Jackdaw\Operation\Mapping\Tuple;
+use FiiSoft\Jackdaw\Operation\Mapping\UnpackTuple;
+use FiiSoft\Jackdaw\Operation\Mapping\Window;
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Operation\Reindex;
-use FiiSoft\Jackdaw\Operation\Reverse;
-use FiiSoft\Jackdaw\Operation\Scan;
-use FiiSoft\Jackdaw\Operation\Segregate;
-use FiiSoft\Jackdaw\Operation\SendTo;
-use FiiSoft\Jackdaw\Operation\SendToMany;
-use FiiSoft\Jackdaw\Operation\Shuffle;
-use FiiSoft\Jackdaw\Operation\Skip;
-use FiiSoft\Jackdaw\Operation\Sort;
-use FiiSoft\Jackdaw\Operation\SortLimited;
-use FiiSoft\Jackdaw\Operation\Tail;
+use FiiSoft\Jackdaw\Operation\Sending\Feed;
+use FiiSoft\Jackdaw\Operation\Sending\FeedMany;
+use FiiSoft\Jackdaw\Operation\Sending\SendTo;
+use FiiSoft\Jackdaw\Operation\Sending\SendToMany;
+use FiiSoft\Jackdaw\Operation\Special\Limit;
+use FiiSoft\Jackdaw\Operation\Special\Until;
 use FiiSoft\Jackdaw\Operation\Terminating\Collect;
 use FiiSoft\Jackdaw\Operation\Terminating\CollectKeys;
 use FiiSoft\Jackdaw\Operation\Terminating\Count;
+use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Operation\Terminating\Find;
 use FiiSoft\Jackdaw\Operation\Terminating\First;
 use FiiSoft\Jackdaw\Operation\Terminating\Has;
@@ -56,12 +68,6 @@ use FiiSoft\Jackdaw\Operation\Terminating\HasEvery;
 use FiiSoft\Jackdaw\Operation\Terminating\HasOnly;
 use FiiSoft\Jackdaw\Operation\Terminating\IsEmpty;
 use FiiSoft\Jackdaw\Operation\Terminating\Last;
-use FiiSoft\Jackdaw\Operation\Terminating\Until;
-use FiiSoft\Jackdaw\Operation\Tokenize;
-use FiiSoft\Jackdaw\Operation\Tuple;
-use FiiSoft\Jackdaw\Operation\Unique;
-use FiiSoft\Jackdaw\Operation\UnpackTuple;
-use FiiSoft\Jackdaw\Operation\Window;
 use FiiSoft\Jackdaw\Stream;
 
 final class Pipe extends ProtectedCloning implements Destroyable
@@ -75,7 +81,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
     /** @var Operation|LastOperation|null  */
     private $replacement = null;
     
-    private bool $prepared = false;
+    private bool $isPrepared = false;
     private bool $isDestroying = false;
     
     public function __construct()
@@ -87,7 +93,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
     public function __clone()
     {
         if (!empty($this->stack)) {
-            throw new \RuntimeException('Cannot clone Pipe with non-empty stack');
+            throw PipeExceptionFactory::cannotClonePipeWithNoneEmptyStack();
         }
         
         $this->head = clone $this->head;
@@ -110,11 +116,20 @@ final class Pipe extends ProtectedCloning implements Destroyable
         }
     }
     
+    public function buildStream(iterable $stream): iterable
+    {
+        for ($node = $this->head; $node !== null; $node = $node->getNext()) {
+            $stream = $node->buildStream($stream);
+        }
+        
+        return $stream;
+    }
+    
     public function prepare(): void
     {
-        if (!$this->prepared) {
+        if (!$this->isPrepared) {
             $this->head = $this->head->removeFromChain();
-            $this->prepared = true;
+            $this->isPrepared = true;
         }
     }
     
@@ -123,6 +138,10 @@ final class Pipe extends ProtectedCloning implements Destroyable
      */
     public function chainOperation(Operation $operation, Stream $stream)
     {
+        if ($this->isPrepared) {
+            throw PipeExceptionFactory::cannotAddOperationToStartedStream();
+        }
+        
         if ($this->canAppend($operation, $stream)) {
             $this->append($operation);
         }
@@ -145,7 +164,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
     private function canAppend(Operation $next, Stream $stream): bool
     {
         if ($this->last instanceof FinalOperation) {
-            throw new \LogicException('You cannot add another operation to the final one');
+            throw PipeExceptionFactory::cannotAddOperationToFinalOne();
         }
         
         if ($next instanceof FilterSingle) {
@@ -154,17 +173,15 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 return false;
             }
             if ($this->last instanceof FilterSingle) {
-                $filterMany = new FilterMany($this->last, $next);
-                $this->last = $this->last->removeFromChain();
-                $this->append($filterMany);
+                $this->replaceLastOperation(new FilterMany($this->last, $next));
                 return false;
             }
             if ($this->keepsItemsUnchanged($this->last)) {
-                $prev = $this->findPlaceForFilterMany($this->last);
-                if ($prev instanceof FilterMany) {
-                    $prev->add($next);
+                $node = $this->findPlaceForFilterMany($this->last);
+                if ($node instanceof FilterMany) {
+                    $node->add($next);
                 } else {
-                    $prev->getNext()->prepend(new FilterMany($next));
+                    $node->getNext()->prepend(new FilterMany($next));
                 }
                 return false;
             }
@@ -176,7 +193,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 return !($this->last->mapper() instanceof Value && $next->mapper() instanceof Key);
             }
             if ($this->last instanceof Flip && $next->mapper() instanceof Key) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 $stream->mapKey(Mappers::value());
                 return false;
             }
@@ -186,9 +203,25 @@ final class Pipe extends ProtectedCloning implements Destroyable
             }
             if ($this->last instanceof Map) {
                 if (!$this->last->mergeWith($next)) {
-                    $mapMany = $this->last->createMapMany($next);
-                    $this->last = $this->last->removeFromChain();
-                    $this->append($mapMany);
+                    $this->replaceLastOperation(new MapMany($this->last, $next));
+                }
+                return false;
+            }
+        } elseif ($next instanceof FilterBy) {
+            if ($this->last instanceof FilterByMany) {
+                $this->last->add($next);
+                return false;
+            }
+            if ($this->last instanceof FilterBy) {
+                $this->replaceLastOperation(new FilterByMany($this->last, $next));
+                return false;
+            }
+            if ($this->keepsItemsUnchanged($this->last)) {
+                $node = $this->findPlaceForFilterByMany($this->last);
+                if ($node instanceof FilterByMany) {
+                    $node->add($next);
+                } else {
+                    $node->getNext()->prepend(new FilterByMany($next));
                 }
                 return false;
             }
@@ -197,7 +230,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 return false;
             }
             if ($this->last instanceof Flip && $next->mapper() instanceof Value) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 $stream->map(Mappers::key());
                 return false;
             }
@@ -209,16 +242,18 @@ final class Pipe extends ProtectedCloning implements Destroyable
             }
         } elseif ($next instanceof Limit) {
             if ($this->last instanceof Limitable) {
-                return !$this->last->applyLimit($next->limit());
+                if ($this->last->applyLimit($next->limit())) {
+                    return false;
+                }
+                $this->replaceLastOperation($this->last->createWithLimit($next->limit()));
+                return true;
             }
             if ($this->last instanceof Sort) {
-                $sortLimited = $this->last->createSortLimited($next->limit());
-                $this->last = $this->last->removeFromChain();
-                $this->append($sortLimited);
+                $this->replaceLastOperation($this->last->createSortLimited($next->limit()));
                 return false;
             }
             if ($this->last instanceof Reverse) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 $stream->tail($next->limit())->reverse();
                 return false;
             }
@@ -229,7 +264,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
             }
         } elseif ($next instanceof Reverse) {
             if ($this->last instanceof Reverse) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 return false;
             }
             if ($this->last instanceof Shuffle) {
@@ -248,7 +283,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 return false;
             }
             if ($this->last instanceof MapKey) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
             } elseif ($next->isDefaultReindex()) {
                 if ($this->last instanceof Gather
                     || $this->last instanceof Accumulate
@@ -263,27 +298,27 @@ final class Pipe extends ProtectedCloning implements Destroyable
             }
         } elseif ($next instanceof Flip) {
             if ($this->last instanceof Flip) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 return false;
             }
             if ($this->last instanceof Map && $this->last->mapper() instanceof Key) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 $stream->map(Mappers::key());
                 return false;
             }
             if ($this->last instanceof MapKey && $this->last->mapper() instanceof Value) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 $stream->mapKey(Mappers::value());
                 return false;
             }
         } elseif ($next instanceof Shuffle) {
             if ($this->last instanceof Shuffle) {
-                $this->last->mergeWith($next);
+                $this->replaceLastOperation($this->last->mergedWith($next));
                 return false;
             }
-            if (!$next->isChunked()) {
+            if ($next instanceof ShuffleAll) {
                 if ($this->last instanceof Reverse || $this->last instanceof Sort) {
-                    $this->last = $this->last->removeFromChain();
+                    $this->removeLast();
                 }
             }
             if ($this->last instanceof Limitable && $this->last->limit() === 1) {
@@ -306,7 +341,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 return false;
             }
             if ($this->last instanceof Reverse) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 $stream->limit($next->length())->reverse();
                 return false;
             }
@@ -318,14 +353,14 @@ final class Pipe extends ProtectedCloning implements Destroyable
             if ($this->last instanceof Map) {
                 $mapper = $this->last->mapper();
                 if ($mapper instanceof TokenizeMapper) {
-                    $this->last = $this->last->removeFromChain();
+                    $this->removeLast();
                     $stream->tokenize($mapper->tokens());
                     return false;
                 }
             }
             if ($this->last instanceof Gather) {
                 $reindex = $this->last->isReindexed();
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 if ($reindex) {
                     $stream->reindex();
                 }
@@ -337,14 +372,12 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 }
             }
             if ($this->last instanceof Chunk && !$this->last->isReindexed()) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 return !$next->isLevel(1);
             }
         } elseif ($next instanceof SendTo) {
             if ($this->last instanceof SendTo) {
-                $sendToMany = $this->last->createSendToMany($next);
-                $this->last = $this->last->removeFromChain();
-                $this->append($sendToMany);
+                $this->replaceLastOperation($this->last->createSendToMany($next));
                 return false;
             }
             if ($this->last instanceof SendToMany) {
@@ -358,21 +391,20 @@ final class Pipe extends ProtectedCloning implements Destroyable
             }
             if ($this->last instanceof SendTo) {
                 $next->addConsumers($this->last->consumer());
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
             }
-        } elseif ($next instanceof Sort
-            || $next instanceof SortLimited
-        ) {
-            if ($this->last instanceof Shuffle || $this->last instanceof Reverse) {
-                $this->last = $this->last->removeFromChain();
+        } elseif ($next instanceof Sort || $next instanceof SortLimited) {
+            if ($this->changesTheOrder($this->last)) {
+                $this->removeLast();
             }
         } elseif ($next instanceof Gather) {
             if ($this->last instanceof Reindex) {
                 if ($next->isReindexed()) {
-                    $this->last = $this->last->removeFromChain();
+                    $this->removeLast();
                 } elseif ($this->last->isDefaultReindex()) {
-                    $this->last = $this->last->removeFromChain();
-                    $next->reindex();
+                    $this->removeLast();
+                    $this->append($next->reindexed());
+                    return false;
                 }
             }
         } elseif ($next instanceof Feed) {
@@ -381,12 +413,10 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 return false;
             }
             if ($this->last instanceof Feed) {
-                $feedMany = $this->last->createFeedMany($next);
-                $this->last = $this->last->removeFromChain();
-                $this->append($feedMany);
+                $this->replaceLastOperation($this->last->createFeedMany($next));
                 return false;
             }
-        } elseif ($next instanceof ConditionalMapOperation) {
+        } elseif ($next instanceof ConditionalMap) {
             if ($next->shouldBeNonConditional()) {
                 $stream->map($next->getMaper());
                 return false;
@@ -396,12 +426,17 @@ final class Pipe extends ProtectedCloning implements Destroyable
             if ($this->last instanceof Sort) {
                 $stream->limit(1);
             } elseif ($this->last instanceof Limit) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
             } elseif ($this->last instanceof Limitable) {
-                $this->last->applyLimit(1);
+                if (!$this->last->applyLimit(1)) {
+                    $this->replaceLastOperation($this->last->createWithLimit(1));
+                }
             } elseif ($this->last instanceof Reverse) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 $this->replacement = $stream->last();
+                return false;
+            } elseif ($this->last instanceof Filter) {
+                $this->replaceTerminatingOperation($this->last->createFind($stream));
                 return false;
             }
         } elseif ($next instanceof Last) {
@@ -411,12 +446,12 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 return false;
             }
             if ($this->last instanceof Reverse) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 $this->replacement = $stream->first();
                 return false;
             }
             if ($this->last instanceof Tail) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
             }
         } elseif ($next instanceof IsEmpty) {
             if ($this->last instanceof Sort
@@ -444,7 +479,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 || $this->last instanceof Segregate
                 || $this->last instanceof OmitReps
             ) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 return $this->canAppend($next, $stream);
             }
         } elseif ($next instanceof Find
@@ -453,12 +488,12 @@ final class Pipe extends ProtectedCloning implements Destroyable
             || $next instanceof HasEvery
         ) {
             if ($this->changesTheOrder($this->last)) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 return $this->canAppend($next, $stream);
             }
         } elseif ($next instanceof Count) {
             if ($this->keepsQuantity($this->last)) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 return $this->canAppend($next, $stream);
             }
         } elseif ($next instanceof Unique) {
@@ -467,42 +502,49 @@ final class Pipe extends ProtectedCloning implements Destroyable
             }
         } elseif ($next instanceof Collect) {
             if ($this->last instanceof Flip) {
-                $this->last = $this->last->removeFromChain();
                 $this->replaceTerminatingOperation(new CollectKeys($stream));
                 return false;
             }
         } elseif ($next instanceof CollectKeys) {
             if ($this->last instanceof Flip) {
-                $this->last = $this->last->removeFromChain();
-                $this->replaceTerminatingOperation(new Collect($stream, true));
+                $this->replaceTerminatingOperation(Collect::create($stream, true));
                 return false;
             }
         } elseif ($next instanceof UnpackTuple) {
             if ($this->last instanceof Tuple && $next->isAssoc() === $this->last->isAssoc()) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 return false;
             }
             if ($this->last instanceof Reindex || $this->last instanceof MapKey) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
             }
         } elseif ($next instanceof Tuple) {
             if ($this->last instanceof UnpackTuple && $next->isAssoc() === $this->last->isAssoc()) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
                 return false;
             }
-        } elseif ($next instanceof Until && $next->canBeInversed()) {
+        } elseif ($next instanceof Until && $next->shouldBeInversed()) {
+            $this->append($next->createInversed());
+            return false;
+        } elseif ($next instanceof SkipWhile && $next->shouldBeInversed()) {
             $this->append($next->createInversed());
             return false;
         } elseif ($next instanceof Window && $next->isLikeChunk()) {
             $stream->chunk($next->size(), $next->reindex());
             return false;
-        } elseif ($next instanceof EveryNth && $next->num() === 1) {
-            return false;
+        } elseif ($next instanceof EveryNth) {
+            if ($next->num() === 1) {
+                return false;
+            }
+            if ($this->last instanceof EveryNth) {
+                $this->last->applyNum($next->num());
+                return false;
+            }
         }
         
         if ($next instanceof Reindexable) {
             if ($this->last instanceof Reindex && $next->isReindexed()) {
-                $this->last = $this->last->removeFromChain();
+                $this->removeLast();
             }
         }
 
@@ -511,19 +553,56 @@ final class Pipe extends ProtectedCloning implements Destroyable
     
     private function replaceTerminatingOperation(Operation $operation): void
     {
-        $this->append($operation);
+        $this->replaceLastOperation($operation);
         $this->replacement = $operation;
+    }
+    
+    private function replaceLastOperation(Operation $operation): void
+    {
+        $this->removeLast();
+        $this->append($operation);
+    }
+    
+    private function removeLast(): void
+    {
+        $this->last = $this->last->removeFromChain();
     }
     
     private function findPlaceForFilterMany(Operation $last): Operation
     {
         $prev = $last->getPrev();
         
-        while ($this->keepsItemsUnchanged($prev)) {
+        while ($this->keepsItemsUnchanged($prev) || $this->isFilterBy($prev)) {
             $prev = $prev->getPrev();
         }
         
         return $prev;
+    }
+    
+    private function isFilterBy(Operation $operation): bool
+    {
+        return $operation instanceof FilterBy || $operation instanceof FilterByMany;
+    }
+    
+    private function findPlaceForFilterByMany(Operation $last): Operation
+    {
+        $prev = $last->getPrev();
+        
+        while ($this->keepsItemsUnchanged($prev) || $this->isFilterRegular($prev)) {
+            $prev = $prev->getPrev();
+        }
+        
+        return $prev;
+    }
+    
+    private function isFilterRegular(Operation $operation): bool
+    {
+        return $operation instanceof FilterSingle || $operation instanceof FilterMany;
+    }
+    
+    private function keepsQuantity(Operation $operation): bool
+    {
+        return $operation instanceof Reindex || $this->changesTheOrder($operation);
     }
     
     private function keepsItemsUnchanged(Operation $operation): bool
@@ -531,11 +610,6 @@ final class Pipe extends ProtectedCloning implements Destroyable
         return $operation instanceof Unique
             || $operation instanceof OmitReps
             || $this->changesTheOrder($operation);
-    }
-    
-    private function keepsQuantity(Operation $operation): bool
-    {
-        return $operation instanceof Reindex || $this->changesTheOrder($operation);
     }
     
     private function changesTheOrder(Operation $operation): bool

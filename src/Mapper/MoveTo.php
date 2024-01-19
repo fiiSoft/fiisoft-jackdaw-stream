@@ -3,46 +3,31 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
+use FiiSoft\Jackdaw\Mapper\MoveTo\MoveToFieldKey;
+use FiiSoft\Jackdaw\Mapper\MoveTo\MoveToField;
 
-final class MoveTo extends BaseMapper
+abstract class MoveTo extends StateMapper
 {
     /** @var string|int */
-    private $field;
-    
-    /** @var int|string|null */
-    private $key = null;
+    protected $field;
     
     /**
      * @param string|int $field
      * @param string|int|null $key
      */
-    public function __construct($field, $key = null)
+    final public static function create($field, $key = null): self
     {
-        if (Helper::isFieldValid($field)) {
-            $this->field = $field;
-        } else {
-            throw new \InvalidArgumentException('Invalid param field');
-        }
-        
-        if ($key !== null) {
-            if (Helper::isFieldValid($key)) {
-                $this->key = $key;
-            } else {
-                throw new \InvalidArgumentException('Invalid param key');
-            }
-        }
+        return $key !== null
+            ? new MoveToFieldKey($field, $key)
+            : new MoveToField($field);
     }
     
-    public function map($value, $key): array
+    /**
+     * @param string|int $field
+     */
+    protected function __construct($field)
     {
-        if ($this->key === null) {
-            return [$this->field => $value];
-        }
-        
-        return [
-            $this->key  => $key,
-            $this->field => $value,
-        ];
+        $this->field = Helper::validField($field, 'field');
     }
 }

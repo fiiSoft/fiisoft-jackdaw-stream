@@ -2,23 +2,27 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
-use FiiSoft\Jackdaw\Operation\Internal\FinalOperation;
+use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
+use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Stream;
 
 abstract class ForkCollaborator extends ProtectedCloning
 {
-    protected function getFinalOperation(): FinalOperation
+    //Fork, Stream
+    protected function getFinalOperation(): ?FinalOperation
     {
-        throw new \BadMethodCallException('Method '.__METHOD__.' should never be called');
+        throw ImpossibleSituationException::called(__METHOD__);
     }
     
+    //Result, StreamPipeAdapter, FinalOperation, ProcessOperation [Feed, FeedMany, Fork]
     protected function process(Signal $signal): bool
     {
-        throw new \BadMethodCallException('Method '.__METHOD__.' should never be called');
+        throw ImpossibleSituationException::called(__METHOD__);
     }
     
+    //Fork, FinalOperation
     protected function cloneStream(): Stream
     {
-        throw new \BadMethodCallException('Method '.__METHOD__.' should never be called');
+        throw ImpossibleSituationException::called(__METHOD__);
     }
 }

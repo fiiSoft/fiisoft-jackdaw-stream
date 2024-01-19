@@ -3,27 +3,64 @@
 namespace FiiSoft\Jackdaw\Filter\Logic;
 
 use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 
-final class FilterNOT implements Filter
+final class FilterNOT extends LogicFilter
 {
     private Filter $filter;
     
+    protected function __construct(Filter $filter)
+    {
+        parent::__construct();
+        
+        $this->filter = $filter;
+    }
+    
     /**
-     * @param Filter|callable|mixed $filter
+     * @inheritDoc
      */
-    public function __construct($filter)
+    public function isAllowed($value, $key = null): bool
     {
-        $this->filter = Filters::getAdapter($filter);
+        return !$this->filter->isAllowed($value, $key);
     }
     
-    public function isAllowed($value, $key, int $mode = Check::VALUE): bool
+    public function buildStream(iterable $stream): iterable
     {
-        return !$this->filter->isAllowed($value, $key, $mode);
+        foreach ($stream as $key => $value) {
+            if (!$this->filter->isAllowed($value, $key)) {
+                yield $key => $value;
+            }
+        }
     }
     
-    public function getFilter(): Filter
+    public function inMode(?int $mode): Filter
+    {
+        if ($mode !== null && ($mode !== $this->filter->getMode() || $mode !== $this->negatedMode())) {
+            if ($mode === Check::BOTH) {
+                $mode = Check::ANY;
+            } elseif ($mode === Check::ANY) {
+                $mode = Check::BOTH;
+            }
+            
+            return new self($this->filter->inMode($mode));
+        }
+        
+        return $this;
+    }
+    
+    public function getMode(): ?int
+    {
+        return $this->filter->getMode();
+    }
+    
+    public function negate(): Filter
+    {
+        $negation = $this->filter->negate();
+        
+        return $negation instanceof self ? $this->filter->inMode($this->negatedMode()) : $negation;
+    }
+    
+    public function wrappedFilter(): Filter
     {
         return $this->filter;
     }

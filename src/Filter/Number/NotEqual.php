@@ -2,21 +2,36 @@
 
 namespace FiiSoft\Jackdaw\Filter\Number;
 
-final class NotEqual extends NumberFilter
+use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\Number\NotEqual\AnyNotEqual;
+use FiiSoft\Jackdaw\Filter\Number\NotEqual\BothNotEqual;
+use FiiSoft\Jackdaw\Filter\Number\NotEqual\KeyNotEqual;
+use FiiSoft\Jackdaw\Filter\Number\NotEqual\ValueNotEqual;
+use FiiSoft\Jackdaw\Internal\Check;
+
+abstract class NotEqual extends SingleArg
 {
     /**
-     * @inheritdoc
+     * @param float|int $value
      */
-    protected function test($value): bool
+    final public static function create(int $mode, $value): self
     {
-        if (\is_int($value) || \is_float($value)) {
-            return $value !== $this->value;
+        switch ($mode) {
+            case Check::VALUE:
+                return new ValueNotEqual($mode, $value);
+            case Check::KEY:
+                return new KeyNotEqual($mode, $value);
+            case Check::BOTH:
+                return new BothNotEqual($mode, $value);
+            case Check::ANY:
+                return new AnyNotEqual($mode, $value);
+            default:
+                throw Check::invalidModeException($mode);
         }
+    }
     
-        if (\is_numeric($value)) {
-            return (float) $value !== (float) $this->value;
-        }
-    
-        throw new \LogicException('Cannot compare value which is not a number');
+    final public function negate(): Filter
+    {
+        return Equal::create($this->negatedMode(), $this->number);
     }
 }

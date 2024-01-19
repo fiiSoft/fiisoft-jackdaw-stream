@@ -3,6 +3,8 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\Consumer\Exception\ConsumerExceptionFactory;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Registry\Registry;
 use PHPUnit\Framework\TestCase;
@@ -11,8 +13,7 @@ final class ConsumersTest extends TestCase
 {
     public function test_getAdapter_throws_exception_on_invalid_argument(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param consumer - int 15');
+        $this->expectExceptionObject(InvalidParamException::describe('consumer', 15));
         
         Consumers::getAdapter(15);
     }
@@ -30,17 +31,13 @@ final class ConsumersTest extends TestCase
     
     public function test_GenericConsumer_throws_exception_when_callable_accepts_wrong_number_of_params(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectExceptionObject(ConsumerExceptionFactory::invalidParamConsumer(3));
         
         Consumers::getAdapter(static fn($a,$b,$c): bool => true)->consume(2, 1);
     }
     
     /**
      * @dataProvider getDataForTestPrinterConsumerSimplyEchoOutputToStdout
-     *
-     * @param int $mode
-     * @param string $expectedOutput
-     * @return void
      */
     public function test_Printer_consumer_simply_echo_output_to_stdout(int $mode, string $expectedOutput): void
     {
@@ -66,8 +63,7 @@ final class ConsumersTest extends TestCase
     
     public function test_ResourceWriter_throws_exception_when_param_is_not_resource(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param resource');
+        $this->expectExceptionObject(InvalidParamException::byName('resource'));
         
         Consumers::resource('this is not resource');
     }
@@ -116,8 +112,7 @@ final class ConsumersTest extends TestCase
     
     public function test_Sleeper_throws_exception_when_param_microseconds_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param microseconds');
+        $this->expectExceptionObject(InvalidParamException::byName('microseconds'));
         
         Consumers::usleep(-1);
     }

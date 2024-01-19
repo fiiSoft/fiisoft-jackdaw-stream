@@ -2,31 +2,35 @@
 
 namespace FiiSoft\Jackdaw\Discriminator;
 
+use FiiSoft\Jackdaw\Discriminator\Exception\DiscriminatorExceptionFactory;
+use FiiSoft\Jackdaw\Discriminator\Generic\OneArg;
+use FiiSoft\Jackdaw\Discriminator\Generic\TwoArgs;
+use FiiSoft\Jackdaw\Discriminator\Generic\ZeroArg;
 use FiiSoft\Jackdaw\Internal\Helper;
 
-final class GenericDiscriminator implements Discriminator
+abstract class GenericDiscriminator implements Discriminator
 {
     /** @var callable */
-    private $classifier;
+    protected $callable;
     
-    private int $numOfArgs;
-    
-    public function __construct(callable $classifier)
+    final public static function create(callable $classifier): self
     {
-        $this->classifier = $classifier;
-        $this->numOfArgs = Helper::getNumOfArgs($classifier);
+        $numOfArgs = Helper::getNumOfArgs($classifier);
+        
+        switch ($numOfArgs) {
+            case 1:
+                return new OneArg($classifier);
+            case 2:
+                return new TwoArgs($classifier);
+            case 0:
+                return new ZeroArg($classifier);
+            default:
+                throw DiscriminatorExceptionFactory::invalidParamClassifier($numOfArgs);
+        }
     }
     
-    public function classify($value, $key)
+    final protected function __construct(callable $classifier)
     {
-        $classify = $this->classifier;
-    
-        switch ($this->numOfArgs) {
-            case 1: return $classify($value);
-            case 2: return $classify($value, $key);
-            case 0: return $classify();
-            default:
-                throw Helper::wrongNumOfArgsException('Classifier', $this->numOfArgs, 1, 2, 0);
-        }
+        $this->callable = $classifier;
     }
 }

@@ -7,8 +7,9 @@ use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Operation\Segregate\Bucket;
-use FiiSoft\Jackdaw\Operation\Strategy\Unique\FullAssocChecker;
+use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
+use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
+use FiiSoft\Jackdaw\Operation\Filtering\Unique\FullAssocChecker;
 use PHPUnit\Framework\TestCase;
 
 final class OtherTest extends TestCase
@@ -38,7 +39,7 @@ final class OtherTest extends TestCase
     
     public function test_Check_throws_exception_when_param_mode_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(Check::invalidModeException(0));
         
         Check::getMode(0);
     }
@@ -239,6 +240,10 @@ final class OtherTest extends TestCase
             [['a', 'b', 'c'], 'array of length 3 ["a","b","c"]'],
             [new \stdClass(), 'object of class stdClass'],
             [\fopen('php://temp', 'r'), 'resource'],
+            [
+                'This is a bit longer string so it should be shortened',
+                'string This is a bit longer string so it should be sho...'
+            ],
         ];
     }
     
@@ -309,8 +314,8 @@ final class OtherTest extends TestCase
         $second = new Bucket();
         $second->add(new Item(2, 'b'));
         
-        $third = $second->append(new Item(3, 'c'));
-        $first = $second->prepend(new Item(1, 'a'));
+        $third = $second->create(new Item(3, 'c'));
+        $first = $second->create(new Item(1, 'a'));
         
         self::assertSame([1 => 'a'], $first->data);
         self::assertSame([2 => 'b'], $second->data);
@@ -420,8 +425,7 @@ final class OtherTest extends TestCase
     public function test_FullAssocChecker_throws_exception_when_Comparator_is_invalid(): void
     {
         //Assert
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('FullAssocChecker can work only with four-argument callable');
+        $this->expectExceptionObject(OperationExceptionFactory::invalidComparator());
         
         //Arrange
         $comparator = Comparators::getAdapter('is_string');
@@ -449,5 +453,23 @@ final class OtherTest extends TestCase
         
         \array_shift($arr);
         self::assertSame([], $arr);
+    }
+    
+    public function test_examine_array_callable_using_Helper(): void
+    {
+        self::assertSame(2, Helper::getNumOfArgs([$this, 'the_function_to_test_helper']));
+        self::assertFalse(Helper::isDeclaredReturnTypeArray([$this, 'the_function_to_test_helper']));
+        
+        self::assertSame(0, Helper::getNumOfArgs([__CLASS__, 'other_function_to_test_helper']));
+        self::assertTrue(Helper::isDeclaredReturnTypeArray([__CLASS__, 'other_function_to_test_helper']));
+    }
+    
+    public function the_function_to_test_Helper(int $firstArg, string $secondArg, bool $thirdArg = true): void
+    {
+    }
+    
+    public static function other_function_to_test_Helper(int $firstArg = 0, string $secondArg = ''): array
+    {
+        return [];
     }
 }

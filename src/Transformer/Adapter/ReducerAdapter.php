@@ -19,16 +19,12 @@ final class ReducerAdapter implements Transformer
      */
     public function transform($value, $key)
     {
-        if (\is_iterable($value)) {
-            $this->reducer->reset();
+        $this->reducer->reset();
         
-            foreach ($value as $v) {
-                $this->reducer->consume($v);
-            }
-            
-            return $this->reducer->hasResult() ? $this->reducer->result() : null;
+        foreach ($value as $v) {
+            $this->reducer->consume($v);
         }
         
-        throw new \LogicException('Param value must be iterable');
+        return $this->reducer->hasResult() ? $this->reducer->result() : null;
     }
 }

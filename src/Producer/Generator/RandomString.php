@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Producer\Generator\Exception\GeneratorExceptionFactory;
 use FiiSoft\Jackdaw\Producer\Tech\LimitedProducer;
 
 final class RandomString extends LimitedProducer
@@ -24,7 +24,7 @@ final class RandomString extends LimitedProducer
         parent::__construct($limit);
         
         if ($maxLength !== null && $maxLength < $minLength) {
-            throw new \InvalidArgumentException('Max length cannot be less than min length');
+            throw GeneratorExceptionFactory::maxLengthCannotBeLessThanMinLength();
         }
     
         $this->minLength = $minLength;
@@ -33,7 +33,7 @@ final class RandomString extends LimitedProducer
         $this->chars = \str_split($charset ?: self::DEFAULT_CHARSET);
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         $count = 0;
         
@@ -45,15 +45,7 @@ final class RandomString extends LimitedProducer
             
             \shuffle($this->chars);
             
-            $item->key = $count++;
-            $item->value = \implode('', \array_slice($this->chars, 0, $length));
-            
-            yield;
+            yield $count++ => \implode('', \array_slice($this->chars, 0, $length));
         }
-    }
-    
-    public function getLast(): ?Item
-    {
-        return null;
     }
 }

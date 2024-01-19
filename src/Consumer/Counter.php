@@ -2,25 +2,47 @@
 
 namespace FiiSoft\Jackdaw\Consumer;
 
-final class Counter implements Consumer
+use FiiSoft\Jackdaw\Internal\StreamAware;
+use FiiSoft\Jackdaw\Internal\StreamState;
+use FiiSoft\Jackdaw\Stream;
+
+final class Counter extends StreamState implements Consumer, StreamAware
 {
     private int $count = 0;
     
+    private ?Stream $stream = null;
+    
+    /**
+     * @inheritDoc
+     */
     public function consume($value, $key): void
     {
         ++$this->count;
     }
     
+    /**
+     * Alias for method get() for convenient use.
+     */
     public function count(): int
     {
-        return $this->count;
+        return $this->get();
     }
     
     /**
-     * Alias for count for convenient use.
+     * Alias for method count() for convenient use.
      */
     public function get(): int
     {
+        if ($this->stream !== null && $this->stream->isNotStartedYet()) {
+            $this->stream->run();
+            $this->stream = null;
+        }
+        
         return $this->count;
+    }
+    
+    public function assignStream(Stream $stream): void
+    {
+        $this->stream = $stream;
     }
 }

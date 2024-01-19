@@ -2,12 +2,10 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
-use FiiSoft\Jackdaw\Collector\Collectors;
-use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparators;
-use FiiSoft\Jackdaw\Comparator\Sorting\By;
-use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
@@ -15,44 +13,37 @@ use FiiSoft\Jackdaw\Internal\Pipe;
 use FiiSoft\Jackdaw\Internal\ResultItem;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Operation\Aggregate;
-use FiiSoft\Jackdaw\Operation\Chunk;
-use FiiSoft\Jackdaw\Operation\Classify;
-use FiiSoft\Jackdaw\Operation\CollectIn;
-use FiiSoft\Jackdaw\Operation\Dispatch;
-use FiiSoft\Jackdaw\Operation\EveryNth;
-use FiiSoft\Jackdaw\Operation\Flat;
-use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\Handlers;
-use FiiSoft\Jackdaw\Operation\Internal\Ending;
-use FiiSoft\Jackdaw\Operation\Internal\FeedMany;
-use FiiSoft\Jackdaw\Operation\Internal\Fork;
-use FiiSoft\Jackdaw\Operation\Internal\Initial;
-use FiiSoft\Jackdaw\Operation\Limit;
-use FiiSoft\Jackdaw\Operation\MapFieldWhen;
-use FiiSoft\Jackdaw\Operation\MapKey;
-use FiiSoft\Jackdaw\Operation\MapKeyValue;
+use FiiSoft\Jackdaw\Operation\Collecting\Segregate;
+use FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
+use FiiSoft\Jackdaw\Operation\Collecting\Tail;
+use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
+use FiiSoft\Jackdaw\Operation\Filtering\EveryNth;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterBy;
+use FiiSoft\Jackdaw\Operation\Internal\Pipe\Ending;
+use FiiSoft\Jackdaw\Operation\Internal\Pipe\Initial;
+use FiiSoft\Jackdaw\Operation\Mapping\Aggregate;
+use FiiSoft\Jackdaw\Operation\Mapping\Chunk;
+use FiiSoft\Jackdaw\Operation\Mapping\Flat;
+use FiiSoft\Jackdaw\Operation\Mapping\MapFieldWhen;
+use FiiSoft\Jackdaw\Operation\Mapping\MapKey;
+use FiiSoft\Jackdaw\Operation\Mapping\MapKeyValue;
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Operation\Reverse;
-use FiiSoft\Jackdaw\Operation\Segregate;
-use FiiSoft\Jackdaw\Operation\SendTo;
-use FiiSoft\Jackdaw\Operation\SendToMax;
-use FiiSoft\Jackdaw\Operation\Sort;
-use FiiSoft\Jackdaw\Operation\SortLimited;
-use FiiSoft\Jackdaw\Operation\State\SortLimited\BufferFull;
-use FiiSoft\Jackdaw\Operation\State\SortLimited\SingleItem;
-use FiiSoft\Jackdaw\Operation\StoreIn;
-use FiiSoft\Jackdaw\Operation\Tail;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatch;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Handlers;
+use FiiSoft\Jackdaw\Operation\Sending\FeedMany;
+use FiiSoft\Jackdaw\Operation\Sending\SendTo;
+use FiiSoft\Jackdaw\Operation\Sending\SendToMax;
+use FiiSoft\Jackdaw\Operation\Sending\StoreIn;
+use FiiSoft\Jackdaw\Operation\Special\Iterate;
+use FiiSoft\Jackdaw\Operation\Special\Limit;
 use FiiSoft\Jackdaw\Operation\Terminating\Collect;
 use FiiSoft\Jackdaw\Operation\Terminating\CollectKeys;
 use FiiSoft\Jackdaw\Operation\Terminating\Count;
 use FiiSoft\Jackdaw\Operation\Terminating\Find;
 use FiiSoft\Jackdaw\Operation\Terminating\First;
-use FiiSoft\Jackdaw\Operation\Terminating\GroupBy;
 use FiiSoft\Jackdaw\Operation\Terminating\Has;
 use FiiSoft\Jackdaw\Operation\Terminating\HasEvery;
-use FiiSoft\Jackdaw\Operation\Terminating\Last;
 use FiiSoft\Jackdaw\Operation\Terminating\Reduce;
-use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
@@ -61,16 +52,14 @@ final class OperationsTest extends TestCase
 {
     public function test_Tail_throws_exception_when_limit_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param length');
+        $this->expectExceptionObject(InvalidParamException::byName('length'));
         
         new Tail(0);
     }
     
     public function test_SendToMax_throws_exception_when_limit_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param times');
+        $this->expectExceptionObject(InvalidParamException::byName('times'));
         
         new SendToMax(0, Consumers::counter());
     }
@@ -80,10 +69,9 @@ final class OperationsTest extends TestCase
      */
     public function test_Aggregate_throws_exception_when_param_keys_is_invalid($keys): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param keys');
+        $this->expectExceptionObject(InvalidParamException::byName('keys'));
         
-        new Aggregate($keys);
+        Aggregate::create($keys);
     }
     
     public static function getDataForTestAggregateThrowsExceptionWhenParamKeysIsInvalid(): array
@@ -117,54 +105,16 @@ final class OperationsTest extends TestCase
     
     public function test_MapFieldWhen_throws_exception_when_param_field_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param field');
+        $this->expectExceptionObject(InvalidParamException::byName('field'));
         
         new MapFieldWhen('', 'is_string', 'strtolower');
     }
     
-    public function test_MapFieldWhen_throws_exception_when_field_is_not_in_ArrayAccess_object(): void
-    {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Field foo does not exist in value');
-        
-        Stream::from([['bar' => 1]])
-            ->map(static fn(array $row): \ArrayObject => new \ArrayObject($row))
-            ->mapFieldWhen('foo', 'is_string', 'strtoupper')
-            ->run();
-    }
-    
     public function test_SortLimited_throws_exception_when_param_limit_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param limit');
+        $this->expectExceptionObject(InvalidParamException::byName('limit'));
         
-        new SortLimited(0);
-    }
-    
-    public function test_SortLimited_acceptSimpleData(): void
-    {
-        //given
-        [$stream, $pipe, $signal] = $this->prepare();
-        
-        $sortLimited = new SortLimited(3);
-        $collect = new Collect($stream);
-        $this->addToPipe($pipe, $sortLimited, $collect);
-        
-        //when
-        $sortLimited->acceptSimpleData([5, 2, 7, 1, 3, 6], $signal, false);
-        
-        //then
-        self::assertSame([3 => 1, 1 => 2, 4 => 3], $collect->get());
-    }
-    
-    public function test_change_size_of_SortLimited_buffer_is_prohibited(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Change of size of full buffer is prohibited');
-        
-        $state = new BufferFull(new SortLimited(5), new \SplMaxHeap());
-        $state->setLength(1);
+        SortLimited::create(0);
     }
     
     public function test_Ending_operation(): void
@@ -176,17 +126,15 @@ final class OperationsTest extends TestCase
     
     public function test_Ending_operation_cannot_be_removed_from_chain(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('It should never happen (Ending::removeFromChain)');
-    
+        $this->expectExceptionObject(ImpossibleSituationException::called('removeFromChain'));
+        
         $operation = new Ending();
         $operation->removeFromChain();
     }
     
     public function test_Ending_operation_has_to_be_the_last_operation_in_chain(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('It should never happen (Ending::setNext)');
+        $this->expectExceptionObject(ImpossibleSituationException::called('setNext'));
     
         $operation = new Ending();
         $operation->setNext(new Ending());
@@ -194,8 +142,7 @@ final class OperationsTest extends TestCase
     
     public function test_Ending_cannot_prepend_other_operation(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('It should never happen (Ending::prepend)');
+        $this->expectExceptionObject(ImpossibleSituationException::called('prepend'));
         
         $operation = new Ending();
         $operation->prepend(new Ending());
@@ -203,8 +150,7 @@ final class OperationsTest extends TestCase
     
     public function test_Initial_operation_have_to_be_first_operation_in_chain(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('It should never happen (Inital::setPrev)');
+        $this->expectExceptionObject(ImpossibleSituationException::called('setPrev'));
     
         $operation = new Initial();
         $operation->setPrev(new Ending());
@@ -212,8 +158,7 @@ final class OperationsTest extends TestCase
     
     public function test_Initial_cannot_prepend_other_operation(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('It should never happen (Inital::prepend)');
+        $this->expectExceptionObject(ImpossibleSituationException::called('prepend'));
     
         $operation = new Initial();
         $operation->prepend(new Ending());
@@ -246,7 +191,7 @@ final class OperationsTest extends TestCase
         $passedData = [];
         
         $initial = new Initial();
-        $chunk = new Chunk(5, true);
+        $chunk = Chunk::create(5, true);
         
         $initial->setNext($chunk);
         $chunk->setNext(new SendTo(static function ($value, $key) use (&$passedData): void {
@@ -270,10 +215,29 @@ final class OperationsTest extends TestCase
         self::assertSame([[3, 7]], $passedData);
     }
     
+    public function test_Initial_buildStream_returns_passed_stream(): void
+    {
+        $initial = new Initial();
+        
+        $stream = new \ArrayIterator([]);
+        $actual = $initial->buildStream($stream);
+        
+        self::assertSame($stream, $actual);
+    }
+    
+    public function test_Iterate_buildStream_returns_passed_stream(): void
+    {
+        $initial = new Iterate();
+        
+        $stream = new \ArrayIterator([]);
+        $actual = $initial->buildStream($stream);
+        
+        self::assertSame($stream, $actual);
+    }
+    
     public function test_FeedMany_throws_exception_when_no_streams_are_provided(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('FeedMany requires at least one stream');
+        $this->expectExceptionObject(InvalidParamException::byName('streams'));
         
         new FeedMany();
     }
@@ -297,25 +261,9 @@ final class OperationsTest extends TestCase
     
     public function test_MapKeyValue_throws_exception_when_number_of_arguments_accepted_by_mapper_is_invalid(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('KeyValue mapper have to accept 0, 1 or 2 arguments, but requires 3');
+        $this->expectExceptionObject(OperationExceptionFactory::invalidKeyValueMapper(3));
         
-        new MapKeyValue(static fn($a, $b, $c): bool => true);
-    }
-    
-    public function test_Fork_throws_exception_when_Discriminator_returns_invalid_value(): void
-    {
-        //Assert
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessage('Unsupported value was returned from discriminator (got array)');
-        
-        //Arrange
-        $stream = Stream::empty();
-        
-        $fork = new Fork(static fn($v,$k): array => [$k => $v], new Collect($stream));
-        
-        //Act
-        $fork->handle(new Signal($stream));
+        MapKeyValue::create(static fn($a, $b, $c): bool => true);
     }
     
     /**
@@ -323,10 +271,9 @@ final class OperationsTest extends TestCase
      */
     public function test_MapKeyValue_throws_exception_when_return_type_of_mapper_is_not_array(callable $mapper): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('KeyValue mapper must have declared array as its return type');
+        $this->expectExceptionObject(OperationExceptionFactory::wrongTypeOfKeyValueMapper());
         
-        new MapKeyValue($mapper);
+        MapKeyValue::create($mapper);
     }
     
     public static function getDataForTestMapKeyValueThrowsExceptionWhenDeclaredTypeOfValueOfMapperIsNotArray(): \Generator
@@ -356,47 +303,6 @@ final class OperationsTest extends TestCase
         self::assertSame(8, $first->get());
     }
     
-    public function test_First_collectDataFromProducer(): void
-    {
-        [$stream, , $signal] = $this->prepare();
-        
-        $first = new First($stream);
-        $first->setNext(new Ending());
-        $first->collectDataFromProducer(Producers::getAdapter([8, 3, 5]), $signal, false);
-        
-        self::assertSame(8, $first->get());
-    }
-    
-    public function test_First_acceptSimpleData(): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $first = new First($stream);
-        $first->setNext(new Ending());
-        
-        //when
-        $first->acceptSimpleData([8, 3, 5], $signal, false);
-        
-        //then
-        self::assertSame(8, $first->get());
-    }
-    
-    public function test_First_acceptCollectedItems(): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $first = new First($stream);
-        $first->setNext(new Ending());
-        
-        //when
-        $first->acceptCollectedItems($this->convertToItems([8, 3, 5]), $signal, false);
-        
-        //then
-        self::assertSame(8, $first->get());
-    }
-    
     /**
      * @dataProvider getDataForCollect
      */
@@ -404,64 +310,10 @@ final class OperationsTest extends TestCase
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $collect = new Collect($stream, $reindex);
+        $collect = Collect::create($stream, $reindex);
         $this->addToPipe($pipe, $collect);
         
         $this->sendToPipe($dataSet, $pipe, $signal);
-        self::assertSame($expected, $collect->get());
-    }
-    
-    /**
-     * @dataProvider getDataForCollect
-     */
-    public function test_Collect_collectDataFromProducer(bool $reindex, array $dataSet, array $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $collect = new Collect($stream, $reindex);
-        $collect->setNext(new Ending());
-        
-        //when
-        $collect->collectDataFromProducer(Producers::getAdapter($dataSet), $signal, false);
-        
-        //then
-        self::assertSame($expected, $collect->get());
-    }
-    
-    /**
-     * @dataProvider getDataForCollect
-     */
-    public function test_Collect_acceptSimpleData(bool $reindex, array $dataSet, array $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $collect = new Collect($stream, $reindex);
-        $collect->setNext(new Ending());
-        
-        //when
-        $collect->acceptSimpleData($dataSet, $signal, false);
-        
-        //then
-        self::assertSame($expected, $collect->get());
-    }
-    
-    /**
-     * @dataProvider getDataForCollect
-     */
-    public function test_Collect_acceptCollectedItems(bool $reindex, array $dataSet, array $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $collect = new Collect($stream, $reindex);
-        $collect->setNext(new Ending());
-        
-        //when
-        $collect->acceptCollectedItems($this->convertToItems($dataSet), $signal, false);
-        
-        //then
         self::assertSame($expected, $collect->get());
     }
     
@@ -490,60 +342,6 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $collectKeys->get());
     }
     
-    /**
-     * @dataProvider getDataForCollectKeys
-     */
-    public function test_CollectKeys_collectDataFromProducer(array $dataSet, array $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $collectKeys = new CollectKeys($stream);
-        $collectKeys->setNext(new Ending());
-        
-        //when
-        $collectKeys->collectDataFromProducer(Producers::getAdapter($dataSet), $signal, false);
-        
-        //then
-        self::assertSame($expected, $collectKeys->get());
-    }
-    
-    /**
-     * @dataProvider getDataForCollectKeys
-     */
-    public function test_CollectKeys_acceptSimpleData(array $dataSet, array $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $collectKeys = new CollectKeys($stream);
-        $collectKeys->setNext(new Ending());
-        
-        //when
-        $collectKeys->acceptSimpleData($dataSet, $signal, false);
-        
-        //then
-        self::assertSame($expected, $collectKeys->get());
-    }
-    
-    /**
-     * @dataProvider getDataForCollectKeys
-     */
-    public function test_CollectKeys_acceptCollectedItems(array $dataSet, array $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $collectKeys = new CollectKeys($stream);
-        $collectKeys->setNext(new Ending());
-        
-        //when
-        $collectKeys->acceptCollectedItems($this->convertToItems($dataSet), $signal, false);
-        
-        //then
-        self::assertSame($expected, $collectKeys->get());
-    }
-    
     public static function getDataForCollectKeys(): array
     {
         //dataset, expected keys
@@ -565,75 +363,6 @@ final class OperationsTest extends TestCase
         $this->addToPipe($pipe, $count);
         
         $this->sendToPipe($dataSet, $pipe, $signal);
-        self::assertSame($expected, $count->get());
-    }
-    
-    /**
-     * @dataProvider getDataForCount
-     */
-    public function test_Count_collectDataFromProducer(array $dataSet, int $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $count = new Count($stream);
-        $count->setNext(new Ending());
-        
-        //when
-        $count->collectDataFromProducer(Producers::getAdapter($dataSet), $signal, false);
-        
-        //then
-        self::assertSame($expected, $count->get());
-    }
-    
-    public function test_Count_collectDataFromProducer_non_countable(): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $count = new Count($stream);
-        $count->setNext(new Ending());
-        
-        //when
-        $count->collectDataFromProducer(Producers::tokenizer(' ', 'foo bar zoo'), $signal, false);
-        
-        //then
-        self::assertSame(3, $count->get());
-    }
-    
-    /**
-     * @dataProvider getDataForCount
-     */
-    public function test_Count_acceptSimpleData(array $dataSet, int $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $count = new Count($stream);
-        $count->setNext(new Ending());
-        
-        //when
-        $count->acceptSimpleData($dataSet, $signal, false);
-        
-        //then
-        self::assertSame($expected, $count->get());
-    }
-    
-    /**
-     * @dataProvider getDataForCount
-     */
-    public function test_Count_acceptCollectedItems(array $dataSet, int $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $count = new Count($stream);
-        $count->setNext(new Ending());
-        
-        //when
-        $count->acceptCollectedItems($this->convertToItems($dataSet), $signal, false);
-        
-        //then
         self::assertSame($expected, $count->get());
     }
     
@@ -661,60 +390,6 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $has->get());
     }
     
-    /**
-     * @dataProvider getDataForTestHas
-     */
-    public function test_Has_collectDataFromProducer(int $mode, $predicate, array $dataSet, bool $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $has = new Has($stream, $predicate, $mode);
-        $has->setNext(new Ending());
-        
-        //when
-        $has->collectDataFromProducer(Producers::getAdapter($dataSet), $signal, false);
-        
-        //then
-        self::assertSame($expected, $has->get());
-    }
-    
-    /**
-     * @dataProvider getDataForTestHas
-     */
-    public function test_Has_acceptSimpleData(int $mode, $predicate, array $dataSet, bool $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $has = new Has($stream, $predicate, $mode);
-        $has->setNext(new Ending());
-        
-        //when
-        $has->acceptSimpleData($dataSet, $signal, false);
-        
-        //then
-        self::assertSame($expected, $has->get());
-    }
-    
-    /**
-     * @dataProvider getDataForTestHas
-     */
-    public function test_Has_acceptCollectedItems(int $mode, $predicate, array $dataSet, bool $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $has = new Has($stream, $predicate, $mode);
-        $has->setNext(new Ending());
-        
-        //when
-        $has->acceptCollectedItems($this->convertToItems($dataSet), $signal, false);
-        
-        //then
-        self::assertSame($expected, $has->get());
-    }
-    
     public static function getDataForTestHas(): \Generator
     {
         $cases = [
@@ -739,60 +414,6 @@ final class OperationsTest extends TestCase
         
         $this->sendToPipe($dataSet, $pipe, $signal);
         
-        $this->assertFindResultIsCorrect($find, $expected);
-    }
-    
-    /**
-     * @dataProvider getDataForTestFind
-     */
-    public function test_Find_collectDataFromProducer(int $mode, $predicate, array $dataSet, ?array $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-
-        $find = new Find($stream, $predicate, $mode);
-        $find->setNext(new Ending());
-        
-        //when
-        $find->collectDataFromProducer(Producers::getAdapter($dataSet), $signal, false);
-        
-        //then
-        $this->assertFindResultIsCorrect($find, $expected);
-    }
-    
-    /**
-     * @dataProvider getDataForTestFind
-     */
-    public function test_Find_acceptSimpleData(int $mode, $predicate, array $dataSet, ?array $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $find = new Find($stream, $predicate, $mode);
-        $find->setNext(new Ending());
-        
-        //when
-        $find->acceptSimpleData($dataSet, $signal, false);
-        
-        //then
-        $this->assertFindResultIsCorrect($find, $expected);
-    }
-    
-    /**
-     * @dataProvider getDataForTestFind
-     */
-    public function test_Find_acceptCollectedItems(int $mode, $predicate, array $dataSet, ?array $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $find = new Find($stream, $predicate, $mode);
-        $find->setNext(new Ending());
-        
-        //when
-        $find->acceptCollectedItems($this->convertToItems($dataSet), $signal, false);
-        
-        //then
         $this->assertFindResultIsCorrect($find, $expected);
     }
     
@@ -837,60 +458,6 @@ final class OperationsTest extends TestCase
         self::assertSame($expected, $reduce->get());
     }
     
-    /**
-     * @dataProvider getDataForTestReduce
-     */
-    public function test_Reduce_collectDataFromProducer(array $dataSet, ?string $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-
-        $reduce = new Reduce($stream, Reducers::concat());
-        $reduce->setNext(new Ending());
-        
-        //when
-        $reduce->collectDataFromProducer(Producers::getAdapter($dataSet), $signal, false);
-        
-        //then
-        self::assertSame($expected, $reduce->get());
-    }
-    
-    /**
-     * @dataProvider getDataForTestReduce
-     */
-    public function test_Reduce_acceptSimpleData(array $dataSet, ?string $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $reduce = new Reduce($stream, Reducers::concat());
-        $reduce->setNext(new Ending());
-        
-        //when
-        $reduce->acceptSimpleData($dataSet, $signal, false);
-        
-        //then
-        self::assertSame($expected, $reduce->get());
-    }
-    
-    /**
-     * @dataProvider getDataForTestReduce
-     */
-    public function test_Reduce_acceptCollectedItems(array $dataSet, ?string $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $reduce = new Reduce($stream, Reducers::concat());
-        $reduce->setNext(new Ending());
-        
-        //when
-        $reduce->acceptCollectedItems($this->convertToItems($dataSet), $signal, false);
-        
-        //then
-        self::assertSame($expected, $reduce->get());
-    }
-    
     public static function getDataForTestReduce(): array
     {
         return [
@@ -904,85 +471,11 @@ final class OperationsTest extends TestCase
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $collect = new Collect($stream);
+        $collect = Collect::create($stream);
         $this->addToPipe($pipe, new Tail(2), $collect);
         
         $this->sendToPipe(['a', 'b', 'c', 'd'], $pipe, $signal);
         self::assertSame([2 => 'c', 'd'], $collect->get());
-    }
-    
-    public function test_Tail_collectDataFromProducer_with_Collect(): void
-    {
-        //given
-        [$stream, $pipe, $signal] = $this->prepare();
-
-        $tail = new Tail(2);
-        $collect = new Collect($stream);
-        $this->addToPipe($pipe, $tail, $collect);
-        
-        //when
-        $tail->collectDataFromProducer(Producers::getAdapter(['a', 'b', 'c', 'd']), $signal, false);
-        
-        //then
-        self::assertSame([2 => 'c', 'd'], $collect->get());
-    }
-    
-    public function test_Tail_acceptSimpleData_with_Collect(): void
-    {
-        //given
-        [$stream, $pipe, $signal] = $this->prepare();
-        
-        $tail = new Tail(2);
-        $collect = new Collect($stream);
-        $this->addToPipe($pipe, $tail, $collect);
-        
-        //when
-        $tail->acceptSimpleData(['a', 'b', 'c', 'd'], $signal, false);
-        
-        //then
-        self::assertSame([2 => 'c', 'd'], $collect->get());
-    }
-    
-    public function test_Tail_acceptCollectedItems_with_Collect(): void
-    {
-        //given
-        [$stream, $pipe, $signal] = $this->prepare();
-        
-        $tail = new Tail(2);
-        $collect = new Collect($stream);
-        $this->addToPipe($pipe, $tail, $collect);
-        
-        //when
-        $tail->acceptCollectedItems($this->convertToItems(['a', 'b', 'c', 'd']), $signal, false);
-        
-        //then
-        self::assertSame([2 => 'c', 'd'], $collect->get());
-    }
-    
-    /**
-     * @dataProvider getDataForTestSort
-     */
-    public function test_Sort_acceptSimpleData_with_DataCollector(
-        bool $reversed,
-        int $mode,
-        ?Comparator $comparator,
-        array $expected
-    ): void
-    {
-        //given
-        [$stream, $pipe, $signal] = $this->prepare();
-        
-        $sort = new Sort(Sorting::create($reversed, $comparator, $mode));
-        $collect = new Collect($stream);
-        $this->addToPipe($pipe, $sort, $collect);
-        
-        $data = [4 => 5, 8 => 2, 2 => 6, 3 => 5, 7 => 3, 5 => 2, 6 => 1, 1 => 3, 0 => 6];
-        
-        //when
-        $sort->acceptSimpleData($data, $signal, false);
-        
-        //then
-        self::assertSame($expected, $collect->get());
     }
     
     public static function getDataForTestSort(): array
@@ -1041,63 +534,6 @@ final class OperationsTest extends TestCase
         ];
     }
     
-    public function test_Sort_acceptSimpleData_with_single_data(): void
-    {
-        //given
-        [, $pipe, $signal] = $this->prepare();
-        
-        $sort = new Sort();
-        $this->addToPipe($pipe, $sort, new CollectIn(Collectors::default()));
-        
-        $signal->streamIsEmpty();
-        
-        //when
-        $result = $sort->acceptSimpleData([4 => 5], $signal, false);
-        
-        //then
-        self::assertTrue($result);
-        self::assertTrue($signal->isWorking);
-        self::assertFalse($signal->isEmpty);
-    }
-    
-    public function test_Sort_acceptCollectedItems_without_DataCollector(): void
-    {
-        //given
-        [, $pipe, $signal] = $this->prepare();
-        
-        $sort = new Sort();
-        $this->addToPipe($pipe, $sort, new CollectIn(Collectors::default()));
-        
-        $signal->streamIsEmpty();
-        
-        //when
-        $result = $sort->acceptCollectedItems($this->convertToItems([4 => 5]), $signal, false);
-        
-        //then
-        self::assertTrue($result);
-        self::assertTrue($signal->isWorking);
-        self::assertFalse($signal->isEmpty);
-    }
-    
-    /**
-     * @dataProvider getDataForTestReverseAcceptSimpleData
-     */
-    public function test_Reverse_acceptSimpleData(array $data, array $expected): void
-    {
-        //given
-        [$stream, $pipe, $signal] = $this->prepare();
-        
-        $reverse = new Reverse();
-        $collect = new Collect($stream);
-        $this->addToPipe($pipe, $reverse, $collect);
-        
-        //when
-        $reverse->acceptSimpleData($data, $signal, false);
-        
-        //then
-        self::assertSame($expected, $collect->get());
-    }
-    
     public static function getDataForTestReverseAcceptSimpleData(): array
     {
         //data, expected
@@ -1107,79 +543,6 @@ final class OperationsTest extends TestCase
         ];
     }
     
-    public function test_Reverse_acceptSimpleData_reindexed(): void
-    {
-        //given
-        [$stream, $pipe, $signal] = $this->prepare();
-        
-        $reverse = new Reverse();
-        $collect = new Collect($stream);
-        $this->addToPipe($pipe, $reverse, $collect);
-        
-        //when
-        $reverse->acceptSimpleData(['a', 'b', 'c'], $signal, true);
-        
-        //then
-        self::assertSame([2 => 'c', 1 => 'b', 0 => 'a'], $collect->get());
-    }
-    
-    public function test_Reverse_acceptSimpleData_with_not_DataCollector_next_in_chain(): void
-    {
-        //given
-        [, $pipe, $signal] = $this->prepare();
-        
-        $reverse = new Reverse();
-        $this->addToPipe($pipe, $reverse, new Chunk(2));
-        
-        $signal->streamIsEmpty();
-        
-        //when
-        $result = $reverse->acceptSimpleData([1, 2, 3], $signal, false);
-        
-        //then
-        self::assertTrue($result);
-        self::assertTrue($signal->isWorking);
-        self::assertFalse($signal->isEmpty);
-    }
-    
-    /**
-     * @dataProvider getDataForTestReverseAcceptSimpleData
-     */
-    public function test_Reverse_acceptCollectedItems(array $data, array $expected): void
-    {
-        //given
-        [$stream, $pipe, $signal] = $this->prepare();
-        
-        $reverse = new Reverse();
-        $collect = new Collect($stream);
-        $this->addToPipe($pipe, $reverse, $collect);
-        
-        //when
-        $reverse->acceptCollectedItems($this->convertToItems($data), $signal, false);
-        
-        //then
-        self::assertSame($expected, $collect->get());
-    }
-    
-    public function test_Reverse_acceptCollectedItems_with_not_DataCollector_next_in_chain(): void
-    {
-        //given
-        [, $pipe, $signal] = $this->prepare();
-        
-        $reverse = new Reverse();
-        $this->addToPipe($pipe, $reverse, new Chunk(2));
-        
-        $signal->streamIsEmpty();
-        
-        //when
-        $result = $reverse->acceptCollectedItems($this->convertToItems([1, 2, 3]), $signal, false);
-        
-        //then
-        self::assertTrue($result);
-        self::assertTrue($signal->isWorking);
-        self::assertFalse($signal->isEmpty);
-    }
-    
     /**
      * @dataProvider getDataForTestHasEvery
      */
@@ -1187,64 +550,10 @@ final class OperationsTest extends TestCase
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $hasEvery = new HasEvery($stream, $values, $mode);
+        $hasEvery = HasEvery::create($stream, $values, $mode);
         $this->addToPipe($pipe, $hasEvery);
         
         $this->sendToPipe($dataSet, $pipe, $signal);
-        self::assertSame($expected, $hasEvery->get());
-    }
-    
-    /**
-     * @dataProvider getDataForTestHasEvery
-     */
-    public function test_HasEvery_collectDataFromProducer(int $mode, array $values, array $dataSet, bool $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-
-        $hasEvery = new HasEvery($stream, $values, $mode);
-        $hasEvery->setNext(new Ending());
-        
-        //when
-        $hasEvery->collectDataFromProducer(Producers::getAdapter($dataSet), $signal, false);
-        
-        //then
-        self::assertSame($expected, $hasEvery->get());
-    }
-    
-    /**
-     * @dataProvider getDataForTestHasEvery
-     */
-    public function test_HasEvery_acceptSimpleData(int $mode, array $values, array $dataSet, bool $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $hasEvery = new HasEvery($stream, $values, $mode);
-        $hasEvery->setNext(new Ending());
-        
-        //when
-        $hasEvery->acceptSimpleData($dataSet, $signal, false);
-        
-        //then
-        self::assertSame($expected, $hasEvery->get());
-    }
-    
-    /**
-     * @dataProvider getDataForTestHasEvery
-     */
-    public function test_HasEvery_acceptCollectedItems(int $mode, array $values, array $dataSet, bool $expected): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $hasEvery = new HasEvery($stream, $values, $mode);
-        $hasEvery->setNext(new Ending());
-        
-        //when
-        $hasEvery->acceptCollectedItems($this->convertToItems($dataSet), $signal, false);
-        
-        //then
         self::assertSame($expected, $hasEvery->get());
     }
     
@@ -1260,109 +569,47 @@ final class OperationsTest extends TestCase
         yield from self::generateVariationsWithValues($cases, $dataSet);
     }
     
-    public function test_limit_of_SortLimited_can_be_only_decreased(): void
+    public function test_changing_limit_of_SortLimited(): void
     {
-        $sortLimited = new SortLimited(5);
+        $sortLimited = SortLimited::create(5);
         self::assertSame(5, $sortLimited->limit());
         
-        $sortLimited->applyLimit(3);
+        self::assertTrue($sortLimited->applyLimit(3));
         self::assertSame(3, $sortLimited->limit());
         
-        $sortLimited->applyLimit(7);
+        self::assertTrue($sortLimited->applyLimit(7));
         self::assertSame(3, $sortLimited->limit());
         
-        $sortLimited->applyLimit(1);
+        self::assertFalse($sortLimited->applyLimit(1));
+        
+        $sortLimited = $sortLimited->createWithLimit(1);
         self::assertSame(1, $sortLimited->limit());
         
-        $sortLimited->applyLimit(2);
-        self::assertSame(1, $sortLimited->limit());
-    }
-    
-    public function test_SingeItem_strategy_is_protected_agains_change_its_limit(): void
-    {
-        $state = new SingleItem(new SortLimited(1), By::value());
-        $state->setLength(1);
+        self::assertTrue($sortLimited->applyLimit(1));
+        self::assertFalse($sortLimited->applyLimit(2));
         
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('It is forbidden to change the length of SingleItem collector');
-        
-        $state->setLength(2);
-    }
-    
-    public function test_Last_collectDataFromProducer_not_countable(): void
-    {
-        //given
-        [$stream, , $signal] = $this->prepare();
-        
-        $last = new Last($stream);
-        $last->setNext(new Ending());
-        
-        //when
-        $last->collectDataFromProducer(Producers::tokenizer(' ', 'foo bar zoo'), $signal, false);
-        
-        //then
-        self::assertSame('zoo', $last->get());
-    }
-    
-    public function test_GroupBy_collectDataFromProducer_throws_exception_on_invalid_classifier(): void
-    {
-        //Assert
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessage('Value returned from discriminator is inappropriate (got array)');
-        
-        //Arrange
-        $groupBy = new GroupBy(static fn($v): array => [$v]);
-        
-        //Act
-        $groupBy->collectDataFromProducer(Producers::from([1]), new Signal(Stream::empty()), false);
-    }
-    
-    public function test_GroupBy_acceptSimpleData_throws_exception_on_invalid_classifier(): void
-    {
-        //Assert
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessage('Value returned from discriminator is inappropriate (got array)');
-        
-        //Arrange
-        $groupBy = new GroupBy(static fn($v): array => [$v]);
-        
-        //Act
-        $groupBy->acceptSimpleData([1], new Signal(Stream::empty()), false);
-    }
-    
-    public function test_GroupBy_acceptCollectedItems_throws_exception_on_invalid_classifier(): void
-    {
-        //Assert
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessage('Value returned from discriminator is inappropriate (got array)');
-        
-        //Arrange
-        $groupBy = new GroupBy(static fn($v): array => [$v]);
-        
-        //Act
-        $groupBy->acceptCollectedItems([new Item(1, 2)], new Signal(Stream::empty()), false);
+        $sortLimited = $sortLimited->createWithLimit(2);
+        self::assertSame(2, $sortLimited->limit());
     }
     
     public function test_Dispatch_throws_excpetion_when_param_handlers_is_empty(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Param handlers cannot be empty');
+        $this->expectExceptionObject(InvalidParamException::byName('handlers'));
         
         new Dispatch('is_string', []);
     }
     
     public function test_Dispatch_throws_exception_when_there_is_no_handler_defined_for_classifier(): void
     {
-        //Assert
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('There is no handler defined for classifier 1');
-        
         //Arrange
         $signal = new Signal(Stream::empty());
         $signal->item->key = 1;
         $signal->item->value = 'foo';
         
         $dispatch = new Dispatch('is_string', ['yes' => Consumers::counter()]);
+        
+        //Assert
+        $this->expectExceptionObject(OperationExceptionFactory::handlerIsNotDefined($signal->item->key));
         
         //Act
         $dispatch->handle($signal);
@@ -1371,8 +618,7 @@ final class OperationsTest extends TestCase
     public function test_Dispatch_throws_exception_when_classifier_is_invalid(): void
     {
         //Assert
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Value returned from discriminator is inappropriate (got double)');
+        $this->expectExceptionObject(OperationExceptionFactory::handlerIsNotDefined('ohno'));
         
         //Arrange
         $signal = new Signal(Stream::empty());
@@ -1380,7 +626,7 @@ final class OperationsTest extends TestCase
         $signal->item->value = 'foo';
         
         $dispatch = new Dispatch(
-            static fn($v, $k): float => 15.5,
+            static fn($v, $k): string => 'ohno',
             ['yes' => Consumers::counter()]
         );
         
@@ -1390,34 +636,18 @@ final class OperationsTest extends TestCase
     
     public function test_Dispatcher_handlers_factory_throws_exception_when_not_StreamPipe_is_provided(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Only StrimPipe is supported as Handler for Dispatcher');
+        $this->expectExceptionObject(InvalidParamException::byName('handler'));
         
         Handlers::getAdapter(ResultItem::createNotFound());
     }
     
-    public function test_Classify_throws_exception_when_Discriminator_returns_invalid_value(): void
-    {
-        //Assert
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessage('Unsupported value was returned from discriminator (got array)');
-        
-        //Arrange
-        $signal = new Signal(Stream::empty());
-        $classify = new Classify(static fn($v): array => [$v]);
-        
-        //Act
-        $classify->handle($signal);
-    }
-    
     public function test_StoreIn_throws_exception_when_param_buffer_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param buffer');
+        $this->expectExceptionObject(InvalidParamException::byName('buffer'));
         
         $object = new \stdClass();
         
-        new StoreIn($object);
+        StoreIn::create($object);
     }
     
     public function test_Segregate_can_handle_limit_zero_properly(): void
@@ -1425,6 +655,8 @@ final class OperationsTest extends TestCase
         $segregate = new Segregate(3);
         
         self::assertFalse($segregate->applyLimit(0));
+        
+        $segregate = $segregate->createWithLimit(0);
         self::assertSame(1, $segregate->limit());
     }
     
@@ -1441,14 +673,6 @@ final class OperationsTest extends TestCase
         
         //then
         self::assertSame($limit, $prev);
-    }
-    
-    public function test_UnpackTyple_throws_exception_when_element_is_not_a_tuple(): void
-    {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('UnpackTuple cannot handle value which is not a valid tuple');
-        
-        Stream::from(['a', 'b'])->unpackTuple()->run();
     }
     
     public function test_UnpackTuple_can_handle_numerical_array(): void
@@ -1479,9 +703,30 @@ final class OperationsTest extends TestCase
     
     public function test_EveryNth_throws_exception_when_param_num_is_invalid(): void
     {
-        $this->expectExceptionObject(new \InvalidArgumentException('Invalid param num'));
+        $this->expectExceptionObject(InvalidParamException::byName('num'));
         
         new EveryNth(0);
+    }
+    
+    public function test_FilterBy_throws_exception_when_param_field_is_invalid(): void
+    {
+        $field = ['a'];
+        
+        $this->expectExceptionObject(InvalidParamException::describe('field', $field));
+        
+        new FilterBy($field, 'is_int');
+    }
+    
+    public function test_Limit_can_change_its_limit_and_create_new_Limit(): void
+    {
+        $limit = new Limit(8);
+        self::assertSame(8, $limit->limit());
+        
+        self::assertTrue($limit->applyLimit(3));
+        self::assertSame(3, $limit->limit());
+        
+        $limit = $limit->createWithLimit(5);
+        self::assertSame(5, $limit->limit());
     }
     
     /**
@@ -1544,19 +789,23 @@ final class OperationsTest extends TestCase
     
     private function getPipeFromStream(Stream $stream): Pipe
     {
-        return $this->getPropertyFromObject($stream, 'pipe');
+        return $this->getPropertyFromStream($stream, 'pipe');
     }
     
     private function getSignalFromStream(Stream $stream): Signal
     {
-        return $this->getPropertyFromObject($stream, 'signal');
+        return $this->getPropertyFromStream($stream, 'signal');
     }
     
-    private function getPropertyFromObject(object $object, string $property)
+    private function getPropertyFromStream(Stream $stream, string $property)
     {
-        $prop = (new \ReflectionObject($object))->getProperty($property);
+        $method = (new \ReflectionObject($stream))->getMethod('initialize');
+        $method->setAccessible(true);
+        $method->invoke($stream);
+        
+        $prop = (new \ReflectionObject($stream))->getProperty($property);
         $prop->setAccessible(true);
         
-        return $prop->getValue($object);
+        return $prop->getValue($stream);
     }
 }

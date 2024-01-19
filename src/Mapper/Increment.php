@@ -2,16 +2,17 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class Increment extends BaseMapper
+final class Increment extends StateMapper
 {
     private int $step;
     
     public function __construct(int $step)
     {
         if ($step === 0) {
-            throw new \InvalidArgumentException('Invalid param step - it cannot be 0');
+            throw InvalidParamException::byName('step');
         }
         
         $this->step = $step;
@@ -20,12 +21,15 @@ final class Increment extends BaseMapper
     /**
      * @inheritDoc
      */
-    public function map($value, $key): int
+    public function map($value, $key = null): int
     {
-        if (\is_int($value)) {
-            return $value + $this->step;
+        return $value + $this->step;
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => $value + $this->step;
         }
-        
-        throw new \LogicException('Mapper Increment requires integers');
     }
 }

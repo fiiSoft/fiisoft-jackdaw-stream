@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Producer\Tech\LimitedProducer;
 
 final class SequentialInt extends LimitedProducer
@@ -15,37 +15,22 @@ final class SequentialInt extends LimitedProducer
         parent::__construct($limit);
         
         if ($step === 0) {
-            throw new \InvalidArgumentException('Param step cannot be 0');
+            throw InvalidParamException::byName('step');
         }
         
         $this->start = $start;
         $this->step = $step;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         $count = 0;
         $current = $this->start;
         
         while ($count !== $this->limit) {
-            
-            $item->key = $count++;
-            $item->value = $current;
-            
-            yield;
+            yield $count++ => $current;
             
             $current += $this->step;
         }
-    }
-    
-    public function getLast(): ?Item
-    {
-        if ($this->count() === 0) {
-            return null;
-        }
-        
-        $last = $this->start + $this->step * ($this->limit - 1);
-        
-        return new Item($this->limit - 1, $last);
     }
 }

@@ -38,6 +38,8 @@
         <directory name="src"/>
         <ignoreFiles>
             <file name="src/Producer/Generator/Uuid/Symfony/SymfonyUuidGenerator.php" />
+            <file name="src/Filter/OnlyIn/Mixed/MixedBothOnlyIn.php" />
+            <file name="src/Consumer/Reference.php" />
         </ignoreFiles>
     </projectFiles>
 
@@ -68,5 +70,6 @@
         <PropertyNotSetInConstructor errorLevel="suppress" />
         <MissingClosureReturnType errorLevel="suppress" />
         <InvalidArrayOffset errorLevel="suppress" />
+        <RiskyTruthyFalsyComparison errorLevel="suppress" />
     </issueHandlers>
 </psalm>

@@ -8,7 +8,7 @@ abstract class CustomItemComparator implements ItemComparator
 {
     protected Comparator $comparator;
     
-    public function __construct(Comparator $comparator)
+    final public function __construct(Comparator $comparator)
     {
         $this->comparator = $comparator;
     }

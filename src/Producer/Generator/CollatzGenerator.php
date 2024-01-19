@@ -2,13 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
 /**
  * Made purely for fun. Enjoy!
  */
-final class CollatzGenerator extends NonCountableProducer
+final class CollatzGenerator extends BaseProducer
 {
     private ?int $startNumber = null;
     private int $count = 0;
@@ -16,19 +16,17 @@ final class CollatzGenerator extends NonCountableProducer
     public function __construct(int $startNumber = null)
     {
         if ($startNumber !== null && $startNumber < 1) {
-            throw new \InvalidArgumentException('Invalid param startNumber');
+            throw InvalidParamException::describe('startNumber', $startNumber);
         }
         
         $this->startNumber = $startNumber;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         $number = $this->startNumber ?? $this->findStartNumber();
     
-        $item->key = $this->count++;
-        $item->value = $number;
-        yield;
+        yield $this->count++ => $number;
     
         while ($number > 1) {
             if (($number & 1) === 0) {
@@ -37,14 +35,12 @@ final class CollatzGenerator extends NonCountableProducer
                 $number = (3 * $number + 1);
             }
     
-            $item->key = $this->count++;
-            $item->value = $number;
-            yield;
+            yield $this->count++ => $number;
         }
     }
     
     private function findStartNumber(): int
     {
-        return (int) (\PHP_INT_MAX / \mt_rand(3577, \PHP_INT_MAX / 3577));
+        return (int) (\PHP_INT_MAX / \mt_rand(3577, (int) (\PHP_INT_MAX / 3577)));
     }
 }

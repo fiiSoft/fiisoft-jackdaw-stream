@@ -2,11 +2,16 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedGeneral;
+use FiiSoft\Jackdaw\Producer\Generator\Exception\GeneratorExceptionFactory;
+use FiiSoft\Jackdaw\Producer\Generator\Flattener;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidProvider;
 use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
@@ -19,7 +24,6 @@ use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
 use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
-use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
 use FiiSoft\Jackdaw\Registry\Registry;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
@@ -30,7 +34,8 @@ final class ProducersTest extends TestCase
 {
     public function test_getAdapter_throws_exception_on_wrong_param(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('producer'));
+        
         Producers::getAdapter('wrong_argument');
     }
     
@@ -40,7 +45,7 @@ final class ProducersTest extends TestCase
         $count = 0;
         
         $item = new Item();
-        foreach ($producer->feed($item) as $_) {
+        foreach (Helper::createItemProducer($item, $producer) as $_) {
             self::assertIsInt($item->value);
             self::assertTrue($item->value >= 1);
             self::assertTrue($item->value <= 500);
@@ -50,26 +55,13 @@ final class ProducersTest extends TestCase
         self::assertSame(10, $count);
     }
     
-    public function test_SequentialInt_generator(): void
-    {
-        $producer = Producers::sequentialInt(1, 2, 5);
-        $buffer = [];
-        
-        $item = new Item();
-        foreach ($producer->feed($item) as $_) {
-            $buffer[] = $item->value;
-        }
-    
-        self::assertSame([1,3,5,7,9], $buffer);
-    }
-    
     public function test_RandomString_generator(): void
     {
         $producer = Producers::randomString(3, 10, 5);
         $count = 0;
     
         $item = new Item();
-        foreach ($producer->feed($item) as $_) {
+        foreach (Helper::createItemProducer($item, $producer) as $_) {
             self::assertIsString($item->value);
             self::assertTrue(\strlen($item->value) >= 3);
             self::assertTrue(\strlen($item->value) <= 10, 'length is '.\strlen($item->value));
@@ -83,15 +75,15 @@ final class ProducersTest extends TestCase
     {
         $this->checkIfRamseyOrSymfonyUuidIsInstalled();
         
-        $expectedStringLength = \interface_exists(RamseyUuid::class) ? 32 : 22;
+        $expectedUuidLength = $this->expectedDefaultUuidLength();
         
         $producer = Producers::randomUuid(5);
         $count = 0;
     
         $item = new Item();
-        foreach ($producer->feed($item) as $_) {
+        foreach (Helper::createItemProducer($item, $producer) as $_) {
             self::assertIsString($item->value);
-            self::assertSame($expectedStringLength, \strlen($item->value));
+            self::assertSame($expectedUuidLength, \strlen($item->value));
             ++$count;
         }
         
@@ -107,25 +99,29 @@ final class ProducersTest extends TestCase
     
     public function test_SequentialInt_generator_throws_exception_on_param_step_zero(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('step'));
+        
         Producers::sequentialInt(1, 0, 10);
     }
     
     public function test_SequentialInt_generator_throws_exception_on_invalid_param_limit(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('limit'));
+        
         Producers::sequentialInt(1, 1, -1);
     }
     
     public function test_RandomString_throws_exception_on_invalid_limit(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('limit'));
+        
         Producers::randomString(1, 10, -1);
     }
     
     public function test_RandomString_throws_exception_when_maxLength_is_less_than_minLength(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(GeneratorExceptionFactory::maxLengthCannotBeLessThanMinLength());
+        
         Producers::randomString(11, 10, 1);
     }
     
@@ -134,20 +130,22 @@ final class ProducersTest extends TestCase
         $producer = Producers::randomString(5, 5, 3);
         $item = new Item();
     
-        foreach ($producer->feed($item) as $_) {
+        foreach (Helper::createItemProducer($item, $producer) as $_) {
             self::assertSame(5, \strlen($item->value));
         }
     }
     
     public function test_RandomInt_throws_exception_on_invalid_limit(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('limit'));
+        
         Producers::randomInt(1, 2, -1);
     }
     
     public function test_RandomInt_thows_exception_when_max_is_not_greater_than_min(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(GeneratorExceptionFactory::maxCannotBeLessThanOrEqualToMin());
+        
         Producers::randomInt(2, 2);
     }
     
@@ -157,7 +155,7 @@ final class ProducersTest extends TestCase
         $buffer = [];
     
         $item = new Item();
-        foreach ($producer->feed($item) as $_) {
+        foreach (Helper::createItemProducer($item, $producer) as $_) {
             $buffer[] = $item->value;
         }
     
@@ -170,7 +168,7 @@ final class ProducersTest extends TestCase
         $buffer = [];
     
         $item = new Item();
-        foreach ($producer->feed($item) as $_) {
+        foreach (Helper::createItemProducer($item, $producer) as $_) {
             $buffer[] = $item->value;
         }
     
@@ -185,16 +183,14 @@ final class ProducersTest extends TestCase
     
     public function test_Collatz_generator_throws_exception_when_initial_number_is_below_one(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param startNumber');
+        $this->expectExceptionObject(InvalidParamException::byName('startNumber'));
         
         Producers::collatz(0);
     }
     
     public function test_RandomUuid_generator_throws_exception_when_limit_is_less_than_zero(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param limit');
+        $this->expectExceptionObject(InvalidParamException::byName('limit'));
         
         Producers::randomUuid(-1);
     }
@@ -213,7 +209,7 @@ final class ProducersTest extends TestCase
         $item = new Item();
         $buffer = [];
     
-        foreach ($producer->feed($item) as $_) {
+        foreach (Helper::createItemProducer($item, $producer) as $_) {
             $buffer[] = $item->value;
         }
         
@@ -231,7 +227,7 @@ final class ProducersTest extends TestCase
         $producer = Producers::from([$object]);
         
         //when
-        foreach ($producer->feed($item) as $_) {
+        foreach (Helper::createItemProducer($item, $producer) as $_) {
             //then
             self::assertIsObject($item->value);
             
@@ -245,8 +241,7 @@ final class ProducersTest extends TestCase
     
     public function test_TextFileReader_throws_exception_when_param_is_not_resource(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param resource');
+        $this->expectExceptionObject(InvalidParamException::byName('resource'));
         
         new TextFileReader('this is not file pointer');
     }
@@ -261,7 +256,7 @@ final class ProducersTest extends TestCase
         $item = new Item();
         $buffer = [];
     
-        foreach ($producer->feed($item) as $_) {
+        foreach (Helper::createItemProducer($item, $producer) as $_) {
             $buffer[] = \trim($item->value);
         }
         
@@ -275,7 +270,7 @@ final class ProducersTest extends TestCase
         $producer = Producers::resource($fp, true);
     
         $item = new Item();
-        foreach ($producer->feed($item) as $_) {
+        foreach (Helper::createItemProducer($item, $producer) as $_) {
             //just iterate
         }
         
@@ -284,8 +279,7 @@ final class ProducersTest extends TestCase
     
     public function test_resource_reader_throws_exception_when_param_readBytes_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param readBytes');
+        $this->expectExceptionObject(InvalidParamException::byName('readBytes'));
     
         Producers::resource(\fopen('php://memory', 'rwb'), true, 0);
     }
@@ -316,48 +310,42 @@ final class ProducersTest extends TestCase
     
     public function test_Flattener_throws_exception_when_try_to_increase_level_with_negative_number(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param level, must be greater than 0');
-    
+        $this->expectExceptionObject(GeneratorExceptionFactory::invalidParamLevel(-1, Flattener::MAX_LEVEL));
+        
         Producers::flattener()->increaseLevel(-1);
     }
     
     public function test_CircularBufferIterator_throws_exception_when_param_buffer_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param buffer');
+        $this->expectExceptionObject(InvalidParamException::byName('buffer'));
         
         new CircularBufferIterator('wrong buffer', 3, 3);
     }
     
     public function test_CircularBufferIterator_throws_exception_when_param_count_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param count');
+        $this->expectExceptionObject(InvalidParamException::byName('count'));
         
         new CircularBufferIterator([], -1, 3);
     }
     
     public function test_CircularBufferIterator_throws_exception_when_param_index_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param index');
+        $this->expectExceptionObject(InvalidParamException::byName('index'));
         
         new CircularBufferIterator([], 5, 6);
     }
     
     public function test_Flattener_prevents_decrease_level_when_it_is_0(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Cannot decrease level');
+        $this->expectExceptionObject(GeneratorExceptionFactory::cannotDecreaseLevel());
         
         Producers::flattener([], 0)->decreaseLevel();
     }
     
     public function test_Flattener_prevents_decrease_level_when_it_is_1(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Cannot decrease level');
+        $this->expectExceptionObject(GeneratorExceptionFactory::cannotDecreaseLevel());
         
         Producers::flattener([], 1)->decreaseLevel();
     }
@@ -381,9 +369,8 @@ final class ProducersTest extends TestCase
         
         $producer = Producers::queue();
         $producer->appendMany(['a', 'b', 'c']); //0:a,1:b,2:c
-        self::assertFalse($producer->isEmpty());
         
-        $generator = $producer->feed($item);
+        $generator = Helper::createItemProducer($item, $producer);
         $generator->valid(); //1:b,2:c
     
         self::assertSame(0, $item->key);
@@ -439,7 +426,7 @@ final class ProducersTest extends TestCase
         self::assertSame(1, $item->key);
         self::assertSame('k', $item->value);
         
-        self::assertTrue($producer->isEmpty());
+        self::assertSame(0, \iterator_count($producer));
     }
     
     public function test_MultiProducer(): void
@@ -449,82 +436,48 @@ final class ProducersTest extends TestCase
             Producers::sequentialInt(1, 1, 2)
         );
         
-        self::assertFalse($producer->isEmpty());
         self::assertSame(['a', 'b', 1, 2], $producer->stream()->toArray());
-        self::assertFalse($producer->isEmpty());
+        self::assertSame(['a', 'b', 1, 2], $producer->stream()->toArray());
     }
     
     public function test_MultiProducer_can_be_empty_only_when_all_producers_within_it_are_empty(): void
     {
-        $producer = Producers::multiSourced(
-            [],
-            Producers::sequentialInt(1, 1, 0)
+        self::assertSame(
+            0,
+            \iterator_count(Producers::multiSourced([], Producers::sequentialInt(1, 1, 0), Producers::queue()))
         );
-        
-        self::assertTrue($producer->isEmpty());
     }
     
-    public function test_CircularBufferIterator_can_tell_if_is_empty_only_in_some_circumstances(): void
-    {
-        //it can tell correctly if is empty for arrays...
-        $cbi = new CircularBufferIterator([], 5, 0);
-        self::assertTrue($cbi->isEmpty());
-        
-        $cbi = new CircularBufferIterator(['a'], 5, 0);
-        self::assertFalse($cbi->isEmpty());
-        
-        //and \Countable objects
-        $cbi = new CircularBufferIterator(new \ArrayObject(), 5, 0);
-        self::assertTrue($cbi->isEmpty());
-        
-        $cbi = new CircularBufferIterator(new \ArrayObject(['a']), 5, 0);
-        self::assertFalse($cbi->isEmpty());
-        
-        //but for others, isEmpty() always returns FALSE!
-        $buffer = new \SplFixedArray(5);
-        $cbi = new CircularBufferIterator($buffer, 5, 0);
-        self::assertFalse($cbi->isEmpty());
-        
-        $buffer = new \SplFixedArray(5);
-        $buffer[0] = 'a';
-        $cbi = new CircularBufferIterator($buffer, 5, 0);
-        self::assertFalse($cbi->isEmpty());
-    }
-    
-    public function test_CircularBufferIterator_can_return_the_last_element(): void
+    public function test_CircularBufferIterator(): void
     {
         $cbi = new CircularBufferIterator([], 0, 0);
-        self::assertNull($cbi->getLast());
+        self::assertSame(0, \iterator_count($cbi));
         
-        $cbi = new CircularBufferIterator([new Item(2, 'a')], 1, 0);
-        self::assertEquals(new Item(2, 'a'), $cbi->getLast());
+        $cbi = new CircularBufferIterator(self::items(['a']), 1, 0);
+        self::assertGreaterThan(0, \iterator_count($cbi));
         
-        $cbi = new CircularBufferIterator([new Item(2, 'a'), new Item(1, 'b')], 2, 0);
-        self::assertEquals(new Item(1, 'b'), $cbi->getLast());
+        $cbi = new CircularBufferIterator(new \ArrayObject(), 0, 0);
+        self::assertSame(0, \iterator_count($cbi));
         
-        $cbi = new CircularBufferIterator([new Item(2, 'a'), new Item(1, 'b')], 2, 1);
-        self::assertEquals(new Item(2, 'a'), $cbi->getLast());
+        $cbi = new CircularBufferIterator(new \ArrayObject(self::items(['a'])), 1, 0);
+        self::assertGreaterThan(0, \iterator_count($cbi));
         
-        $cbi = new CircularBufferIterator([new Item(2, 'a'), new Item(1, 'b')], 2, 2);
-        self::assertEquals(new Item(1, 'b'), $cbi->getLast());
+        $cbi = new CircularBufferIterator(new \SplFixedArray(5), 0, 0);
+        self::assertSame(0, \iterator_count($cbi));
+        
+        $buffer = new \SplFixedArray(5);
+        $buffer[0] = new Item(3, 'a');
+        $cbi = new CircularBufferIterator($buffer, 1, 0);
+        self::assertGreaterThan(0, \iterator_count($cbi));
     }
     
     public function test_ReverseItemsIterator_can_tell_if_is_empty(): void
     {
-        $cbi = new ReverseItemsIterator([]);
-        self::assertTrue($cbi->isEmpty());
+        $rii = new ReverseItemsIterator([]);
+        self::assertSame(0, \iterator_count($rii));
         
-        $cbi = new ReverseItemsIterator([new Item(0, 1)]);
-        self::assertFalse($cbi->isEmpty());
-    }
-    
-    public function test_QueueProducer_can_return_the_last_element(): void
-    {
-        $producer = Producers::queue();
-        self::assertNull($producer->getLast());
-        
-        $producer->appendMany(['a', 'v', 'c']);
-        self::assertEquals(new Item(2, 'c'), $producer->getLast());
+        $rii = new ReverseItemsIterator([new Item(0, 1)]);
+        self::assertGreaterThan(0, \iterator_count($rii));
     }
     
     public function test_MultiProducer_can_merge_other_MultiProducer(): void
@@ -535,136 +488,19 @@ final class ProducersTest extends TestCase
         self::assertSame(['a', 'b', 1, 2, 'foo', 'bar'], $second->stream()->toArray());
     }
     
-    public function test_MultiProducer_can_tell_if_is_countable_or_not(): void
-    {
-        $nonCountable = Producers::multiSourced([1, 2], Producers::collatz());
-        self::assertFalse($nonCountable->isCountable());
-        
-        $countable = Producers::multiSourced(['a', 'b'], new \ArrayIterator([1,2,3]));
-        self::assertTrue($countable->isCountable());
-    }
-    
-    public function test_MultiProducer_can_return_number_of_elements_when_is_countable_only(): void
-    {
-        $countable = Producers::multiSourced(['a', 'b'], new \ArrayIterator([1,2,3]));
-        
-        self::assertTrue($countable->isCountable());
-        self::assertSame(5, $countable->count());
-        
-        $nonCountable = Producers::multiSourced([1, 2], Producers::collatz());
-        self::assertFalse($nonCountable->isCountable());
-        
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('MultiProducer cannot count how many elements can produce!');
-        
-        $nonCountable->count();
-    }
-    
-    public function test_MultiProducer_can_return_the_last_element_when_its_possible(): void
-    {
-        $emptyProducer = Producers::multiSourced();
-        self::assertNull($emptyProducer->getLast());
-        
-        $lastAvailable = Producers::multiSourced(['a', 'b'], new \ArrayIterator([1,2,3]));
-        self::assertEquals(new Item(2, 3), $lastAvailable->getLast());
-        
-        $lastNotAvailable = Producers::multiSourced(new \ArrayIterator([1,2,3]), Producers::randomInt());
-        self::assertNull($lastNotAvailable->getLast());
-    }
-    
     public function test_ArrayIteratorAdapter_not_empty(): void
     {
-        $producer = Producers::getAdapter(new \ArrayIterator(['a', 'b', 'c']));
-        
-        self::assertFalse($producer->isEmpty());
-        self::assertTrue($producer->isCountable());
-        self::assertSame(3, $producer->count());
-        self::assertEquals(new Item(2, 'c'), $producer->getLast());
+        self::assertCount(3, Producers::getAdapter(new \ArrayIterator(['a', 'b', 'c'])));
     }
     
     public function test_ArrayIteratorAdapter_empty(): void
     {
-        $producer = Producers::getAdapter(new \ArrayIterator());
-        
-        self::assertTrue($producer->isEmpty());
-        self::assertTrue($producer->isCountable());
-        self::assertSame(0, $producer->count());
-        self::assertNull($producer->getLast());
-    }
-    
-    public function test_IteratorAdaptor_can_count_number_of_elements_only_when_iterator_is_countable(): void
-    {
-        $countable = Producers::getAdapter(new \ArrayIterator(['a', 'b', 'c']));
-        
-        self::assertTrue($countable->isCountable());
-        self::assertSame(3, $countable->count());
-        
-        $notCountable = Producers::getAdapter(new class implements \IteratorAggregate {
-            public function getIterator(): \ArrayIterator {
-                return new \ArrayIterator(['a', 'b', 'c']);
-            }
-        });
-        
-        self::assertFalse($notCountable->isCountable());
-        
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Cannot count elements in non-countable Traversable iterator');
-        
-        $notCountable->count();
-    }
-    
-    public function test_IteratorAdapter_never_returns_the_last_element(): void
-    {
-        $producer = Producers::getAdapter(new \ArrayObject(['a', 'b']));
-        
-        self::assertFalse($producer->isEmpty());
-        self::assertTrue($producer->isCountable());
-        self::assertSame(2, $producer->count());
-        self::assertNull($producer->getLast());
-    }
-    
-    public function test_ArrayAdapter_cen_return_the_last_element(): void
-    {
-        self::assertNull(Producers::getAdapter([])->getLast());
-        
-        self::assertEquals(new Item(1, 'b'), Producers::getAdapter(['a', 'b'])->getLast());
-    }
-    
-    public function test_RandomString_producer_never_returns_the_last_value(): void
-    {
-        self::assertNull(Producers::randomString(15)->getLast());
-    }
-    
-    public function test_RandomUuid_producer_never_returns_the_last_value(): void
-    {
-        $this->checkIfRamseyOrSymfonyUuidIsInstalled();
-        
-        self::assertNull(Producers::randomUuid()->getLast());
-    }
-    
-    public function test_SequentialInt_producer_can_compute_value_of_last_element(): void
-    {
-        $producer = Producers::sequentialInt(5, 3, 4);
-        
-        self::assertFalse($producer->isEmpty());
-        self::assertTrue($producer->isCountable());
-        self::assertSame(4, $producer->count());
-        
-        $last = $producer->getLast();
-        self::assertEquals(new Item(3, 14), $last);
-        
-        $generated = $producer->stream()->toArrayAssoc();
-        self::assertSame([5, 8, 11, 14], $generated);
+        self::assertCount(0, Producers::getAdapter(new \ArrayIterator()));
     }
     
     public function test_SequentialInt_can_be_empty(): void
     {
-        $producer = Producers::sequentialInt(1, 1, 0);
-        
-        self::assertTrue($producer->isEmpty());
-        self::assertTrue($producer->isCountable());
-        self::assertSame(0, $producer->count());
-        self::assertNull($producer->getLast());
+        self::assertSame(0, \iterator_count(Producers::sequentialInt(1, 1, 0)));
     }
     
     /**
@@ -775,7 +611,7 @@ final class ProducersTest extends TestCase
     
     public function test_PusProducer_can_hold_other_producers(): void
     {
-        $push = new PushProducer(false);
+        $push = new PushProducer();
         $producer1 = Producers::getAdapter(['a', 'b']);
         $producer2 = Producers::sequentialInt();
         
@@ -785,49 +621,23 @@ final class ProducersTest extends TestCase
         self::assertSame([$producer1, $producer2], $push->getProducers());
     }
     
-    public function test_ForwardItemsIterator_knows_number_of_elements_and_can_return_the_last_one(): void
+    public function test_ForwardItemsIterator(): void
     {
         $producer = new ForwardItemsIterator();
-        
-        self::assertTrue($producer->isEmpty());
-        self::assertSame(0, $producer->count());
-        self::assertNull($producer->getLast());
-        
+        self::assertSame(0, \iterator_count($producer));
+
         $producer->with([new Item(3, 'a'), new Item(1, 'c')]);
-        
-        self::assertFalse($producer->isEmpty());
-        self::assertSame(2, $producer->count());
-        self::assertEquals(new Item(1, 'c'), $producer->getLast());
-    }
-    
-    public function test_NonCountableProducer_producer_throws_exception_on_count(): void
-    {
-        $producer = Producers::collatz();
-        self::assertInstanceOf(NonCountableProducer::class, $producer);
-        
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('NonCountableProducer cannot count how many elements can produce!');
-        
-        $producer->count();
+        self::assertSame(2, \iterator_count($producer));
     }
     
     public function test_ReverseArrayIterator_empty(): void
     {
-        $producer = new ReverseArrayIterator([]);
-        
-        self::assertTrue($producer->isEmpty());
-        self::assertTrue($producer->isCountable());
-        self::assertSame(0, $producer->count());
-        self::assertNull($producer->getLast());
+        self::assertSame(0, \iterator_count(new ReverseArrayIterator([])));
     }
     
     public function test_ReverseArrayIterator_notEmpty_preserveKeys(): void
     {
         $producer = new ReverseArrayIterator([3 => 'a', 'b', 'c']);
-        
-        self::assertFalse($producer->isEmpty());
-        self::assertSame(3, $producer->count());
-        self::assertEquals(new Item(3, 'a'), $producer->getLast());
         
         self::assertSame([
             5 => 'c',
@@ -839,10 +649,6 @@ final class ProducersTest extends TestCase
     public function test_ReverseArrayIterator_notEmpty_reindex(): void
     {
         $producer = new ReverseArrayIterator([3 => 'a', 'b', 'c'], true);
-        
-        self::assertFalse($producer->isEmpty());
-        self::assertSame(3, $producer->count());
-        self::assertEquals(new Item(2, 'a'), $producer->getLast());
         
         self::assertSame([
             0 => 'c',
@@ -866,36 +672,7 @@ final class ProducersTest extends TestCase
         $producer = new ReverseItemsIterator($items, true);
         
         //then
-        self::assertEquals(new Item(4, 'a'), $producer->getLast());
         self::assertSame(['a', 'b', 'c', 'b', 'a'], $producer->stream()->toArrayAssoc());
-    }
-    
-    public function test_ReverseItemsIterator_returns_null_from_getLast_when_is_empty(): void
-    {
-        $producer = new ReverseItemsIterator([]);
-        
-        self::assertNull($producer->getLast());
-    }
-    
-    public function test_ReverseNumericalArrayIterator_can_return_the_last_element(): void
-    {
-        $producer = new ReverseNumericalArrayIterator(['a', 'b', 'c']);
-        
-        self::assertEquals(new Item(0, 'a'), $producer->getLast());
-    }
-    
-    public function test_ReverseNumericalArrayIterator_can_return_the_last_element_reindexed(): void
-    {
-        $producer = new ReverseNumericalArrayIterator(['a', 'b', 'c'], true);
-        
-        self::assertEquals(new Item(2, 'a'), $producer->getLast());
-    }
-    
-    public function test_ReverseNumericalArrayIterator_returns_null_from_getLast_when_is_empty(): void
-    {
-        $producer = new ReverseNumericalArrayIterator([]);
-        
-        self::assertNull($producer->getLast());
     }
     
     public function test_ReverseNumericalArrayIterator_no_reindex(): void
@@ -912,43 +689,20 @@ final class ProducersTest extends TestCase
         self::assertSame(['d', 'c', 'b', 'a'], $producer->stream()->toArrayAssoc());
     }
     
-    public function test_BucketListIterator_returns_null_from_getLast_when_is_empty(): void
+    public function test_BucketListIterator_empty(): void
     {
-        $producer = new BucketListIterator([]);
-        
-        self::assertSame(0, $producer->count());
-        self::assertNull($producer->getLast());
+        self::assertSame(0, \iterator_count(new BucketListIterator([])));
     }
     
     public function test_QueueProducer(): void
     {
-        //given
         $queue = Producers::queue(['a', 'b']);
         
-        self::assertFalse($queue->isEmpty());
-        self::assertSame(2, $queue->count());
-        
-        //when
         self::assertSame(['a', 'b'], $queue->stream()->toArray());
-        
-        //then
-        self::assertTrue($queue->isEmpty());
-        self::assertSame(0, $queue->count());
         self::assertEmpty($queue->stream()->toArray());
         
-        //when
         $queue->appendMany(['c', 'd']);
-        
-        //then
-        self::assertFalse($queue->isEmpty());
-        self::assertSame(2, $queue->count());
-        
-        //when
         self::assertSame(['c', 'd'], $queue->stream()->toArray());
-        
-        //then
-        self::assertTrue($queue->isEmpty());
-        self::assertSame(0, $queue->count());
         self::assertEmpty($queue->stream()->toArray());
     }
     
@@ -957,9 +711,7 @@ final class ProducersTest extends TestCase
      */
     public function test_CombinedArrays_not_empty(CombinedArrays $producer): void
     {
-        self::assertFalse($producer->isEmpty());
-        self::assertSame(2, $producer->count());
-        self::assertEquals(new Item('b', 2), $producer->getLast());
+        self::assertSame(2, \iterator_count($producer));
     }
     
     public static function getDataForTestCombinedArraysNotEmpty(): array
@@ -976,9 +728,7 @@ final class ProducersTest extends TestCase
      */
     public function test_CombinedArrays_empty(CombinedArrays $producer): void
     {
-        self::assertTrue($producer->isEmpty());
-        self::assertSame(0, $producer->count());
-        self::assertNull($producer->getLast());
+        self::assertSame(0, \iterator_count($producer));
     }
     
     public static function getDataForTestCombinedArraysEmpty(): array
@@ -995,12 +745,7 @@ final class ProducersTest extends TestCase
      */
     public function test_CombinedGeneral_not_empty(CombinedGeneral $producer): void
     {
-        self::assertFalse($producer->isEmpty());
-        self::assertNull($producer->getLast());
-        
-        if ($producer->isCountable()) {
-            self::assertSame(2, $producer->count());
-        }
+        self::assertSame(2, \iterator_count($producer));
     }
     
     public static function getDataForTestCombinedGeneralNotEmpty(): array
@@ -1017,12 +762,7 @@ final class ProducersTest extends TestCase
      */
     public function test_CombinedGeneral_empty(CombinedGeneral $producer): void
     {
-        self::assertFalse($producer->isEmpty());
-        self::assertNull($producer->getLast());
-        
-        if ($producer->isCountable()) {
-            self::assertSame(0, $producer->count());
-        }
+        self::assertSame(0, \iterator_count($producer));
     }
     
     public static function getDataForTestCombinedGeneralEmpty(): array
@@ -1049,22 +789,6 @@ final class ProducersTest extends TestCase
             ->toArrayAssoc();
         
         self::assertSame([2 => '2', 1 => 'd'], $result);
-    }
-    
-    public function test_CombinedGeneral_throws_exception_when_is_non_countable_and_method_count_is_called(): void
-    {
-        //Assert
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('CombinedGeneral producer cannot count how many elements can produce!');
-        
-        //Arrange
-        $producer = Producers::combinedFrom(
-            static fn(): array => ['a', 2, 'b', 1, 'c'],
-            Producers::getAdapter([0, '2', 5, 'd', 4, 'e'])
-        );
-        
-        //Act
-        $producer->count();
     }
     
     public function test_UuidGenerator_can_be_use_as_producer(): void
@@ -1159,5 +883,221 @@ final class ProducersTest extends TestCase
         
         self::assertSame(3, $count->get());
         self::assertSame([3, 2, 1], $values);
+    }
+    
+    /**
+     * @dataProvider getDataForTestIterateProducer
+     */
+    public function test_iterate_producer($producer): void
+    {
+        self::assertSame([1 => 'a', 3 => 'b', 5 => 'c'], \iterator_to_array(Producers::getAdapter($producer)));
+    }
+    
+    public static function getDataForTestIterateProducer(): \Generator
+    {
+        $data = [1 => 'a', 3 => 'b', 5 => 'c'];
+
+        yield 'ArrayAdapter' => [$data];
+        yield 'ArrayIteratorAdapter' => [new \ArrayIterator($data)];
+
+        yield 'CircularBufferIterator' => [
+            new CircularBufferIterator(self::items([5 => 'c', 1 => 'a', 3 => 'b']), 3, 1)
+        ];
+
+        yield 'CombinedArrays' => [Producers::combinedFrom([1, 3, 5], ['a', 'b', 'c'])];
+
+        yield 'CombinedGeneral' => [
+            Producers::combinedFrom(
+                Producers::sequentialInt(1, 2),
+                Producers::tokenizer(' ', 'a b c')
+            )
+        ];
+
+        yield 'ForwardItemsIterator' => [new ForwardItemsIterator(self::items($data))];
+
+        yield 'QueueProducer' => [Producers::queue()->append('a', 1)->append('b', 3)->append('c', 5)];
+
+        yield 'ReverseArrayIterator' => [new ReverseArrayIterator(\array_reverse($data, true))];
+
+        yield 'ReverseItemsIterator' => [new ReverseItemsIterator(\array_reverse(self::items($data)))];
+        
+        yield 'MultiProducer' => [
+            Producers::multiSourced(
+                Producers::queue()->append('a', 1),
+                Producers::combinedFrom([3], ['b']),
+                new ReverseArrayIterator([5 => 'c']),
+            )
+        ];
+        
+        yield 'CallableAdapter' => [
+            Producers::getAdapter(static function () use ($data) {
+                yield from $data;
+            })
+        ];
+        
+        yield 'Flattener' => [Producers::flattener([1 => 'a', [3 => 'b', [5 => 'c']]])];
+        
+        yield 'ResultCasterAdapter' => [Producers::getAdapter(Stream::from($data)->collect())];
+    }
+    
+    public function test_iterate_BucketListIterator_producer(): void
+    {
+        $data = ['a', 'b', 'c'];
+        
+        $bucket = new Bucket();
+        $bucket->data = $data;
+        
+        self::assertSame([$data], \iterator_to_array(new BucketListIterator([$bucket])));
+    }
+    
+    public function test_iterate_RandomInt_producer(): void
+    {
+        $expectedKey = 0;
+        
+        foreach (Producers::randomInt(5, 9, 3) as $key => $value) {
+            self::assertSame($expectedKey++, $key);
+            self::assertGreaterThanOrEqual(5, $value);
+            self::assertLessThanOrEqual(9, $value);
+        }
+        
+        self::assertSame(3, $expectedKey);
+    }
+    
+    public function test_iterate_RandomString_producer(): void
+    {
+        $expectedKey = 0;
+        
+        foreach (Producers::randomString(5, 9, 3, 'abcdefghijkl') as $key => $value) {
+            self::assertSame($expectedKey++, $key);
+            self::assertMatchesRegularExpression('/^[abcdefghijkl]{5,9}$/', $value);
+        }
+        
+        self::assertSame(3, $expectedKey);
+    }
+    
+    public function test_iterate_RandomString_producer_with_constant_string_length(): void
+    {
+        $expectedKey = 0;
+        
+        foreach (Producers::randomString(5, 5, 3, 'abcdefghijkl') as $key => $value) {
+            self::assertSame($expectedKey++, $key);
+            self::assertMatchesRegularExpression('/^[abcdefghijkl]{5}$/', $value);
+        }
+        
+        self::assertSame(3, $expectedKey);
+    }
+    
+    public function test_iterate_RandomUuid_producer(): void
+    {
+        $this->checkIfRamseyOrSymfonyUuidIsInstalled();
+        
+        $expectedUuidLength = $this->expectedDefaultUuidLength();
+        $expectedKey = 0;
+        
+        foreach (Producers::randomUuid(3) as $key => $value) {
+            self::assertSame($expectedKey++, $key);
+            self::assertSame($expectedUuidLength, \strlen($value));
+        }
+        
+        self::assertSame(3, $expectedKey);
+    }
+    
+    public function test_iterate_SequentialInt_producer(): void
+    {
+        self::assertSame([3, 5, 7], \iterator_to_array(Producers::sequentialInt(3, 2, 3)));
+    }
+    
+    public function test_iterate_ReverseNumericalArrayIterator_producer(): void
+    {
+        self::assertSame(
+            [2 => 'c', 1 => 'b', 0 => 'a'],
+            \iterator_to_array(new ReverseNumericalArrayIterator(['a', 'b', 'c']))
+        );
+    }
+    
+    public function test_iterate_IteratorAdapter_producer(): void
+    {
+        $queue = new \SplQueue();
+        $queue->enqueue('a');
+        $queue->enqueue('b');
+        $queue->enqueue('c');
+        
+        $producer = Producers::getAdapter($queue);
+        
+        self::assertSame(['a', 'b', 'c'], \iterator_to_array($producer));
+    }
+    
+    public function test_iterate_CollatzGenerator_producer(): void
+    {
+        self::assertSame([3, 10, 5, 16, 8, 4, 2, 1], \iterator_to_array(Producers::collatz(3)));
+    }
+    
+    public function test_iterate_PDOStatementAdapter_producer(): void
+    {
+        $stmt = $this->getMockBuilder(\PDOStatement::class)->getMock();
+        $stmt->expects(self::exactly(4))->method('fetch')->willReturnOnConsecutiveCalls(
+            [1 => 'a'],
+            [3 => 'b'],
+            [5 => 'c'],
+            false,
+        );
+        
+        self::assertSame([[1 => 'a'], [3 => 'b'], [5 => 'c']], \iterator_to_array(Producers::getAdapter($stmt)));
+    }
+    
+    public function test_iterate_ReferenceAdapter_producer(): void
+    {
+        $values = [3, 2, 5];
+        $current = \array_shift($values);
+        
+        $actual = [];
+        foreach (Producers::readFrom($current) as $key => $value) {
+            $actual[$key] = $value;
+            $current = \array_shift($values);
+        }
+        
+        self::assertSame([3, 2, 5], $actual);
+    }
+    
+    public function test_iterate_RegistryAdapter_producer(): void
+    {
+        $values = [3, 2, 5];
+        
+        $regEntry = Registry::new()->entry(Check::VALUE);
+        $regEntry->set(\array_shift($values));
+        
+        $actual = [];
+        foreach (Producers::getAdapter($regEntry) as $key => $value) {
+            $actual[$key] = $value;
+            $regEntry->set(\array_shift($values));
+        }
+        
+        self::assertSame([3, 2, 5], $actual);
+    }
+    
+    public function test_iterate_TextFileReader_producer(): void
+    {
+        foreach (Producers::resource(\fopen(__FILE__, 'rb')) as $line) {
+            self::assertSame('<?php declare(strict_types=1);', \trim($line));
+            break;
+        }
+    }
+    
+    /**
+     * @return Item[]
+     */
+    private static function items(array $data): array
+    {
+        $result = [];
+        foreach ($data as $key => $value) {
+            $result[] = new Item($key, $value);
+        }
+        
+        return $result;
+    }
+    
+    private function expectedDefaultUuidLength(): int
+    {
+        return \interface_exists(RamseyUuid::class) ? 32 : 22;
     }
 }

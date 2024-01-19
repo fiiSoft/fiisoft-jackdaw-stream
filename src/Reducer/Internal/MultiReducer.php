@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Reducer\Internal;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 
@@ -15,7 +16,7 @@ final class MultiReducer extends BaseReducer
     public function __construct(array $pattern)
     {
         if (empty($pattern)) {
-            throw new \InvalidArgumentException('Invalid param pattern - cannot be empty!');
+            throw InvalidParamException::describe('pattern', $pattern);
         }
         
         $this->pattern = \array_map(static fn($item): Reducer => Reducers::getAdapter($item), $pattern);

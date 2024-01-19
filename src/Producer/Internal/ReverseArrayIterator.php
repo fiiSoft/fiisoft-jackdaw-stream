@@ -2,10 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Producer\Internal;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class ReverseArrayIterator extends CountableProducer
+final class ReverseArrayIterator extends BaseProducer
 {
     private array $source;
 
@@ -17,7 +16,7 @@ final class ReverseArrayIterator extends CountableProducer
         $this->reindex = $reindex;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         if ($this->reindex) {
             $index = 0;
@@ -27,10 +26,7 @@ final class ReverseArrayIterator extends CountableProducer
                 \key($this->source) !== null;
                 \prev($this->source)
             ){
-                $item->key = $index++;
-                $item->value = \current($this->source);
-                
-                yield;
+                yield $index++ => \current($this->source);
             }
         } else {
             for (
@@ -38,33 +34,9 @@ final class ReverseArrayIterator extends CountableProducer
                 \key($this->source) !== null;
                 \prev($this->source)
             ){
-                $item->key = \key($this->source);
-                $item->value = \current($this->source);
-                
-                yield;
+                yield \key($this->source) => \current($this->source);
             }
         }
-    }
-    
-    public function count(): int
-    {
-        return \count($this->source);
-    }
-    
-    public function getLast(): ?Item
-    {
-        if (empty($this->source)) {
-            return null;
-        }
-        
-        $key = \array_key_first($this->source);
-        $value = $this->source[$key];
-        
-        if ($this->reindex) {
-            $key = \count($this->source) - 1;
-        }
-        
-        return new Item($key, $value);
     }
     
     public function destroy(): void

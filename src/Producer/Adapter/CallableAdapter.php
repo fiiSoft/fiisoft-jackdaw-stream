@@ -2,10 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Producer\Adapter;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class CallableAdapter extends NonCountableProducer
+final class CallableAdapter extends BaseProducer
 {
     /** @var callable */
     private $factory;
@@ -18,13 +17,9 @@ final class CallableAdapter extends NonCountableProducer
         $this->factory = $factory;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
-        $factory = $this->factory;
-        
-        foreach ($factory() as $item->key => $item->value) {
-            yield;
-        }
+        yield from ($this->factory)();
     }
     
     public function destroy(): void

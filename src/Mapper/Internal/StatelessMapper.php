@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Mapper\Internal;
 
 abstract class StatelessMapper extends BaseMapper
 {
-    final public function isStateless(): bool
+    final protected function isStateless(): bool
     {
         return true;
     }

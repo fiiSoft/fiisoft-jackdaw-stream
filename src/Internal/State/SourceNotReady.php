@@ -8,26 +8,27 @@ final class SourceNotReady extends Source
 {
     public function hasNextItem(): bool
     {
-        try {
-            $this->initializeSource();
+        if ($this->nextValue->isSet) {
+            $this->item->key = $this->nextValue->key;
+            $this->item->value = $this->nextValue->value;
+            $this->nextValue->isSet = false;
             
-            if ($this->isLoop) {
-                $this->currentSource->send($this->signal->item);
-            }
-            
-            return $this->currentSource->valid();
-        } finally {
-            $this->sourceIsReady();
+            return true;
         }
-    }
-    
-    public function setNextValue(Item $item): void
-    {
+        
         $this->initializeSource();
         
-        $this->currentSource->send($item);
-        
+        $isValid = $this->currentSource->valid();
         $this->sourceIsReady();
+        
+        return $isValid;
+    }
+    
+    public function setNextItem(Item $item): void
+    {
+        $this->nextValue->isSet = true;
+        $this->nextValue->key = $item->key;
+        $this->nextValue->value = $item->value;
     }
     
     private function sourceIsReady(): void
@@ -39,7 +40,8 @@ final class SourceNotReady extends Source
             $this->signal,
             $this->pipe,
             $this->stack,
-            $this->currentSource
+            $this->currentSource,
+            $this->nextValue
         ));
     }
 }

@@ -3,10 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper\Adapter;
 
 use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class FilterAdapter extends BaseMapper
+final class FilterAdapter extends StateMapper
 {
     private Filter $filter;
     
@@ -18,9 +17,22 @@ final class FilterAdapter extends BaseMapper
     /**
      * @inheritDoc
      */
-    public function map($value, $key)
+    public function map($value, $key = null): array
     {
-        if (\is_iterable($value)) {
+        $result = [];
+        
+        foreach ($value as $k => $v) {
+            if ($this->filter->isAllowed($v, $k)) {
+                $result[$k] = $v;
+            }
+        }
+        
+        return $result;
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
             $result = [];
             
             foreach ($value as $k => $v) {
@@ -29,11 +41,7 @@ final class FilterAdapter extends BaseMapper
                 }
             }
             
-            return $result;
+            yield $key => $result;
         }
-    
-        throw new \LogicException(
-            'Unable to map '.Helper::typeOfParam($value).' using Filter because it is not iterable'
-        );
     }
 }

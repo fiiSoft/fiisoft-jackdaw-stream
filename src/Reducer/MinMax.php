@@ -6,19 +6,23 @@ use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
 final class MinMax extends BaseReducer
 {
-    private ?int $min = null, $max = null;
+    private bool $isFirst = true;
     
+    /** @var mixed */
+    private $min = null, $max = null;
+    
+    /**
+     * @param mixed $value anything that can be compared using < and > operators
+     */
     public function consume($value): void
     {
-        if ($this->min === null) {
+        if ($this->isFirst) {
             $this->min = $this->max = $value;
-        } else {
-            if ($value < $this->min) {
-                $this->min = $value;
-            }
-            if ($value > $this->max) {
-                $this->max = $value;
-            }
+            $this->isFirst = false;
+        } elseif ($value < $this->min) {
+            $this->min = $value;
+        } elseif ($value > $this->max) {
+            $this->max = $value;
         }
     }
     
@@ -32,11 +36,11 @@ final class MinMax extends BaseReducer
     
     public function reset(): void
     {
-        $this->min = $this->max = null;
+        $this->isFirst = true;
     }
     
     public function hasResult(): bool
     {
-        return $this->min !== null;
+        return !$this->isFirst;
     }
 }

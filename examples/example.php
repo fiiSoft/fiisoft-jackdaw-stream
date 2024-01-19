@@ -10,7 +10,6 @@ use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
-use FiiSoft\Jackdaw\StreamMaker;
 
 $buffer = new ArrayObject();
 
@@ -31,13 +30,13 @@ $stream = Stream::from([4, 7, 2, 'a', 8, null, 5, 3, 7])
 
 echo print_r($stream->toArray(), true), 'data collected in buffer: ', json_encode($buffer->getArrayCopy()), PHP_EOL;
 
-$stream = StreamMaker::from([4, 'c' => 7, 2, 'a', 'z' => 8, null, 5, '', 3, 7]);
+$producer = Producers::getAdapter([4, 'c' => 7, 2, 'a', 'z' => 8, null, 5, '', 3, 7]);
 
-foreach ($stream->start()->filter('is_int')->limit(5)->skip(2) as $key => $value) {
+foreach ($producer->stream()->filter('is_int')->limit(5)->skip(2) as $key => $value) {
     echo 'key: ', $key,' value: ', $value, PHP_EOL;
 }
 
-echo 'count: ', $stream->start()->notEmpty()->count()->get(), PHP_EOL;
+echo 'count: ', $producer->stream()->notEmpty()->count()->get(), PHP_EOL;
 
 echo 'first: ', Stream::from(['a', 5, 'b', 3, 'c'])->filter('is_int')->first()->get(), PHP_EOL;
 
@@ -49,23 +48,23 @@ echo 'some random numbers: ', Producers::randomInt(10, 99)->stream()->limit(5)->
 
 echo 'join: ', Stream::from(['a', 'b', 'c'])->join([1, 2, 3])->skip(2)->limit(2)->toJson(), PHP_EOL;
 
-$integersFrom1To10 = StreamMaker::from(Producers::sequentialInt(1, 1, 10));
+$integersFrom1To10 = Producers::sequentialInt(1, 1, 10);
 
-echo 'min: ', $integersFrom1To10->start()->reduce(Reducers::min())->get(), PHP_EOL;
-echo 'max: ', $integersFrom1To10->start()->reduce(Reducers::max())->get(), PHP_EOL;
-echo 'sum: ', $integersFrom1To10->start()->reduce(Reducers::sum())->get(), PHP_EOL;
-echo 'avg: ', $integersFrom1To10->start()->reduce(Reducers::average())->get(), PHP_EOL;
+echo 'min: ', $integersFrom1To10->stream()->reduce(Reducers::min())->get(), PHP_EOL;
+echo 'max: ', $integersFrom1To10->stream()->reduce(Reducers::max())->get(), PHP_EOL;
+echo 'sum: ', $integersFrom1To10->stream()->reduce(Reducers::sum())->get(), PHP_EOL;
+echo 'avg: ', $integersFrom1To10->stream()->reduce(Reducers::average())->get(), PHP_EOL;
 
-echo 'min: ', $integersFrom1To10->start()->reduce('min')->get(), PHP_EOL;
-echo 'max: ', $integersFrom1To10->start()->reduce('max')->get(), PHP_EOL;
+echo 'min: ', $integersFrom1To10->stream()->reduce('min')->get(), PHP_EOL;
+echo 'max: ', $integersFrom1To10->stream()->reduce('max')->get(), PHP_EOL;
 
-$someNumbers = StreamMaker::from([8,3,6,2,7]);
+$someNumbers = Producers::getAdapter([8,3,6,2,7]);
 
-echo 'min from ', $someNumbers->start()->toString(),
-    ' is ', $someNumbers->start()->reduce(Reducers::min())->get(), PHP_EOL;
+echo 'min from ', $someNumbers->stream()->toString(),
+    ' is ', $someNumbers->stream()->reduce(Reducers::min())->get(), PHP_EOL;
 
-echo 'max from ', $someNumbers->start()->toString(),
-    ' is ', $someNumbers->start()->reduce(Reducers::max())->get(), PHP_EOL;
+echo 'max from ', $someNumbers->stream()->toString(),
+    ' is ', $someNumbers->stream()->reduce(Reducers::max())->get(), PHP_EOL;
 
 echo 'unique values: ', Stream::from([1,0,2,9,3,8,4,7,5,6,1,0,2,9,3,8,4,8,5,7,6])
     ->unique()->skip(5)->limit(5)->toString(), PHP_EOL;
@@ -89,10 +88,10 @@ Stream::of(5, 'five', 2, 'six', 4, 'seven', 2)
         echo 'element: ', $item, PHP_EOL;
     });
 
-$sorted = StreamMaker::from(static fn() => Stream::of(7,4,3,8,7,6,9,1,2,7,6)->unique()->sort());
-echo 'sorted unique: ', $sorted->start()->toString(), PHP_EOL;
+$sorted = Producers::getAdapter(static fn() => Stream::of(7,4,3,8,7,6,9,1,2,7,6)->unique()->sort());
+echo 'sorted unique: ', $sorted->stream()->toString(), PHP_EOL;
 
-echo Stream::of(['a', 'b'], 6, 'z', 3, ['c', 'd'], $sorted->start())
+echo Stream::of(['a', 'b'], 6, 'z', 3, ['c', 'd'], $sorted->stream())
     ->map(function ($v, $k) {
         return $v.'('.$k.')';
     })
@@ -101,42 +100,42 @@ echo Stream::of(['a', 'b'], 6, 'z', 3, ['c', 'd'], $sorted->start())
 
 echo 'sorted: ', Stream::from([6,3,8,1,9,4,0])->sort()->toJson(), PHP_EOL;
 
-$words = StreamMaker::from(['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog']);
-echo 'words sorted by length asc: ', $words->start()->sort('strlen')->toString(', '), PHP_EOL;
-echo 'words sorted by length desc: ', $words->start()->rsort('strlen')->toJson(), PHP_EOL;
+$words = Producers::getAdapter(['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog']);
+echo 'words sorted by length asc: ', $words->stream()->sort('strlen')->toString(', '), PHP_EOL;
+echo 'words sorted by length desc: ', $words->stream()->rsort('strlen')->toJson(), PHP_EOL;
 
-$words = StreamMaker::from(Producers::getAdapter(['the', 'Quick', 'brown', 'Fox', 'The', 'quick', 'Brown', 'fox']));
-echo 'words unsorted: ', $words->start()->toString(', '), PHP_EOL;
-echo 'words sorted 1: ', $words->start()->sort()->toString(', '), PHP_EOL;
-echo 'words sorted 2: ', $words->start()->sort('strtoupper')->toString(', '), PHP_EOL;
-echo 'words sorted 3: ', $words->start()->sort('strtolower')->toString(', '), PHP_EOL;
-echo 'words sorted 4: ', $words->start()->sort('strcmp')->toString(', '), PHP_EOL;
+$words = Producers::getAdapter(['the', 'Quick', 'brown', 'Fox', 'The', 'quick', 'Brown', 'fox']);
+echo 'words unsorted: ', $words->stream()->toString(', '), PHP_EOL;
+echo 'words sorted 1: ', $words->stream()->sort()->toString(', '), PHP_EOL;
+echo 'words sorted 2: ', $words->stream()->sort('strtoupper')->toString(', '), PHP_EOL;
+echo 'words sorted 3: ', $words->stream()->sort('strtolower')->toString(', '), PHP_EOL;
+echo 'words sorted 4: ', $words->stream()->sort('strcmp')->toString(', '), PHP_EOL;
 
-$numbers = StreamMaker::from([7,3,8,1,9,2,0,5,4]);
-echo 'numbers: ', $numbers->start()->toJson(), PHP_EOL;
-echo 'numbers in reversed order: ', $numbers->start()->reverse()->reindex()->toJson(), PHP_EOL;
-echo 'numbers sorted asc: ', $numbers->start()->sort()->reindex()->toJson(), PHP_EOL;
-echo 'numbers sorted desc: ', $numbers->start()->rsort()->reindex()->toJson(), PHP_EOL;
-echo 'numbers in random order: ', $numbers->start()->shuffle()->reindex()->toJson(), PHP_EOL;
+$numbers = Producers::getAdapter([7,3,8,1,9,2,0,5,4]);
+echo 'numbers: ', $numbers->stream()->toJson(), PHP_EOL;
+echo 'numbers in reversed order: ', $numbers->stream()->reverse()->reindex()->toJson(), PHP_EOL;
+echo 'numbers sorted asc: ', $numbers->stream()->sort()->reindex()->toJson(), PHP_EOL;
+echo 'numbers sorted desc: ', $numbers->stream()->rsort()->reindex()->toJson(), PHP_EOL;
+echo 'numbers in random order: ', $numbers->stream()->shuffle()->reindex()->toJson(), PHP_EOL;
 
-$words = StreamMaker::of('sometimes', 'shit', 'happens');
-echo 'sort by length: ', $words->start()->sort('strlen')->toString(', '), PHP_EOL;
-echo 'sort normally: ', $words->start()->sort()->toString(', '), PHP_EOL;
+$words = Producers::from(['sometimes', 'shit', 'happens']);
+echo 'sort by length: ', $words->stream()->sort('strlen')->toString(', '), PHP_EOL;
+echo 'sort normally: ', $words->stream()->sort()->toString(', '), PHP_EOL;
 
-$assoc = StreamMaker::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
-echo 'normal: ', $assoc->start()->toJson(), PHP_EOL,
-    'flipped: ', $assoc->start()->flip()->toJson(), PHP_EOL,
-    'map keys: ', $assoc->start()->mapKey(static fn($v, $k) => $v.'_'.$k)->toJsonAssoc(), PHP_EOL;
+$assoc = Producers::getAdapter(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+echo 'normal: ', $assoc->stream()->toJson(), PHP_EOL,
+    'flipped: ', $assoc->stream()->flip()->toJson(), PHP_EOL,
+    'map keys: ', $assoc->stream()->mapKey(static fn($v, $k) => $v.'_'.$k)->toJsonAssoc(), PHP_EOL;
 
-if ($assoc->start()->has(3)->get()) {
+if ($assoc->stream()->has(3)->get()) {
     echo '3 is in stream!', PHP_EOL;
 }
 
-if ($assoc->start()->hasAny([3, 5, 7])->get()) {
+if ($assoc->stream()->hasAny([3, 5, 7])->get()) {
     echo '3 or 5 or 7 is in stream!', PHP_EOL;
 }
 
-if ($assoc->start()->hasEvery([2, 4])->get()) {
+if ($assoc->stream()->hasEvery([2, 4])->get()) {
     echo 'stream contains 2 and 4!', PHP_EOL;
 }
 
@@ -144,8 +143,8 @@ if (Stream::from([5, 3, 7, 3, 5, 1, 5, 3, 7])->hasOnly([1, 3, 5, 7])->get()) {
     echo 'stream contains only 1,3,5,7', PHP_EOL;
 }
 
-echo 'find in stream: ', print_r($assoc->start()->find('d', Check::ANY)->toArrayAssoc(), true), PHP_EOL;
-echo 'find in stream: ', print_r($assoc->start()->find('d', Check::ANY)->toArray(), true), PHP_EOL;
+echo 'find in stream: ', print_r($assoc->stream()->find('d', Check::ANY)->toArrayAssoc(), true), PHP_EOL;
+echo 'find in stream: ', print_r($assoc->stream()->find('d', Check::ANY)->toArray(), true), PHP_EOL;
 
 echo 'fold: ', Stream::from([1, 1, 1])->fold(7, Reducers::sum())->get(), PHP_EOL;
 
@@ -154,12 +153,12 @@ echo 'example of chunking: ', Stream::from(['a','b','c','d','e','f','g','h'])
     ->map(Mappers::concat())
     ->toString(', '), PHP_EOL;
 
-$numbersFrom1To5 = StreamMaker::from([1, 2, 3, 4, 5]);
-echo 'example of scan for ', $numbersFrom1To5->start()->toString(),
-    ' is: ', $numbersFrom1To5->start()->scan(0, Reducers::sum())->skip(1)->toString(), PHP_EOL;
+$numbersFrom1To5 = Producers::getAdapter([1, 2, 3, 4, 5]);
+echo 'example of scan for ', $numbersFrom1To5->stream()->toString(),
+    ' is: ', $numbersFrom1To5->stream()->scan(0, Reducers::sum())->skip(1)->toString(), PHP_EOL;
 
-echo 'another example of scan: ', StreamMaker::from(['a', 'b', 'c', 'd'])
-    ->start()
+echo 'another example of scan: ', Producers::getAdapter(['a', 'b', 'c', 'd'])
+    ->stream()
     ->scan('', Reducers::concat())
     ->skip(1)
     ->toString(), PHP_EOL;
@@ -235,20 +234,20 @@ echo 'example of usin flatMap: ', Stream::from(['the quick brown fox jumps'])
 
 echo 'iterate over stream: ';
 
-$source = StreamMaker::from([9, 4, 2, 7, 3, 5, 9, 3, 6, 1, 2, 1, 5, 7, 3, 4, 9, 7, 8]);
+$source = Producers::getAdapter([9, 4, 2, 7, 3, 5, 9, 3, 6, 1, 2, 1, 5, 7, 3, 4, 9, 7, 8]);
 foreach ($source as $item) {
     echo $item, ',';
 }
 
 echo PHP_EOL;
 
-echo 'average value of triplets: ', $source->start()->chunk(3)->map(Reducers::average(2))->toString(', '), PHP_EOL;
+echo 'average value of triplets: ', $source->stream()->chunk(3)->map(Reducers::average(2))->toString(', '), PHP_EOL;
 
-$stream = StreamMaker::of('a', 'v', 3, 'z');
-echo 'example of while: ', $stream->start()->while('is_string')->map('strtoupper')->toString(), PHP_EOL;
-echo 'example of until: ', $stream->start()->until('is_int')->map('strtoupper')->toString(), PHP_EOL;
+$stream = Producers::getAdapter(['a', 'v', 3, 'z']);
+echo 'example of while: ', $stream->stream()->while('is_string')->map('strtoupper')->toString(), PHP_EOL;
+echo 'example of until: ', $stream->stream()->until('is_int')->map('strtoupper')->toString(), PHP_EOL;
 
-$streams = $stream->start()->groupBy('is_int');
+$streams = $stream->stream()->groupBy('is_int');
 echo 'only integers: ', $streams->get(true)->toString(), PHP_EOL;
 echo 'only non-integers: ', $streams->get(false)->toString(), PHP_EOL;
 
@@ -292,8 +291,7 @@ $lastFive = Stream::empty()
 
 $count = Stream::empty()->count();
 
-$numOfNumbers = $source->start()->feed($count)->feed($target)->feed($lastFive)->greaterThan(5)->count();
-$numOfNumbers->run();
+$numOfNumbers = $source->stream()->feed($count)->feed($target)->feed($lastFive)->greaterThan(5)->count();
 
 echo 'total num of numbers: ', $count->get(), PHP_EOL;
 echo 'num of numbers greater than 5: ', $numOfNumbers->get(), PHP_EOL;
@@ -303,7 +301,7 @@ echo 'max value of last 5 elements: ', $maxValue->get(), PHP_EOL;
 //another example
 
 $minValue = Stream::empty()->reduce('min');
-$source->start()->feed($minValue)->run();
+$source->stream()->feed($minValue)->run();
 
 echo 'min value from feed: ', $minValue->get(), PHP_EOL;
 
@@ -312,12 +310,12 @@ echo 'min value: ', $minValue, PHP_EOL;
 
 //lazy result
 echo 'lazy-evaluated result: ',
-    $source->start()->find(Filters::greaterThan(100))->getOrElse(static fn(): int => -1),
+    $source->stream()->find(Filters::greaterThan(100))->getOrElse(static fn(): int => -1),
     PHP_EOL;
 
 //transform result
 echo 'transformed result: ',
-    $source->start()->find(Filters::isInt())->transform(static fn(int $n): int => $n - 100)->get(),
+    $source->stream()->find(Filters::isInt())->transform(static fn(int $n): int => $n - 100)->get(),
     PHP_EOL;
 
 //collect feed

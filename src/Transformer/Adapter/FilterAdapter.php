@@ -17,20 +17,16 @@ final class FilterAdapter implements Transformer
     /**
      * @inheritDoc
      */
-    public function transform($value, $key)
+    public function transform($value, $key): array
     {
-        if (\is_iterable($value)) {
-            $result = [];
-            
-            foreach ($value as $index => $item) {
-                if ($this->filter->isAllowed($item, $index)) {
-                    $result[$index] = $item;
-                }
+        $result = [];
+        
+        foreach ($value as $k => $v) {
+            if ($this->filter->isAllowed($v, $k)) {
+                $result[$k] = $v;
             }
-            
-            return $result;
         }
         
-        throw new \LogicException('Param value must be iterable');
+        return $result;
     }
 }

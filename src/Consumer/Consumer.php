@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Consumer;
 
-use FiiSoft\Jackdaw\Operation\Internal\Dispatcher\HandlerReady;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 
 interface Consumer extends ConsumerReady, HandlerReady
 {

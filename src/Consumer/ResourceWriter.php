@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Consumer;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
 
 final class ResourceWriter implements Consumer
@@ -13,14 +14,13 @@ final class ResourceWriter implements Consumer
     
     /**
      * @param resource $resource
-     * @param int $mode
      */
     public function __construct($resource, int $mode = Check::VALUE)
     {
         if (\is_resource($resource)) {
             $this->resource = $resource;
         } else {
-            throw new \InvalidArgumentException('Invalid param resource');
+            throw InvalidParamException::describe('resource', $resource);
         }
         
         $this->mode = $mode;

@@ -17,7 +17,7 @@ final class MapperAdapter implements Discriminator
     /**
      * @inheritDoc
      */
-    public function classify($value, $key)
+    public function classify($value, $key = null)
     {
         return $this->mapper->map($value, $key);
     }

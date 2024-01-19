@@ -10,7 +10,7 @@ use FiiSoft\Jackdaw\Collector\Adapter\Iterable\SplFixedArrayAdapter;
 use FiiSoft\Jackdaw\Collector\Adapter\SplDoublyLinkedListAdapter;
 use FiiSoft\Jackdaw\Collector\Adapter\SplHeapAdapter;
 use FiiSoft\Jackdaw\Collector\Adapter\SplPriorityQueueAdapter;
-use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 
 final class Collectors
 {
@@ -44,7 +44,7 @@ final class Collectors
             return new SplPriorityQueueAdapter($collector, 0, $allowsKeys);
         }
     
-        throw Helper::invalidParamException('collector', $collector);
+        throw InvalidParamException::describe('collector', $collector);
     }
     
     /**
@@ -69,7 +69,7 @@ final class Collectors
             return new SplFixedArrayAdapter($collector, $allowsKeys);
         }
         
-        throw Helper::invalidParamException('collector', $collector);
+        throw InvalidParamException::describe('collector', $collector);
     }
     
     public static function values(): IterableCollector

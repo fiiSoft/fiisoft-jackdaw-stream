@@ -3,26 +3,32 @@
 namespace FiiSoft\Jackdaw\Filter\Number;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\Number\IsEven\AnyIsEven;
+use FiiSoft\Jackdaw\Filter\Number\IsEven\BothIsEven;
+use FiiSoft\Jackdaw\Filter\Number\IsEven\KeyIsEven;
+use FiiSoft\Jackdaw\Filter\Number\IsEven\ValueIsEven;
 use FiiSoft\Jackdaw\Internal\Check;
 
-final class IsEven implements Filter
+abstract class IsEven extends ZeroArg
 {
-    /**
-     * @inheritdoc
-     */
-    public function isAllowed($value, $key, int $mode = Check::VALUE): bool
+    final public static function create(int $mode): self
     {
         switch ($mode) {
             case Check::VALUE:
-                return ($value & 1) === 0;
+                return new ValueIsEven($mode);
             case Check::KEY:
-                return ($key & 1) === 0;
+                return new KeyIsEven($mode);
             case Check::BOTH:
-                return ($value & 1) === 0 && ($key & 1) === 0;
+                return new BothIsEven($mode);
             case Check::ANY:
-                return ($value & 1) === 0 || ($key & 1) === 0;
+                return new AnyIsEven($mode);
             default:
-                throw new \InvalidArgumentException('Invalid param mode');
+                throw Check::invalidModeException($mode);
         }
+    }
+    
+    final public function negate(): Filter
+    {
+        return IsOdd::create($this->negatedMode());
     }
 }

@@ -10,8 +10,8 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Operation\Segregate\Bucket;
-use FiiSoft\Jackdaw\Operation\State\ItemBuffer\SingleItemBuffer;
+use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
+use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\SingleItemBuffer;
 use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
@@ -23,7 +23,6 @@ use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
-use FiiSoft\Jackdaw\StreamMaker;
 use PHPUnit\Framework\TestCase;
 
 final class DestroyTest extends TestCase
@@ -53,7 +52,7 @@ final class DestroyTest extends TestCase
             ->castToString()
             ->storeIn($buffer)
             ->chunk(2)
-            ->filter(Filters::length()->eq(2))
+            ->filter(Filters::size()->eq(2))
             ->concat('');
         
         $collector = $stream->collect();
@@ -64,13 +63,28 @@ final class DestroyTest extends TestCase
         self::assertSame('E|D|C|B|A', $reversedChars->get());
         self::assertSame(24, $multiplyNumbers->result());
         self::assertSame(['A', '1', 'B', '2', 'C', '3', 'D', '4', 'E'], $buffer);
-        self::assertSame(['A', 1, 'B', 2, 'C', 3, 'D', 4, 'E'], $charsAndNums->getData());
+        self::assertSame(['A', 1, 'B', 2, 'C', 3, 'D', 4, 'E'], $charsAndNums->toArray());
         
         $collector->destroy();
         $onlyChars->destroy();
         $onlyNumbers->destroy();
         $reversedChars->destroy();
         $stream->destroy();
+    }
+    
+    public function test_LastOperation_destroy(): void
+    {
+        $onlyChars = Stream::empty()->onlyStrings()->reduce(Reducers::concat());
+        
+        $stream = Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e'])
+            ->feed($onlyChars)
+            ->mapWhen('\is_string', '\strtoupper');
+        
+        $stream->run();
+        
+        self::assertSame('abcde', $onlyChars->get());
+        
+        $onlyChars->destroy();
     }
     
     public function test_destroy_stream_with_stacked_operations(): void
@@ -136,16 +150,11 @@ final class DestroyTest extends TestCase
      */
     public function test_general_producer_destroy(Producer $producer): void
     {
-        //given
-        self::assertFalse($producer->isEmpty());
-        self::assertSame(3, $producer->count());
-        
         //when
         $producer->destroy();
-        
+
         //then
-        self::assertTrue($producer->isEmpty());
-        self::assertSame(0, $producer->count());
+        self::assertSame(0, \iterator_count($producer));
     }
     
     public static function getDataForTestGeneralProducerDestroy(): array
@@ -154,14 +163,28 @@ final class DestroyTest extends TestCase
             'QueueProducer' => [Producers::queue(['a', 'b', 'c'])],
             'MultiProducer' => [Producers::multiSourced(Producers::queue(['a', 'b']), Producers::getAdapter(['c']))],
             'BucketListIterator' => [new BucketListIterator([new Bucket(), new Bucket(), new Bucket()])],
-            'CircularBufferIterator' => [new CircularBufferIterator(['a', 'b', 'c'], 3, 1)],
+            'CircularBufferIterator' => [new CircularBufferIterator(self::convertToItems(['a', 'b', 'c']), 3, 1)],
             'ForwardItemsIterator' => [new ForwardItemsIterator(self::convertToItems([1, 2, 3]))],
             'ReverseArrayIterator' => [new ReverseArrayIterator(['a', 'b', 'c'])],
             'ReverseItemsIterator' => [new ReverseItemsIterator(self::convertToItems(['a', 'b', 'c']))],
             'ReverseNumericalArrayIterator' => [new ReverseNumericalArrayIterator(['a', 'b', 'c'])],
             'ArrayIteratorAdapter' => [Producers::getAdapter(new \ArrayIterator(['a', 'b', 'c']))],
-            'IteratorAdapter' => [Producers::getAdapter(new \ArrayObject(['a', 'b', 'c']))],
+            'TraversableAdapter' => [Producers::getAdapter(new \ArrayObject(['a', 'b', 'c']))],
         ];
+    }
+    
+    public function test_PushProducer_destroy(): void
+    {
+        //given
+        $otherProducer = Producers::getAdapter(['a', 'b']);
+        $producer = new PushProducer($otherProducer);
+        
+        //when
+        $producer->destroy();
+        
+        //then
+        self::assertSame(0, \iterator_count($producer));
+        self::assertSame(0, \iterator_count($otherProducer));
     }
     
     public function test_TextFileReader_destroy(): void
@@ -223,19 +246,6 @@ final class DestroyTest extends TestCase
         //then
         self::assertEmpty($bucket1->data);
         self::assertEmpty($bucket2->data);
-    }
-    
-    public function test_PushProducer_destroy(): void
-    {
-        //given
-        $otherProducer = Producers::getAdapter(['a', 'b']);
-        $producer = new PushProducer(false, $otherProducer);
-        
-        //when
-        $producer->destroy();
-        
-        //then
-        self::assertSame(0, $otherProducer->count());
     }
     
     public function test_Tokenizer_destroy(): void
@@ -355,7 +365,7 @@ final class DestroyTest extends TestCase
         $stream = Stream::from($data)->flip()->collectKeysIn($collector);
         $stream->run();
         
-        self::assertSame($data, $collector->getData());
+        self::assertSame($data, $collector->toArray());
         
         $stream->destroy();
     }
@@ -367,6 +377,25 @@ final class DestroyTest extends TestCase
             ->lessThan(3);
         
         self::assertSame([1, 2], $stream->toArray());
+        
+        $stream->destroy();
+    }
+    
+    public function test_FilterByMany_destroy(): void
+    {
+        $rowset = [
+            ['id' => 1, 'age' => 43, 'sex' => 'f'],
+            ['id' => 4, 'age' => 62, 'sex' => 'm'],
+            ['id' => 7, 'age' => 55, 'sex' => 'f'],
+        ];
+        
+        $stream = Stream::from($rowset)
+            ->filterBy('age', Filters::greaterOrEqual(50))
+            ->filterBy('sex', 'f');
+        
+        self::assertSame([
+            ['id' => 7, 'age' => 55, 'sex' => 'f'],
+        ], $stream->toArray());
         
         $stream->destroy();
     }
@@ -384,7 +413,7 @@ final class DestroyTest extends TestCase
     {
         $stream = Stream::from(['a', 'b', 'c', 'd', 'e'])
             ->onError(OnError::abort())
-            ->callWhen(Filters::equals('e'), static function () {
+            ->callWhen(Filters::equal('e'), static function () {
                 throw new \RuntimeException('force break');
             })
             ->fork(
@@ -412,12 +441,11 @@ final class DestroyTest extends TestCase
     
     public function test_HasEvery_destroy(): void
     {
-        $stream = Stream::from(['a', 'b', 'c', 'd'])->hasEvery(['a', 'd']);
+        $stream = Stream::from(['c' => 'a', 'd' => 'b', 'b' => 'c', 'a' => 'd'])->hasEvery(['a', 'd'], Check::BOTH);
         
         self::assertTrue($stream->get());
         
         $stream->destroy();
-        
     }
     
     public function test_HasOnly_destroy(): void
@@ -434,7 +462,7 @@ final class DestroyTest extends TestCase
     {
         $stream = Stream::from(['a', 'b', 'c', 'd', 'e'])
             ->onError(OnError::abort())
-            ->callWhen(Filters::equals('e'), static function () {
+            ->callWhen(Filters::equal('e'), static function () {
                 throw new \RuntimeException('force break');
             })
             ->best(3);
@@ -442,15 +470,6 @@ final class DestroyTest extends TestCase
         self::assertEmpty($stream->toArrayAssoc());
         
         $stream->destroy();
-    }
-    
-    public function test_StreamMaker_destroy(): void
-    {
-        $stream = StreamMaker::from(['a', 'b', 'c']);
-        self::assertSame(3, $stream->start()->count()->get());
-        
-        $stream->destroy();
-        self::assertSame(0, $stream->start()->count()->get());
     }
     
     public function test_MapMany_destroy(): void
@@ -610,11 +629,20 @@ final class DestroyTest extends TestCase
     
     public function test_CombinedGeneral_destroy(): void
     {
-        $producer = Producers::combinedFrom(static fn(): array => ['a', 2], [0, '2']);
+        $stream = Producers::combinedFrom(static fn(): array => ['a', 2], [0, '2'])->stream();
         
-        self::assertSame(['a' => 0, 2 => '2'], $producer->stream()->toArrayAssoc());
+        self::assertSame(['a' => 0, 2 => '2'], $stream->toArrayAssoc());
         
-        $producer->destroy();
+        $stream->destroy();
+    }
+    
+    public function test_CombinedArrays_destroy(): void
+    {
+        $stream = Producers::combinedFrom(['a', 2], [0, '2'])->stream();
+        
+        self::assertSame(['a' => 0, 2 => '2'], $stream->toArrayAssoc());
+        
+        $stream->destroy();
     }
     
     public function test_SendToMany_destroy(): void

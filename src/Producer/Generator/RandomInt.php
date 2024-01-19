@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Producer\Generator\Exception\GeneratorExceptionFactory;
 use FiiSoft\Jackdaw\Producer\Tech\LimitedProducer;
 
 final class RandomInt extends LimitedProducer
@@ -15,28 +15,19 @@ final class RandomInt extends LimitedProducer
         parent::__construct($limit);
         
         if ($max <= $min) {
-            throw new \InvalidArgumentException('Max cannot be less than or equal to min');
+            throw GeneratorExceptionFactory::maxCannotBeLessThanOrEqualToMin();
         }
     
         $this->min = $min;
         $this->max = $max;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         $count = 0;
         
         while ($count !== $this->limit) {
-            
-            $item->key = $count++;
-            $item->value = \random_int($this->min, $this->max);
-            
-            yield;
+            yield $count++ => \random_int($this->min, $this->max);
         }
-    }
-    
-    public function getLast(): ?Item
-    {
-        return null;
     }
 }

@@ -16,7 +16,7 @@ $chars = str_split('qwertyuiopasdfghjklzxcvbnm');
 
 $count = 0;
 $progressBar = static function () use (&$count) {
-    if (++$count === 5000) {
+    if (++$count === 10_000) {
         $count = 0;
         echo '.';
     }

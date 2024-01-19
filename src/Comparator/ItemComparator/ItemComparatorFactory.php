@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Comparator\ItemComparator;
 
 use FiiSoft\Jackdaw\Comparator\ComparisonSpec;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
+use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
 use FiiSoft\Jackdaw\Internal\Check;
 
 final class ItemComparatorFactory
@@ -45,7 +46,7 @@ final class ItemComparatorFactory
             
             //@codeCoverageIgnoreStart
             default:
-                throw new \UnexpectedValueException('Unknown choice in ItemComparatorFactory: '.$choice);
+                throw ImpossibleSituationException::create('Unknown choice in ItemComparatorFactory: '.$choice);
             //@codeCoverageIgnoreEnd
         }
     }

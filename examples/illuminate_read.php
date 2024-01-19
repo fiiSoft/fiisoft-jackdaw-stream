@@ -18,15 +18,14 @@ $reader = static function ($fp): \Generator {
 
 $count = 0;
 
-$collection = new Collection($reader(fopen(__DIR__.'/../var/testfile.txt', 'rb')));
-$rows = $collection
-    ->map(static fn(string $line) => json_decode($line, true, 512, JSON_THROW_ON_ERROR))
-    ->filter(static fn(array $row) => $row['isVerified'])
-    ->filter(static fn(array $row) => isset($row['facebookId']))
-    ->filter(static fn(array $row) => $row['credits'] >= 500000)
-    ->filter(static fn(array $row) => $row['scoring'] >= 95.0)
-    ->filter(static fn(array $row) => mb_strlen($row['name']) === 10)
-    ->map(static fn(array $row) => ['id' => $row['id'], 'credits' => $row['credits']])
+$rows = (new Collection($reader(fopen(__DIR__.'/../var/testfile.txt', 'rb'))))
+    ->map(static fn(string $line): array => json_decode($line, true, 512, JSON_THROW_ON_ERROR))
+    ->filter(static fn(array $row): bool => $row['isVerified'])
+    ->filter(static fn(array $row): bool => isset($row['facebookId']))
+    ->filter(static fn(array $row): bool => $row['credits'] >= 500000)
+    ->filter(static fn(array $row): bool => $row['scoring'] >= 95.0)
+    ->filter(static fn(array $row): bool => mb_strlen($row['name']) >= 10)
+    ->map(static fn(array $row): array => ['id' => $row['id'], 'credits' => $row['credits']])
     ->each(function () use (&$count) {
         ++$count;
     })
@@ -44,5 +43,6 @@ echo PHP_EOL, 'total found rows: ', $count, PHP_EOL;
 $memoryStop = memory_get_usage();
 $timeStop = microtime(true);
 
-echo 'memory usage: ', $memoryStop - $memoryStart, ' (peak: ', memory_get_peak_usage(true), ')', PHP_EOL,
-'execution time: ', ($timeStop - $timeStart), PHP_EOL;
+echo 'memory usage: ', number_format($memoryStop - $memoryStart, 0, '.', '_')
+    , ' (peak: ', number_format(memory_get_peak_usage(), 0, '.', '_'), ')', PHP_EOL
+    , 'execution time: ', ($timeStop - $timeStart), PHP_EOL;

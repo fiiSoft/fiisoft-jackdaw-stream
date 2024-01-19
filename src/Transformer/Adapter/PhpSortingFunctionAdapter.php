@@ -19,13 +19,8 @@ final class PhpSortingFunctionAdapter implements Transformer
      */
     public function transform($value, $key)
     {
-        if (\is_array($value)) {
-            $sortFunc = $this->sortFunc;
-            $sortFunc($value);
-            
-            return $value;
-        }
+        ($this->sortFunc)($value);
         
-        throw new \LogicException('Only arrays can be sorted');
+        return $value;
     }
 }

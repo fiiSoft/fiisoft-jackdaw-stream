@@ -2,10 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Producer\Generator;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\CountableProducer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class CombinedArrays extends CountableProducer
+final class CombinedArrays extends BaseProducer
 {
     private array $keys;
     private array $values;
@@ -20,32 +19,11 @@ final class CombinedArrays extends CountableProducer
         $this->values = $values;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
-        for ($i = 0, $j = $this->count(); $i < $j; ++$i) {
-            $item->key = $this->keys[$i];
-            $item->value = $this->values[$i];
-            
-            yield;
+        for ($i = 0, $j = \min(\count($this->keys), \count($this->values)); $i < $j; ++$i) {
+            yield $this->keys[$i] => $this->values[$i];
         }
-    }
-    
-    public function count(): int
-    {
-        return \min(\count($this->keys), \count($this->values));
-    }
-    
-    public function getLast(): ?Item
-    {
-        $count = $this->count();
-        
-        if ($count > 0) {
-            $last = $count - 1;
-            
-            return new Item($this->keys[$last], $this->values[$last]);
-        }
-        
-        return null;
     }
     
     public function destroy(): void

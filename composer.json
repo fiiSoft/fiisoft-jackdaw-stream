@@ -1,13 +1,13 @@
 {
     "name": "fiisoft/jackdaw-stream",
     "type": "library",
-    "description": "A funny library to provide stream-like operations on iterable data",
+    "description": "A powerfull and unique library to provide stream-like operations on iterable data. However, it's not funny any more :(",
     "keywords": [
         "streams", "iterators", "generators", "data processing", "functional programming", "pipes and filters", "etl"
     ],
     "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
     "license": "MIT",
-    "version": "6.3.0",
+    "version": "7.0.0",
     "authors": [
         {
             "name": "fiiSoft",
@@ -65,7 +65,7 @@
             "vendor/bin/phpstan analyse src/",
             "vendor/bin/rector process src/ --dry-run",
             "vendor/bin/psalm",
-            "vendor/bin/phpmd src html phpmd.xml.dist --reportfile var/phpmd.html"
+            "vendor/bin/phpmd src html phpmd.xml.dist --reportfile var/phpmd.html --cache --cache-file var/phpmd.result-cache.php"
         ],
         "test": "vendor/bin/phpunit --no-coverage",
         "report" : "XDEBUG_MODE=coverage php vendor/bin/phpunit"

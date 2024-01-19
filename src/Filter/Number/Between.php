@@ -3,74 +3,50 @@
 namespace FiiSoft\Jackdaw\Filter\Number;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\Number\Between\AnyBetween;
+use FiiSoft\Jackdaw\Filter\Number\Between\BothBetween;
+use FiiSoft\Jackdaw\Filter\Number\Between\KeyBetween;
+use FiiSoft\Jackdaw\Filter\Number\Between\ValueBetween;
 use FiiSoft\Jackdaw\Internal\Check;
 
-final class Between implements Filter
+abstract class Between extends TwoArgs
 {
-    /** @var float|int */
-    private $lower;
-    
-    /** @var float|int */
-    private $higher;
+    /**
+     * @param float|int $lower
+     * @param float|int $higher
+     */
+    final public static function create(int $mode, $lower, $higher): Filter
+    {
+        return self::createFilter($mode, $lower, $higher)->optimise();
+    }
     
     /**
      * @param float|int $lower
      * @param float|int $higher
      */
-    public function __construct($lower, $higher)
-    {
-        if (\is_int($lower) || \is_float($lower)) {
-            $this->lower = $lower;
-        } else {
-            throw new \InvalidArgumentException('Invalid param lower');
-        }
-        
-        if (\is_int($higher) || \is_float($higher)) {
-            $this->higher = $higher;
-        } else {
-            throw new \InvalidArgumentException('Invalid param higher');
-        }
-    
-        if ($lower > $higher) {
-            throw new \LogicException('Lower number is greater from higher number');
-        }
-    }
-    
-    /**
-     * @param mixed $value
-     * @param mixed $key
-     */
-    public function isAllowed($value, $key, int $mode = Check::VALUE): bool
+    private static function createFilter(int $mode, $lower, $higher): Between
     {
         switch ($mode) {
             case Check::VALUE:
-                return $this->test($value);
+                return new ValueBetween($mode, $lower, $higher);
             case Check::KEY:
-                return $this->test($key);
+                return new KeyBetween($mode, $lower, $higher);
             case Check::BOTH:
-                return $this->test($value) && $this->test($key);
+                return new BothBetween($mode, $lower, $higher);
             case Check::ANY:
-                return $this->test($value) || $this->test($key);
+                return new AnyBetween($mode, $lower, $higher);
             default:
-                throw new \InvalidArgumentException('Invalid param mode');
+                throw Check::invalidModeException($mode);
         }
     }
     
-    /**
-     * @param mixed $value
-     */
-    private function test($value): bool
+    private function optimise(): Filter
     {
-        if (\is_int($value) || \is_float($value)) {
-            return $value >= $this->lower && $value <= $this->higher;
-        }
+        return $this->lower == $this->higher ? Equal::create($this->mode, $this->lower) : $this;
+    }
     
-        if (\is_numeric($value)) {
-            $value = (float) $value;
-            
-            return $value >= $this->lower && $value <= $this->higher;
-        }
-    
-        throw new \LogicException('Cannot compare value which is not a number');
+    final public function negate(): Filter
+    {
+        return Outside::create($this->negatedMode(), $this->lower, $this->higher);
     }
 }

@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Registry\Writer;
 
+use FiiSoft\Jackdaw\Registry\Exception\RegistryExceptionFactory;
+
 final class TupleWriter extends SingleWriter
 {
     /**
@@ -20,7 +22,7 @@ final class TupleWriter extends SingleWriter
         if (\is_array($value) || $value === null) {
             $this->storage->registered[$this->name] = $value;
         } else {
-            throw new \InvalidArgumentException('Invalid param value - null or tuple [key,value] is required');
+            throw RegistryExceptionFactory::cannotSetValue();
         }
     }
 }

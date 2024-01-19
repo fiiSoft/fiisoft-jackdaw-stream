@@ -2,10 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Comparator\Basic;
 
-use FiiSoft\Jackdaw\Internal\Helper;
-
 /**
- * Allows to compare length of strings and size of arrays. Can also handle \Countable as well.
+ * Allows to compare size of arrays or \Countable objects.
  */
 final class SizeComparator extends BaseComparator
 {
@@ -14,7 +12,7 @@ final class SizeComparator extends BaseComparator
      */
     public function compare($value1, $value2): int
     {
-        return $this->sizeOf($value1) <=> $this->sizeOf($value2);
+        return \count($value1) <=> \count($value2);
     }
     
     /**
@@ -22,26 +20,6 @@ final class SizeComparator extends BaseComparator
      */
     public function compareAssoc($value1, $value2, $key1, $key2): int
     {
-        return $this->sizeOf($value1) <=> $this->sizeOf($value2) ?: $key1 <=> $key2;
-    }
-    
-    /**
-     * @param mixed $value
-     */
-    private function sizeOf($value): int
-    {
-        if (\is_array($value)) {
-            return \count($value);
-        }
-        
-        if ($value instanceof \Countable) {
-            return $value->count();
-        }
-        
-        if (\is_string($value)) {
-            return \mb_strlen($value);
-        }
-        
-        throw new \LogicException('Cannot compute size of '.Helper::typeOfParam($value));
+        return \count($value1) <=> \count($value2) ?: $key1 <=> $key2;
     }
 }

@@ -3,34 +3,36 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Exception\MapperExceptionFactory;
+use FiiSoft\Jackdaw\Mapper\Generic\OneArg;
+use FiiSoft\Jackdaw\Mapper\Generic\TwoArgs;
+use FiiSoft\Jackdaw\Mapper\Generic\ZeroArg;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class GenericMapper extends BaseMapper
+abstract class GenericMapper extends StateMapper
 {
     /** @var callable */
-    private $mapper;
+    protected $callable;
     
-    private int $numOfArgs;
-    
-    public function __construct(callable $mapper)
+    final public static function create(callable $mapper): self
     {
-        $this->mapper = $mapper;
-        $this->numOfArgs = Helper::getNumOfArgs($mapper);
+        $numOfArgs = Helper::getNumOfArgs($mapper);
+        
+        switch ($numOfArgs) {
+            case 1:
+                return new OneArg($mapper);
+            case 2:
+                return new TwoArgs($mapper);
+            case 0:
+                return new ZeroArg($mapper);
+            default:
+                throw MapperExceptionFactory::invalidParamMapper($numOfArgs);
+        }
+        
     }
     
-    public function map($value, $key)
+    final protected function __construct(callable $mapper)
     {
-        $map = $this->mapper;
-    
-        switch ($this->numOfArgs) {
-            case 1:
-                return $map($value);
-            case 2:
-                return $map($value, $key);
-            case 0:
-                return $map();
-            default:
-                throw Helper::wrongNumOfArgsException('Mapper', $this->numOfArgs, 0, 1, 2);
-        }
+        $this->callable = $mapper;
     }
 }

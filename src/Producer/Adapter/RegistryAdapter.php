@@ -2,11 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Producer\Adapter;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 use FiiSoft\Jackdaw\Registry\RegReader;
 
-final class RegistryAdapter extends NonCountableProducer
+final class RegistryAdapter extends BaseProducer
 {
     private RegReader $reader;
     
@@ -17,15 +16,12 @@ final class RegistryAdapter extends NonCountableProducer
         $this->reader = $reader;
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         $value = $this->reader->read();
         
         while ($value !== null) {
-            $item->key = $this->index++;
-            $item->value = $value;
-            
-            yield;
+            yield $this->index++ => $value;
             
             $value = $this->reader->read();
         }

@@ -23,12 +23,8 @@ final class ByField implements Discriminator
     /**
      * @inheritDoc
      */
-    public function classify($value, $key)
+    public function classify($value, $key = null)
     {
-        if (\is_array($value) || $value instanceof \ArrayAccess) {
-            return $value[$this->field] ?? $this->orElse;
-        }
-        
-        throw new \LogicException('ByField discriminator can handle only arrays-like values');
+        return $value[$this->field] ?? $this->orElse;
     }
 }

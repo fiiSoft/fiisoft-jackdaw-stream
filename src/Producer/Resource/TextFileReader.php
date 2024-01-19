@@ -2,10 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Producer\Resource;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
-final class TextFileReader extends NonCountableProducer
+final class TextFileReader extends BaseProducer
 {
     /** @var resource|null */
     private $resource;
@@ -22,13 +22,13 @@ final class TextFileReader extends NonCountableProducer
         if (\is_resource($resource)) {
             $this->resource = $resource;
         } else {
-            throw new \InvalidArgumentException('Invalid param resource');
+            throw InvalidParamException::describe('resource', $resource);
         }
     
         if ($readBytes === null || $readBytes >= 1) {
             $this->readBytes = $readBytes ?? 1024;
         } else {
-            throw new \InvalidArgumentException('Invalid param readBytes');
+            throw InvalidParamException::describe('readBytes', $readBytes);
         }
         
         $this->closeOnFinish = $closeOnFinish;
@@ -39,7 +39,7 @@ final class TextFileReader extends NonCountableProducer
         }
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
         if ($this->resource === null) {
             return;
@@ -48,11 +48,10 @@ final class TextFileReader extends NonCountableProducer
         $lineNumber = 0;
     
         LOOP:
-        $item->value = \fgets($this->resource, $this->readBytes);
+        $value = \fgets($this->resource, $this->readBytes);
         
-        if ($item->value !== false) {
-            $item->key = $lineNumber++;
-            yield;
+        if ($value !== false) {
+            yield $lineNumber++ => $value;
 
             goto LOOP; //Ohhh I love it so much! It makes me get goosebumps! <3
         }

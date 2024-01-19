@@ -1,6 +1,10 @@
 # Changelog
 
-All important changes to `fiisoft-jackdaw-stream` will be documented in this file
+## 7.0.0
+
+Many new features have been added and several errors fixed. Greatly increased speed in most use cases.  
+
+Large portions of the code have been redesigned and rewritten, so overall they are completely incompatible with the earlier version.
 
 ## 6.3.0
 

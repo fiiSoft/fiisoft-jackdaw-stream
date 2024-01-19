@@ -16,7 +16,7 @@ final class LogFormatter
     {
         $message = 'Exception: '.\get_class($error);
         
-        if (!empty($error->getMessage())) {
+        if ($error->getMessage() !== '') {
             $message .= ', message: ';
             
             if (!empty($error->getCode())) {

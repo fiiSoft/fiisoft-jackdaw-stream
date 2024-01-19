@@ -2,47 +2,22 @@
 
 namespace FiiSoft\Jackdaw\Discriminator;
 
+use FiiSoft\Jackdaw\Discriminator\EvenOdd\BothEvenOdd;
+use FiiSoft\Jackdaw\Discriminator\EvenOdd\KeyEvenOdd;
+use FiiSoft\Jackdaw\Discriminator\EvenOdd\ValueEvenOdd;
 use FiiSoft\Jackdaw\Internal\Check;
 
-final class EvenOdd implements Discriminator
+abstract class EvenOdd implements Discriminator
 {
-    private int $mode;
-    
-    public function __construct(int $mode = Check::VALUE)
+    final public static function create(int $mode): self
     {
-        $this->mode = Check::getMode($mode);
-    }
-    
-    /**
-     * @inheritDoc
-     */
-    public function classify($value, $key)
-    {
-        switch ($this->mode) {
-            case Check::VALUE: return $this->check($value);
-            case Check::KEY: return $this->check($key);
+        switch (Check::getMode($mode)) {
+            case Check::VALUE:
+                return new ValueEvenOdd();
+            case Check::KEY:
+                return new KeyEvenOdd();
             default:
-                $valueDiscr = $this->check($value);
-                $keyDiscr = $this->check($key);
-            
-                if ($valueDiscr === $keyDiscr) {
-                    return $valueDiscr;
-                }
-            
-                return 'value_'.$valueDiscr.'_key_'.$keyDiscr;
+                return new BothEvenOdd();
         }
-        
-    }
-    
-    /**
-     * @param mixed $value
-     */
-    private function check($value): string
-    {
-        if (\is_int($value)) {
-            return ($value & 1) === 0 ? 'even' : 'odd';
-        }
-        
-        throw new \UnexpectedValueException('EvenOdd discriminator can be used only with integers!');
     }
 }

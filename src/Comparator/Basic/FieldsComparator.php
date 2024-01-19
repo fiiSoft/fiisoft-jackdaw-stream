@@ -2,9 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Comparator\Basic;
 
+use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
+
 final class FieldsComparator extends BaseComparator
 {
-    /** @var array<string|int> */
     private array $fields = [];
     
     /**
@@ -20,12 +21,6 @@ final class FieldsComparator extends BaseComparator
      */
     public function compare($value1, $value2): int
     {
-        if (!\is_array($value1) && !$value1 instanceof \ArrayAccess
-            || !\is_array($value2) && !$value2 instanceof \ArrayAccess
-        ) {
-            throw new \LogicException('FieldsComparator comparator can compare only arrays');
-        }
-    
         foreach ($this->fields as $field => $sortAsc) {
             $compare = \gettype($value1[$field]) <=> \gettype($value2[$field]) ?: $value1[$field] <=> $value2[$field];
             if ($compare !== 0) {
@@ -42,7 +37,7 @@ final class FieldsComparator extends BaseComparator
     private function validateAndSetFields(array $fields): void
     {
         if (empty($fields)) {
-            throw new \InvalidArgumentException('Fields cannot be empty');
+            throw ComparatorExceptionFactory::paramFieldsCannotBeEmpty();
         }
     
         foreach ($fields as $field) {
@@ -67,9 +62,7 @@ final class FieldsComparator extends BaseComparator
                 continue;
             }
             
-            throw new \InvalidArgumentException(
-                'Each element of array fields have to be a non empty string or integer'
-            );
+            throw ComparatorExceptionFactory::paramFieldsIsInvalid();
         }
     }
     
@@ -78,6 +71,6 @@ final class FieldsComparator extends BaseComparator
      */
     public function compareAssoc($value1, $value2, $key1, $key2): int
     {
-        throw new \LogicException('Sorry, this comparision is not implemented, and never will be');
+        throw ComparatorExceptionFactory::compareAssocIsNotImplemented();
     }
 }

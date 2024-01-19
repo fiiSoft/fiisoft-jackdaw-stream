@@ -2,37 +2,49 @@
 
 namespace FiiSoft\Jackdaw\Filter\String;
 
-use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Filter\BaseFilter;
 
-abstract class StringFilter implements Filter
+abstract class StringFilter extends BaseFilter
 {
-    protected string $value;
-    protected int $length;
     protected bool $ignoreCase;
     
-    public function __construct(string $value, bool $ignoreCase = false)
+    protected function __construct(int $mode, bool $ignoreCase)
     {
-        $this->value = $value;
-        $this->length = \mb_strlen($value);
+        parent::__construct($mode);
+        
         $this->ignoreCase = $ignoreCase;
     }
     
-    public function isAllowed($value, $key, int $mode = Check::VALUE): bool
+    /**
+     * @return self new instance
+     */
+    public function ignoreCase(): self
     {
-        switch ($mode) {
-            case Check::VALUE:
-                return $this->test($value);
-            case Check::KEY:
-                return $this->test($key);
-            case Check::BOTH:
-                return $this->test($value) && $this->test($key);
-            case Check::ANY:
-                return $this->test($value) || $this->test($key);
-            default:
-                throw new \InvalidArgumentException('Invalid param mode');
-        }
+        $copy = clone $this;
+        $copy->ignoreCase = true;
+        
+        return $copy;
     }
     
-    abstract protected function test(string $value): bool;
+    /**
+     * @return self new instance
+     */
+    public function caseSensitive(): self
+    {
+        $copy = clone $this;
+        $copy->ignoreCase = false;
+        
+        return $copy;
+    }
+    
+    final public function buildStream(iterable $stream): iterable
+    {
+        return $this->ignoreCase ? $this->compareCaseInsensitive($stream) : $this->compareCaseSensitive($stream);
+    }
+    
+    abstract protected function compareCaseInsensitive(iterable $stream): iterable;
+    
+    abstract protected function compareCaseSensitive(iterable $stream): iterable;
+    
+    abstract public function negate(): StringFilter;
 }

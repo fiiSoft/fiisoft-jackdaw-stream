@@ -8,8 +8,8 @@ interface Discriminator extends MapperReady, DiscriminatorReady
 {
     /**
      * @param mixed $value
-     * @param mixed $key
+     * @param mixed|null $key
      * @return string|int|bool used to classify element to some group; just remember that bool will be cast to int
      */
-    public function classify($value, $key);
+    public function classify($value, $key = null);
 }

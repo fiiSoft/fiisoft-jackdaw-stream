@@ -125,18 +125,51 @@ final class By
         return self::fields($fields, true);
     }
     
+    /**
+     * Sort by size of arrays or \Countable objects.
+     */
     public static function size(bool $reversed = false): Sorting
     {
         return self::value(Comparators::size(), $reversed);
     }
     
+    /**
+     * Sort by size of arrays or \Countable objects.
+     */
     public static function sizeAsc(): Sorting
     {
         return self::size();
     }
     
+    /**
+     * Sort by size of arrays or \Countable objects.
+     */
     public static function sizeDesc(): Sorting
     {
         return self::size(true);
+    }
+    
+    /**
+     * Sort by length of strings.
+     */
+    public static function length(bool $reversed = false): Sorting
+    {
+        return self::value(Comparators::length(), $reversed);
+    }
+    
+    /**
+     * Sort by length of strings.
+     */
+    public static function lengthAsc(): Sorting
+    {
+        return self::length();
+    }
+    
+    /**
+     * Sort by length of strings.
+     */
+    public static function lengthDesc(): Sorting
+    {
+        return self::length(true);
     }
 }

@@ -5,6 +5,7 @@ namespace FiiSoft\Jackdaw\Comparator\Comparison\Comparer;
 use FiiSoft\Jackdaw\Comparator\Comparable;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparer;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
+use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
 use FiiSoft\Jackdaw\Internal\Check;
 
 final class ComparerFactory
@@ -21,7 +22,9 @@ final class ComparerFactory
             return self::doubleComparer($comparison->mode(), ...$comparators);
         }
         
-        throw new \UnexpectedValueException('Unexpected number of comparators returned from Comparison');
+        //@codeCoverageIgnoreStart
+        throw ImpossibleSituationException::create('Unexpected number of comparators returned from Comparison');
+        //@codeCoverageIgnoreEnd
     }
     
     /**
@@ -50,8 +53,10 @@ final class ComparerFactory
                 return new Comparer\Double\FullComparer($first, $second);
             case Check::ANY:
                 return new Comparer\Double\SeparatedComparer($first, $second);
+            //@codeCoverageIgnoreStart
             default:
-                throw new \UnexpectedValueException('Unexpected value of mode ('.$mode.')');
+                throw ImpossibleSituationException::create('Unexpected value of mode ('.$mode.')');
+            //@codeCoverageIgnoreEnd
         }
     }
 }

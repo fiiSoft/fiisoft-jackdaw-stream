@@ -2,37 +2,35 @@
 
 namespace FiiSoft\Jackdaw\Consumer;
 
+use FiiSoft\Jackdaw\Consumer\Exception\ConsumerExceptionFactory;
+use FiiSoft\Jackdaw\Consumer\Generic\OneArg;
+use FiiSoft\Jackdaw\Consumer\Generic\TwoArgs;
+use FiiSoft\Jackdaw\Consumer\Generic\ZeroArg;
 use FiiSoft\Jackdaw\Internal\Helper;
 
-final class GenericConsumer implements Consumer
+abstract class GenericConsumer implements Consumer
 {
     /** @var callable */
-    private $consumer;
+    protected $callable;
     
-    private int $numOfArgs;
-    
-    public function __construct(callable $consumer)
+    final public static function create(callable $consumer): self
     {
-        $this->consumer = $consumer;
-        $this->numOfArgs = Helper::getNumOfArgs($consumer);
+        $numOfArgs = Helper::getNumOfArgs($consumer);
+        
+        switch ($numOfArgs) {
+            case 0:
+                return new ZeroArg($consumer);
+            case 1:
+                return new OneArg($consumer);
+            case 2:
+                return new TwoArgs($consumer);
+            default:
+                throw ConsumerExceptionFactory::invalidParamConsumer($numOfArgs);
+        }
     }
     
-    public function consume($value, $key): void
+    final protected function __construct(callable $consumer)
     {
-        $consume = $this->consumer;
-    
-        switch ($this->numOfArgs) {
-            case 0:
-                $consume();
-            break;
-            case 1:
-                $consume($value);
-            break;
-            case 2:
-                $consume($value, $key);
-            break;
-            default:
-                throw Helper::wrongNumOfArgsException('Consumer', $this->numOfArgs, 0, 1, 2);
-        }
+        $this->callable = $consumer;
     }
 }

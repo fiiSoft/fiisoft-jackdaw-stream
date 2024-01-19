@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Collector\Adapter;
 
+use FiiSoft\Jackdaw\Collector\Adapter\Exception\CollectorExceptionFactory;
 use FiiSoft\Jackdaw\Collector\Collector;
 
 final class SplHeapAdapter implements Collector
@@ -18,7 +19,7 @@ final class SplHeapAdapter implements Collector
      */
     public function set($key, $value): void
     {
-        throw new \LogicException('You cannot keep keys and values in '.\get_class($this->heap));
+        throw CollectorExceptionFactory::cannotSetKeys($this->heap);
     }
     
     /**

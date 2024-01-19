@@ -32,7 +32,7 @@ final class OnError
     
     public static function call(callable $handler): ErrorHandler
     {
-        return new GenericErrorHandler($handler);
+        return GenericErrorHandler::create($handler);
     }
     
     /**

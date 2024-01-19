@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Transformer;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Reducer\Reducer;
@@ -48,9 +49,9 @@ final class Transformers
                 return new PhpSortingFunctionAdapter($transformer);
             }
             
-            return new GenericTransformer($transformer);
+            return GenericTransformer::create($transformer);
         }
         
-        throw new \InvalidArgumentException('Invalid param transformer');
+        throw InvalidParamException::describe('transformer', $transformer);
     }
 }

@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class Trim extends BaseMapper
+final class Trim extends StateMapper
 {
     private string $chars;
     
@@ -16,13 +16,16 @@ final class Trim extends BaseMapper
     /**
      * @inheritDoc
      */
-    public function map($value, $key)
+    public function map($value, $key = null): string
     {
-        if (\is_string($value)) {
-            return \trim($value, $this->chars);
+        return \trim($value, $this->chars);
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => \trim($value, $this->chars);
         }
-        
-        return $value;
     }
     
     public function mergeWith(Mapper $other): bool

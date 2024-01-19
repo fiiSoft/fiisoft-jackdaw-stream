@@ -7,7 +7,7 @@ final class ByValue implements Discriminator
     /**
      * @inheritDoc
      */
-    public function classify($value, $key)
+    public function classify($value, $key = null)
     {
         return $value;
     }

@@ -14,7 +14,7 @@ final class ArrayAccessAdapter extends BaseCollector
         
         $this->buffer = $buffer;
     }
-
+    
     public function set($key, $value): void
     {
         $this->buffer[$key] = $value;

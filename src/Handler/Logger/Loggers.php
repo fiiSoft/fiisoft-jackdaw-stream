@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Handler\Logger;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+
 final class Loggers
 {
     /**
@@ -27,7 +29,7 @@ final class Loggers
             }
         }
         
-        throw new \InvalidArgumentException('Invalid param logger');
+        throw InvalidParamException::describe('logger', $logger);
     }
     
     public static function simple(): ErrorLogger

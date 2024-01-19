@@ -5,6 +5,8 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Condition\Conditions;
 use FiiSoft\Jackdaw\Discriminator\Alternately;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
+use FiiSoft\Jackdaw\Discriminator\Exception\DiscriminatorExceptionFactory;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use PHPUnit\Framework\TestCase;
@@ -16,8 +18,7 @@ final class DiscriminatorsTest extends TestCase
      */
     public function test_getAdapter_throws_exception_on_invalid_argument($discriminator): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param discriminator');
+        $this->expectExceptionObject(InvalidParamException::byName('discriminator'));
         
         Discriminators::getAdapter($discriminator);
     }
@@ -38,7 +39,7 @@ final class DiscriminatorsTest extends TestCase
     
     public function test_GenericDiscriminator_throws_exception_when_callable_accepts_wrong_number_of_arguments(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectExceptionObject(DiscriminatorExceptionFactory::invalidParamClassifier(3));
         
         Discriminators::getAdapter(static fn($a,$b,$c): bool => true)->classify(15, 1);
     }
@@ -46,13 +47,6 @@ final class DiscriminatorsTest extends TestCase
     public function test_GenericDiscriminator_can_call_callable_with_two_arguments(): void
     {
         self::assertSame('151', Discriminators::getAdapter(static fn($a, $b): string => $a.$b)->classify(15, 1));
-    }
-    
-    public function test_EvenOdd_throws_exception_when_checked_value_is_not_integer(): void
-    {
-        $this->expectException(\UnexpectedValueException::class);
-        
-        Discriminators::evenOdd()->classify('a', 5);
     }
     
     public function test_EvenOdd_can_evaluate_key(): void
@@ -65,10 +59,10 @@ final class DiscriminatorsTest extends TestCase
         foreach ([Check::BOTH, Check::ANY] as $mode) {
             $evenOdd = Discriminators::evenOdd($mode);
     
-            self::assertSame('even', $evenOdd->classify(4, 4));
-            self::assertSame('odd', $evenOdd->classify(3, 3));
-            self::assertSame('value_even_key_odd', $evenOdd->classify(4, 3));
-            self::assertSame('value_odd_key_even', $evenOdd->classify(3, 4));
+            self::assertSame('even_even', $evenOdd->classify(4, 4));
+            self::assertSame('odd_odd', $evenOdd->classify(3, 3));
+            self::assertSame('even_odd', $evenOdd->classify(4, 3));
+            self::assertSame('odd_even', $evenOdd->classify(3, 4));
         }
     }
     
@@ -83,10 +77,10 @@ final class DiscriminatorsTest extends TestCase
     public function test_field_of_array_can_be_used_as_Discriminator_thanks_to_dedicated_methods(): void
     {
         $discriminator = Discriminators::prepare('sex');
-        self::assertSame('male', $discriminator->classify(['sex' => 'male'], 1));
+        self::assertSame('male', $discriminator->classify(['sex' => 'male']));
         
         $discriminator = Discriminators::byField('sex');
-        self::assertSame('female', $discriminator->classify(['sex' => 'female'], 1));
+        self::assertSame('female', $discriminator->classify(['sex' => 'female']));
     }
     
     public function test_key_of_stream_element_can_be_used_as_discriminator(): void
@@ -94,26 +88,17 @@ final class DiscriminatorsTest extends TestCase
         self::assertSame('bbb', Discriminators::byKey()->classify('aaa', 'bbb'));
     }
     
-    public function test_ByField_discriminator_throws_exception_when_argument_is_not_array(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('ByField discriminator can handle only arrays-like values');
-        
-        Discriminators::byField('sex')->classify(5, 1);
-    }
-    
     public function test_Mapper_can_be_used_as_Discriminator(): void
     {
         $discriminator = Discriminators::getAdapter(Mappers::fieldValue('gender'));
         
-        self::assertSame('man', $discriminator->classify(['id' => 5, 'gender' => 'man'], 0));
-        self::assertSame('woman', $discriminator->classify(['id' => 7, 'gender' => 'woman'], 1));
+        self::assertSame('man', $discriminator->classify(['id' => 5, 'gender' => 'man']));
+        self::assertSame('woman', $discriminator->classify(['id' => 7, 'gender' => 'woman']));
     }
     
     public function test_Alternately_throws_exception_when_argument_classifiers_is_empy(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param classifiers');
+        $this->expectExceptionObject(InvalidParamException::byName('classifiers'));
         
         Discriminators::alternately([]);
     }
@@ -133,33 +118,22 @@ final class DiscriminatorsTest extends TestCase
     
     public function test_YesNo_throws_exception_when_arguments_yes_and_no_are_the_same(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Params yes and no cannot be the same');
+        $this->expectExceptionObject(DiscriminatorExceptionFactory::paramsYesAndNoCannotBeTheSame());
         
         Discriminators::yesNo('is_string', 'foo', 'foo');
     }
     
     public function test_YesNo_throws_exception_when_param_yes_is_empty_string(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param yes');
+        $this->expectExceptionObject(InvalidParamException::byName('yes'));
         
         Discriminators::yesNo('is_string', '', 'foo');
     }
     
     public function test_YesNo_throws_exception_when_param_no_is_empty_string(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param no');
+        $this->expectExceptionObject(InvalidParamException::byName('no'));
         
         Discriminators::yesNo('is_string', 'foo', '');
-    }
-    
-    public function test_YesNo_throws_exception_when_wrapped_discriminator_returns_something_other_than_bool(): void
-    {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('YesNo discriminator can only work with boolean results');
-        
-        Discriminators::yesNo(static fn($v) => $v)->classify('foo', 1);
     }
 }

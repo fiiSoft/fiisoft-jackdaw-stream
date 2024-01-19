@@ -9,15 +9,18 @@ use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Specs\DoubleComparison;
 use FiiSoft\Jackdaw\Comparator\Comparison\Specs\SingleComparison;
 use FiiSoft\Jackdaw\Comparator\ComparisonSpec;
+use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
 use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueKeyComparator;
 use FiiSoft\Jackdaw\Internal\Check;
 
 abstract class Comparison implements ComparisonSpec
 {
+    protected int $mode;
+    
     /**
      * @param Comparable|callable|null $comparator
      */
-    public static function create(int $mode, $comparator = null): self
+    final public static function create(int $mode, $comparator = null): self
     {
         $comparator = Comparators::getAdapter($comparator);
         $mode = self::adjustMode($mode, $comparator);
@@ -28,14 +31,16 @@ abstract class Comparison implements ComparisonSpec
     /**
      * @param Comparable|callable|null $comparison
      */
-    public static function prepare($comparison): self
+    final public static function prepare($comparison): self
     {
         if ($comparison instanceof self) {
             return $comparison;
         }
         
+        $mode = $comparison instanceof ComparisonSpec ? $comparison->mode() : Check::VALUE;
+        
         $comparison = Comparators::getAdapter($comparison);
-        $mode = self::adjustMode(Check::VALUE, $comparison);
+        $mode = self::adjustMode($mode, $comparison);
         
         return self::simple($mode, $comparison);
     }
@@ -48,37 +53,39 @@ abstract class Comparison implements ComparisonSpec
     /**
      * @param Comparable|callable|null $comparator
      */
-    public static function simple(int $mode = Check::VALUE, $comparator = null): self
+    final public static function simple(int $mode = Check::VALUE, $comparator = null): self
     {
         $comparator = Comparators::getAdapter($comparator);
         
         if ($comparator instanceof ValueKeyComparator) {
             $mode = Check::BOTH;
         } elseif ($comparator instanceof GenericComparator
-            && $comparator->isFullAssoc()
             && ($mode === Check::VALUE || $mode === Check::KEY)
+            && $comparator->isFullAssoc()
         ) {
-            throw self::wrongCallableException($mode);
+            throw ComparatorExceptionFactory::wrongComparisonCallable($mode);
         }
         
         return new SingleComparison($comparator, $mode);
-    }
-    
-    private static function wrongCallableException(int $mode): \Throwable
-    {
-        return new \LogicException(
-            'Cannot compare by '.($mode === Check::VALUE ? 'values' : 'keys')
-            .' with callable that requires four arguments'
-        );
     }
     
     /**
      * @param Comparable|callable|null $valueComparator
      * @param Comparable|callable|null $keyComparator
      */
-    public static function double(int $mode = Check::VALUE, $valueComparator = null, $keyComparator = null): self
+    final public static function double(int $mode = Check::VALUE, $valueComparator = null, $keyComparator = null): self
     {
         return new DoubleComparison($mode, $valueComparator, $keyComparator);
+    }
+    
+    protected function __construct(int $mode)
+    {
+        $this->mode = Check::getMode($mode);
+    }
+    
+    final public function mode(): int
+    {
+        return $this->mode;
     }
     
     /**

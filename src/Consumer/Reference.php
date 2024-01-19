@@ -4,8 +4,11 @@ namespace FiiSoft\Jackdaw\Consumer;
 
 final class Reference implements Consumer
 {
-    /** @var \Closure */
-    private $setter;
+    /** @var mixed REFERENCE */
+    private $value;
+    
+    /** @var mixed REFERENCE */
+    private $key;
     
     /**
      * @param mixed $value REFERENCE
@@ -13,10 +16,8 @@ final class Reference implements Consumer
      */
     public function __construct(&$value, &$key)
     {
-        $this->setter = static function ($v, $k) use (&$value, &$key): void {
-            $value = $v;
-            $key = $k;
-        };
+        $this->value = &$value;
+        $this->key = &$key;
     }
     
     /**
@@ -24,7 +25,7 @@ final class Reference implements Consumer
      */
     public function consume($value, $key): void
     {
-        $setter = $this->setter;
-        $setter($value, $key);
+        $this->value = $value;
+        $this->key = $key;
     }
 }

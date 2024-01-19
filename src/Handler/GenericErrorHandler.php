@@ -2,38 +2,41 @@
 
 namespace FiiSoft\Jackdaw\Handler;
 
+use FiiSoft\Jackdaw\Handler\Exception\HandlerExceptionFactory;
+use FiiSoft\Jackdaw\Handler\Generic\OneArg;
+use FiiSoft\Jackdaw\Handler\Generic\ThreeArgs;
+use FiiSoft\Jackdaw\Handler\Generic\TwoArgs;
+use FiiSoft\Jackdaw\Handler\Generic\ZeroArg;
 use FiiSoft\Jackdaw\Internal\Helper;
 
-final class GenericErrorHandler implements ErrorHandler
+abstract class GenericErrorHandler implements ErrorHandler
 {
     /** @var callable */
-    private $handler;
+    protected $callable;
     
-    private int $numOfArgs;
+    final public static function create(callable $handler): self
+    {
+        $numOfArgs = Helper::getNumOfArgs($handler);
+        
+        switch ($numOfArgs) {
+            case 0:
+                return new ZeroArg($handler);
+            case 1:
+                return new OneArg($handler);
+            case 2:
+                return new TwoArgs($handler);
+            case 3:
+                return new ThreeArgs($handler);
+            default:
+                throw HandlerExceptionFactory::invalidParamErrorHandler($numOfArgs);
+        }
+    }
     
     /**
      * @param callable $handler this callable MUST return true, false or null, see explanation in ErrorHandler
      */
-    public function __construct(callable $handler)
+    final protected function __construct(callable $handler)
     {
-        $this->handler = $handler;
-        $this->numOfArgs = Helper::getNumOfArgs($handler);
-    }
-    
-    /**
-     * @inheritDoc
-     */
-    public function handle(\Throwable $error, $key, $value): ?bool
-    {
-        $handler = $this->handler;
-    
-        switch ($this->numOfArgs) {
-            case 0: return $handler();
-            case 1: return $handler($error);
-            case 2: return $handler($error, $key);
-            case 3: return $handler($error, $key, $value);
-            default:
-                throw Helper::wrongNumOfArgsException('ErrorHandler', $this->numOfArgs, 0, 1, 2, 3);
-        }
+        $this->callable = $handler;
     }
 }

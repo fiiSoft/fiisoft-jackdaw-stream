@@ -2,12 +2,15 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
-use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Mapper\Exception\MapperExceptionFactory;
 use FiiSoft\Jackdaw\Mapper\Internal\StatelessMapper;
 
 final class Reverse extends StatelessMapper
 {
-    public function map($value, $key)
+    /**
+     * @inheritDoc
+     */
+    public function map($value, $key = null)
     {
         if (\is_array($value)) {
             return \array_reverse($value, true);
@@ -17,6 +20,6 @@ final class Reverse extends StatelessMapper
             return \strrev($value);
         }
         
-        throw new \LogicException('Unable to reverse '.Helper::typeOfParam($value));
+        throw MapperExceptionFactory::unableToReverse($value);
     }
 }

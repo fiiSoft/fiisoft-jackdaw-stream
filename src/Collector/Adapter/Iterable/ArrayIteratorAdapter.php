@@ -47,7 +47,7 @@ final class ArrayIteratorAdapter extends BaseIterableCollector
         }
     }
     
-    public function getData(): array
+    public function toArray(): array
     {
         return $this->iterator->getArrayCopy();
     }

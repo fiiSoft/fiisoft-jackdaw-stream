@@ -6,7 +6,10 @@ use FiiSoft\Jackdaw\Mapper\Internal\StatelessMapper;
 
 final class Key extends StatelessMapper
 {
-    public function map($value, $key)
+    /**
+     * @inheritDoc
+     */
+    public function map($value, $key = null)
     {
         return $key;
     }

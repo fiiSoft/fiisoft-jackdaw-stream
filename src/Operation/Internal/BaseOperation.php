@@ -11,7 +11,7 @@ abstract class BaseOperation extends ProtectedCloning implements Operation
 {
     use CommonOperationCode;
     
-    final public function assignStream(Stream $stream): void
+    public function assignStream(Stream $stream): void
     {
         if ($this->next !== null) {
             $this->next->assignStream($stream);

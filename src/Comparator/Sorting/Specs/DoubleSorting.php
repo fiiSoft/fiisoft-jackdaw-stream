@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Comparator\Sorting\Specs;
 
 use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\KeyAscValueAscComparator;
 use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\KeyAscValueDescComparator;
@@ -12,6 +13,8 @@ use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueAscKeyAscComparator;
 use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueAscKeyDescComparator;
 use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueDescKeyAscComparator;
 use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueDescKeyDescComparator;
+use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
 
 final class DoubleSorting extends Sorting
@@ -23,18 +26,20 @@ final class DoubleSorting extends Sorting
     
     private ?Comparator $comparator = null;
     
-    public function __construct(Sorting $first, Sorting $second)
+    protected function __construct(Sorting $first, Sorting $second)
     {
+        parent::__construct();
+        
         if (!$this->isSingleMode($first)) {
-            throw new \InvalidArgumentException('Invalid param first');
+            throw InvalidParamException::describe('first', $first);
         }
         
         if (!$this->isSingleMode($second)) {
-            throw new \InvalidArgumentException('Invalid param second');
+            throw InvalidParamException::describe('second', $second);
         }
         
         if ($first->mode() === $second->mode()) {
-            throw new \LogicException('Sorting specifications cannot be of the same type');
+            throw ComparatorExceptionFactory::sortingsCannotBeTheSame();
         }
         
         $this->first = $first;
@@ -99,7 +104,9 @@ final class DoubleSorting extends Sorting
             
             //@codeCoverageIgnoreStart
             default:
-                throw new \UnexpectedValueException('Unknown choice in DoubleSorting::createComparator: '.$choice);
+                throw ImpossibleSituationException::create(
+                    'Unknown choice in DoubleSorting::createComparator: '.$choice
+                );
             //@codeCoverageIgnoreEnd
         }
     }

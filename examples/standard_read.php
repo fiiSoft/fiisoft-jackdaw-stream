@@ -19,14 +19,14 @@ while (($line = fgets($fp)) !== false) {
         && isset($row['facebookId'])
         && $row['credits'] >= 500000
         && $row['scoring'] >= 95.0
-        && mb_strlen($row['name']) === 10
+        && mb_strlen($row['name']) >= 10
     ) {
         ++$counter;
         $stream[] = ['id' => $row['id'], 'credits' => $row['credits']];
     }
 }
 
-usort($stream, static function (array $a, array $b) {
+usort($stream, static function (array $a, array $b): int {
     return $b['credits'] <=> $a['credits'] ?: $a['id'] <=> $b['id'];
 });
 
@@ -41,5 +41,6 @@ echo PHP_EOL, 'total found rows: ', $counter, PHP_EOL;
 $memoryStop = memory_get_usage();
 $timeStop = microtime(true);
 
-echo 'memory usage: ', $memoryStop - $memoryStart, ' (peak: ', memory_get_peak_usage(true), ')', PHP_EOL,
-'execution time: ', ($timeStop - $timeStart), PHP_EOL;
+echo 'memory usage: ', number_format($memoryStop - $memoryStart, 0, '.', '_')
+    , ' (peak: ', number_format(memory_get_peak_usage(), 0, '.', '_'), ')', PHP_EOL
+    , 'execution time: ', ($timeStop - $timeStart), PHP_EOL;

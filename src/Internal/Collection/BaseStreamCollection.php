@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Internal\Collection;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Internal\ResultApi;
 use FiiSoft\Jackdaw\Internal\ResultItem;
@@ -20,7 +21,7 @@ abstract class BaseStreamCollection implements Destroyable, \Iterator
     private array $dataCollection;
     private bool $isDestroying = false;
     
-    public static function create(GroupBy $groupBy, array $dataCollection): self
+    final public static function create(GroupBy $groupBy, array $dataCollection): self
     {
         if (\version_compare(\PHP_VERSION, '8.1.0') >= 0) {
             //@codeCoverageIgnoreStart
@@ -31,7 +32,7 @@ abstract class BaseStreamCollection implements Destroyable, \Iterator
         return new StreamCollection($groupBy, $dataCollection);
     }
     
-    protected function __construct(GroupBy $groupBy, array $dataCollection)
+    final protected function __construct(GroupBy $groupBy, array $dataCollection)
     {
         $this->groupBy = $groupBy;
         $this->dataCollection = $dataCollection;
@@ -46,7 +47,7 @@ abstract class BaseStreamCollection implements Destroyable, \Iterator
         if (\is_bool($id)) {
             $id = (int) $id;
         } elseif (!\is_string($id) && !\is_int($id)) {
-            throw new \InvalidArgumentException('Invalid param stream id');
+            throw InvalidParamException::byName('stream id');
         }
         
         if (!isset($this->results[$id])) {

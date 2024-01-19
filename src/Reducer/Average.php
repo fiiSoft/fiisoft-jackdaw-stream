@@ -34,11 +34,9 @@ final class Average extends BaseReducer
      */
     public function result()
     {
-        if ($this->precision !== null) {
-            return \round($this->total / $this->count, $this->precision);
-        }
-        
-        return $this->total / $this->count;
+        return $this->precision !== null
+            ? \round($this->total / $this->count, $this->precision)
+            : $this->total / $this->count;
     }
     
     public function hasResult(): bool

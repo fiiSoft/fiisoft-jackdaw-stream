@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Mapper\Internal\BaseMapper;
+use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
-final class Append extends BaseMapper
+final class Append extends StateMapper
 {
     private Mapper $mapper;
     
@@ -18,16 +18,14 @@ final class Append extends BaseMapper
      */
     public function __construct($field, $mapper)
     {
-        if (Helper::isFieldValid($field)) {
-            $this->field = $field;
-        } else {
-            throw new \InvalidArgumentException('Invalid param field');
-        }
-        
+        $this->field = Helper::validField($field, 'field');
         $this->mapper = Mappers::getAdapter($mapper);
     }
     
-    public function map($value, $key)
+    /**
+     * @inheritDoc
+     */
+    public function map($value, $key = null)
     {
         if (\is_array($value) || $value instanceof \ArrayAccess) {
             $value[$this->field] = $this->mapper->map($value, $key);
@@ -38,5 +36,21 @@ final class Append extends BaseMapper
             $key => $value,
             $this->field => $this->mapper->map($value, $key),
         ];
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            if (\is_array($value) || $value instanceof \ArrayAccess) {
+                $value[$this->field] = $this->mapper->map($value, $key);
+            } else {
+                $value = [
+                    $key => $value,
+                    $this->field => $this->mapper->map($value, $key),
+                ];
+            }
+            
+            yield $key => $value;
+        }
     }
 }

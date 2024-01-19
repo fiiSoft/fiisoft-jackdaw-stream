@@ -4,45 +4,56 @@ namespace FiiSoft\Jackdaw\Mapper\Internal;
 
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Filters;
-use FiiSoft\Jackdaw\Filter\Logic\FilterAND;
-use FiiSoft\Jackdaw\Filter\Logic\FilterOR;
-use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Filter\Logic\OpAND\FilterAND;
+use FiiSoft\Jackdaw\Filter\Logic\OpOR\FilterOR;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 
-final class ConditionalExtract extends BaseMapper
+final class ConditionalExtract extends StateMapper
 {
     private Filter $filter;
+    
     private int $mode;
     private bool $negate;
     
     /**
      * @param Filter|callable|mixed $filter
      */
-    public function __construct($filter, int $mode = Check::VALUE, bool $negate = false)
+    public function __construct($filter, ?int $mode = null, bool $negate = false)
     {
-        $this->filter = Filters::getAdapter($filter);
-        $this->mode = Check::getMode($mode);
+        $this->filter = Filters::getAdapter($filter, $mode);
+        $this->mode = $this->filter->getMode();
         $this->negate = $negate;
     }
     
     /**
      * @inheritDoc
      */
-    public function map($value, $key)
+    public function map($value, $key = null): array
     {
-        if (\is_iterable($value)) {
+        $result = [];
+        
+        foreach ($value as $k => $v) {
+            if ($this->negate XOR $this->filter->isAllowed($v, $k)) {
+                $result[$k] = $v;
+            }
+        }
+        
+        return $result;
+    }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
             $result = [];
+         
             foreach ($value as $k => $v) {
-                if ($this->negate XOR $this->filter->isAllowed($v, $k, $this->mode)) {
+                if ($this->negate XOR $this->filter->isAllowed($v, $k)) {
                     $result[$k] = $v;
                 }
             }
             
-            return $result;
+            yield $key => $result;
         }
-    
-        throw new \LogicException('Iterable value is required but got '.Helper::typeOfParam($value));
     }
     
     public function mergeWith(Mapper $other): bool

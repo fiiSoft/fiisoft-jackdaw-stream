@@ -17,11 +17,13 @@ final class SingleSorting extends Sorting
     /**
      * @param Comparable|callable|null $comparator
      */
-    public function __construct(
+    protected function __construct(
         bool $reversed = false,
         $comparator = null,
         int $mode = Check::VALUE
     ) {
+        parent::__construct();
+        
         $this->reversed = $reversed;
         $this->mode = Check::getMode($mode);
         $this->comparator = Comparators::getAdapter($comparator);

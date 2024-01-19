@@ -2,7 +2,6 @@
 
 namespace FiiSoft\Jackdaw\Internal\Iterator;
 
-use FiiSoft\Jackdaw\Internal\Interruption;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Stream;
@@ -14,7 +13,18 @@ abstract class BaseStreamIterator extends StreamPipe implements \Iterator
     private Stream $stream;
     private bool $isValid = false;
     
-    final public function __construct(Stream $stream, Item $item)
+    final public static function create(Stream $stream, Item $item): self
+    {
+        if (\version_compare(\PHP_VERSION, '8.1.0') >= 0) {
+            //@codeCoverageIgnoreStart
+            return new StreamIterator81($stream, $item);
+            //@codeCoverageIgnoreEnd
+        }
+        
+        return new StreamIterator($stream, $item);
+    }
+    
+    final protected function __construct(Stream $stream, Item $item)
     {
         $this->stream = $stream;
         $this->item = $item;

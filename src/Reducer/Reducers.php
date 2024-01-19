@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Reducer;
 
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Reducer\Internal\MultiReducer;
 
@@ -47,7 +48,7 @@ final class Reducers
             return new MultiReducer($reducer);
         }
     
-        throw new \InvalidArgumentException('Invalid param reducer');
+        throw InvalidParamException::describe('reducer', $reducer);
     }
     
     public static function sum(): Reducer
@@ -75,6 +76,11 @@ final class Reducers
         return new Average($roundPrecision);
     }
     
+    public static function basicStats(?int $roundPrecision = null): Reducer
+    {
+        return new BasicStats($roundPrecision);
+    }
+    
     public static function concat(string $separator = ''): Reducer
     {
         return new Concat($separator);
@@ -98,8 +104,8 @@ final class Reducers
     /**
      * @param DiscriminatorReady|callable|array|null $discriminator
      */
-    public static function countUnique($discriminator = null, int $mode = Check::VALUE): Reducer
+    public static function countUnique($discriminator = null): Reducer
     {
-        return new CountUnique($discriminator, $mode);
+        return new CountUnique($discriminator);
     }
 }

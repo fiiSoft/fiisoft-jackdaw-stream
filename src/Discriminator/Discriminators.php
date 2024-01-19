@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Discriminator\Adapter\ConditionAdapter;
 use FiiSoft\Jackdaw\Discriminator\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Discriminator\Adapter\MapperAdapter;
 use FiiSoft\Jackdaw\Discriminator\Adapter\RegistryAdapter;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mapper;
@@ -17,14 +18,14 @@ final class Discriminators
     /**
      * @param DiscriminatorReady|callable|array $discriminator
      */
-    public static function getAdapter($discriminator, int $mode = Check::VALUE): Discriminator
+    public static function getAdapter($discriminator): Discriminator
     {
         if ($discriminator instanceof Discriminator) {
             return $discriminator;
         }
         
         if (\is_callable($discriminator)) {
-            return new GenericDiscriminator($discriminator);
+            return GenericDiscriminator::create($discriminator);
         }
         
         if (\is_array($discriminator) && !empty($discriminator)) {
@@ -36,7 +37,7 @@ final class Discriminators
         }
     
         if ($discriminator instanceof Filter) {
-            return new FilterAdapter($discriminator, $mode);
+            return new FilterAdapter($discriminator);
         }
     
         if ($discriminator instanceof Condition) {
@@ -47,22 +48,22 @@ final class Discriminators
             return new RegistryAdapter($discriminator);
         }
         
-        throw new \InvalidArgumentException('Invalid param discriminator');
+        throw InvalidParamException::describe('discriminator', $discriminator);
     }
     
     /**
      * @param DiscriminatorReady|callable|array|string|int $discriminator
      */
-    public static function prepare($discriminator, int $mode = Check::VALUE): Discriminator
+    public static function prepare($discriminator): Discriminator
     {
         return (\is_string($discriminator) && !\is_callable($discriminator)) || \is_int($discriminator)
             ? self::byField($discriminator)
-            : self::getAdapter($discriminator, $mode);
+            : self::getAdapter($discriminator);
     }
     
     public static function evenOdd(int $mode = Check::VALUE): Discriminator
     {
-        return new EvenOdd($mode);
+        return EvenOdd::create($mode);
     }
     
     /**

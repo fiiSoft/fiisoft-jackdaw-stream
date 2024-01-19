@@ -2,42 +2,41 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
-use FiiSoft\Jackdaw\Discriminator\Discriminators;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
+use FiiSoft\Jackdaw\Mapper\Cast\ToBool;
+use FiiSoft\Jackdaw\Mapper\Cast\ToFloat;
+use FiiSoft\Jackdaw\Mapper\Cast\ToInt;
+use FiiSoft\Jackdaw\Mapper\Cast\ToString;
 use FiiSoft\Jackdaw\Mapper\Concat;
+use FiiSoft\Jackdaw\Mapper\Exception\MapperExceptionFactory;
 use FiiSoft\Jackdaw\Mapper\JsonDecode;
 use FiiSoft\Jackdaw\Mapper\JsonEncode;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Mapper\Reverse;
 use FiiSoft\Jackdaw\Mapper\Split;
-use FiiSoft\Jackdaw\Mapper\ToBool;
-use FiiSoft\Jackdaw\Mapper\ToFloat;
-use FiiSoft\Jackdaw\Mapper\ToInt;
-use FiiSoft\Jackdaw\Mapper\ToString;
 use FiiSoft\Jackdaw\Mapper\Trim;
 use FiiSoft\Jackdaw\Reducer\Reducers;
-use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 
 final class MappersTest extends TestCase
 {
-    public function test_Concat_throws_exception_on_invalid_argument(): void
-    {
-        $this->expectException(\LogicException::class);
-        
-        Mappers::concat()->map('string', 1);
-    }
-    
     /**
      * @dataProvider getDataForTestExtractThrowsExceptionOnInvalidParam
      */
     public function test_Extract_throws_exception_on_invalid_param($fields): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param fields');
+        $this->expectExceptionObject(InvalidParamException::byName('field'));
         
         Mappers::extract($fields);
+    }
+    
+    public function test_Split_throws_exception_when_separator_is_invalid(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::byName('separator'));
+        
+        Mappers::split('');
     }
     
     public static function getDataForTestExtractThrowsExceptionOnInvalidParam(): \Generator
@@ -56,94 +55,90 @@ final class MappersTest extends TestCase
         }
     }
     
-    public function test_Extract_throws_exception_on_invalid_argument(): void
-    {
-        $this->expectException(\LogicException::class);
-        
-        Mappers::extract(['field'])->map('not_an_array', 1);
-    }
-    
     public function test_GenericMapper_throws_exception_when_callable_does_not_accept_required_num_of_arguments(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectExceptionObject(MapperExceptionFactory::invalidParamMapper(3));
         
-        Mappers::getAdapter(static fn($a, $b, $c): bool => true)->map('a', 1);
+        Mappers::getAdapter(static fn($a, $b, $c): bool => true)->map('a');
     }
     
     public function test_GenericMapper_can_call_callable_without_arguments(): void
     {
-        self::assertSame('foo', Mappers::getAdapter(static fn(): string => 'foo')->map('bar', 1));
+        self::assertSame('foo', Mappers::getAdapter(static fn(): string => 'foo')->map('bar'));
+    }
+    
+    public function test_GenericMapper_can_call_callable_without_arguments_when_iterate_stream(): void
+    {
+        $mapper = Mappers::getAdapter(static fn(): string => 'foo');
+        
+        $result = [];
+        foreach ($mapper->buildStream([1, 2, 3]) as $key => $value) {
+            $result[$key] = $value;
+        }
+        
+        self::assertSame(['foo', 'foo', 'foo'], $result);
     }
     
     public function test_JsonDecode(): void
     {
-        self::assertSame([['a' => 1, 'b' => 2]], Mappers::jsonDecode()->map('[{"a":1,"b":2}]', 1));
-    }
-    
-    public function test_JsonDecode_throws_exception_on_invalid_arguments(): void
-    {
-        $this->expectException(\LogicException::class);
-        
-        Mappers::jsonDecode()->map(15, 1);
+        self::assertSame([['a' => 1, 'b' => 2]], Mappers::jsonDecode()->map('[{"a":1,"b":2}]'));
     }
     
     public function test_JsonEncode(): void
     {
-        self::assertSame('[{"a":1,"b":2}]', Mappers::jsonEncode()->map([['a' => 1, 'b' => 2]], 1));
+        self::assertSame('[{"a":1,"b":2}]', Mappers::jsonEncode()->map([['a' => 1, 'b' => 2]]));
+    }
+    
+    public function test_JsonEncode_can_iterate_stream(): void
+    {
+        $data = [
+            ['a' => 1, 'b' => 2],
+            ['c' => 3, 'd' => 4],
+        ];
+        
+        $result = [];
+        foreach (Mappers::jsonEncode()->buildStream($data) as $key => $value) {
+            $result[$key] = $value;
+        }
+        
+        self::assertSame(['{"a":1,"b":2}', '{"c":3,"d":4}'], $result);
+    }
+    
+    public function test_JsonDecode_can_iterate_stream(): void
+    {
+        $data = ['{"a":1,"b":2}', '{"c":3,"d":4}'];
+        
+        $result = [];
+        foreach (Mappers::jsonDecode()->buildStream($data) as $key => $value) {
+            $result[$key] = $value;
+        }
+        
+        self::assertSame([
+            ['a' => 1, 'b' => 2],
+            ['c' => 3, 'd' => 4],
+        ], $result);
     }
     
     public function test_toString_can_map_simple_value_and_also_fields_in_arrays(): void
     {
-        self::assertSame('15', Mappers::toString()->map(15, 1));
-        self::assertSame(['field' => '5'], Mappers::toString(['field'])->map(['field' => 5], 1));
-    }
-    
-    public function test_toString_throws_exception_when_scalar_value_is_required(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to cast to string param array');
-        
-        Mappers::toString()->map(['field' => 5], 1);
-    }
-    
-    public function test_toString_throws_exception_when_array_value_is_required(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to cast to string param integer when array is required');
-        
-        Mappers::toString(['field'])->map(5, 1);
+        self::assertSame('15', Mappers::toString()->map(15));
+        self::assertSame(['field' => '5'], Mappers::toString(['field'])->map(['field' => 5]));
     }
     
     public function test_toBool_can_map_simple_value_and_also_fields_in_arrays(): void
     {
-        self::assertTrue(Mappers::toBool()->map(15, 1));
-        self::assertSame(['field' => true], Mappers::toBool(['field'])->map(['field' => 5], 1));
-    }
-    
-    public function test_toBool_throws_exception_when_scalar_value_is_required(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to cast to bool param array');
-        
-        Mappers::toBool()->map(['field' => 5], 1);
-    }
-    
-    public function test_toBool_throws_exception_when_array_value_is_required(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to cast to bool param integer when array is required');
-        
-        Mappers::toBool(['field'])->map(5, 1);
+        self::assertTrue(Mappers::toBool()->map(15));
+        self::assertSame(['field' => true], Mappers::toBool(['field'])->map(['field' => 5]));
     }
     
     public function test_toFloat(): void
     {
-        self::assertSame(15.45, Mappers::toFloat()->map('15.45', 1));
+        self::assertSame(15.45, Mappers::toFloat()->map('15.45'));
     }
     
     public function test_Remove_throws_exception_on_invalid_param(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('fields'));
         
         Mappers::remove([]);
     }
@@ -152,7 +147,7 @@ final class MappersTest extends TestCase
     {
         $mapper = Mappers::remove('id');
         
-        self::assertSame(['name' => 'Joe'], $mapper->map(['id' => 1, 'name' => 'Joe'], 1));
+        self::assertSame(['name' => 'Joe'], $mapper->map(['id' => 1, 'name' => 'Joe']));
     }
     
     public function test_Remove_from_Traversable(): void
@@ -161,107 +156,98 @@ final class MappersTest extends TestCase
         
         $value = new \ArrayObject(['id' => 1, 'name' => 'Joe']);
         
-        self::assertEquals(new \ArrayObject(['name' => 'Joe']), $mapper->map($value, 1));
+        self::assertEquals(new \ArrayObject(['name' => 'Joe']), $mapper->map($value));
+    }
+    
+    public function test_Remove_from_Traversable_in_iterable_stream(): void
+    {
+        $item = new \ArrayObject(['id' => 1, 'name' => 'Joe']);
+        
+        $result = [];
+        foreach (Mappers::remove('id')->buildStream([$item]) as $key => $value) {
+            $result[$key] = $value;
+        }
+        
+        self::assertEquals([new \ArrayObject(['name' => 'Joe'])], $result);
     }
     
     public function test_Remove_throws_exception_on_invalid_argument(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectExceptionObject(MapperExceptionFactory::unsupportedValue(new \stdClass()));
         
-        Mappers::remove('id')->map(new \stdClass(), 1);
+        Mappers::remove('id')->map(new \stdClass());
+    }
+    
+    public function test_Remove_throws_exception_on_invalid_argument_when_iterate_over_stream(): void
+    {
+        $this->expectExceptionObject(MapperExceptionFactory::unsupportedValue(new \stdClass()));
+        
+        foreach (Mappers::remove('id')->buildStream([new \stdClass()]) as $_) {
+            //noop
+        }
     }
     
     public function test_Reverse_can_handle_string(): void
     {
-        self::assertSame('dcba', Mappers::reverse()->map('abcd', 1));
+        self::assertSame('dcba', Mappers::reverse()->map('abcd'));
     }
     
     public function test_Reverse_throws_exception_on_invalid_argument(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectExceptionObject(MapperExceptionFactory::unableToReverse(15));
         
-        Mappers::reverse()->map(15, 1);
+        Mappers::reverse()->map(15);
     }
     
-    public function test_Split_throws_exception_on_invalid_argument(): void
+    public function test_ToInt(): void
     {
-        $this->expectException(\LogicException::class);
-        
-        Mappers::split()->map(15, 1);
+        self::assertSame(16, Mappers::toInt()->map('16'));
     }
     
     public function test_ToInt_throws_exception_on_invalid_param(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('fields'));
         
         Mappers::toInt([]);
     }
     
     public function test_ToInt_with_many_fields(): void
     {
-        $mapper = Mappers::toInt(['id', 'pid']);
-        $actual = $mapper->map(['id' => '1', 'pid' => '3', 'other' => 'str'], 1);
-        self::assertSame(['id' => 1, 'pid' => 3, 'other' => 'str'], $actual);
-    }
-    
-    public function test_ToInt_throws_exception_on_invalid_argument(): void
-    {
-        try {
-            Mappers::toInt()->map(['id' => 1], 1);
-            self::fail('Exception expected');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('Unable to cast to int param array', $e->getMessage());
-        }
+        $actual = Mappers::toInt(['id', 'pid'])->map(['id' => '1', 'pid' => '3', 'other' => 'str']);
         
-        try {
-            Mappers::toInt('id')->map(15, 1);
-            self::fail('Exception expected');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('Unable to cast to int param integer', $e->getMessage());
-        }
+        self::assertSame(['id' => 1, 'pid' => 3, 'other' => 'str'], $actual);
     }
     
     public function test_ToFloat_throws_exception_on_invalid_param(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('fields'));
         
         Mappers::toFloat([]);
     }
     
     public function test_ToFloat_with_many_fields(): void
     {
-        $mapper = Mappers::toFloat(['val1', 'val2']);
-        $actual = $mapper->map(['val1' => '10', 'val2' => '3.5', 'other' => 'str'], 1);
+        $actual = Mappers::toFloat(['val1', 'val2'])->map(['val1' => '10', 'val2' => '3.5', 'other' => 'str']);
+        
         self::assertSame(['val1' => 10.0, 'val2' => 3.5, 'other' => 'str'], $actual);
     }
     
-    public function test_ToFloat_throws_exception_on_invalid_argument(): void
+    public function test_ToFloat_with_many_fields_iterate_stream(): void
     {
-        try {
-            Mappers::toFloat()->map(['id' => 1], 1);
-            self::fail('Exception expected');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('Unable to cast to float param array', $e->getMessage());
+        $mapper = Mappers::toFloat(['val1', 'val2'])->buildStream([
+            ['val1' => '10', 'val2' => '3.5', 'other' => 'foo'],
+            ['val1' => '3', 'val2' => '8.9', 'other' => 'bar'],
+        ]);
+        
+        $result = [];
+        foreach ($mapper as $key => $value) {
+            $result[$key] = $value;
         }
         
-        try {
-            Mappers::toFloat('id')->map(15, 1);
-            self::fail('Exception expected');
-        } catch (AssertionFailedError $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            self::assertInstanceOf(\LogicException::class, $e);
-            self::assertSame('Unable to cast to float param integer', $e->getMessage());
-        }
+        self::assertSame([
+            ['val1' => 10.0, 'val2' => 3.5, 'other' => 'foo'],
+            ['val1' => 3.0, 'val2' => 8.9, 'other' => 'bar'],
+        ], $result);
     }
     
     public function test_Append(): void
@@ -276,7 +262,7 @@ final class MappersTest extends TestCase
     
     public function test_Append_can_reduce_array_to_single_field(): void
     {
-        self::assertSame([1, 2, 3, 'sum' => 6], Mappers::append('sum', Reducers::sum())->map([1, 2, 3], 1));
+        self::assertSame([1, 2, 3, 'sum' => 6], Mappers::append('sum', Reducers::sum())->map([1, 2, 3]));
     }
     
     public function test_Simple(): void
@@ -284,12 +270,22 @@ final class MappersTest extends TestCase
         self::assertSame('g', Mappers::simple('g')->map(5, 'a'));
     }
     
+    public function test_Simple_iterable_stream(): void
+    {
+        $result = [];
+        foreach (Mappers::simple('foo')->buildStream([6, 'a', true]) as $key => $value) {
+            $result[$key] = $value;
+        }
+        
+        self::assertSame(['foo', 'foo', 'foo'], $result);
+    }
+    
     public function test_MoveTo_creates_array_with_key_from_value(): void
     {
         $mapper = Mappers::moveTo('key');
         
-        self::assertSame(['key' => 15], $mapper->map(15, 3));
-        self::assertSame(['key' => [2, 3]], $mapper->map([2, 3], 'a'));
+        self::assertSame(['key' => 15], $mapper->map(15));
+        self::assertSame(['key' => [2, 3]], $mapper->map([2, 3]));
     }
     
     public function test_MoveTo_creates_array_with_value_and_key_moved_to_fields(): void
@@ -301,37 +297,55 @@ final class MappersTest extends TestCase
     
     public function test_MoveTo_throws_exception_when_param_field_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param field');
+        $this->expectExceptionObject(InvalidParamException::byName('field'));
         
         Mappers::moveTo('');
     }
     
     public function test_MoveTo_throws_exception_when_param_key_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param key');
+        $this->expectExceptionObject(InvalidParamException::byName('key'));
     
         Mappers::moveTo('field', '');
     }
     
     public function test_Round(): void
     {
-        self::assertSame(5.47, Mappers::round()->map(5.4689, 1));
-        self::assertSame(5.47, Mappers::round()->map('5.4689', 1));
+        self::assertSame(5.47, Mappers::round()->map(5.4689));
+        self::assertSame(5.47, Mappers::round()->map('5.4689'));
         
-        self::assertSame(5.0, Mappers::round()->map(5.0, 1));
-        self::assertSame(5.0, Mappers::round()->map('5.0', 1));
+        self::assertSame(5.0, Mappers::round()->map(5.0));
+        self::assertSame(5.0, Mappers::round()->map('5.0'));
         
-        self::assertSame(5, Mappers::round()->map(5, 1));
+        self::assertSame(5, Mappers::round()->map(5));
+    }
+    
+    public function test_Round_can_iterate_stream(): void
+    {
+        $result = [];
+        foreach (Mappers::round()->buildStream([5.4689, 5.0, 5, '5.27']) as $key => $value) {
+            $result[$key] = $value;
+        }
+        
+        self::assertSame([5.47, 5.0, 5, 5.27], $result);
     }
     
     public function test_Round_throws_exception_when_argument_is_invalid(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to round non-number value string');
+        $value = 'this is not a number';
+        $this->expectExceptionObject(MapperExceptionFactory::unableToRoundValue($value));
         
-        Mappers::round()->map('this is not a number', 1);
+        Mappers::round()->map($value);
+    }
+    
+    public function test_Round_throws_exception_when_argument_is_invalid_and_stream_is_iterated(): void
+    {
+        $value = 'this is not a number';
+        $this->expectExceptionObject(MapperExceptionFactory::unableToRoundValue($value));
+        
+        foreach (Mappers::round()->buildStream([5, '8', $value, 3.245]) as $_) {
+            //noop
+        }
     }
     
     public function test_getAdapter_can_create_Mapper_from_various_arguments(): void
@@ -371,41 +385,23 @@ final class MappersTest extends TestCase
     
     public function test_MapField_throws_exception_when_param_field_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param field');
+        $this->expectExceptionObject(InvalidParamException::byName('field'));
     
         Mappers::mapField('', Mappers::reverse());
-    }
-    
-    public function test_MapField_throws_exception_when_value_has_not_required_field(): void
-    {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Field key does not exist in value');
-    
-        Mappers::mapField('key', Mappers::reverse())->map(['no_key' => 'abc'], 1);
-    }
-    
-    public function test_MapField_throws_exception_when_value_is_not_array(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to map field key because value is string');
-    
-        Mappers::mapField('key', Mappers::reverse())->map('string value', 1);
     }
     
     public function test_Complete_replaces_only_null_or_missing_keys(): void
     {
         $mapper = Mappers::complete('name', 'anonymous');
         
-        self::assertSame(['id' => 3, 'name' => 'Ole'], $mapper->map(['id' => 3, 'name' => 'Ole'], 0));
-        self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3, 'name' => null], 0));
-        self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3], 0));
+        self::assertSame(['id' => 3, 'name' => 'Ole'], $mapper->map(['id' => 3, 'name' => 'Ole']));
+        self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3, 'name' => null]));
+        self::assertSame(['id' => 3, 'name' => 'anonymous'], $mapper->map(['id' => 3]));
     }
     
     public function test_Complete_throws_exception_when_param_field_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param field');
+        $this->expectExceptionObject(InvalidParamException::byName('field'));
         
         Mappers::complete('', Mappers::reverse());
     }
@@ -419,78 +415,42 @@ final class MappersTest extends TestCase
     
     public function test_Complete_can_reduce_array_value_to_single_field(): void
     {
-        self::assertSame([1, 2, 3, 'sum' => 6], Mappers::complete('sum', Reducers::sum())->map([1, 2, 3], 1));
+        self::assertSame([1, 2, 3, 'sum' => 6], Mappers::complete('sum', Reducers::sum())->map([1, 2, 3]));
     }
     
     public function test_Append_throws_exception_when_param_field_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param field');
-    
+        $this->expectExceptionObject(InvalidParamException::byName('field'));
+        
         Mappers::append('', Mappers::reverse());
-    }
-    
-    public function test_ReducerAdapter_throws_exception_when_value_is_not_array(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to reduce string because it is not iterable');
-    
-        Mappers::getAdapter(Reducers::max())->map('string', 1);
     }
     
     public function test_Tokenize_changes_string_to_array(): void
     {
-        $result = Mappers::tokenize(' ')->map(' this is   string to  tokenize  by space ', 1);
+        $result = Mappers::tokenize(' ')->map(' this is   string to  tokenize  by space ');
         
         self::assertSame(['this', 'is', 'string', 'to', 'tokenize', 'by', 'space'], $result);
     }
     
-    public function test_Tokenize_throws_exception_when_value_is_not_string(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Value must be a string to tokenize it');
-        
-        Mappers::tokenize()->map(5, 2);
-    }
-    
-    public function test_Trim_trims_strings_and_returns_non_strims_unafected(): void
-    {
-        $mapper = Mappers::trim();
-        
-        self::assertSame('foo', $mapper->map(' foo ', 1));
-        self::assertSame(5, $mapper->map(5, 1));
-    }
-    
     public function test_Remap_throws_exception_when_param_keys_is_empty(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param keys');
+        $this->expectExceptionObject(InvalidParamException::byName('keys'));
         
         Mappers::remap([]);
     }
     
     public function test_Remap_throws_exception_when_param_keys_contains_invalid_key(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid element in param keys');
+        $this->expectExceptionObject(InvalidParamException::byName('keys'));
         
         Mappers::remap(['' => 'foo']);
     }
     
     public function test_Remap_throws_exception_when_param_keys_contains_invalid_value(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid element in param keys');
+        $this->expectExceptionObject(InvalidParamException::byName('keys'));
         
         Mappers::remap(['foo' => '']);
-    }
-    
-    public function test_Remap_throws_exception_when_value_to_map_is_not_array(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to remap keys in value which is not an array');
-        
-        Mappers::remap(['foo' => 'bar'])->map(5, 1);
     }
     
     public function test_Remap_can_merge_with_other_Remap_mapper(): void
@@ -502,7 +462,7 @@ final class MappersTest extends TestCase
         
         self::assertSame(
             ['bar' => 'hello', 'moo' => 'world'],
-            $first->map([1 => 'world', 2 => 'hello'], 1)
+            $first->map([1 => 'world', 2 => 'hello'])
         );
     }
     
@@ -523,21 +483,19 @@ final class MappersTest extends TestCase
         
         self::assertTrue($first->mergeWith($second));
         
-        self::assertSame(['zoe' => 3], $first->map(['foo' => 1, 'bar' => 2, 'zoe' => 3], 1));
+        self::assertSame(['zoe' => 3], $first->map(['foo' => 1, 'bar' => 2, 'zoe' => 3]));
     }
     
     public function test_Round_throws_exception_when_param_precision_is_too_low(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param precision');
+        $this->expectExceptionObject(InvalidParamException::byName('precision'));
         
         Mappers::round(-1);
     }
     
     public function test_Round_throws_exception_when_param_precision_is_too_high(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param precision');
+        $this->expectExceptionObject(InvalidParamException::byName('precision'));
         
         Mappers::round(17);
     }
@@ -549,7 +507,7 @@ final class MappersTest extends TestCase
         
         self::assertTrue($first->mergeWith($second));
         
-        self::assertSame(4.286, $first->map(4.286356, 1));
+        self::assertSame(4.286, $first->map(4.286356));
     }
     
     public function test_Simple_can_merge_with_other_Simple_mapper(): void
@@ -559,7 +517,7 @@ final class MappersTest extends TestCase
         
         self::assertTrue($first->mergeWith($second));
         
-        self::assertSame('bar', $first->map('zoe', 1));
+        self::assertSame('bar', $first->map('zoe'));
     }
     
     public function test_Trim_can_merge_with_other_Trim_mapper(): void
@@ -569,7 +527,7 @@ final class MappersTest extends TestCase
     
         self::assertTrue($first->mergeWith($second));
     
-        self::assertSame('foo', $first->map(',.foo,.', 1));
+        self::assertSame('foo', $first->map(',.foo,.'));
     }
     
     public function test_ToBool_can_merge_with_other_ToBool_mapper(): void
@@ -579,7 +537,7 @@ final class MappersTest extends TestCase
     
         self::assertTrue($first->mergeWith($second));
     
-        self::assertSame(['foo' => true, 'bar' => false], $first->map(['foo' => 1, 'bar' => 0], 1));
+        self::assertSame(['foo' => true, 'bar' => false], $first->map(['foo' => 1, 'bar' => 0]));
     }
     
     public function test_ToInt_can_merge_with_other_ToInt_mapper(): void
@@ -589,7 +547,7 @@ final class MappersTest extends TestCase
     
         self::assertTrue($first->mergeWith($second));
     
-        self::assertSame(['foo' => 1, 'bar' => 2], $first->map(['foo' => 1.0, 'bar' => 2.0], 1));
+        self::assertSame(['foo' => 1, 'bar' => 2], $first->map(['foo' => 1.0, 'bar' => 2.0]));
     }
     
     public function test_ToFloat_can_merge_with_other_ToFloat_mapper(): void
@@ -599,7 +557,7 @@ final class MappersTest extends TestCase
     
         self::assertTrue($first->mergeWith($second));
     
-        self::assertSame(['foo' => 1.0, 'bar' => 0.0], $first->map(['foo' => 1, 'bar' => 0], 1));
+        self::assertSame(['foo' => 1.0, 'bar' => 0.0], $first->map(['foo' => 1, 'bar' => 0]));
     }
     
     public function test_ToString_can_merge_with_other_ToString_mapper(): void
@@ -609,17 +567,43 @@ final class MappersTest extends TestCase
     
         self::assertTrue($first->mergeWith($second));
     
-        self::assertSame(['foo' => '1', 'bar' => '0'], $first->map(['foo' => 1, 'bar' => 0], 1));
+        self::assertSame(['foo' => '1', 'bar' => '0'], $first->map(['foo' => 1, 'bar' => 0]));
+    }
+    
+    public function test_two_different_simple_cast_mappers_dont_merge(): void
+    {
+        $toBool = Mappers::toBool();
+        $toFloat = Mappers::toFloat();
+        $toInt = Mappers::toInt();
+        $toString = Mappers::toString();
+        
+        self::assertFalse($toBool->mergeWith($toFloat));
+        self::assertFalse($toFloat->mergeWith($toInt));
+        self::assertFalse($toInt->mergeWith($toString));
+        self::assertFalse($toString->mergeWith($toBool));
+    }
+    
+    public function test_two_different_field_cast_mappers_dont_merge(): void
+    {
+        $toBool = Mappers::toBool('foo');
+        $toFloat = Mappers::toFloat('bar');
+        $toInt = Mappers::toInt('zoo');
+        $toString = Mappers::toString('joe');
+        
+        self::assertFalse($toBool->mergeWith($toFloat));
+        self::assertFalse($toFloat->mergeWith($toInt));
+        self::assertFalse($toInt->mergeWith($toString));
+        self::assertFalse($toString->mergeWith($toBool));
     }
     
     public function test_ToArray_changes_every_argument_into_array(): void
     {
         $withoutKey = Mappers::toArray();
         
-        self::assertSame(['a'], $withoutKey->map('a', 1));
-        self::assertSame([4], $withoutKey->map(4, 1));
-        self::assertSame(['foo' => 'bar'], $withoutKey->map(['foo' => 'bar'], 1));
-        self::assertSame(['foo' => 'bar'], $withoutKey->map(new \ArrayObject(['foo' => 'bar']), 1));
+        self::assertSame(['a'], $withoutKey->map('a'));
+        self::assertSame([4], $withoutKey->map(4));
+        self::assertSame(['foo' => 'bar'], $withoutKey->map(['foo' => 'bar']));
+        self::assertSame(['foo' => 'bar'], $withoutKey->map(new \ArrayObject(['foo' => 'bar'])));
         
         $withKey = Mappers::toArray(true);
         
@@ -629,18 +613,42 @@ final class MappersTest extends TestCase
         self::assertSame(['foo' => 'bar'], $withKey->map(new \ArrayObject(['foo' => 'bar']), 1));
     }
     
+    public function test_ToArray_build_iterable_stream_append_keys(): void
+    {
+        $data = [1 => 'a', 3 => 4, 5 => ['foo' => 'bar'], 7 => new \ArrayObject(['joe' => 'doe'])];
+        
+        $result = [];
+        foreach (Mappers::toArray(true)->buildStream($data) as $key => $value) {
+            $result[$key] = $value;
+        }
+        
+        self::assertSame([1 => [1 => 'a'], 3 => [3 => 4], 5 => ['foo' => 'bar'], 7 => ['joe' => 'doe']], $result);
+    }
+    
+    public function test_ToArray_build_iterable_stream_dont_append_keys(): void
+    {
+        $data = [1 => 'a', 3 => 4, 5 => ['foo' => 'bar'], 7 => new \ArrayObject(['joe' => 'doe'])];
+        
+        $result = [];
+        foreach (Mappers::toArray()->buildStream($data) as $key => $value) {
+            $result[$key] = $value;
+        }
+        
+        self::assertSame([1 => ['a'], 3 => [4], 5 => ['foo' => 'bar'], 7 => ['joe' => 'doe']], $result);
+    }
+    
     public function test_Shuffle_can_mix_elements_in_arrays(): void
     {
         $array = \range(1, 1000);
         
-        self::assertNotSame($array, Mappers::shuffle()->map($array, 0));
+        self::assertNotSame($array, Mappers::shuffle()->map($array));
     }
     
     public function test_Shuffle_can_mix_chars_in_strings(): void
     {
         $string = \str_repeat(\implode('', \range('a', 'z')), 10);
         
-        self::assertNotSame($string, Mappers::shuffle()->map($string, 0));
+        self::assertNotSame($string, Mappers::shuffle()->map($string));
     }
     
     public function test_Shuffle_can_transform_iterator_into_array_with_mixed_elements(): void
@@ -648,55 +656,33 @@ final class MappersTest extends TestCase
         $array = \range(1, 1000);
         $iterator = new \ArrayIterator($array);
         
-        self::assertNotSame($array, Mappers::getAdapter('\shuffle')->map($iterator, 0));
+        self::assertNotSame($array, Mappers::getAdapter('\shuffle')->map($iterator));
     }
     
-    public function test_Filter_used_as_mapper_throws_exception_when_mapped_value_is_not_iterable(): void
+    public function test_split(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to map integer using Filter because it is not iterable');
-        
-        Mappers::getAdapter(Filters::string()->contains('foo'))->map(15, 1);
+        self::assertSame(['a', 'b', 'c'], Mappers::split()->map('a b c', 1));
     }
     
     public function test_Filter_used_as_mapper_allows_to_remove_elements_in_arrays_1(): void
     {
         $data = ['a', 1, 'b', 2, 'c', 3];
         
-        self::assertSame([1 => 1, 3 => 2, 5 => 3], Mappers::getAdapter(Filters::isInt())->map($data, 1));
+        self::assertSame([1 => 1, 3 => 2, 5 => 3], Mappers::getAdapter(Filters::isInt())->map($data));
     }
     
     public function test_Filter_used_as_mapper_allows_to_remove_elements_in_arrays_2(): void
     {
         $data = ['a', 1, 'b', 2, 'c', 3];
         
-        self::assertSame([1 => 1, 5 => 3], Mappers::getAdapter(Filters::onlyIn([1, 3]))->map($data, 1));
+        self::assertSame([1 => 1, 5 => 3], Mappers::getAdapter(Filters::onlyIn([1, 3]))->map($data));
     }
     
     public function test_FieldValue_throws_exception_when_param_field_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param field');
+        $this->expectExceptionObject(InvalidParamException::byName('field'));
         
         Mappers::fieldValue(false);
-    }
-    
-    public function test_FieldValue_throws_exception_when_mapped_value_is_not_array(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('It is impossible to extract field foo from int');
-        
-        $mapper = Mappers::fieldValue('foo');
-        $mapper->map(5, 2);
-    }
-    
-    public function test_FieldValue_throws_exception_when_value_of_field_is_null(): void
-    {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Cannot extract value of field foo');
-    
-        $mapper = Mappers::fieldValue('foo');
-        $mapper->map(['bar' => 3], 2);
     }
     
     public function test_FieldValue_allows_to_merge_only_with_other_FieldValue_mapper(): void
@@ -707,12 +693,12 @@ final class MappersTest extends TestCase
         self::assertTrue($first->mergeWith($second));
         self::assertFalse($first->mergeWith(Mappers::simple('zoo')));
         
-        self::assertSame(2, $first->map(['foo' => 1, 'bar' => 2], 0));
+        self::assertSame(2, $first->map(['foo' => 1, 'bar' => 2]));
     }
     
     public function test_Value_simply_returns_value(): void
     {
-        self::assertSame('foo', Mappers::value()->map('foo', 1));
+        self::assertSame('foo', Mappers::value()->map('foo'));
     }
     
     public function test_Key_simply_returns_key(): void
@@ -734,99 +720,73 @@ final class MappersTest extends TestCase
     
     public function test_MultiMapper_throws_exception_when_initial_array_is_empty(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param pattern - cannot be empty!');
+        $this->expectExceptionObject(InvalidParamException::byName('pattern'));
         
         Mappers::getAdapter([]);
     }
     
     public function test_Replace(): void
     {
-        $mapper = Mappers::replace(' ', '');
+        self::assertSame('abc', Mappers::replace(' ', '')->map('a b c'));
+    }
+    
+    public function test_Replace_can_map_stream(): void
+    {
+        $result = [];
+        foreach (Mappers::replace('a', '*')->buildStream(['ooao', 'eeea', 'aiiia']) as $key => $value) {
+            $result[$key] = $value;
+        }
         
-        self::assertSame('abc', $mapper->map('a b c', 0));
+        self::assertSame(['oo*o', 'eee*', '*iii*'], $result);
     }
     
     public function test_Replace_throws_exception_on_wrong_type_of_param_search(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param search - it cannot be integer');
+        $this->expectExceptionObject(InvalidParamException::byName('search'));
         
         Mappers::replace(5, '');
     }
     
     public function test_Replace_throws_exception_on_wrong_type_of_param_replace(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param replace - it cannot be integer');
+        $this->expectExceptionObject(InvalidParamException::byName('replace'));
         
         Mappers::replace(' ', 5);
     }
     
     public function test_Replace_throws_exception_when_param_search_is_empty(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param search');
+        $this->expectExceptionObject(InvalidParamException::byName('search'));
         
         Mappers::replace('', '');
     }
     
-    public function test_Replace_throws_exception_when_mapped_value_is_not_array(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to replace chars in integer');
-        
-        Mappers::replace(' ', '')->map(15, 0);
-    }
-    
-    public function test_DiscriminatorAdapter_throws_exception_when_Discriminator_returns_invalid_value(): void
-    {
-        //Assert
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessage('Unsupported value was returned from discriminator (got array)');
-        
-        //Arrange
-        $mapper = Mappers::getAdapter(Discriminators::getAdapter(static fn($v): array => [$v]));
-        
-        //Act
-        $mapper->map('foo', 1);
-    }
-    
     public function test_FieldValue_can_handle_ArrayAccess_implementations(): void
     {
-        self::assertSame('a', Mappers::fieldValue('foo')->map(new \ArrayObject(['foo' => 'a']), 1));
+        self::assertSame('a', Mappers::fieldValue('foo')->map(new \ArrayObject(['foo' => 'a'])));
     }
     
     public function test_MapField_can_handle_ArrayAccess_implementations(): void
     {
         self::assertEquals(
             new \ArrayObject(['foo' => 6]),
-            Mappers::mapField('foo', static fn(int $v): int => $v * 2)->map(new \ArrayObject(['foo' => 3]), 1)
+            Mappers::mapField('foo', static fn(int $v): int => $v * 2)->map(new \ArrayObject(['foo' => 3]))
         );
     }
     
     public function test_Increment_can_increment_integer_values(): void
     {
-        self::assertSame(7, Mappers::increment(2)->map(5, 'a'));
+        self::assertSame(7, Mappers::increment(2)->map(5));
     }
     
     public function test_Increment_can_decrement_integer_values(): void
     {
-        self::assertSame(3, Mappers::decrement(2)->map(5, 'a'));
-    }
-    
-    public function test_Increment_throws_exception_when_value_is_not_integer(): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Mapper Increment requires integers');
-        
-        Mappers::increment()->map('foo', 'bar');
+        self::assertSame(3, Mappers::decrement(2)->map(5));
     }
     
     public function test_Increment_throws_exception_when_param_step_is_zero(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param step - it cannot be 0');
+        $this->expectExceptionObject(InvalidParamException::byName('step'));
         
         Mappers::increment(0);
     }

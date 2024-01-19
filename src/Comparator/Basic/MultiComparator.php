@@ -2,9 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Comparator\Basic;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\Comparators;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 
 final class MultiComparator extends BaseComparator
 {
@@ -19,7 +20,7 @@ final class MultiComparator extends BaseComparator
         $this->addComparators($comparators);
         
         if (empty($this->comparators)) {
-            throw new \InvalidArgumentException('Invalid param comparators');
+            throw InvalidParamException::byName('comparators');
         }
     }
     

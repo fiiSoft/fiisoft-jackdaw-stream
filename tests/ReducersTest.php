@@ -3,7 +3,9 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Reducer\Exception\ReducerExceptionFactory;
 use FiiSoft\Jackdaw\Reducer\Max;
 use FiiSoft\Jackdaw\Reducer\Min;
 use FiiSoft\Jackdaw\Reducer\Reducers;
@@ -13,7 +15,7 @@ final class ReducersTest extends TestCase
 {
     public function test_getAdapter_throws_exception_when_arg_is_invalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionObject(InvalidParamException::byName('reducer'));
         
         Reducers::getAdapter(15);
     }
@@ -138,16 +140,14 @@ final class ReducersTest extends TestCase
     
     public function test_GenericReducer_throws_exception_when_callable_requires_invalid_number_of_arguments(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Reducer have to accept 2 arguments, but requires 1');
+        $this->expectExceptionObject(ReducerExceptionFactory::invalidParamReducer(1));
         
         Reducers::getAdapter('strtolower');
     }
     
     public function test_MultiReducer_throws_exception_when_initial_array_is_empty(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param pattern - cannot be empty!');
+        $this->expectExceptionObject(InvalidParamException::byName('pattern'));
         
         Reducers::getAdapter([]);
     }
@@ -279,15 +279,5 @@ final class ReducersTest extends TestCase
         }
         
         self::assertSame([1 => 2, 0 => 1], $reducer->result());
-    }
-    
-    public function test_CountUnique_throws_exception_when_classifier_returned_from_discriminator_is_invalid(): void
-    {
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessage('Unsupported value was returned from discriminator (got array)');
-        
-        $reducer = Reducers::countUnique(static fn($v): array => [$v]);
-        
-        $reducer->consume('foo');
     }
 }

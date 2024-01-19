@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Internal;
 
 final class Item
 {
-    /** @var string|int */
+    /** @var mixed */
     public $key;
     
     /** @var mixed */

@@ -2,10 +2,12 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
-abstract class ProtectedCloning
+use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
+
+abstract class ProtectedCloning extends StreamState
 {
     protected function __clone()
     {
-        throw new \BadMethodCallException('Method '.__METHOD__.' should never be called');
+        throw ImpossibleSituationException::called(__METHOD__);
     }
 }

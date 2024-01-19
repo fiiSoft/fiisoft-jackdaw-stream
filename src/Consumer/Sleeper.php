@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Consumer;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+
 final class Sleeper implements Consumer
 {
     private int $microseconds;
@@ -9,7 +11,7 @@ final class Sleeper implements Consumer
     public function __construct(int $microseconds)
     {
         if ($microseconds < 0) {
-            throw new \InvalidArgumentException('Invalid param microseconds');
+            throw InvalidParamException::describe('microseconds', $microseconds);
         }
         
         $this->microseconds = $microseconds;

@@ -9,11 +9,11 @@ abstract class BaseIterableCollector extends BaseCollector implements IterableCo
 {
     final public function toString(string $separator = ','): string
     {
-        return \implode($separator, $this->getData());
+        return \implode($separator, $this->toArray());
     }
     
     final public function toJson(int $flags = 0): string
     {
-        return \json_encode($this->getData(), \JSON_THROW_ON_ERROR | $flags);
+        return \json_encode($this->toArray(), \JSON_THROW_ON_ERROR | $flags);
     }
 }

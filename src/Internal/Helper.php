@@ -2,16 +2,19 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Exception\JackdawException;
+
 final class Helper
 {
     public static function getNumOfArgs(callable $callable): int
     {
-        return (new \ReflectionFunction($callable))->getNumberOfRequiredParameters();
+        return self::getFuncRefl($callable)->getNumberOfRequiredParameters();
     }
     
     public static function isDeclaredReturnTypeArray(callable $callable): bool
     {
-        $refl = new \ReflectionFunction($callable);
+        $refl = self::getFuncRefl($callable);
         
         if ($refl->hasReturnType()) {
             $returnType = $refl->getReturnType();
@@ -23,14 +26,11 @@ final class Helper
         return false;
     }
     
-    /**
-     * @param mixed $param
-     */
-    public static function invalidParamException(string $name, $param): \InvalidArgumentException
+    private static function getFuncRefl(callable $callable): \ReflectionFunctionAbstract
     {
-        return new \InvalidArgumentException(
-            'Invalid param '.$name.' - it cannot be '.self::typeOfParam($param)
-        );
+        return \is_array($callable)
+            ? (new \ReflectionClass($callable[0]))->getMethod($callable[1])
+            : new \ReflectionFunction($callable);
     }
     
     /**
@@ -42,7 +42,7 @@ final class Helper
     }
 
     
-    public static function wrongNumOfArgsException(string $name, int $current, int ...$alowed): \LogicException
+    public static function wrongNumOfArgsException(string $name, int $current, int ...$alowed): JackdawException
     {
         if (empty($alowed)) {
             $alowed[] = 0;
@@ -59,11 +59,11 @@ final class Helper
     
         $message .= ' arguments, but requires '.$current;
         
-        return new \LogicException($message);
+        return InvalidParamException::create($message);
     }
     
     /**
-     * @param array<string|int> $fields
+     * @param array|string|int $fields
      */
     public static function areFieldsValid($fields): bool
     {
@@ -82,6 +82,20 @@ final class Helper
         }
     
         return self::isFieldValid($fields);
+    }
+    
+    /**
+     * @param string|int $field
+     * @throws JackdawException
+     * @return string|int
+     */
+    public static function validField($field, string $name)
+    {
+        if (self::isFieldValid($field)) {
+            return $field;
+        }
+        
+        throw InvalidParamException::describe($name, $field);
     }
     
     /**
@@ -118,7 +132,10 @@ final class Helper
         }
         
         if (\is_string($value)) {
-            return 'string '.(\mb_strlen($value) > 50 ? \mb_substr($value, 0, 47).'...' : $value);
+            if (\mb_strlen($value) > 50) {
+                $value = \trim(\mb_substr($value, 0, 47)).'...';
+            }
+            return \trim('string '.$value);
         }
         
         if (\is_array($value)) {
@@ -141,5 +158,14 @@ final class Helper
         }
         
         return \gettype($value);
+    }
+    
+    public static function createItemProducer(Item $item, iterable $iterator): \Iterator
+    {
+        return (static function () use ($iterator, $item) {
+            foreach ($iterator as $item->key => $item->value) {
+                yield;
+            }
+        })();
     }
 }

@@ -2,69 +2,27 @@
 
 namespace FiiSoft\Jackdaw\Producer\Internal;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\QueueProducer;
-use FiiSoft\Jackdaw\Producer\Tech\MultiSourcedProducer;
-use FiiSoft\Jackdaw\Producer\Tech\NonCountableProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
+use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
+use FiiSoft\Jackdaw\Producer\Tech\MultiSourcedProducer;
 
-final class PushProducer extends NonCountableProducer implements MultiSourcedProducer
+final class PushProducer extends BaseProducer implements MultiSourcedProducer
 {
     /** @var Producer[] */
     private array $producers = [];
     
-    private ?Item $next = null;
-    
-    private bool $isLoop;
-    
-    public function __construct(bool $isLoop, Producer ...$producers)
+    public function __construct(Producer ...$producers)
     {
-        $this->isLoop = $isLoop;
-        
         $this->merge($producers);
     }
     
-    public function feed(Item $item): \Generator
+    public function getIterator(): \Generator
     {
-        $i = 0;
-        $j = \count($this->producers);
-        
-        if ($this->isLoop) {
-            for (; $i < $j; ++$i) {
-                $generator = $this->producers[$i]->feed($item);
-                if ($generator->valid()) {
-                    yield;
-                    goto LOOP;
-                }
-            }
-        } elseif ($j > 0) {
-            $i = -1;
+        foreach ($this->producers as $producer) {
+            yield from $producer;
         }
         
-        $generator = (static function (): \Generator { yield; })();
-        
-        LOOP:
-        do {
-            $this->next = yield;
-            
-            while ($this->next !== null) {
-                $item->key = $this->next->key;
-                $item->value = $this->next->value;
-                yield;
-                
-                $this->next = yield;
-            }
-            
-            $generator->next();
-        }
-        while ($generator->valid());
-        
-        for (++$i; $i < $j; ++$i) {
-            $generator = $this->producers[$i]->feed($item);
-            if ($generator->valid()) {
-                goto LOOP;
-            }
-        }
+        $this->producers = [];
     }
     
     public function addProducer(Producer $producer): void
@@ -80,7 +38,7 @@ final class PushProducer extends NonCountableProducer implements MultiSourcedPro
         foreach ($producers as $producer) {
             if ($producer instanceof MultiSourcedProducer) {
                 $this->merge($producer->getProducers());
-            } elseif ($producer instanceof QueueProducer || !$producer->isEmpty()) {
+            } else {
                 $this->producers[] = $producer;
             }
         }

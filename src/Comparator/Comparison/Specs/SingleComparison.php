@@ -11,25 +11,20 @@ use FiiSoft\Jackdaw\Internal\Check;
 final class SingleComparison extends Comparison
 {
     private ?Comparator $comparator;
-    private int $mode;
     
     /**
      * @param Comparable|callable|null $comparator
      */
-    public function __construct($comparator = null, int $mode = Check::VALUE)
+    protected function __construct($comparator = null, int $mode = Check::VALUE)
     {
+        parent::__construct($mode);
+        
         $this->comparator = Comparators::getAdapter($comparator);
-        $this->mode = Check::getMode($mode);
     }
     
     public function comparator(): ?Comparator
     {
         return $this->comparator;
-    }
-    
-    public function mode(): int
-    {
-        return $this->mode;
     }
     
     public function getComparators(): array

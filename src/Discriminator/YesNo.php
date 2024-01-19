@@ -2,6 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Discriminator;
 
+use FiiSoft\Jackdaw\Discriminator\Exception\DiscriminatorExceptionFactory;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
+
 /**
  * This discriminator can only work with other discriminator which returns boolean values.
  */
@@ -16,26 +19,26 @@ final class YesNo implements Discriminator
     private $no;
     
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array|string|int $discriminator it SHOULD returns boolean values
      * @param string|int $yes
      * @param string|int $no value of it must be different than value of $yes
      */
     public function __construct($discriminator, $yes = 'yes', $no = 'no')
     {
         if ($yes === $no) {
-            throw new \LogicException('Params yes and no cannot be the same');
+            throw DiscriminatorExceptionFactory::paramsYesAndNoCannotBeTheSame();
         }
         
         if ((\is_string($yes) && $yes !== '') || \is_int($yes)) {
             $this->yes = $yes;
         } else {
-            throw new \InvalidArgumentException('Invalid param yes');
+            throw InvalidParamException::describe('yes', $yes);
         }
         
         if ((\is_string($no) && $no !== '') || \is_int($no)) {
             $this->no = $no;
         } else {
-            throw new \InvalidArgumentException('Invalid param no');
+            throw InvalidParamException::describe('no', $no);
         }
         
         $this->discriminator = Discriminators::prepare($discriminator);
@@ -44,18 +47,8 @@ final class YesNo implements Discriminator
     /**
      * @inheritDoc
      */
-    public function classify($value, $key)
+    public function classify($value, $key = null)
     {
-        $classifier = $this->discriminator->classify($value, $key);
-        
-        if ($classifier === true) {
-            return $this->yes;
-        }
-        
-        if ($classifier === false) {
-            return $this->no;
-        }
-        
-        throw new \RuntimeException('YesNo discriminator can only work with boolean results');
+        return $this->discriminator->classify($value, $key) ? $this->yes : $this->no;
     }
 }

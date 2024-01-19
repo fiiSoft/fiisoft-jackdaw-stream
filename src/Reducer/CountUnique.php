@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Reducer;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
-use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
@@ -19,10 +19,10 @@ final class CountUnique extends BaseReducer
     /**
      * @param DiscriminatorReady|callable|array|null $discriminator
      */
-    public function __construct($discriminator = null, int $mode = Check::VALUE)
+    public function __construct($discriminator = null)
     {
         if ($discriminator !== null) {
-            $this->discriminator = Discriminators::getAdapter($discriminator, $mode);
+            $this->discriminator = Discriminators::getAdapter($discriminator);
         }
     }
     
@@ -32,14 +32,9 @@ final class CountUnique extends BaseReducer
     public function consume($value): void
     {
         if ($this->discriminator !== null) {
-            $classifier = $this->discriminator->classify($value, null);
-            
+            $classifier = $this->discriminator->classify($value);
             if (\is_bool($classifier)) {
                 $classifier = (int) $classifier;
-            } elseif (!\is_string($classifier) && !\is_int($classifier)) {
-                throw new \UnexpectedValueException(
-                    'Unsupported value was returned from discriminator (got '.Helper::typeOfParam($classifier).')'
-                );
             }
         } elseif (\is_string($value) || \is_int($value)) {
             $classifier = $value;
@@ -57,7 +52,7 @@ final class CountUnique extends BaseReducer
             $classifier = (string) $value;
         } else {
             //@codeCoverageIgnoreStart
-            throw new \UnexpectedValueException('Unsupported type of value: '.Helper::describe($value));
+            throw ImpossibleSituationException::create('Unsupported type of value: '.Helper::describe($value));
             //@codeCoverageIgnoreEnd
         }
         

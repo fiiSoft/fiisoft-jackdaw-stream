@@ -3,6 +3,8 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Condition\Conditions;
+use FiiSoft\Jackdaw\Condition\Exception\ConditionExceptionFactory;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
 use PHPUnit\Framework\TestCase;
 
@@ -10,8 +12,7 @@ final class ConditionsTest extends TestCase
 {
     public function test_getAdapter_throws_exception_on_invalid_argument(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid param condition');
+        $this->expectExceptionObject(InvalidParamException::byName('condition'));
         
         Conditions::getAdapter('this is not callback');
     }
@@ -25,7 +26,7 @@ final class ConditionsTest extends TestCase
     
     public function test_it_throws_exception_when_callable_requires_unsupported_number_of_arguments(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectExceptionObject(ConditionExceptionFactory::invalidParamCondition(3));
         
         $condition = Conditions::getAdapter(static fn($a, $b, $c): bool => true);
         $condition->isTrueFor('any', 'any');

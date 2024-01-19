@@ -2,21 +2,36 @@
 
 namespace FiiSoft\Jackdaw\Filter\Number;
 
-final class LessThan extends NumberFilter
+use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\Number\LessThan\AnyLessThan;
+use FiiSoft\Jackdaw\Filter\Number\LessThan\BothLessThan;
+use FiiSoft\Jackdaw\Filter\Number\LessThan\KeyLessThan;
+use FiiSoft\Jackdaw\Filter\Number\LessThan\ValueLessThan;
+use FiiSoft\Jackdaw\Internal\Check;
+
+abstract class LessThan extends SingleArg
 {
     /**
-     * @inheritdoc
+     * @param float|int $value
      */
-    protected function test($value): bool
+    final public static function create(int $mode, $value): self
     {
-        if (\is_int($value) || \is_float($value)) {
-            return $value < $this->value;
+        switch ($mode) {
+            case Check::VALUE:
+                return new ValueLessThan($mode, $value);
+            case Check::KEY:
+                return new KeyLessThan($mode, $value);
+            case Check::BOTH:
+                return new BothLessThan($mode, $value);
+            case Check::ANY:
+                return new AnyLessThan($mode, $value);
+            default:
+                throw Check::invalidModeException($mode);
         }
+    }
     
-        if (\is_numeric($value)) {
-            return (float) $value < (float) $this->value;
-        }
-    
-        throw new \LogicException('Cannot compare value which is not a number');
+    final public function negate(): Filter
+    {
+        return GreaterOrEqual::create($this->negatedMode(), $this->number);
     }
 }

@@ -5,9 +5,11 @@ namespace FiiSoft\Jackdaw\Comparator;
 use FiiSoft\Jackdaw\Comparator\Basic\DefaultComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\FieldsComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\LengthComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\MultiComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\ReverseComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\SizeComparator;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 
 final class Comparators
 {
@@ -24,6 +26,10 @@ final class Comparators
      */
     public static function getAdapter($comparator): ?Comparator
     {
+        if ($comparator === null) {
+            return null;
+        }
+        
         if ($comparator instanceof Comparator) {
             return $comparator;
         }
@@ -33,14 +39,10 @@ final class Comparators
         }
         
         if (\is_callable($comparator)) {
-            return new GenericComparator($comparator);
+            return GenericComparator::create($comparator);
         }
         
-        if ($comparator === null) {
-            return null;
-        }
-        
-        throw new \InvalidArgumentException('Invalid param comparator');
+        throw InvalidParamException::describe('comparator', $comparator);
     }
     
     public static function default(): Comparator
@@ -62,11 +64,19 @@ final class Comparators
     }
     
     /**
-     * Allows to compare length of strings and size of arrays. Can also handle \Countable as well.
+     * Allows to compare size of arrays or \Countable objects.
      */
     public static function size(): Comparator
     {
         return new SizeComparator();
+    }
+    
+    /**
+     * Allows to compare length of strings.
+     */
+    public static function length(): Comparator
+    {
+        return new LengthComparator();
     }
     
     /**

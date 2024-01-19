@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Producer\Generator\Uuid;
 
+use FiiSoft\Jackdaw\Producer\Generator\Uuid\Exception\UuidUnavailableException;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\Ramsey\RamseyDefault;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\Ramsey\RamseyHex;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\Symfony\SymfonyBase32;
@@ -25,9 +26,7 @@ final class UuidProvider
             return $compact ? self::symfonyBase58() : self::symfony();
         }
         
-        throw new \LogicException(
-            'You have to have installed either ramsey/uuid or symfony/uid to create default UuidProvider'
-        );
+        throw UuidUnavailableException::create();
     }
     
     public static function ramsey(?RamseyUuid $generator = null): UuidGenerator

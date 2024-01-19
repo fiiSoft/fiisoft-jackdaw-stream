@@ -1,21 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.6/phpunit.xsd"
          colors="true"
          bootstrap="vendor/autoload.php"
          cacheResultFile="var/.phpunit.result.cache"
+         stopOnError="true"
+         stopOnFailure="true"
 >
     <coverage processUncoveredFiles="true">
         <include>
             <directory suffix=".php">src</directory>
         </include>
         <exclude>
-            <file>src/Internal/StreamPipe.php</file>
-            <file>src/Internal/ProtectedCloning.php</file>
-            <file>src/Internal/ForkCollaborator.php</file>
             <file>src/Internal/Collaborator.php</file>
-            <file>src/Internal/Iterator/StreamIterator81.php</file>
             <file>src/Internal/Collection/StreamCollection81.php</file>
+            <file>src/Internal/ForkCollaborator.php</file>
+            <file>src/Internal/Iterator/FastIterator81.php</file>
+            <file>src/Internal/Iterator/StreamIterator81.php</file>
+            <file>src/Internal/ProtectedCloning.php</file>
+            <file>src/Internal/State/StreamSource.php</file>
+            <file>src/Internal/StreamPipe.php</file>
+            <file>src/Internal/StreamState.php</file>
         </exclude>
         <report>
             <html outputDirectory="var/phpunit/html/" lowUpperBound="50" highLowerBound="100"/>

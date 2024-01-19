@@ -17,7 +17,7 @@ final class RegistryAdapter implements Discriminator
     /**
      * @inheritDoc
      */
-    public function classify($value, $key)
+    public function classify($value, $key = null)
     {
         return $this->registry->read();
     }

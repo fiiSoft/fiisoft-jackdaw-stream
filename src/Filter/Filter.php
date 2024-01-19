@@ -1,19 +1,62 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Filter;
 
 use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
-use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 
 interface Filter extends MapperReady, ConditionReady, DiscriminatorReady
 {
     /**
      * @param mixed $value
-     * @param string|int $key
-     * @param int $mode
-     * @return bool
+     * @param mixed $key
      */
-    public function isAllowed($value, $key, int $mode = Check::VALUE): bool;
+    public function isAllowed($value, $key = null): bool;
+    
+    public function inMode(?int $mode): Filter;
+    
+    public function negate(): Filter;
+    
+    public function getMode(): ?int;
+    
+    public function buildStream(iterable $stream): iterable;
+    
+    public function checkValue(): Filter;
+    
+    public function checkKey(): Filter;
+    
+    public function checkBoth(): Filter;
+    
+    public function checkAny(): Filter;
+    
+    /**
+     * @param Filter|callable|mixed $filter
+     */
+    public function and($filter): Filter;
+
+    /**
+     * @param Filter|callable|mixed $filter
+     */
+    public function andNot($filter): Filter;
+
+    /**
+     * @param Filter|callable|mixed $filter
+     */
+    public function or($filter): Filter;
+
+    /**
+     * @param Filter|callable|mixed $filter
+     */
+    public function orNot($filter): Filter;
+
+    /**
+     * @param Filter|callable|mixed $filter
+     */
+    public function xor($filter): Filter;
+
+    /**
+     * @param Filter|callable|mixed $filter
+     */
+    public function xnor($filter): Filter;
 }

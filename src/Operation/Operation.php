@@ -4,9 +4,9 @@ namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\Internal\StreamAware;
 
-interface Operation extends Destroyable
+interface Operation extends StreamAware, Destroyable
 {
     public function handle(Signal $signal): void;
     
@@ -29,5 +29,5 @@ interface Operation extends Destroyable
      */
     public function streamingFinished(Signal $signal): bool;
     
-    public function assignStream(Stream $stream): void;
+    public function buildStream(iterable $stream): iterable;
 }
