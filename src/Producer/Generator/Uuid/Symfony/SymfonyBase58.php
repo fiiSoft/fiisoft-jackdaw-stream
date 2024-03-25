@@ -6,6 +6,6 @@ final class SymfonyBase58 extends SymfonyUuidGenerator
 {
     public function create(): string
     {
-        return $this->generator->toBase58();
+        return ($this->factory)()->toBase58();
     }
 }

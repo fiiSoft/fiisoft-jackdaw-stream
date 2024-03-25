@@ -13,44 +13,49 @@ use Symfony\Component\Uid\AbstractUid as SymfonyUuid;
 
 final class UuidProvider
 {
+    public static function version(UuidVersion $version): UuidGenerator
+    {
+        return self::default(true, $version);
+    }
+    
     /**
      * @codeCoverageIgnore
      */
-    public static function default(bool $compact = true): UuidGenerator
+    public static function default(bool $compact = true, ?UuidVersion $version = null): UuidGenerator
     {
-        if (\interface_exists(RamseyUuid::class)) {
-            return $compact ? self::ramseyHex() : self::ramsey();
+        if (\class_exists(SymfonyUuid::class)) {
+            return $compact ? self::symfonyBase58($version) : self::symfony($version);
         }
         
-        if (\class_exists(SymfonyUuid::class)) {
-            return $compact ? self::symfonyBase58() : self::symfony();
+        if (\interface_exists(RamseyUuid::class)) {
+            return $compact ? self::ramseyHex($version) : self::ramsey($version);
         }
         
         throw UuidUnavailableException::create();
     }
     
-    public static function ramsey(?RamseyUuid $generator = null): UuidGenerator
+    public static function ramsey(?UuidVersion $version = null): UuidGenerator
     {
-        return new RamseyDefault($generator);
+        return new RamseyDefault($version);
     }
     
-    public static function ramseyHex(?RamseyUuid $generator = null): UuidGenerator
+    public static function ramseyHex(?UuidVersion $version = null): UuidGenerator
     {
-        return new RamseyHex($generator);
+        return new RamseyHex($version);
     }
     
-    public static function symfony(?SymfonyUuid $generator = null): UuidGenerator
+    public static function symfony(?UuidVersion $version = null): UuidGenerator
     {
-        return new SymfonyDefault($generator);
+        return new SymfonyDefault($version);
     }
     
-    public static function symfonyBase32(?SymfonyUuid $generator = null): UuidGenerator
+    public static function symfonyBase32(?UuidVersion $version = null): UuidGenerator
     {
-        return new SymfonyBase32($generator);
+        return new SymfonyBase32($version);
     }
     
-    public static function symfonyBase58(?SymfonyUuid $generator = null): UuidGenerator
+    public static function symfonyBase58(?UuidVersion $version = null): UuidGenerator
     {
-        return new SymfonyBase58($generator);
+        return new SymfonyBase58($version);
     }
 }

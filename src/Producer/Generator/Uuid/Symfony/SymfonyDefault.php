@@ -6,6 +6,6 @@ final class SymfonyDefault extends SymfonyUuidGenerator
 {
     public function create(): string
     {
-        return $this->generator->toRfc4122();
+        return ($this->factory)()->toRfc4122();
     }
 }

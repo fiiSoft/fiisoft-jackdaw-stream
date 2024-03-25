@@ -12,7 +12,9 @@ use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedGeneral;
 use FiiSoft\Jackdaw\Producer\Generator\Exception\GeneratorExceptionFactory;
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;
+use FiiSoft\Jackdaw\Producer\Generator\Uuid\Exception\UuidUnavailableException;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidProvider;
+use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidVersion;
 use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
@@ -503,6 +505,27 @@ final class ProducersTest extends TestCase
         self::assertSame(0, \iterator_count(Producers::sequentialInt(1, 1, 0)));
     }
     
+    public function test_default_uuid_producer_throws_exception_when_version_is_invalid(): void
+    {
+        $this->expectExceptionObject(UuidUnavailableException::create());
+        
+        Producers::uuidFrom(UuidProvider::version(UuidVersion::nil()));
+    }
+    
+    public function test_symfony_uuid_producer_throws_exception_when_version_is_invalid(): void
+    {
+        $this->expectExceptionObject(UuidUnavailableException::create());
+        
+        Producers::uuidFrom(UuidProvider::symfony(UuidVersion::nil()));
+    }
+    
+    public function test_ramsey_uuid_producer_throws_exception_when_version_is_invalid(): void
+    {
+        $this->expectExceptionObject(UuidUnavailableException::create());
+        
+        Producers::uuidFrom(UuidProvider::ramsey(UuidVersion::nil()));
+    }
+    
     /**
      * @dataProvider getDataForTestRandomAndSequentialProducersAreReusable
      */
@@ -517,49 +540,85 @@ final class ProducersTest extends TestCase
         yield 'sequentialInt' => [Producers::sequentialInt(1, 1, 3)];
         yield 'randomString' => [Producers::randomString(1, 5, 3)];
         yield 'randomInt' => [Producers::randomInt(1, 10, 3)];
-        
-        $testDefaultUuidProducer = false;
+    }
+    
+    public function test_uuid_producers_are_reusable(): void
+    {
+        $this->checkIfRamseyOrSymfonyUuidIsInstalled();
         
         if (\interface_exists(RamseyUuid::class)) {
-            $testDefaultUuidProducer = true;
             
-            yield 'ramseyDefault' => [Producers::uuidFrom(UuidProvider::ramsey(), 3)];
-            yield 'ramseyHex' => [Producers::uuidFrom(UuidProvider::ramseyHex(), 3)];
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::ramsey()));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::ramsey(UuidVersion::v6())));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::ramsey(UuidVersion::v4())));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::ramsey(UuidVersion::v1())));
+            
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::ramseyHex()));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::ramseyHex(UuidVersion::v6())));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::ramseyHex(UuidVersion::v4())));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::ramseyHex(UuidVersion::v1())));
         }
         
         if (\class_exists(SymfonyUuid::class)) {
-            $testDefaultUuidProducer = true;
             
-            yield 'symfonyDefault' => [Producers::uuidFrom(UuidProvider::symfony(), 3)];
-            yield 'symfonyBase32' => [Producers::uuidFrom(UuidProvider::symfonyBase32(), 3)];
-            yield 'symfonyBase58' => [Producers::uuidFrom(UuidProvider::symfonyBase58(), 3)];
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfony()));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfony(UuidVersion::v6())));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfony(UuidVersion::v4())));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfony(UuidVersion::v1())));
+            
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfonyBase32()));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfonyBase32(UuidVersion::v6())));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfonyBase32(UuidVersion::v4())));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfonyBase32(UuidVersion::v1())));
+            
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfonyBase58()));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfonyBase58(UuidVersion::v6())));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfonyBase58(UuidVersion::v4())));
+            $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::symfonyBase58(UuidVersion::v1())));
         }
         
-        if ($testDefaultUuidProducer) {
-            yield 'randomUuid' => [Producers::randomUuid(3)];
-        }
+        $this->examineReusableUuidProducers(Producers::randomUuid());
+        
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::default()));
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::default(false)));
+        
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::default(true, UuidVersion::v6())));
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::default(true, UuidVersion::v4())));
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::default(true, UuidVersion::v1())));
+        
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::default(false, UuidVersion::v6())));
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::default(false, UuidVersion::v4())));
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::default(false, UuidVersion::v1())));
+        
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::version(UuidVersion::v6())));
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::version(UuidVersion::v4())));
+        $this->examineReusableUuidProducers(Producers::uuidFrom(UuidProvider::version(UuidVersion::v1())));
+    }
+    
+    private function examineReusableUuidProducers(Producer $producer): void
+    {
+        $uuids1 = $producer->stream()->limit(3)->toArray();
+        $uuids2 = $producer->stream()->limit(3)->toArray();
+        
+        self::assertNotSame($uuids1, $uuids2);
     }
     
     public function test_UuidProvider_ramsey_default(): void
     {
         $this->checkIfRamseyUuidIsInstalled();
         
-        $uuid = Producers::uuidFrom(UuidProvider::ramsey(\Ramsey\Uuid\Uuid::uuid4()))
-            ->stream()->first()->get();
+        $producer = Producers::uuidFrom(UuidProvider::ramsey());
         
-        self::assertIsString($uuid);
-        self::assertSame(36, \strlen($uuid));
+        $this->examineUuidProducer($producer, 36);
     }
     
     public function test_UuidProvider_ramsey_hex(): void
     {
         $this->checkIfRamseyUuidIsInstalled();
         
-        $uuid = Producers::uuidFrom(UuidProvider::ramseyHex(\Ramsey\Uuid\Uuid::uuid4()))
-            ->stream()->first()->get();
+        $producer = Producers::uuidFrom(UuidProvider::ramseyHex());
         
-        self::assertIsString($uuid);
-        self::assertSame(32, \strlen($uuid));
+        $this->examineUuidProducer($producer, 32);
     }
     
     private function checkIfRamseyUuidIsInstalled(): void
@@ -573,33 +632,42 @@ final class ProducersTest extends TestCase
     {
         $this->checkIfSymfonyUuidIsInstalled();
         
-        $uuid = Producers::uuidFrom(UuidProvider::symfony(\Symfony\Component\Uid\Uuid::v4()))
-            ->stream()->first()->get();
+        $producer = Producers::uuidFrom(UuidProvider::symfony());
         
-        self::assertIsString($uuid);
-        self::assertSame(36, \strlen($uuid));
+        $this->examineUuidProducer($producer, 36);
     }
     
     public function test_UuidProvider_symfony_base32(): void
     {
         $this->checkIfSymfonyUuidIsInstalled();
         
-        $uuid = Producers::uuidFrom(UuidProvider::symfonyBase32(\Symfony\Component\Uid\Uuid::v4()))
-            ->stream()->first()->get();
+        $producer = Producers::uuidFrom(UuidProvider::symfonyBase32());
         
-        self::assertIsString($uuid);
-        self::assertSame(26, \strlen($uuid));
+        $this->examineUuidProducer($producer, 26);
     }
     
     public function test_UuidProvider_symfony_base58(): void
     {
         $this->checkIfSymfonyUuidIsInstalled();
         
-        $uuid = Producers::uuidFrom(UuidProvider::symfonyBase58(\Symfony\Component\Uid\Uuid::v4()))
-            ->stream()->first()->get();
+        $producer = Producers::uuidFrom(UuidProvider::symfonyBase58());
         
-        self::assertIsString($uuid);
-        self::assertSame(22, \strlen($uuid));
+        $this->examineUuidProducer($producer, 22);
+    }
+    
+    private function examineUuidProducer(Producer $producer, int $length): void
+    {
+        $uuids = [];
+        
+        foreach ($producer->stream()->limit(3) as $uuid) {
+            self::assertIsString($uuid);
+            self::assertSame($length, \strlen($uuid));
+            $uuids[] = $uuid;
+        }
+        
+        self::assertNotSame($uuids[0], $uuids[1]);
+        self::assertNotSame($uuids[1], $uuids[2]);
+        self::assertNotSame($uuids[0], $uuids[2]);
     }
     
     private function checkIfSymfonyUuidIsInstalled(): void
@@ -1098,6 +1166,6 @@ final class ProducersTest extends TestCase
     
     private function expectedDefaultUuidLength(): int
     {
-        return \interface_exists(RamseyUuid::class) ? 32 : 22;
+        return \class_exists(SymfonyUuid::class) ? 22 : 32;
     }
 }

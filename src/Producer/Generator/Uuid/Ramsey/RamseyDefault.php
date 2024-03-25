@@ -6,6 +6,6 @@ final class RamseyDefault extends RamseyUuidGenerator
 {
     public function create(): string
     {
-        return $this->generator->toString();
+        return ($this->factory)()->toString();
     }
 }

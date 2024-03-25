@@ -1378,7 +1378,7 @@ final class StreamATest extends TestCase
         $expected = ['a','b','c','d','n'];
         
         $comparator = static fn(string $first, string $second): int => $first <=> $second;
-        $actual = Stream::from($given)->unique()->toArray();
+        $actual = Stream::from($given)->unique($comparator)->toArray();
         
         self::assertSame($expected, $actual);
     }

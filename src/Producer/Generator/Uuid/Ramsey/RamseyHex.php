@@ -6,6 +6,6 @@ final class RamseyHex extends RamseyUuidGenerator
 {
     public function create(): string
     {
-        return $this->generator->getHex()->toString();
+        return ($this->factory)()->getHex()->toString();
     }
 }

@@ -6,6 +6,6 @@ final class SymfonyBase32 extends SymfonyUuidGenerator
 {
     public function create(): string
     {
-        return $this->generator->toBase32();
+        return ($this->factory)()->toBase32();
     }
 }
