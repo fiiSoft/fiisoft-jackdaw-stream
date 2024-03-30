@@ -11,7 +11,7 @@ use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Exception\StreamExceptionFactory;
 use FiiSoft\Jackdaw\Filter\{Filter, Filters};
 use FiiSoft\Jackdaw\Handler\{ErrorHandler, OnError};
-use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyable, Executable, ForkCollaborator,
+use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyable, Executable, ForkCollaborator, Helper,
     Iterator\BaseFastIterator, Iterator\BaseStreamIterator, Iterator\Interruption, Pipe, Signal, SignalHandler,
     State\Source, State\SourceNotReady, State\Stack, State\StreamSource, StreamPipe};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, MapperReady, Mappers};
@@ -1307,14 +1307,14 @@ final class Stream extends StreamSource
     /**
      * It works in the same way as toJson($flags, true).
      */
-    public function toJsonAssoc(int $flags = 0): string
+    public function toJsonAssoc(?int $flags = null): string
     {
         return $this->toJson($flags, true);
     }
     
-    public function toJson(int $flags = 0, bool $preserveKeys = false): string
+    public function toJson(?int $flags = null, bool $preserveKeys = false): string
     {
-        return \json_encode($this->toArray($preserveKeys), \JSON_THROW_ON_ERROR | $flags);
+        return \json_encode($this->toArray($preserveKeys), Helper::jsonFlags($flags));
     }
     
     public function toString(string $separator = ','): string

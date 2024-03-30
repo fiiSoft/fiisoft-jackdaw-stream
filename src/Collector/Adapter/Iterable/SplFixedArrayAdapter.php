@@ -8,9 +8,11 @@ final class SplFixedArrayAdapter extends BaseIterableCollector
 {
     private \SplFixedArray $fixedArray;
     
-    private int $index = 0, $count = 0;
+    private int $index = 0;
     
-    public function __construct(\SplFixedArray $fixedArray, ?bool $allowKeys = true)
+    private bool $valueSet = false;
+    
+    public function __construct(\SplFixedArray $fixedArray, ?bool $allowKeys)
     {
         parent::__construct($allowKeys);
         
@@ -20,19 +22,18 @@ final class SplFixedArrayAdapter extends BaseIterableCollector
     public function set($key, $value): void
     {
         $this->fixedArray[$key] = $value;
-        ++$this->count;
+        $this->valueSet = true;
     }
     
     public function add($value): void
     {
         $this->fixedArray[$this->index++] = $value;
-        ++$this->count;
     }
     
     public function count(): int
     {
-        if ($this->count === $this->index) {
-            return $this->count;
+        if (!$this->valueSet) {
+            return $this->index;
         }
         
         $count = 0;
@@ -55,7 +56,7 @@ final class SplFixedArrayAdapter extends BaseIterableCollector
         }
         
         $this->index = 0;
-        $this->count = 0;
+        $this->valueSet = false;
     }
     
     public function toArray(): array

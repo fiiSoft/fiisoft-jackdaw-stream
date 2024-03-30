@@ -152,7 +152,17 @@ final class CollectorsTest extends TestCase
         self::assertCount(2, $collector);
     }
     
-    public function test_each_collectot_can_serialize_collected_values_to_string(): void
+    public function test_default_collector_allows_keys_by_default(): void
+    {
+        $collector = Collectors::default();
+        
+        $collector->set('b', 5);
+        $collector->set('a', 2);
+        
+        self::assertSame(['b' => 5, 'a' => 2], $collector->toArray());
+    }
+    
+    public function test_each_collector_can_serialize_collected_values_to_string(): void
     {
         //given
         $collector = Collectors::default();
@@ -166,18 +176,19 @@ final class CollectorsTest extends TestCase
         self::assertSame('1,2', $str);
     }
     
-    public function test_each_collectot_can_serialize_collected_values_to_json(): void
+    public function test_each_collector_can_serialize_collected_values_to_json(): void
     {
         //given
         $collector = Collectors::default();
         $collector->set('a', 1);
-        $collector->set('b', 2);
+        $collector->set('b', 2.0);
+        $collector->set('c', '5');
         
         //when
         $json = $collector->toJson();
         
         //then
-        self::assertSame('{"a":1,"b":2}', $json);
+        self::assertSame('{"a":1,"b":2.0,"c":"5"}', $json);
     }
     
     /**
@@ -391,8 +402,7 @@ final class CollectorsTest extends TestCase
     {
         $this->expectExceptionObject(CollectorExceptionFactory::cannotSetKeys($splObject));
         
-        $collector = Collectors::getAdapter($splObject);
-        $collector->set(1, 2);
+        Collectors::getAdapter($splObject)->set(1, 2);
     }
     
     public static function getDataForTestSomeAdaptersThrowExceptionWhenKeyIsSet(): \Generator
@@ -463,6 +473,29 @@ final class CollectorsTest extends TestCase
         ], \iterator_to_array($queue));
     }
     
+    public function test_SplPriorityQueueAdapter_collector_treats_numerical_keys_as_priority_number_by_default(): void
+    {
+        $queue = new \SplPriorityQueue();
+        $collector = Collectors::wrapSplPriorityQueue($queue);
+        
+        Stream::from([1 => 'a', 7 => 'n', 4 => 'e', 6 => 'k'])->collectIn($collector)->run();
+        
+        self::assertSame([3 => 'n', 2 => 'k', 1 => 'e', 0 => 'a'], \iterator_to_array($queue));
+    }
+    
+    public function test_Collector_instance_can_be_reconfigured_to_keep_or_reindex_keys(): void
+    {
+        $collector = Collectors::default();
+        
+        Stream::from(['y' => 6])->collectIn($collector, true)->run();
+        self::assertSame([6], $collector->toArray());
+        
+        $collector = Collectors::default(false);
+        
+        Stream::from(['y' => 6])->collectIn($collector, false)->run();
+        self::assertSame(['y' => 6], $collector->toArray());
+    }
+    
     public function test_for_many_collectors_default_behaviour_if_keys_are_preserved_can_be_change(): void
     {
         $data = [5 => 'a', 6 => 4, 1 => 'p', 2 => 1];
@@ -477,5 +510,33 @@ final class CollectorsTest extends TestCase
         
         Stream::from($data)->collectIn($collector)->run();
         self::assertSame(\array_values($data), $collector->toArray());
+    }
+    
+    public function test_calling_method_allowKeys_on_SplHeapAdapter_doesnt_allow_to_set_keys(): void
+    {
+        //given
+        $heap = new \SplMinHeap();
+        $collector = Collectors::getAdapter($heap);
+        
+        //expect
+        $this->expectExceptionObject(CollectorExceptionFactory::cannotSetKeys($heap));
+        
+        //when
+        $collector->allowKeys(true);
+        $collector->set(5, 'a');
+    }
+    
+    public function test_calling_method_allowKeys_on_SplDoublyLinkedListAdapter_doesnt_allow_to_set_keys(): void
+    {
+        //given
+        $list = new \SplDoublyLinkedList();
+        $collector = Collectors::getAdapter($list);
+        
+        //expect
+        $this->expectExceptionObject(CollectorExceptionFactory::cannotSetKeys($list));
+        
+        //when
+        $collector->allowKeys(true);
+        $collector->set(5, 'a');
     }
 }

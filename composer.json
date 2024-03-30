@@ -7,7 +7,7 @@
     ],
     "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
     "license": "MIT",
-    "version": "7.0.1",
+    "version": "7.0.2",
     "authors": [
         {
             "name": "fiiSoft",
@@ -57,7 +57,8 @@
         "rector/rector": ">=0.18.3",
         "symfony/uid": ">=5.0.0",
         "phpmd/phpmd": ">=2.0.0",
-        "vimeo/psalm": ">=5.0.0"
+        "vimeo/psalm": ">=5.0.0",
+        "infection/infection": "^0.26.6"
     },
     "scripts": {
         "check": [
@@ -68,16 +69,19 @@
             "vendor/bin/phpmd src html phpmd.xml.dist --reportfile var/phpmd.html --cache --cache-file var/phpmd.result-cache.php"
         ],
         "test": "vendor/bin/phpunit --no-coverage",
-        "report" : "XDEBUG_MODE=coverage php vendor/bin/phpunit"
+        "report" : "XDEBUG_MODE=coverage php vendor/bin/phpunit",
+        "mutate": "vendor/bin/infection --test-framework=phpunit --only-covered --coverage=var/phpunit/xml --skip-initial-tests --threads=4 --min-covered-msi=100 --min-msi=100 --filter=src/"
     },
     "scripts-descriptions": {
         "check": "Run code analysis tools",
         "test": "Run tests without code-coverage report",
-        "report": "Run tests with code-coverage report"
+        "report": "Run tests with code-coverage report",
+        "mutate": "Run mutation tests. You need to generate code-coverage report before!"
     },
     "config": {
         "allow-plugins": {
-            "phpstan/extension-installer": true
+            "phpstan/extension-installer": true,
+            "infection/extension-installer": true
         }
     }
 }

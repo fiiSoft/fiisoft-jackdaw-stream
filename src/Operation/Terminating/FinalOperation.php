@@ -100,12 +100,12 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
         return $this->result()->toString($separator);
     }
     
-    final public function toJson(int $flags = 0, bool $preserveKeys = false): string
+    final public function toJson(?int $flags = null, bool $preserveKeys = false): string
     {
         return $this->result()->toJson($flags, $preserveKeys);
     }
     
-    final public function toJsonAssoc(int $flags = 0): string
+    final public function toJsonAssoc(?int $flags = null): string
     {
         return $this->result()->toJsonAssoc($flags);
     }

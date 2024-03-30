@@ -14,6 +14,7 @@ parameters:
         - '#Property FiiSoft\\Jackdaw\\Consumer\\Reference::\$key is never read, only written.#'
         - '#Parameter \#4 \$length of function substr_compare expects int, null given.#'
         - '#Property FiiSoft\\Jackdaw\\Collector\\Adapter\\ArrayAccessAdapter::\$buffer is never read, only written.#'
+        - '#.*::(toJsonAssoc|toJson)\(\) should return string but returns string\|false.#'
         -
             message: '#Cannot assign offset int\|string to SplFixedArray.#'
             path: 'src/Collector/Adapter/Iterable/SplFixedArrayAdapter.php'
@@ -38,3 +39,6 @@ parameters:
         -
             message: '#Parameter \#1 \$buffer of class FiiSoft\\Jackdaw\\Producer\\Internal\\CircularBufferIterator constructor expects .*#'
             path: 'src/Operation/Internal/ItemBuffer/CircularItemBuffer.php'
+        -
+            message: '#Parameter \#1 \$str of function md5 expects string, string\|false given.#'
+            path: 'src/Reducer/CountUnique.php'

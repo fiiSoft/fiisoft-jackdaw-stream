@@ -307,6 +307,11 @@ final class ComparatorsTest extends TestCase
         yield [By::bothDesc('strnatcmp'), ['b', 'c'], ['a', 'c'], -1];
         yield [By::bothDesc('strnatcmp'), ['b', 'c'], ['a', 'b'], -1];
         yield [By::bothDesc('strnatcmp'), ['b', 'c'], ['b', 'b'], -1];
+        
+        yield [
+            By::both(Key::desc('strcmp'), Value::asc(static fn(int $a, int $b): int => $a <=> $b)),
+            ['a', 2], ['b', 1], 1
+        ];
     }
     
     public function test_sort_by_custom_reversed_assoc(): void

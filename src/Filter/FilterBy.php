@@ -24,7 +24,7 @@ final class FilterBy extends BaseFilter
     /**
      * @param string|int $field valid key in array
      */
-    protected function __construct($field, Filter $filter)
+    private function __construct($field, Filter $filter)
     {
         parent::__construct(Check::VALUE);
         

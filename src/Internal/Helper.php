@@ -168,4 +168,9 @@ final class Helper
             }
         })();
     }
+    
+    public static function jsonFlags(?int $flags = null): int
+    {
+        return ($flags ?? \JSON_PRESERVE_ZERO_FRACTION) | \JSON_THROW_ON_ERROR;
+    }
 }

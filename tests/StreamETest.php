@@ -152,12 +152,12 @@ final class StreamETest extends TestCase
         
         $result = Stream::from($data)
             ->findMax(3, Filters::filterBy('sex', 'female'))
-            ->toArray();
+            ->toArrayAssoc();
         
         $expected = [
-            ['id' => 7, 'name' => 'Sue', 'age' => 17, 'sex' => 'female'],
-            ['id' => 2, 'name' => 'Kate', 'age' => 35, 'sex' => 'female'],
-            ['id' => 6, 'name' => 'Joanna', 'age' => 30, 'sex' => 'female'],
+            0 => ['id' => 7, 'name' => 'Sue', 'age' => 17, 'sex' => 'female'],
+            2 => ['id' => 2, 'name' => 'Kate', 'age' => 35, 'sex' => 'female'],
+            4 => ['id' => 6, 'name' => 'Joanna', 'age' => 30, 'sex' => 'female'],
         ];
         
         self::assertSame($expected, $result);

@@ -1316,4 +1316,24 @@ final class StreamCTest extends TestCase
         
         self::assertSame([9 => 5], $actual->toArrayAssoc());
     }
+    
+    public function test_iterate_result_of_groupBy(): void
+    {
+        $stream = Stream::from([['a', 1], ['b', 2], ['a', 3], ['c', 4], ['b', 5], ['c', 6], ['a', 7]])
+            ->unpackTuple()
+            ->group();
+
+        $result = [];
+        foreach ($stream as $classifier => $values) {
+            foreach ($values as $key => $value) {
+                $result[$classifier][$key] = $value;
+            }
+        }
+        
+        self::assertSame([
+            'a' => [1, 3, 7],
+            'b' => [2, 5],
+            'c' => [4, 6],
+        ], $result);
+    }
 }

@@ -15,6 +15,7 @@ $countIterations = null;
 $producer = static function () use(&$countIterations) {
     $num = false;
     $index = 0;
+    $countIterations = 0;
     
     while (true) {
         ++$countIterations;
@@ -24,8 +25,6 @@ $producer = static function () use(&$countIterations) {
 };
 
 //--------- Jackdaw -----------
-
-$countIterations = 0;
 
 $numbers = Jackdaw::from($producer)
     ->onlyIntegers()
@@ -38,8 +37,6 @@ echo 'iterations: ', $countIterations, ', numbers: ', $numbers, PHP_EOL;
 
 //--------- Bertptrs -----------
 
-$countIterations = 0;
-
 $numbers = (new Bertptrs($producer()))
     ->filter('is_int')
     ->distinct()
@@ -50,8 +47,6 @@ $numbers = (new Bertptrs($producer()))
 echo 'iterations: ', $countIterations, ', numbers: ', implode(',', $numbers), PHP_EOL;
 
 //--------- Gowork -----------
-
-$countIterations = 0;
 
 $numbers = Gowork::iterable($producer())
     ->filter('is_int')
@@ -66,8 +61,6 @@ echo 'iterations: ', $countIterations, ', numbers: ', $numbers, PHP_EOL;
 
 //--------- Illuminate -----------
 
-$countIterations = 0;
-
 $numbers = (new Illuminate($producer))
     ->filter(static fn($v): bool => is_int($v))
     ->unique()
@@ -78,8 +71,6 @@ $numbers = (new Illuminate($producer))
 echo 'iterations: ', $countIterations, ', numbers: ', $numbers, PHP_EOL;
 
 //--------- Loophp -----------
-
-$countIterations = 0;
 
 $numbers = Loophp::fromCallable($producer)
     ->filter(static fn($v): bool => is_int($v))

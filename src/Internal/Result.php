@@ -95,7 +95,7 @@ final class Result extends StreamPipe implements ResultApi
     /**
      * @inheritDoc
      */
-    public function toJson(int $flags = 0, bool $preserveKeys = false): string
+    public function toJson(?int $flags = null, bool $preserveKeys = false): string
     {
         return $this->do()->toJson($flags, $preserveKeys);
     }
@@ -103,7 +103,7 @@ final class Result extends StreamPipe implements ResultApi
     /**
      * @inheritDoc
      */
-    public function toJsonAssoc(int $flags = 0): string
+    public function toJsonAssoc(?int $flags = null): string
     {
         return $this->do()->toJsonAssoc($flags);
     }

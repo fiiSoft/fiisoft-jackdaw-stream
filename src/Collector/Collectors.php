@@ -20,7 +20,6 @@ final class Collectors
     public static function getAdapter($collector, ?bool $allowsKeys = null): Collector
     {
         if ($collector instanceof Collector) {
-            $collector->allowKeys($allowsKeys);
             return $collector;
         }
         
@@ -41,7 +40,7 @@ final class Collectors
         }
 
         if ($collector instanceof \SplPriorityQueue) {
-            return new SplPriorityQueueAdapter($collector, 0, $allowsKeys);
+            return self::wrapSplPriorityQueue($collector, $allowsKeys ?? true);
         }
     
         throw InvalidParamException::describe('collector', $collector);
@@ -95,6 +94,6 @@ final class Collectors
         bool $allowsKeys = true
     ): SplPriorityQueueAdapter
     {
-        return new SplPriorityQueueAdapter($queue, 0, $allowsKeys);
+        return new SplPriorityQueueAdapter($queue, $allowsKeys);
     }
 }

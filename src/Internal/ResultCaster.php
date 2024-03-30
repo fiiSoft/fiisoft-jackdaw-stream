@@ -9,12 +9,12 @@ interface ResultCaster extends ProducerReady, MapperReady
 {
     public function toString(string $separator = ','): string;
     
-    public function toJson(int $flags = 0, bool $preserveKeys = false): string;
+    public function toJson(?int $flags = null, bool $preserveKeys = false): string;
     
     /**
      * It works in the same way as toJson($flags, true).
      */
-    public function toJsonAssoc(int $flags = 0): string;
+    public function toJsonAssoc(?int $flags = null): string;
     
     public function toArray(bool $preserveKeys = false): array;
     

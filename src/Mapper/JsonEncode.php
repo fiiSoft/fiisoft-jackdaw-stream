@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Mapper;
 
+use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
 final class JsonEncode extends StateMapper
@@ -10,7 +11,7 @@ final class JsonEncode extends StateMapper
     
     public function __construct(?int $flags = null)
     {
-        $this->flags = $flags ?? \JSON_THROW_ON_ERROR;
+        $this->flags = Helper::jsonFlags($flags);
     }
     
     /**

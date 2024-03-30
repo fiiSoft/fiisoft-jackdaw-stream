@@ -1476,6 +1476,29 @@ final class StreamDTest extends TestCase
         self::assertSame(['even' => 4, 'odd' => 3], $result->toArrayAssoc());
     }
     
+    public function test_fork_by_even_and_odd_keys(): void
+    {
+        $result = Stream::from(['a', 'b', 'c', 'd', 'e', 'f', 'g'])
+            ->fork(Discriminators::evenOdd(Check::KEY), Stream::empty()->reduce(Reducers::concat()))
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => 'aceg',
+            'odd' => 'bdf',
+        ], $result);
+    }
+    
+    public function test_filter_only_null_both(): void
+    {
+        $result = Stream::from([[1, 2], [null, 3], [null, null], [4, null], [null, null], [5, null]])
+            ->unpackTuple()
+            ->filter(Filters::isNull(Check::BOTH))
+            ->count()
+            ->get();
+        
+        self::assertSame(2, $result);
+    }
+    
     /**
      * @return Item[]
      */

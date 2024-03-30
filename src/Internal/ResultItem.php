@@ -177,7 +177,7 @@ final class ResultItem implements ResultApi
     /**
      * @inheritdoc
      */
-    public function toJson(int $flags = 0, bool $preserveKeys = false): string
+    public function toJson(?int $flags = null, bool $preserveKeys = false): string
     {
         if (\is_iterable($this->finalValue)) {
             $data = $this->asArray($preserveKeys);
@@ -185,15 +185,15 @@ final class ResultItem implements ResultApi
             $data = $this->found || $this->finalValue !== null ? $this->finalValue : null;
         }
 
-        return \json_encode($data, \JSON_THROW_ON_ERROR | $flags);
+        return \json_encode($data, Helper::jsonFlags($flags));
     }
     
     /**
      * @inheritdoc
      */
-    public function toJsonAssoc(int $flags = 0): string
+    public function toJsonAssoc(?int $flags = null): string
     {
-        return \json_encode($this->asArray(), \JSON_THROW_ON_ERROR | $flags);
+        return \json_encode($this->asArray(), Helper::jsonFlags($flags));
     }
     
     /**

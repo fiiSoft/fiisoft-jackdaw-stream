@@ -52,6 +52,7 @@ final class DiscriminatorsTest extends TestCase
     public function test_EvenOdd_can_evaluate_key(): void
     {
         self::assertSame('odd', Discriminators::evenOdd(Check::KEY)->classify('a', 5));
+        self::assertSame('even', Discriminators::evenOdd(Check::KEY)->classify('a', 6));
     }
     
     public function test_EvenOdd_can_evaluate_both_value_and_key_together(): void

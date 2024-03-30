@@ -8,19 +8,16 @@ final class SplPriorityQueueAdapter extends BaseCollector
 {
     private \SplPriorityQueue $queue;
     
-    /** @var mixed */
-    private $priority;
+    private int $priority = 0;
     
     /**
      * @param \SplPriorityQueue $queue
-     * @param mixed $priority
      */
-    public function __construct(\SplPriorityQueue $queue, $priority = 0, ?bool $allowKeys = true)
+    public function __construct(\SplPriorityQueue $queue, ?bool $allowKeys = true)
     {
         parent::__construct($allowKeys);
         
         $this->queue = $queue;
-        $this->priority = $priority;
     }
     
     public function set($key, $value): void
@@ -33,18 +30,12 @@ final class SplPriorityQueueAdapter extends BaseCollector
         $this->queue->insert($value, $this->priority);
     }
     
-    /**
-     * @return mixed
-     */
-    public function getPriority()
+    public function getPriority(): int
     {
         return $this->priority;
     }
     
-    /**
-     * @param mixed $priority
-     */
-    public function setPriority($priority): void
+    public function setPriority(int $priority): void
     {
         $this->priority = $priority;
     }

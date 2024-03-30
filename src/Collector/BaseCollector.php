@@ -6,7 +6,7 @@ abstract class BaseCollector implements Collector
 {
     private bool $allowKeys;
     
-    public function __construct(?bool $allowKeys = true)
+    public function __construct(?bool $allowKeys = null)
     {
         $this->allowKeys = $allowKeys ?? true;
     }

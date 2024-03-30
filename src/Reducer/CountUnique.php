@@ -43,7 +43,7 @@ final class CountUnique extends BaseReducer
         } elseif (\is_float($value)) {
             $classifier = (string) $value;
         } elseif (\is_array($value)) {
-            $classifier = \md5(\json_encode($value, \JSON_THROW_ON_ERROR));
+            $classifier = \md5(\json_encode($value, Helper::jsonFlags()));
         } elseif (\is_object($value)) {
             $classifier = \spl_object_id($value);
         } elseif (\is_null($value)) {

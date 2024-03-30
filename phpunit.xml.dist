@@ -31,7 +31,9 @@
         <ini name="error_reporting" value="-1"/>
     </php>
 
-    <logging/>
+    <logging>
+        <junit outputFile="var/phpunit/xml/junit.xml"/>
+    </logging>
 
     <testsuites>
         <testsuite name="All">

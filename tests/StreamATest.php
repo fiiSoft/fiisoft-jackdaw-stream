@@ -1773,14 +1773,17 @@ final class StreamATest extends TestCase
     public function test_onlyWith_with_nulls(): void
     {
         $rowset = [
-            ['id' => 3, 'name' => 'Bob'],
-            ['id' => 3, 'name' => null],
-            ['id' => 3],
+            ['id' => 3, 'age' => 55, 'name' => 'Bob'],
+            ['id' => 3, 'name' => 'Joe'],
+            ['id' => 3, 'age' => 33, 'name' => null],
         ];
         
-        $result = Stream::from($rowset)->onlyWith('name', true)->remove('id')->toJsonAssoc();
+        $result = Stream::from($rowset)->onlyWith(['name', 'age'], true)->remove('id', 'age')->toArrayAssoc();
         
-        self::assertSame('[{"name":"Bob"},{"name":null}]', $result);
+        self::assertSame([
+            0 => ['name' => 'Bob'],
+            2 => ['name' => null],
+        ], $result);
     }
     
     public function test_call_different_number_of_times(): void

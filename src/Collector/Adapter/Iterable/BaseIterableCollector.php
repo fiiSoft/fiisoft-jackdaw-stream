@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Collector\Adapter\Iterable;
 
 use FiiSoft\Jackdaw\Collector\BaseCollector;
 use FiiSoft\Jackdaw\Collector\IterableCollector;
+use FiiSoft\Jackdaw\Internal\Helper;
 
 abstract class BaseIterableCollector extends BaseCollector implements IterableCollector, \IteratorAggregate
 {
@@ -12,8 +13,8 @@ abstract class BaseIterableCollector extends BaseCollector implements IterableCo
         return \implode($separator, $this->toArray());
     }
     
-    final public function toJson(int $flags = 0): string
+    final public function toJson(?int $flags = null): string
     {
-        return \json_encode($this->toArray(), \JSON_THROW_ON_ERROR | $flags);
+        return \json_encode($this->toArray(), Helper::jsonFlags($flags));
     }
 }

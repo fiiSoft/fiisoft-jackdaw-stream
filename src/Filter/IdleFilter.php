@@ -16,7 +16,7 @@ final class IdleFilter extends BaseFilter
         return new self(false, $mode);
     }
     
-    protected function __construct(bool $result, ?int $mode)
+    private function __construct(bool $result, ?int $mode)
     {
         parent::__construct($mode);
         

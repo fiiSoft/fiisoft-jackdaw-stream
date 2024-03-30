@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Internal\Collection;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Destroyable;
+use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\ResultApi;
 use FiiSoft\Jackdaw\Internal\ResultItem;
 use FiiSoft\Jackdaw\Operation\Terminating\GroupBy;
@@ -75,12 +76,11 @@ abstract class BaseStreamCollection implements Destroyable, \Iterator
     }
     
     /**
-     * @param int $flags
      * @return string raw data encoded to JSON
      */
-    final public function toJson(int $flags = 0): string
+    final public function toJson(?int $flags = null): string
     {
-        return \json_encode($this->dataCollection, \JSON_THROW_ON_ERROR | $flags);
+        return \json_encode($this->dataCollection, Helper::jsonFlags($flags));
     }
     
     /**
