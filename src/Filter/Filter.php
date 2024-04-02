@@ -2,11 +2,12 @@
 
 namespace FiiSoft\Jackdaw\Filter;
 
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 
-interface Filter extends MapperReady, ConditionReady, DiscriminatorReady
+interface Filter extends MapperReady, ConditionReady, DiscriminatorReady, ComparatorReady
 {
     /**
      * @param mixed $value

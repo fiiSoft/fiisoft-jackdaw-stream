@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Operation\Filtering\Unique\StandardChecker;
+namespace FiiSoft\Jackdaw\Operation\Filtering\Unique\StandardChecker\Single;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Operation\Filtering\Unique\StandardChecker;
+use FiiSoft\Jackdaw\Operation\Filtering\Unique\StandardChecker\SingleChecker;
 
-final class CheckKey extends StandardChecker
+final class CheckKey extends SingleChecker
 {
     public function check(Item $item): bool
     {

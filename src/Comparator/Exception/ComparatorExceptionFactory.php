@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Comparator\Exception;
 
+use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
 use FiiSoft\Jackdaw\Exception\InvalidOperationException;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Exception\JackdawException;
@@ -12,7 +13,7 @@ final class ComparatorExceptionFactory
 {
     public static function cannotCompareOnlyValues(object $object): JackdawException
     {
-        return InvalidOperationException::create('Method '.\get_class($object).'::compare() should never be called');
+        return ImpossibleSituationException::called('compare', $object);
     }
     
     public static function sortingsCannotBeTheSame(): JackdawException

@@ -59,10 +59,11 @@
         "UnwrapArrayMap": false,
         "UnwrapStrShuffle": false,
         "DoWhile": false,
-        "Throw_": false
+        "Throw_": false,
+        "BitwiseAnd": false
     },
     "logs": {
         "html": "var/infection.html"
     },
-    "tmpDir": "var/infection/"
+    "tmpDir": "var/"
 }

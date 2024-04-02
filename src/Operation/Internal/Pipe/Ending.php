@@ -23,7 +23,7 @@ final class Ending implements Operation
     
     public function setNext(Operation $next, bool $direct = false): Operation
     {
-        throw ImpossibleSituationException::called('setNext');
+        throw ImpossibleSituationException::called(__METHOD__);
     }
 
     public function setPrev(Operation $prev): void
@@ -33,7 +33,7 @@ final class Ending implements Operation
     
     public function prepend(Operation $operation): void
     {
-        throw ImpossibleSituationException::called('prepend');
+        throw ImpossibleSituationException::called(__METHOD__);
     }
     
     public function getNext(): ?Operation
@@ -53,7 +53,7 @@ final class Ending implements Operation
     
     public function removeFromChain(): Operation
     {
-        throw ImpossibleSituationException::called('removeFromChain');
+        throw ImpossibleSituationException::called(__METHOD__);
     }
     
     public function streamingFinished(Signal $signal): bool

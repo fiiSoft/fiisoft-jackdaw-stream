@@ -1,30 +1,20 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Operation\Filtering\Unique;
+namespace FiiSoft\Jackdaw\Operation\Filtering\Unique\ItemByItemChecker;
 
-use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
+use FiiSoft\Jackdaw\Operation\Filtering\Unique\UniquenessChecker;
 
-final class FullAssocChecker implements UniquenessChecker
+abstract class QuickChecker implements UniquenessChecker
 {
-    /** @var callable */
-    private $comparator;
-    
     /** @var Item[] */
     private array $unique = [];
     
     private int $count = 0;
     
-    public function __construct(GenericComparator $comparator)
-    {
-        if ($comparator->isFullAssoc()) {
-            $this->comparator = $comparator->getWrappedCallable();
-        } else {
-            throw OperationExceptionFactory::invalidComparator();
-        }
-    }
-    
+    /**
+     * @inheritDoc
+     */
     public function check(Item $item): bool
     {
         $last = $left = 0;
@@ -33,8 +23,7 @@ final class FullAssocChecker implements UniquenessChecker
         while ($left <= $right) {
             $index = (int) \floor(($left + $right) / 2);
             
-            $other = $this->unique[$index];
-            $compare = ($this->comparator)($item->value, $other->value, $item->key, $other->key);
+            $compare = $this->compare($item, $this->unique[$index]);
             
             if ($compare > 0) {
                 $left = $index + 1;
@@ -60,6 +49,8 @@ final class FullAssocChecker implements UniquenessChecker
         
         return true;
     }
+    
+    abstract protected function compare(Item $first, Item $second): int;
     
     public function destroy(): void
     {

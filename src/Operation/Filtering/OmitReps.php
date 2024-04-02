@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparer;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparer\ComparerFactory;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
@@ -17,7 +17,7 @@ final class OmitReps extends BaseOperation
     private ?Item $previous = null;
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function __construct($comparison = null)
     {

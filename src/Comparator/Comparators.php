@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Comparator;
 
+use FiiSoft\Jackdaw\Comparator\Adapter\DiscriminatorAdapter;
+use FiiSoft\Jackdaw\Comparator\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Comparator\Basic\DefaultComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\FieldsComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
@@ -9,12 +11,14 @@ use FiiSoft\Jackdaw\Comparator\Basic\LengthComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\MultiComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\ReverseComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\SizeComparator;
+use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Filter\Filter;
 
 final class Comparators
 {
     /**
-     * @param Comparable|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function prepare($comparator): Comparator
     {
@@ -22,7 +26,7 @@ final class Comparators
     }
     
     /**
-     * @param Comparable|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function getAdapter($comparator): ?Comparator
     {
@@ -36,6 +40,14 @@ final class Comparators
         
         if ($comparator instanceof Comparable) {
             return $comparator->comparator();
+        }
+        
+        if ($comparator instanceof Discriminator) {
+            return new DiscriminatorAdapter($comparator);
+        }
+        
+        if ($comparator instanceof Filter) {
+            return new FilterAdapter($comparator);
         }
         
         if (\is_callable($comparator)) {

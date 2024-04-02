@@ -4,6 +4,7 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
+use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Comparator\Sorting\By;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
@@ -1335,5 +1336,53 @@ final class StreamCTest extends TestCase
             'b' => [2, 5],
             'c' => [4, 6],
         ], $result);
+    }
+    
+    public function test_filter_unique_pairs_of_key_value(): void
+    {
+        $result = Stream::from([[3, 'a'], [3, 'b'], [4, 'a'], [4, 'b'], [3, 'b'], ['b', 3], [4, 'a'], ['a', 3]])
+            ->unpackTuple()
+            ->unique(Compare::pairs())
+            ->makeTuple()
+            ->toArray();
+        
+        self::assertSame([[3, 'a'], [3, 'b'], [4, 'a'], [4, 'b'], ['b', 3], ['a', 3]], $result);
+    }
+    
+    public function test_filter_unique_pairs_of_key_value_using_ComparatorReady_adapters(): void
+    {
+        $result = Stream::from(['a', 'a', 'A', 'A', 'b', 'B', 'B', 'b'])
+            ->unique(Compare::pairs(Filters::getAdapter('ctype_upper'), Discriminators::evenOdd()))
+            ->toArrayAssoc();
+        
+        self::assertSame(['a', 'a', 'A', 'A'], $result);
+    }
+    
+    /**
+     * @dataProvider getDataForTestOmitRepsUsingComparatorReadyAdapterForPairsComparison
+     */
+    public function test_omitReps_using_ComparatorReady_adapter_for_pairs_comparison(Comparison $comparison): void
+    {
+        $data = [
+            0 => 6, 1 => 3, 3 => 5, 4 => 2, 6 => 4, 7 => 3, 9 => 5, 10 => 1, 11 => 4, 13 => 2, 15 => 3, 16 => 4,
+            18 => 2, 19 => 5, 21 => 1,
+        ];
+        
+        $actual = Stream::from($data)
+            ->omitReps($comparison)
+            ->toArrayAssoc();
+        
+        self::assertSame([0 => 6, 1 => 3, 4 => 2, 7 => 3, 10 => 1, 11 => 4, 15 => 3, 16 => 4, 19 => 5], $actual);
+    }
+    
+    public static function getDataForTestOmitRepsUsingComparatorReadyAdapterForPairsComparison(): array
+    {
+        $discriminator = Discriminators::evenOdd();
+        $filter = Filters::number()->isOdd();
+        
+        return [
+            'DiscriminatorAdapter' => [Compare::pairs($discriminator, $discriminator)],
+            'FilterAdapter' => [Compare::pairs($filter, $filter)],
+        ];
     }
 }

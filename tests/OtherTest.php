@@ -9,7 +9,7 @@ use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
-use FiiSoft\Jackdaw\Operation\Filtering\Unique\FullAssocChecker;
+use FiiSoft\Jackdaw\Operation\Filtering\Unique\ItemByItemChecker\FullAssocChecker;
 use PHPUnit\Framework\TestCase;
 
 final class OtherTest extends TestCase

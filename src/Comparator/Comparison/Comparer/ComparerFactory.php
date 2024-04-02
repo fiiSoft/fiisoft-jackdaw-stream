@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Comparator\Comparison\Comparer;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparer;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
@@ -28,7 +28,7 @@ final class ComparerFactory
     }
     
     /**
-     * @param Comparable|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     private static function singleComparer(int $mode, $comparator): Comparer
     {
@@ -43,16 +43,16 @@ final class ComparerFactory
     }
     
     /**
-     * @param Comparable|callable|null $first
-     * @param Comparable|callable|null $second
+     * @param ComparatorReady|callable|null $valueComparator
+     * @param ComparatorReady|callable|null $keyComparator
      */
-    private static function doubleComparer(int $mode, $first, $second): Comparer
+    private static function doubleComparer(int $mode, $valueComparator, $keyComparator): Comparer
     {
         switch ($mode) {
             case Check::BOTH:
-                return new Comparer\Double\FullComparer($first, $second);
+                return new Comparer\Double\FullComparer($valueComparator, $keyComparator);
             case Check::ANY:
-                return new Comparer\Double\SeparatedComparer($first, $second);
+                return new Comparer\Double\SeparatedComparer($valueComparator, $keyComparator);
             //@codeCoverageIgnoreStart
             default:
                 throw ImpossibleSituationException::create('Unexpected value of mode ('.$mode.')');

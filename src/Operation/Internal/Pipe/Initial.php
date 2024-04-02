@@ -43,12 +43,12 @@ final class Initial extends ProtectedCloning implements Operation
     
     public function setPrev(Operation $prev): void
     {
-        throw ImpossibleSituationException::called('setPrev');
+        throw ImpossibleSituationException::called(__METHOD__);
     }
     
     public function prepend(Operation $operation): void
     {
-        throw ImpossibleSituationException::called('prepend');
+        throw ImpossibleSituationException::called(__METHOD__);
     }
     
     public function getNext(): ?Operation

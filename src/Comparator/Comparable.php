@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Comparator;
 
-interface Comparable
+interface Comparable extends ComparatorReady
 {
     public function comparator(): ?Comparator;
 }

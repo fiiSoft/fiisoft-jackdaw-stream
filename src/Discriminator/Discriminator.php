@@ -2,9 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Discriminator;
 
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 
-interface Discriminator extends MapperReady, DiscriminatorReady
+interface Discriminator extends MapperReady, ComparatorReady, DiscriminatorReady
 {
     /**
      * @param mixed $value

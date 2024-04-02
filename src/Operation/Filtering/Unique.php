@@ -3,16 +3,17 @@
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
 use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
-use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Filtering\Unique\ComparisonStrategy;
-use FiiSoft\Jackdaw\Operation\Filtering\Unique\FullAssocChecker;
+use FiiSoft\Jackdaw\Operation\Filtering\Unique\ItemByItemChecker\FullAssocChecker;
+use FiiSoft\Jackdaw\Operation\Filtering\Unique\ItemByItemChecker\PairChecker;
 use FiiSoft\Jackdaw\Operation\Filtering\Unique\StandardChecker;
 use FiiSoft\Jackdaw\Operation\Filtering\Unique\UniquenessChecker;
+use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Unique extends BaseOperation
 {
@@ -20,7 +21,7 @@ final class Unique extends BaseOperation
     private Comparison $comparison;
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function __construct($comparison = null)
     {
@@ -49,6 +50,11 @@ final class Unique extends BaseOperation
     
     private function prepareStrategy(): void
     {
+        if ($this->comparison->isPairComparison()) {
+            $this->checker = new PairChecker(...$this->comparison->getComparators());
+            return;
+        }
+        
         $comparator = $this->comparison->comparator();
         
         if ($comparator !== null) {
@@ -64,16 +70,16 @@ final class Unique extends BaseOperation
         
         switch ($this->comparison->mode()) {
             case Check::VALUE:
-                $this->checker = new StandardChecker\CheckValue($strategy);
+                $this->checker = new StandardChecker\Single\CheckValue($strategy);
             break;
             case Check::KEY:
-                $this->checker = new StandardChecker\CheckKey($strategy);
+                $this->checker = new StandardChecker\Single\CheckKey($strategy);
             break;
             case Check::BOTH:
-                $this->checker = new StandardChecker\CheckValueAndKey($strategy);
+                $this->checker = new StandardChecker\Double\CheckValueAndKey($strategy);
             break;
             default:
-                $this->checker = new StandardChecker\CheckValueOrKey($strategy);
+                $this->checker = new StandardChecker\Double\CheckValueOrKey($strategy);
         }
     }
     

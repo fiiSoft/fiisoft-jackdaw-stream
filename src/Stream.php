@@ -3,7 +3,7 @@
 namespace FiiSoft\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collector;
-use FiiSoft\Jackdaw\Comparator\{Comparable, Sorting\By, Sorting\Sorting};
+use FiiSoft\Jackdaw\Comparator\{Comparable, ComparatorReady, Sorting\By, Sorting\Sorting};
 use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Consumer\{ConsumerReady, Consumers};
 use FiiSoft\Jackdaw\Discriminator\{DiscriminatorReady, Discriminators};
@@ -363,7 +363,7 @@ final class Stream extends StreamSource
      * This operation skips all repeatable consecutive values in series, so each value is different than previous one.
      * Unlike Unique, values can repeat in whole stream, but not in succession.
      *
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function omitReps($comparison = null): Stream
     {
@@ -669,7 +669,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function unique($comparison = null): Stream
     {

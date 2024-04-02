@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.0
+
+Added the ability to compare key=>value pairs (treated as a coherent whole) in the uniqe() and omitReps() operations.
+
 ## 7.0.0
 
 Many new features have been added and several errors fixed. Greatly increased speed in most use cases.  

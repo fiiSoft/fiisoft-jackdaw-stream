@@ -3,7 +3,7 @@
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.6/phpunit.xsd"
          colors="true"
          bootstrap="vendor/autoload.php"
-         cacheResultFile="var/.phpunit.result.cache"
+         cacheResultFile="var/phpunit.result.cache"
          stopOnError="true"
          stopOnFailure="true"
 >
@@ -24,6 +24,7 @@
         </exclude>
         <report>
             <html outputDirectory="var/phpunit/html/" lowUpperBound="50" highLowerBound="100"/>
+            <xml outputDirectory="var/phpunit/xml/" />
         </report>
     </coverage>
 

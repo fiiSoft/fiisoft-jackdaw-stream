@@ -3,8 +3,8 @@
 namespace FiiSoft\Jackdaw\Comparator\Comparison;
 
 use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
-use FiiSoft\Jackdaw\Comparator\Comparable;
 use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Specs\DoubleComparison;
 use FiiSoft\Jackdaw\Comparator\Comparison\Specs\SingleComparison;
@@ -17,8 +17,10 @@ abstract class Comparison implements ComparisonSpec
 {
     protected int $mode;
     
+    private bool $isPairComp;
+    
     /**
-     * @param Comparable|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     final public static function create(int $mode, $comparator = null): self
     {
@@ -29,7 +31,7 @@ abstract class Comparison implements ComparisonSpec
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     final public static function prepare($comparison): self
     {
@@ -51,7 +53,7 @@ abstract class Comparison implements ComparisonSpec
     }
     
     /**
-     * @param Comparable|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     final public static function simple(int $mode = Check::VALUE, $comparator = null): self
     {
@@ -70,17 +72,29 @@ abstract class Comparison implements ComparisonSpec
     }
     
     /**
-     * @param Comparable|callable|null $valueComparator
-     * @param Comparable|callable|null $keyComparator
+     * @param ComparatorReady|callable|null $valueComparator
+     * @param ComparatorReady|callable|null $keyComparator
      */
     final public static function double(int $mode = Check::VALUE, $valueComparator = null, $keyComparator = null): self
     {
         return new DoubleComparison($mode, $valueComparator, $keyComparator);
     }
     
-    protected function __construct(int $mode)
+    /**
+     * Compares full pairs (key,value).
+     *
+     * @param ComparatorReady|callable|null $valueComparator
+     * @param ComparatorReady|callable|null $keyComparator
+     */
+    final public static function pair($valueComparator = null, $keyComparator = null): self
+    {
+        return new DoubleComparison(Check::BOTH, $valueComparator, $keyComparator, true);
+    }
+    
+    protected function __construct(int $mode, bool $isPairComp = false)
     {
         $this->mode = Check::getMode($mode);
+        $this->isPairComp = $isPairComp;
     }
     
     final public function mode(): int
@@ -88,8 +102,13 @@ abstract class Comparison implements ComparisonSpec
         return $this->mode;
     }
     
+    final public function isPairComparison(): bool
+    {
+        return $this->isPairComp;
+    }
+    
     /**
-     * @return array<Comparable|callable|null> only one or two comparators
+     * @return array<ComparatorReady|callable|null> only one or two comparators
      */
     abstract public function getComparators(): array;
 }

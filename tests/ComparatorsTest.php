@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparer\ComparerFactory;
@@ -14,7 +15,10 @@ use FiiSoft\Jackdaw\Comparator\Sorting\Key;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Comparator\Sorting\Value;
 use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueKeyComparator;
+use FiiSoft\Jackdaw\Discriminator\Discriminators;
+use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use PHPUnit\Framework\TestCase;
@@ -495,5 +499,28 @@ final class ComparatorsTest extends TestCase
         $comparator = Comparators::default();
         
         self::assertSame($comparator, $comparator->comparator());
+    }
+    
+    /**
+     * @dataProvider getDataForTestAdapterOfComparatorReady
+     */
+    public function test_adapter_of_ComparatorReady(ComparatorReady $comparator): void
+    {
+        $adapter = Comparators::getAdapter($comparator);
+        
+        self::assertSame(Check::VALUE, $adapter->mode());
+        self::assertSame($adapter, $adapter->comparator());
+        
+        $this->expectExceptionObject(ImpossibleSituationException::called('compareAssoc', $adapter));
+        
+        $adapter->compareAssoc(1, 1, 1, 1);
+    }
+    
+    public static function getDataForTestAdapterOfComparatorReady(): array
+    {
+        return [
+            'filter' => [Filters::isEmpty()],
+            'discriminator' => [Discriminators::evenOdd()],
+        ];
     }
 }

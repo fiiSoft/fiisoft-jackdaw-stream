@@ -126,41 +126,41 @@ final class OperationsTest extends TestCase
     
     public function test_Ending_operation_cannot_be_removed_from_chain(): void
     {
-        $this->expectExceptionObject(ImpossibleSituationException::called('removeFromChain'));
-        
         $operation = new Ending();
+        $this->expectExceptionObject(ImpossibleSituationException::called('removeFromChain', $operation));
+        
         $operation->removeFromChain();
     }
     
     public function test_Ending_operation_has_to_be_the_last_operation_in_chain(): void
     {
-        $this->expectExceptionObject(ImpossibleSituationException::called('setNext'));
-    
         $operation = new Ending();
+        $this->expectExceptionObject(ImpossibleSituationException::called('setNext', $operation));
+    
         $operation->setNext(new Ending());
     }
     
     public function test_Ending_cannot_prepend_other_operation(): void
     {
-        $this->expectExceptionObject(ImpossibleSituationException::called('prepend'));
-        
         $operation = new Ending();
+        $this->expectExceptionObject(ImpossibleSituationException::called('prepend', $operation));
+        
         $operation->prepend(new Ending());
     }
     
     public function test_Initial_operation_have_to_be_first_operation_in_chain(): void
     {
-        $this->expectExceptionObject(ImpossibleSituationException::called('setPrev'));
-    
         $operation = new Initial();
+        $this->expectExceptionObject(ImpossibleSituationException::called('setPrev', $operation));
+    
         $operation->setPrev(new Ending());
     }
     
     public function test_Initial_cannot_prepend_other_operation(): void
     {
-        $this->expectExceptionObject(ImpossibleSituationException::called('prepend'));
-    
         $operation = new Initial();
+        $this->expectExceptionObject(ImpossibleSituationException::called('prepend', $operation));
+    
         $operation->prepend(new Ending());
     }
     

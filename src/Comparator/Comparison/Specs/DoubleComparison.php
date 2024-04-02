@@ -2,23 +2,23 @@
 
 namespace FiiSoft\Jackdaw\Comparator\Comparison\Specs;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
 use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Internal\Check;
 
 final class DoubleComparison extends Comparison
 {
-    /** @var Comparable|callable|null */
+    /** @var ComparatorReady|callable|null */
     private $valueComparator, $keyComparator;
     
     /**
-     * @param Comparable|callable|null $valueComparator
-     * @param Comparable|callable|null $keyComparator
+     * @param ComparatorReady|callable|null $valueComparator
+     * @param ComparatorReady|callable|null $keyComparator
      */
-    protected function __construct(int $mode, $valueComparator = null, $keyComparator = null)
+    protected function __construct(int $mode, $valueComparator = null, $keyComparator = null, bool $isPairComp = false)
     {
-        parent::__construct($mode);
+        parent::__construct($mode, $isPairComp);
         
         if ($this->mode !== Check::BOTH && $this->mode !== Check::ANY) {
             throw Check::invalidModeException($this->mode);
