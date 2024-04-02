@@ -1069,10 +1069,13 @@ final class Stream extends StreamSource
     /**
      * @param int|null $buckets null means collect all elements
      * @param Comparable|callable|null $comparison
+     * @param int|null $limit max number of collected elements in each bucket; null means no limits
      */
-    public function segregate(?int $buckets = null, bool $reindex = false, $comparison = null): Stream
+    public function segregate(
+        ?int $buckets = null, bool $reindex = false, $comparison = null, ?int $limit = null
+    ): Stream
     {
-        $this->chainOperation(new Segregate($buckets, $reindex, $comparison));
+        $this->chainOperation(new Segregate($buckets, $reindex, $comparison, $limit));
         return $this;
     }
     

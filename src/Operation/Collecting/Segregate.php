@@ -23,14 +23,15 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
     /** @var Bucket[] */
     private array $buckets = [];
     
-    private int $limit, $count = 0, $last = 0;
+    private int $maxBuckets, $countBuckets = 0, $lastBucket = 0;
     private bool $reindex;
     
     /**
      * @param int|null $buckets null means collect all elements
      * @param Comparable|callable|null $comparison
+     * @param int|null $limit max number of collected elements in each bucket; null means no limits
      */
-    public function __construct(?int $buckets = null, bool $reindex = false, $comparison = null)
+    public function __construct(?int $buckets = null, bool $reindex = false, $comparison = null, ?int $limit = null)
     {
         if ($buckets === null) {
             $buckets = \PHP_INT_MAX;
@@ -40,23 +41,23 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
         
         $this->comparison = Comparison::prepare($comparison);
         $this->comparator = ItemComparatorFactory::getForComparison($this->comparison);
-        $this->limit = $buckets;
+        $this->maxBuckets = $buckets;
         
-        $this->buckets[0] = new Bucket($reindex);
+        $this->buckets[0] = new Bucket($reindex, $limit);
         $this->reindex = $reindex;
     }
     
     public function handle(Signal $signal): void
     {
-        if ($this->count === 0) {
+        if ($this->countBuckets === 0) {
+            ++$this->countBuckets;
             $this->buckets[0]->add($signal->item);
-            ++$this->count;
             
             return;
         }
         
         $left = 0;
-        $index = $right = $this->last;
+        $index = $right = $this->lastBucket;
         
         while (true) {
             $current = $this->buckets[$index];
@@ -70,24 +71,24 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
                     continue;
                 }
                 
-                if ($this->count < $this->limit) {
+                if ($this->countBuckets < $this->maxBuckets) {
                     
-                    if ($index < $this->last) {
-                        $this->shiftBuckets($index + 1, $this->last);
+                    if ($index < $this->lastBucket) {
+                        $this->shiftBuckets($index + 1, $this->lastBucket);
                     }
                     
                     $this->buckets[$index + 1] = $current->create($signal->item);
                     
-                    ++$this->count;
-                    ++$this->last;
+                    ++$this->countBuckets;
+                    ++$this->lastBucket;
                     
-                } elseif ($this->limit > 1) {
-                    if ($index === $this->last) {
+                } elseif ($this->maxBuckets > 1) {
+                    if ($index === $this->lastBucket) {
                         return;
                     }
                     
-                    $this->buckets[$this->last]->clear();
-                    $this->shiftBuckets($index + 1, $this->last - 1);
+                    $this->buckets[$this->lastBucket]->clear();
+                    $this->shiftBuckets($index + 1, $this->lastBucket - 1);
                     
                     $this->buckets[$index + 1] = $current->create($signal->item);
                 }
@@ -107,16 +108,16 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
                 continue;
             }
             
-            if ($this->count < $this->limit) {
-                $this->shiftBuckets($index, $this->last);
+            if ($this->countBuckets < $this->maxBuckets) {
+                $this->shiftBuckets($index, $this->lastBucket);
                 $this->buckets[$index] = $current->create($signal->item);
                 
-                ++$this->count;
-                ++$this->last;
+                ++$this->countBuckets;
+                ++$this->lastBucket;
                 
-            } elseif ($this->limit > 1) {
-                $this->buckets[$this->last]->clear();
-                $this->shiftBuckets($index, $this->last - 1);
+            } elseif ($this->maxBuckets > 1) {
+                $this->buckets[$this->lastBucket]->clear();
+                $this->shiftBuckets($index, $this->lastBucket - 1);
                 $this->buckets[$index] = $current->create($signal->item);
             } else {
                 $current->replace($signal->item);
@@ -131,15 +132,15 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
         $item = new Item();
         
         foreach ($stream as $item->key => $item->value) {
-            if ($this->count === 0) {
+            if ($this->countBuckets === 0) {
+                ++$this->countBuckets;
                 $this->buckets[0]->add($item);
-                ++$this->count;
                 
                 continue;
             }
             
             $left = 0;
-            $index = $right = $this->last;
+            $index = $right = $this->lastBucket;
             
             while (true) {
                 $current = $this->buckets[$index];
@@ -153,24 +154,24 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
                         continue;
                     }
                     
-                    if ($this->count < $this->limit) {
+                    if ($this->countBuckets < $this->maxBuckets) {
                         
-                        if ($index < $this->last) {
-                            $this->shiftBuckets($index + 1, $this->last);
+                        if ($index < $this->lastBucket) {
+                            $this->shiftBuckets($index + 1, $this->lastBucket);
                         }
                         
                         $this->buckets[$index + 1] = $current->create($item);
                         
-                        ++$this->count;
-                        ++$this->last;
+                        ++$this->countBuckets;
+                        ++$this->lastBucket;
                         
-                    } elseif ($this->limit > 1) {
-                        if ($index === $this->last) {
+                    } elseif ($this->maxBuckets > 1) {
+                        if ($index === $this->lastBucket) {
                             continue 2;
                         }
                         
-                        $this->buckets[$this->last]->clear();
-                        $this->shiftBuckets($index + 1, $this->last - 1);
+                        $this->buckets[$this->lastBucket]->clear();
+                        $this->shiftBuckets($index + 1, $this->lastBucket - 1);
                         
                         $this->buckets[$index + 1] = $current->create($item);
                     }
@@ -191,16 +192,16 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
                     continue;
                 }
                 
-                if ($this->count < $this->limit) {
-                    $this->shiftBuckets($index, $this->last);
+                if ($this->countBuckets < $this->maxBuckets) {
+                    $this->shiftBuckets($index, $this->lastBucket);
                     $this->buckets[$index] = $current->create($item);
                     
-                    ++$this->count;
-                    ++$this->last;
+                    ++$this->countBuckets;
+                    ++$this->lastBucket;
                     
-                } elseif ($this->limit > 1) {
-                    $this->buckets[$this->last]->clear();
-                    $this->shiftBuckets($index, $this->last - 1);
+                } elseif ($this->maxBuckets > 1) {
+                    $this->buckets[$this->lastBucket]->clear();
+                    $this->shiftBuckets($index, $this->lastBucket - 1);
                     $this->buckets[$index] = $current->create($item);
                 } else {
                     $current->replace($item);
@@ -210,7 +211,7 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
             }
         }
         
-        if ($this->count === 0) {
+        if ($this->countBuckets === 0) {
             return [];
         }
         
@@ -228,7 +229,7 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
     
     public function streamingFinished(Signal $signal): bool
     {
-        if ($this->count === 0) {
+        if ($this->countBuckets === 0) {
             return false;
         }
         
@@ -246,7 +247,7 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
     public function applyLimit(int $limit): bool
     {
         if ($limit > 0) {
-            $this->limit = \min($limit, $this->limit);
+            $this->maxBuckets = \min($limit, $this->maxBuckets);
             return true;
         }
         
@@ -255,7 +256,7 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
     
     public function limit(): int
     {
-        return $this->limit;
+        return $this->maxBuckets;
     }
     
     public function isReindexed(): bool

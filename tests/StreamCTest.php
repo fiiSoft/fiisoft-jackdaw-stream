@@ -1385,4 +1385,17 @@ final class StreamCTest extends TestCase
             'FilterAdapter' => [Compare::pairs($filter, $filter)],
         ];
     }
+    
+    public function test_segregate_with_limited_max_number_of_elements_in_each_bucket(): void
+    {
+        $data = [1, 5, 2, 3, 2, 7, 4, 1, 6, 3, 5, 2, 4, 1, 7, 2, 3, 2, 6, 3, 2, 5, 8, 4];
+        
+        $result = Stream::from($data)->segregate(3, false, null, 4)->toArray();
+        
+        self::assertSame([
+            [0 => 1, 7 => 1, 13 => 1],
+            [2 => 2, 4 => 2, 11 => 2, 15 => 2],
+            [3 => 3, 9 => 3, 16 => 3, 19 => 3],
+        ], $result);
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Collecting\Segregate;
 
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Internal\Item;
 
@@ -10,11 +11,20 @@ final class Bucket implements Destroyable
     public ?Item $item = null;
     public array $data = [];
     
+    private ?int $limit = null;
     private bool $reindex;
     
-    public function __construct(bool $reindex = false, ?Item $item = null)
+    public function __construct(bool $reindex = false, ?int $limit = null, ?Item $item = null)
     {
         $this->reindex = $reindex;
+        
+        if ($limit === null) {
+            $this->limit = \PHP_INT_MAX;
+        } elseif ($limit > 0) {
+            $this->limit = $limit;
+        } else {
+            throw InvalidParamException::describe('limit', $limit);
+        }
         
         if ($item !== null) {
             $this->add($item);
@@ -23,7 +33,7 @@ final class Bucket implements Destroyable
     
     public function create(Item $item): Bucket
     {
-        return new self($this->reindex, $item);
+        return new Bucket($this->reindex, $this->limit, $item);
     }
     
     public function add(Item $item): void
@@ -32,10 +42,12 @@ final class Bucket implements Destroyable
             $this->item = $item->copy();
         }
         
-        if ($this->reindex) {
-            $this->data[] = $item->value;
-        } else {
-            $this->data[$item->key] = $item->value;
+        if (\count($this->data) < $this->limit) {
+            if ($this->reindex) {
+                $this->data[] = $item->value;
+            } else {
+                $this->data[$item->key] = $item->value;
+            }
         }
     }
     
@@ -53,7 +65,8 @@ final class Bucket implements Destroyable
     
     public function destroy(): void
     {
-        $this->item = null;
         $this->data = [];
+        $this->item = null;
+        $this->limit = null;
     }
 }

@@ -379,6 +379,13 @@ final class StreamETest extends TestCase
         Stream::empty()->segregate(0);
     }
     
+    public function test_Segregate_throws_exception_when_max_number_of_elements_in_buckets_is_invalid(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::byName('limit'));
+        
+        Stream::empty()->segregate(1, false, null, 0);
+    }
+    
     public function test_Segregate_with_no_elements_on_input(): void
     {
         self::assertEmpty(Stream::empty()->segregate()->toArray());

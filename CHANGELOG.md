@@ -1,8 +1,12 @@
 # Changelog
 
+## 7.2.0
+
+Added possibility to limit max number of elements collected in buckets by operation segregate().
+
 ## 7.1.0
 
-Added the ability to compare key=>value pairs (treated as a coherent whole) in the uniqe() and omitReps() operations.
+Added the ability to compare key=>value pairs (treated as a coherent, single whole) in the uniqe() and omitReps() operations.
 
 ## 7.0.0
 
