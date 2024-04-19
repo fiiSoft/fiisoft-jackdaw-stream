@@ -176,7 +176,7 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
     /**
      * Create new stream from the current one and set provided Producer as source of data for it.
      *
-     * @param ProducerReady|resource|callable|iterable $producer
+     * @param ProducerReady|resource|callable|iterable|string $producer
      */
     final public function wrap($producer): LastOperation
     {

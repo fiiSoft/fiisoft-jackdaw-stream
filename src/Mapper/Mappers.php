@@ -16,6 +16,7 @@ use FiiSoft\Jackdaw\Mapper\Cast\ToBool;
 use FiiSoft\Jackdaw\Mapper\Cast\ToFloat;
 use FiiSoft\Jackdaw\Mapper\Cast\ToInt;
 use FiiSoft\Jackdaw\Mapper\Cast\ToString;
+use FiiSoft\Jackdaw\Mapper\Cast\ToTime;
 use FiiSoft\Jackdaw\Mapper\Internal\MultiMapper;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
@@ -155,6 +156,15 @@ final class Mappers
     public static function toBool($fields = null): Mapper
     {
         return ToBool::create($fields);
+    }
+    
+    /**
+     * @param array|string|int|null $fields
+     * @param \DateTimeZone|string|null $inTimeZone
+     */
+    public static function toTime($fields = null, ?string $fromFormat = null, $inTimeZone = null): Mapper
+    {
+        return ToTime::create($fields, $fromFormat, $inTimeZone);
     }
     
     public static function toArray(bool $appendKey = false): Mapper
@@ -340,5 +350,13 @@ final class Mappers
     public static function decrement(int $step = 1): Mapper
     {
         return new Increment(-$step);
+    }
+    
+    /**
+     * This mapper requiers a \DateTimeInterface object on input and returns string with formatted time value.
+     */
+    public static function formatTime(string $format = 'Y-m-d H:i:s'): Mapper
+    {
+        return new FormatTime($format);
     }
 }

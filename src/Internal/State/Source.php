@@ -52,7 +52,7 @@ abstract class Source extends StreamSource implements Destroyable
     }
     
     /**
-     * @param array<ProducerReady|resource|callable|iterable> $producers
+     * @param array<ProducerReady|resource|callable|iterable|string> $producers
      */
     final public function addProducers(array $producers): void
     {

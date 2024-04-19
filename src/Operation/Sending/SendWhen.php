@@ -9,7 +9,9 @@ use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Internal\StreamAware;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Stream;
 
 final class SendWhen extends BaseOperation
 {
@@ -56,6 +58,19 @@ final class SendWhen extends BaseOperation
             }
             
             yield $key => $value;
+        }
+    }
+    
+    public function assignStream(Stream $stream): void
+    {
+        parent::assignStream($stream);
+        
+        if ($this->consumer instanceof StreamAware) {
+            $this->consumer->assignStream($stream);
+        }
+        
+        if ($this->elseConsumer instanceof StreamAware) {
+            $this->elseConsumer->assignStream($stream);
         }
     }
 }

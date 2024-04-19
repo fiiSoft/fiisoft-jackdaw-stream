@@ -14,6 +14,7 @@
         <exclude name="StaticAccess"/>
         <exclude name="ElseExpression"/>
         <exclude name="UndefinedVariable"/>
+        <exclude name="ErrorControlOperator"/>
     </rule>
 
     <rule ref="rulesets/design.xml">

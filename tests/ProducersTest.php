@@ -62,12 +62,11 @@ final class ProducersTest extends TestCase
         $producer = Producers::randomString(3, 10, 5);
         $count = 0;
     
-        $item = new Item();
-        foreach (Helper::createItemProducer($item, $producer) as $_) {
-            self::assertIsString($item->value);
-            self::assertTrue(\strlen($item->value) >= 3);
-            self::assertTrue(\strlen($item->value) <= 10, 'length is '.\strlen($item->value));
-            ++$count;
+        foreach ($producer as $key => $value) {
+            self::assertSame($count++, $key);
+            self::assertIsString($value);
+            self::assertTrue(\strlen($value) >= 3);
+            self::assertTrue(\strlen($value) <= 10, 'length is '.\strlen($value));
         }
     
         self::assertSame(5, $count);
@@ -82,11 +81,10 @@ final class ProducersTest extends TestCase
         $producer = Producers::randomUuid(5);
         $count = 0;
     
-        $item = new Item();
-        foreach (Helper::createItemProducer($item, $producer) as $_) {
-            self::assertIsString($item->value);
-            self::assertSame($expectedUuidLength, \strlen($item->value));
-            ++$count;
+        foreach ($producer as $key => $value) {
+            self::assertSame($count++, $key);
+            self::assertIsString($value);
+            self::assertSame($expectedUuidLength, \strlen($value));
         }
         
         self::assertSame(5, $count);
@@ -153,12 +151,10 @@ final class ProducersTest extends TestCase
     
     public function test_Collatz_generator_with_known_initial_value_gives_predicable_series_of_numbers(): void
     {
-        $producer = Producers::collatz(3);
         $buffer = [];
     
-        $item = new Item();
-        foreach (Helper::createItemProducer($item, $producer) as $_) {
-            $buffer[] = $item->value;
+        foreach (Producers::collatz(3) as $value) {
+            $buffer[] = $value;
         }
     
         self::assertSame([3, 10, 5, 16, 8, 4, 2, 1], $buffer);
@@ -166,12 +162,10 @@ final class ProducersTest extends TestCase
     
     public function test_Collatz_generator_with_random_initial_value(): void
     {
-        $producer = Producers::collatz();
         $buffer = [];
     
-        $item = new Item();
-        foreach (Helper::createItemProducer($item, $producer) as $_) {
-            $buffer[] = $item->value;
+        foreach (Producers::collatz() as $value) {
+            $buffer[] = $value;
         }
     
         $expected = [16, 8, 4, 2, 1];
@@ -728,7 +722,7 @@ final class ProducersTest extends TestCase
     public function test_ReverseItemsIterator_can_reindex_keys(): void
     {
         //given
-        $items = $this->convertToItems([
+        $items = self::items([
             3 => 'a',
             2 => 'b',
             4 => 'c',
@@ -870,20 +864,6 @@ final class ProducersTest extends TestCase
         //then
         self::assertIsString($uuid);
         self::assertSame(22, \strlen($uuid));
-    }
-    
-    /**
-     * @return Item[]
-     */
-    private function convertToItems(array $data): array
-    {
-        $items = [];
-        
-        foreach ($data as $key => $value) {
-            $items[] = new Item($key, $value);
-        }
-        
-        return $items;
     }
     
     public function test_ReferenceAdapter_can_use_variable_as_source_of_data_for_stream(): void
@@ -1127,6 +1107,17 @@ final class ProducersTest extends TestCase
         self::assertSame([3, 2, 5], $actual);
     }
     
+    public function test_iterate_TimeIterator_producer(): void
+    {
+        $result = [];
+        
+        foreach (Producers::dateTimeSeq('2024-06-29', '1 day', null, 4) as $dateTime) {
+            $result[] = $dateTime->format('Y-m-d');
+        }
+        
+        self::assertSame(['2024-06-29', '2024-06-30', '2024-07-01', '2024-07-02'], $result);
+    }
+    
     public function test_iterate_RegistryAdapter_producer(): void
     {
         $values = [3, 2, 5];
@@ -1149,6 +1140,169 @@ final class ProducersTest extends TestCase
             self::assertSame('<?php declare(strict_types=1);', \trim($line));
             break;
         }
+    }
+    
+    public function test_TimeIterator_throws_exception_when_param_startDate_is_invalid(): void
+    {
+        $this->expectExceptionObject(GeneratorExceptionFactory::invalidDateTimeParam('startDate', []));
+        
+        Producers::dateTimeSeq([]);
+    }
+    
+    public function test_TimeIterator_throws_exception_when_param_endDate_is_invalid(): void
+    {
+        $this->expectExceptionObject(GeneratorExceptionFactory::invalidDateTimeParam('endDate', []));
+        
+        Producers::dateTimeSeq(null, null, []);
+    }
+    
+    public function test_TimeIterator_throws_exception_when_param_interval_is_invalid(): void
+    {
+        $this->expectExceptionObject(GeneratorExceptionFactory::invalidDateIntervalParam('interval', []));
+        
+        Producers::dateTimeSeq(null, []);
+    }
+    
+    /**
+     * @dataProvider getDataForTestIterateOverDateTimeSequence
+     */
+    public function test_iterate_over_DateTime_sequence(
+        $startDate, $interval, $endDate, ?int $limit, array $expected
+    ): void
+    {
+        $previous = \date_default_timezone_get();
+        \date_default_timezone_set('Europe/London');
+        
+        try {
+            $dates = [];
+            foreach (Producers::dateTimeSeq($startDate, $interval, $endDate, $limit) as $date) {
+                $dates[] = $date;
+            }
+            
+            self::assertCount(\count($expected), $dates);
+            
+            foreach (\array_keys($expected) as $n) {
+                self::assertSame($expected[$n], $dates[$n]->format('Y-m-d H:i:s'));
+            }
+        } finally {
+            \date_default_timezone_set($previous);
+        }
+    }
+    
+    public static function getDataForTestIterateOverDateTimeSequence(): array
+    {
+        $previous = \date_default_timezone_get();
+        \date_default_timezone_set('Europe/London');
+        
+        $startImmutable = new \DateTimeImmutable('2020-01-01 12:00:00');
+        $startMutable = \DateTime::createFromImmutable($startImmutable);
+        $startTimestamp = $startMutable->getTimestamp();
+        
+        $byDay = ['2020-01-01 12:00:00', '2020-01-02 12:00:00', '2020-01-03 12:00:00'];
+        $byHour = ['2020-01-01 12:00:00', '2020-01-01 11:00:00', '2020-01-01 10:00:00'];
+        $byMonth = ['2020-01-01 12:00:00', '2020-02-01 12:00:00', '2020-03-01 12:00:00', '2020-04-01 12:00:00'];
+        
+        $decrementByOneHour = new \DateInterval('PT1H');
+        $decrementByOneHour->invert = 1;
+        
+        //startDate, interval, endDate, limit, expected
+        $testData = [
+            //increment by 1 day three times
+            [$startImmutable, null, null, 3, $byDay],
+            [$startMutable, '+1 day', null, 3, $byDay],
+            [$startImmutable, new \DateInterval('P1D'), null, 3, $byDay],
+            //increment by 1 day until endDate is reached
+            [$startImmutable, null, $byDay[2], null, $byDay],
+            [$startImmutable, null, $byDay[2], 3, $byDay],
+            [$startMutable, '+1 day', $byDay[2], null, $byDay],
+            [$startImmutable, new \DateInterval('P1D'), $byDay[2], null, $byDay],
+            //decrement by 1 hour 3 times
+            [$startTimestamp, '-1 hour', null, 3, $byHour],
+            [$startImmutable, $decrementByOneHour, null, 3, $byHour],
+            //decrement by 1 hour until endDate is reached
+            [$startImmutable, '-1 hour', $byHour[2], null, $byHour],
+            [$startTimestamp, '-1 hour', $byHour[2], 3, $byHour],
+            [$startImmutable, new \DateInterval('PT1H'), $byHour[2], null, $byHour],
+            //increment by 1 month until endDate
+            [$startImmutable, '1 month', '2020-04-30 23:59:59', null, $byMonth],
+        ];
+        
+        \date_default_timezone_set($previous);
+        
+        return $testData;
+    }
+    
+    public function test_dateTimeSeq_producer_can_be_reused(): void
+    {
+        $result1 = [];
+        $result2 = [];
+        
+        $producer = Producers::dateTimeSeq('now', '1 hour', null, 3);
+        
+        foreach ($producer as $date) {
+            $result1[] = $date->format('Y-m-d H:i:s');
+        }
+        
+        foreach ($producer as $date) {
+            $result2[] = $date->format('Y-m-d H:i:s');
+        }
+        
+        self::assertSame($result1, $result2);
+    }
+    
+    /**
+     * @dataProvider getDataForTestDateTimeSeqProducerDoesNotDecrementWhenEndDateIsAfterStartDate
+     */
+    public function test_dateTimeSeq_producer_does_not_decrement_when_endDate_is_after_startDate($interval): void
+    {
+        $dates = [];
+        
+        foreach (Producers::dateTimeSeq('2000-05-15', $interval, '2000-05-17') as $date) {
+            $dates[] = $date->format('Y-m-d');
+        }
+        
+        self::assertEmpty($dates);
+    }
+    
+    public static function getDataForTestDateTimeSeqProducerDoesNotDecrementWhenEndDateIsAfterStartDate(): array
+    {
+        return [
+            ['-1 day'],
+            [self::decrementInterval('P1D')],
+        ];
+    }
+    
+    /**
+     * @dataProvider getDataForTestDateTimeSeqProducerAlwaysDecrementsWhenEndDateIsBeforeStartDate
+     */
+    public function test_dateTimeSeq_producer_always_decrements_when_endDate_is_before_startDate($interval): void
+    {
+        $dates = [];
+        
+        foreach (Producers::dateTimeSeq('2000-05-17', $interval, '2000-05-15') as $date) {
+            $dates[] = $date->format('Y-m-d');
+        }
+        
+        self::assertSame(['2000-05-17', '2000-05-16', '2000-05-15'], $dates);
+    }
+    
+    public static function getDataForTestDateTimeSeqProducerAlwaysDecrementsWhenEndDateIsBeforeStartDate(): array
+    {
+        return [
+            [null],
+            ['1 day'],
+            [new \DateInterval('P1D')],
+            ['-1 day'],
+            [self::decrementInterval('P1D')],
+        ];
+    }
+    
+    private static function decrementInterval(string $format): \DateInterval
+    {
+        $decrement = new \DateInterval($format);
+        $decrement->invert = 1;
+        
+        return $decrement;
     }
     
     /**

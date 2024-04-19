@@ -17,6 +17,7 @@ use FiiSoft\Jackdaw\Producer\Generator\RandomInt;
 use FiiSoft\Jackdaw\Producer\Generator\RandomString;
 use FiiSoft\Jackdaw\Producer\Generator\RandomUuid;
 use FiiSoft\Jackdaw\Producer\Generator\SequentialInt;
+use FiiSoft\Jackdaw\Producer\Generator\TimeIterator;
 use FiiSoft\Jackdaw\Producer\Generator\Tokenizer;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidGenerator;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
@@ -26,7 +27,7 @@ use FiiSoft\Jackdaw\Registry\RegReader;
 final class Producers
 {
     /**
-     * @param array<ProducerReady|resource|callable|iterable|scalar> $elements
+     * @param array<ProducerReady|resource|callable|iterable|object|scalar> $elements
      */
     public static function from(array $elements): Producer
     {
@@ -38,7 +39,7 @@ final class Producers
     }
     
     /**
-     * @param array<ProducerReady|resource|callable|iterable|scalar> $elements
+     * @param array<ProducerReady|resource|callable|iterable|object|scalar> $elements
      */
     public static function prepare(array $elements): array
     {
@@ -73,7 +74,7 @@ final class Producers
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable $producer
+     * @param ProducerReady|resource|callable|iterable|string $producer
      */
     public static function getAdapter($producer): Producer
     {
@@ -113,11 +114,18 @@ final class Producers
             return new CallableAdapter($producer);
         }
         
+        if (\is_string($producer) && $producer !== '') {
+            $fp = @\fopen($producer, 'rb');
+            if (\is_resource($fp)) {
+                return self::resource($producer, true);
+            }
+        }
+        
         throw InvalidParamException::describe('producer', $producer);
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable ...$producers
+     * @param ProducerReady|resource|callable|iterable|string ...$producers
      */
     public static function multiSourced(...$producers): Producer
     {
@@ -132,8 +140,8 @@ final class Producers
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable $keys
-     * @param ProducerReady|resource|callable|iterable $values
+     * @param ProducerReady|resource|callable|iterable|string $keys
+     * @param ProducerReady|resource|callable|iterable|string $values
      */
     public static function combinedFrom($keys, $values): Producer
     {
@@ -142,16 +150,25 @@ final class Producers
             : new CombinedGeneral($keys, $values);
     }
     
+    /**
+     * @return Producer<int, int>
+     */
     public static function randomInt(int $min = 1, int $max = \PHP_INT_MAX, int $limit = \PHP_INT_MAX): Producer
     {
         return new RandomInt($min, $max, $limit);
     }
     
+    /**
+     * @return Producer<int, int>
+     */
     public static function sequentialInt(int $start = 1, int $step = 1, int $limit = \PHP_INT_MAX): Producer
     {
         return new SequentialInt($start, $step, $limit);
     }
     
+    /**
+     * @return Producer<int, string>
+     */
     public static function randomString(
         int $minLength,
         ?int $maxLength = null,
@@ -162,29 +179,36 @@ final class Producers
         return new RandomString($minLength, $maxLength, $limit, $charset);
     }
     
+    /**
+     * @return Producer<int, string>
+     */
     public static function uuidFrom(UuidGenerator $provider, int $limit = \PHP_INT_MAX): Producer
     {
         return new RandomUuid($limit, $provider);
     }
     
+    /**
+     * @return Producer<int, string>
+     */
     public static function randomUuid(int $limit = \PHP_INT_MAX): Producer
     {
         return new RandomUuid($limit);
     }
     
+    /**
+     * @return Producer<int, int>
+     */
     public static function collatz(int $startNumber = null): Producer
     {
         return new CollatzGenerator($startNumber);
     }
     
     /**
-     * @param resource $resource it have to be readable
-     * @param bool $closeOnFinish
-     * @param int|null $readByes
+     * @param resource|string $resource resource or full filepath; it have to be readable
      */
-    public static function resource($resource, bool $closeOnFinish = false, ?int $readByes = null): Producer
+    public static function resource($resource, bool $closeOnFinish = false, ?int $readBytes = null): Producer
     {
-        return new TextFileReader($resource, $closeOnFinish, $readByes);
+        return new TextFileReader($resource, $closeOnFinish, $readBytes);
     }
     
     public static function tokenizer(string $tokens, string $string = ''): Tokenizer
@@ -208,5 +232,21 @@ final class Producers
     public static function readFrom(&$variable): Producer
     {
         return new ReferenceAdapter($variable);
+    }
+    
+    /**
+     * @param \DateTimeInterface|string|int|null $startDate null value means "now"
+     * @param \DateInterval|string|null $interval null value means "1 day"
+     * @param \DateTimeInterface|string|int|null $endDate null value means there is no end date
+     * @return Producer<int, \DateTimeImmutable>
+     */
+    public static function dateTimeSeq(
+        $startDate = null,
+        $interval = null,
+        $endDate = null,
+        ?int $limit = null
+    ): Producer
+    {
+        return new TimeIterator($startDate, $interval, $endDate, $limit);
     }
 }

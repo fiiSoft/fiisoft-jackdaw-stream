@@ -9,6 +9,7 @@ use FiiSoft\Jackdaw\Filter\Logic\OpAND\FilterAND;
 use FiiSoft\Jackdaw\Filter\Logic\OpAND\FilterANDAny;
 use FiiSoft\Jackdaw\Filter\Logic\OpOR\FilterOR;
 use FiiSoft\Jackdaw\Filter\Logic\OpOR\FilterORBoth;
+use FiiSoft\Jackdaw\Filter\Time\Day;
 use FiiSoft\Jackdaw\Internal\Check;
 use PHPUnit\Framework\TestCase;
 
@@ -1095,6 +1096,16 @@ final class FiltersBTest extends TestCase
     public function test_filter_one_arg_callable(): void
     {
         $this->examineFilter(Filters::getAdapter(static fn($val): bool => $val === 1), 1, 2);
+    }
+    
+    public function test_isDay_all_variations(): void
+    {
+        $this->examineFilter(Filters::time()->isDay(Day::FRI), '2024-04-19', '2024-04-20');
+    }
+    
+    public function test_isNotDay_all_variations(): void
+    {
+        $this->examineFilter(Filters::time()->isNotDay(Day::FRI), '2024-04-20', '2024-04-19');
     }
     
     private function examineFilter(Filter $filter, $good, $wrong): void

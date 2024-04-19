@@ -60,7 +60,7 @@ final class Stream extends StreamSource
     private array $onErrorHandlers = [];
     
     /**
-     * @param ProducerReady|resource|callable|iterable|scalar ...$elements
+     * @param ProducerReady|resource|callable|iterable|object|scalar ...$elements
      */
     public static function of(...$elements): Stream
     {
@@ -68,7 +68,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable $producer
+     * @param ProducerReady|resource|callable|iterable|string $producer
      */
     public static function from($producer): Stream
     {
@@ -404,6 +404,15 @@ final class Stream extends StreamSource
     }
     
     /**
+     * @param array|string|int|null $fields
+     * @param \DateTimeZone|string|null $inTimeZone
+     */
+    public function castToTime($fields = null, ?string $fromFormat = null, $inTimeZone = null): Stream
+    {
+        return $this->map(Mappers::toTime($fields, $fromFormat, $inTimeZone));
+    }
+    
+    /**
      * It works exactly the same way as remap, it is only different syntax to use.
      * Processed value have to be an array.
      *
@@ -657,7 +666,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable ...$producers
+     * @param ProducerReady|resource|callable|iterable|string ...$producers
      */
     public function join(...$producers): Stream
     {
@@ -1237,7 +1246,7 @@ final class Stream extends StreamSource
     /**
      * Create new stream from the current one and set provided Producer as source of data for it.
      *
-     * @param ProducerReady|resource|callable|iterable $producer
+     * @param ProducerReady|resource|callable|iterable|string $producer
      */
     public function wrap($producer): Stream
     {

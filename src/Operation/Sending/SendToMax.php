@@ -7,7 +7,9 @@ use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Internal\StreamAware;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Stream;
 
 final class SendToMax extends BaseOperation
 {
@@ -52,6 +54,15 @@ final class SendToMax extends BaseOperation
             }
             
             yield $key => $value;
+        }
+    }
+    
+    public function assignStream(Stream $stream): void
+    {
+        parent::assignStream($stream);
+        
+        if ($this->consumer instanceof StreamAware) {
+            $this->consumer->assignStream($stream);
         }
     }
 }

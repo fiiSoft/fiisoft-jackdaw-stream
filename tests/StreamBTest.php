@@ -107,6 +107,116 @@ final class StreamBTest extends TestCase
         self::assertSame($expected, Stream::from($rowset)->castToBool('age')->toArray());
     }
     
+    public function test_castToTime_simple_values(): void
+    {
+        $previous = \date_default_timezone_get();
+        \date_default_timezone_set('Europe/London');
+        
+        try {
+            $dtImmutable = new \DateTimeImmutable('2015-09-30 12:20:30');
+            $dtMutable = new \DateTime('1985-11-10 22:05:45');
+            $dtString = '1992-05-15 03:15:38';
+            $dtTimestamp = $dtImmutable->modify('+10 years')->getTimestamp();
+            
+            $data = [$dtImmutable, $dtMutable, $dtString, $dtTimestamp];
+            
+            self::assertSame(
+                ['2015-09-30 12:20:30', '1985-11-10 22:05:45', '1992-05-15 03:15:38', '2025-09-30 11:20:30'],
+                Stream::from($data)->castToTime()->map(Mappers::formatTime())->toArray()
+            );
+        } finally {
+            \date_default_timezone_set($previous);
+        }
+    }
+    
+    public function test_castToTime_fields_in_arrays(): void
+    {
+        $previous = \date_default_timezone_get();
+        \date_default_timezone_set('Europe/London');
+        
+        try {
+            $dtImmutable = new \DateTimeImmutable('2015-09-30');
+            $dtMutable = new \DateTime('1985-11-10');
+            $dtString = '1992-05-15';
+            $dtTimestamp = $dtImmutable->modify('-10 years')->getTimestamp();
+            
+            $rowset = [
+                ['id' => 2, 'birthDate' => $dtImmutable],
+                ['id' => 9, 'birthDate' => $dtMutable],
+                ['id' => 6, 'birthDate' => $dtString],
+                ['id' => 5, 'birthDate' => $dtTimestamp],
+            ];
+            
+            $expected = [
+                ['id' => 2, 'birthDate' => '2015-09-30'],
+                ['id' => 9, 'birthDate' => '1985-11-10'],
+                ['id' => 6, 'birthDate' => '1992-05-15'],
+                ['id' => 5, 'birthDate' => '2005-09-29'],
+            ];
+            
+            self::assertSame(
+                $expected,
+                Stream::from($rowset)
+                    ->castToTime('birthDate')
+                    ->mapField('birthDate', Mappers::formatTime('Y-m-d'))
+                    ->toArray()
+            );
+        } finally {
+            \date_default_timezone_set($previous);
+        }
+    }
+    
+    public function test_castToTime_can_set_or_change_TimeZone_of_simple_values(): void
+    {
+        $ParisTZ = new \DateTimeZone('Europe/Paris');
+        $NewYorkTZ = 'America/New_York';
+        
+        $dtImmutable = new \DateTimeImmutable('2015-09-30 12:20:30', $ParisTZ);
+        $dtMutable = new \DateTime('1985-11-10 22:05:45', $ParisTZ);
+        $dtString = '15.05.1992, 03:15:38';
+        $dtTimestamp = $dtImmutable->modify('6 hours')->getTimestamp();
+        
+        $data = [$dtImmutable, $dtMutable, $dtString, $dtTimestamp];
+        
+        self::assertSame(
+            ['2015-09-30 06:20:30', '1985-11-10 16:05:45', '1992-05-15 03:15:38', '2015-09-30 16:20:30'],
+            Stream::from($data)->castToTime(null, 'd.m.Y, H:i:s', $NewYorkTZ)->map(Mappers::formatTime())->toArray()
+        );
+    }
+    
+    public function test_castToTime_can_set_or_change_TimeZone_of_fields_in_arrays(): void
+    {
+        $ParisTZ = new \DateTimeZone('Europe/Paris');
+        $NewYorkTZ = 'America/New_York';
+        
+        $dtImmutable = new \DateTimeImmutable('2015-09-30 12:20:30', $ParisTZ);
+        $dtMutable = new \DateTime('1985-11-10 22:05:45', $ParisTZ);
+        $dtString = '1992-05-15 03:15:38';
+        $dtTimestamp = $dtImmutable->modify('6 hours')->getTimestamp();
+        
+        $rowset = [
+            ['id' => 2, 'deathTime' => $dtImmutable],
+            ['id' => 9, 'deathTime' => $dtMutable],
+            ['id' => 6, 'deathTime' => $dtString],
+            ['id' => 5, 'deathTime' => $dtTimestamp],
+        ];
+        
+        $expected = [
+            ['id' => 2, 'deathTime' => '2015-09-30 06:20:30'],
+            ['id' => 9, 'deathTime' => '1985-11-10 16:05:45'],
+            ['id' => 6, 'deathTime' => '1992-05-15 03:15:38'],
+            ['id' => 5, 'deathTime' => '2015-09-30 16:20:30'],
+        ];
+        
+        self::assertSame(
+            $expected,
+            Stream::from($rowset)
+                ->castToTime('deathTime', null, $NewYorkTZ)
+                ->mapField('deathTime', Mappers::formatTime())
+                ->toArray()
+        );
+    }
+    
     public function test_rename(): void
     {
         $rowset = [

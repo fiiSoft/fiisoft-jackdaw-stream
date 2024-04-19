@@ -27,4 +27,20 @@ final class GeneratorExceptionFactory
     {
         return InvalidParamException::create('Max length cannot be less than min length');
     }
+    
+    /**
+     * @param mixed $value
+     */
+    public static function invalidDateTimeParam(string $name, $value): JackdawException
+    {
+        return InvalidParamException::describe($name, $value);
+    }
+    
+    /**
+     * @param mixed $value
+     */
+    public static function invalidDateIntervalParam(string $name, $value): JackdawException
+    {
+        return InvalidParamException::describe($name, $value);
+    }
 }

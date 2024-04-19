@@ -17,6 +17,7 @@ use FiiSoft\Jackdaw\Filter\Time\Compare\Range\NotInside;
 use FiiSoft\Jackdaw\Filter\Time\Compare\Range\Outside;
 use FiiSoft\Jackdaw\Filter\Time\Compare\Set\InSet;
 use FiiSoft\Jackdaw\Filter\Time\Compare\Set\NotInSet;
+use FiiSoft\Jackdaw\Filter\Time\Compare\WeekDay;
 
 final class TimeFilterFactory extends FilterFactory
 {
@@ -144,5 +145,21 @@ final class TimeFilterFactory extends FilterFactory
     public function notInSet(array $dates): Filter
     {
         return $this->get(TimeFilter::create($this->mode, new NotInSet($dates)));
+    }
+    
+    /**
+     * @param array $days at least one of Day::* constants
+     */
+    public function isDay(...$days): Filter
+    {
+        return $this->get(TimeFilter::create($this->mode, new WeekDay(true, $days)));
+    }
+    
+    /**
+     * @param array $days at least one of Day::* constants
+     */
+    public function isNotDay(...$days): Filter
+    {
+        return $this->get(TimeFilter::create($this->mode, new WeekDay(false, $days)));
     }
 }

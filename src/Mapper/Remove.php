@@ -40,7 +40,7 @@ final class Remove extends StateMapper
             return $value;
         }
     
-        throw MapperExceptionFactory::unsupportedValue($value);
+        throw MapperExceptionFactory::cannotRemoveFieldFrom($value);
     }
     
     protected function buildValueMapper(iterable $stream): iterable
@@ -55,7 +55,7 @@ final class Remove extends StateMapper
                 
                 yield $key => $value;
             } else {
-                throw MapperExceptionFactory::unsupportedValue($value);
+                throw MapperExceptionFactory::cannotRemoveFieldFrom($value);
             }
         }
     }

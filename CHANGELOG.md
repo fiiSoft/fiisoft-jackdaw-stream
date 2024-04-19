@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.3.0
+
+- added Producers::dateTimeSeq() to stream sequence of \DateTimeImmutable objects.
+- added Mappers::toTime() to cast values to \DateTimeImmutable
+- added Mappers::formatTime() to cast \DateTimeInterface value into string
+- added Filters::time()->isDay() and Filters::time()->isNotDay() to test time values against name of day
+- added Discriminators::dayOfWeek()
+- added Stream::castToTime() for convenient use of Mappers::toTime()
+
 ## 7.2.0
 
 Added possibility to limit max number of elements collected in buckets by operation segregate().

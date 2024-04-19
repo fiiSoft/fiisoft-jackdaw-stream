@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Exception\UnsupportedValueException;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Cast\ToBool;
@@ -119,21 +120,86 @@ final class MappersTest extends TestCase
         ], $result);
     }
     
-    public function test_toString_can_map_simple_value_and_also_fields_in_arrays(): void
+    public function test_ToTime_can_map_simple_value_and_also_fields_in_arrays(): void
+    {
+        self::assertEquals(
+            new \DateTimeImmutable('1999-05-25 06:30:00'),
+            Mappers::toTime()->map('1999-05-25 06:30:00')
+        );
+        
+        self::assertEquals(
+            ['field' => new \DateTimeImmutable('2050-12-10')],
+            Mappers::toTime(['field'])->map(['field' => '2050-12-10'])
+        );
+    }
+    
+    /**
+     * @dataProvider getDataForTestToTimeThrowsExceptionWhenCannotMapValue
+     */
+    public function test_ToTime_throws_exception_when_cannot_map_value($wrongArg): void
+    {
+        $this->expectExceptionObject(MapperExceptionFactory::cannotCreateTimeObjectFrom($wrongArg));
+        
+        Mappers::toTime()->map($wrongArg);
+    }
+    
+    public static function getDataForTestToTimeThrowsExceptionWhenCannotMapValue(): array
+    {
+        return [
+            [''],
+            [null],
+            [false],
+            [15.0],
+            [['foo']],
+            [new \stdClass()],
+        ];
+    }
+    
+    public function test_ToTime_throws_exception_when_cannot_map_string_of_unknown_format(): void
+    {
+        $this->expectExceptionObject(MapperExceptionFactory::cannotCreateTimeObjectFromString('2020-05-05', 'd.m.Y'));
+        
+        Mappers::toTime(null, 'd.m.Y')->map('2020-05-05');
+    }
+    
+    public function test_ToString_can_map_simple_value_and_also_fields_in_arrays(): void
     {
         self::assertSame('15', Mappers::toString()->map(15));
         self::assertSame(['field' => '5'], Mappers::toString(['field'])->map(['field' => 5]));
     }
     
-    public function test_toBool_can_map_simple_value_and_also_fields_in_arrays(): void
+    public function test_ToBool_can_map_simple_value_and_also_fields_in_arrays(): void
     {
         self::assertTrue(Mappers::toBool()->map(15));
         self::assertSame(['field' => true], Mappers::toBool(['field'])->map(['field' => 5]));
     }
     
-    public function test_toFloat(): void
+    public function test_ToFloat(): void
     {
         self::assertSame(15.45, Mappers::toFloat()->map('15.45'));
+    }
+    
+    public function test_FormatTime_throws_exception_when_param_format_is_empty(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::byName('format'));
+        
+        Mappers::formatTime('');
+    }
+    
+    public function test_FormatTime_throws_exception_when_value_is_not_proper_object(): void
+    {
+        $this->expectExceptionObject(UnsupportedValueException::cannotCastNonTimeObjectToString('foo'));
+        
+        Mappers::formatTime()->map('foo');
+    }
+    
+    public function test_FormatTime_can_map_DateTimeInterface_into_string(): void
+    {
+        $dt = new \DateTimeImmutable('2000-03-10');
+        
+        self::assertSame('2000-03-10 00:00:00', Mappers::formatTime()->map($dt));
+        self::assertSame('2000-03-10', Mappers::formatTime('Y-m-d')->map($dt));
+        self::assertSame('Fri', Mappers::formatTime('D')->map($dt));
     }
     
     public function test_Remove_throws_exception_on_invalid_param(): void
@@ -173,14 +239,14 @@ final class MappersTest extends TestCase
     
     public function test_Remove_throws_exception_on_invalid_argument(): void
     {
-        $this->expectExceptionObject(MapperExceptionFactory::unsupportedValue(new \stdClass()));
+        $this->expectExceptionObject(MapperExceptionFactory::cannotRemoveFieldFrom(new \stdClass()));
         
         Mappers::remove('id')->map(new \stdClass());
     }
     
     public function test_Remove_throws_exception_on_invalid_argument_when_iterate_over_stream(): void
     {
-        $this->expectExceptionObject(MapperExceptionFactory::unsupportedValue(new \stdClass()));
+        $this->expectExceptionObject(MapperExceptionFactory::cannotRemoveFieldFrom(new \stdClass()));
         
         foreach (Mappers::remove('id')->buildStream([new \stdClass()]) as $_) {
             //noop
@@ -570,17 +636,32 @@ final class MappersTest extends TestCase
         self::assertSame(['foo' => '1', 'bar' => '0'], $first->map(['foo' => 1, 'bar' => 0]));
     }
     
+    public function test_ToTime_can_merge_with_other_ToTime_mapper(): void
+    {
+        $first = Mappers::toTime('foo');
+        $second = Mappers::toTime('bar');
+    
+        self::assertTrue($first->mergeWith($second));
+    
+        self::assertEquals(
+            ['foo' => new \DateTimeImmutable('2020-01-01'), 'bar' => new \DateTimeImmutable('2020-12-12')],
+            $first->map(['foo' => '2020-01-01', 'bar' => '2020-12-12'])
+        );
+    }
+    
     public function test_two_different_simple_cast_mappers_dont_merge(): void
     {
         $toBool = Mappers::toBool();
         $toFloat = Mappers::toFloat();
         $toInt = Mappers::toInt();
         $toString = Mappers::toString();
+        $toTime = Mappers::toTime();
         
         self::assertFalse($toBool->mergeWith($toFloat));
         self::assertFalse($toFloat->mergeWith($toInt));
         self::assertFalse($toInt->mergeWith($toString));
-        self::assertFalse($toString->mergeWith($toBool));
+        self::assertFalse($toString->mergeWith($toTime));
+        self::assertFalse($toTime->mergeWith($toBool));
     }
     
     public function test_two_different_field_cast_mappers_dont_merge(): void
@@ -589,11 +670,13 @@ final class MappersTest extends TestCase
         $toFloat = Mappers::toFloat('bar');
         $toInt = Mappers::toInt('zoo');
         $toString = Mappers::toString('joe');
+        $toTime = Mappers::toTime('olo');
         
         self::assertFalse($toBool->mergeWith($toFloat));
         self::assertFalse($toFloat->mergeWith($toInt));
         self::assertFalse($toInt->mergeWith($toString));
-        self::assertFalse($toString->mergeWith($toBool));
+        self::assertFalse($toString->mergeWith($toTime));
+        self::assertFalse($toTime->mergeWith($toBool));
     }
     
     public function test_ToArray_changes_every_argument_into_array(): void

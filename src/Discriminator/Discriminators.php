@@ -99,4 +99,13 @@ final class Discriminators
     {
         return new YesNo($discriminator, $yes, $no);
     }
+    
+    /**
+     * This discriminator requires \DateTimeInterface object on input and returns string with the name of the day,
+     * the same as in Day::* constants or as an output of \DateTimeInterface::format('D') method.
+     */
+    public static function dayOfWeek(): Discriminator
+    {
+        return new DayOfWeek();
+    }
 }

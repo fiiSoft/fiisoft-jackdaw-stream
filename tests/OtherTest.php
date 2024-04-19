@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Mapper\Exception\MapperExceptionFactory;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
 use FiiSoft\Jackdaw\Operation\Filtering\Unique\ItemByItemChecker\FullAssocChecker;
@@ -471,5 +472,39 @@ final class OtherTest extends TestCase
     public static function other_function_to_test_Helper(int $firstArg = 0, string $secondArg = ''): array
     {
         return [];
+    }
+    
+    public function test_cannotCreateTimeObjectWithTimeZone_exception_1(): void
+    {
+        $previous = \date_default_timezone_get();
+        \date_default_timezone_set('Europe/London');
+        
+        try {
+            $exception = MapperExceptionFactory::cannotCreateTimeObjectWithTimeZone(
+                new \DateTime('2010-08-20 12:00:00'),
+                new \DateTimeZone('Africa/Bissau')
+            );
+        
+            self::assertSame(
+                'Cannot set or change time zone Africa/Bissau on DateTime object 2010-08-20T12:00:00+01:00',
+                $exception->getMessage()
+            );
+            
+        } finally {
+            \date_default_timezone_set($previous);
+        }
+    }
+    
+    public function test_cannotCreateTimeObjectWithTimeZone_exception_2(): void
+    {
+        $exception = MapperExceptionFactory::cannotCreateTimeObjectWithTimeZone(
+            '2010-08-20 12:00:00',
+            new \DateTimeZone('Africa/Bissau')
+        );
+    
+        self::assertSame(
+            'Cannot set or change time zone Africa/Bissau from string 2010-08-20 12:00:00',
+            $exception->getMessage()
+        );
     }
 }

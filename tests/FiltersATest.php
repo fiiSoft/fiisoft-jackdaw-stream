@@ -40,6 +40,7 @@ use FiiSoft\Jackdaw\Filter\String\StrIs;
 use FiiSoft\Jackdaw\Filter\String\StrIsNot;
 use FiiSoft\Jackdaw\Filter\Time\Compare\IdleTimeComp;
 use FiiSoft\Jackdaw\Filter\Time\Compare\Point\Is;
+use FiiSoft\Jackdaw\Filter\Time\Day;
 use FiiSoft\Jackdaw\Filter\Time\TimeFilter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Stream;
@@ -766,6 +767,20 @@ final class FiltersATest extends TestCase
         );
     }
     
+    public function test_isDay_all_variations(): void
+    {
+        $this->examineFilter(
+            static fn(int $mode): Filter => Filters::time($mode)->isDay(Day::FRI), '2024-04-19', '2024-04-20'
+        );
+    }
+    
+    public function test_isNotDay_all_variations(): void
+    {
+        $this->examineFilter(
+            static fn(int $mode): Filter => Filters::time($mode)->isNotDay(Day::FRI), '2024-04-20', '2024-04-19'
+        );
+    }
+    
     private function examineFilter(callable $factory, $goodValue, $wrongValue): void
     {
         $iterator = $this->filterTesterIterator($factory, $goodValue, $wrongValue);
@@ -1279,6 +1294,8 @@ final class FiltersATest extends TestCase
         yield 'not_inside' => [$filter->notInside('now', 'now')];
         yield 'inSet' => [$filter->inSet(['now'])];
         yield 'notInSet' => [$filter->notInSet(['now'])];
+        yield 'isDay' => [$filter->isDay(Day::MON)];
+        yield 'isNotDay' => [$filter->isNotDay(Day::MON)];
     }
     
     public function test_TimeFilter_Between_both_arguments_point_to_the_same_datetime(): void
@@ -1330,6 +1347,36 @@ final class FiltersATest extends TestCase
         yield 'inside' => [static fn($arg) => $filter->inside($arg, $arg)];
         yield 'inSet' => [static fn($arg) => $filter->inSet([$arg])];
         yield 'notInSet' => [static fn($arg) => $filter->notInSet([$arg])];
+    }
+    
+    /**
+     * @dataProvider getDataForTestWeekDayFilterThrowsExceptionWhenParamDaysIsInvalid
+     */
+    public function test_isDay_filter_throws_exception_when_param_days_is_invalid(...$days): void
+    {
+        $this->expectExceptionObject(InvalidParamException::describe('days', $days));
+        
+        Filters::time()->isDay(...$days);
+    }
+    
+    /**
+     * @dataProvider getDataForTestWeekDayFilterThrowsExceptionWhenParamDaysIsInvalid
+     */
+    public function test_isNotDay_filter_throws_exception_when_param_days_is_invalid(...$days): void
+    {
+        $this->expectExceptionObject(InvalidParamException::describe('days', $days));
+        
+        Filters::time()->isNotDay(...$days);
+    }
+    
+    public static function getDataForTestWeekDayFilterThrowsExceptionWhenParamDaysIsInvalid(): array
+    {
+        return [
+            [],
+            [''],
+            [1],
+            [Day::SAT, 'foo']
+        ];
     }
     
     public function test_TimeFilter_empty_inSet(): void

@@ -52,11 +52,6 @@ final class SendTo extends BaseOperation
     {
         parent::assignStream($stream);
         
-        $this->assignStreamToConsumer($stream);
-    }
-    
-    private function assignStreamToConsumer(Stream $stream): void
-    {
         if ($this->consumer instanceof StreamAware) {
             $this->consumer->assignStream($stream);
         }

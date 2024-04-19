@@ -11,7 +11,7 @@ $memoryStart = memory_get_usage();
 
 $count = 0;
 
-$stream = Stream::from(fopen(__DIR__.'/../var/testfile.txt', 'rb'))
+$stream = Stream::from(__DIR__.'/../var/testfile.txt')
     ->map(Mappers::jsonDecode())
     ->filterBy('isVerified', true)
     ->filterBy('facebookId', Filters::notNull())

@@ -10,11 +10,14 @@ use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Exception\StreamExceptionFactory;
+use FiiSoft\Jackdaw\Exception\UnsupportedValueException;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Filter\IdleFilter;
+use FiiSoft\Jackdaw\Filter\Time\Day;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
+use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Registry\Registry;
@@ -1396,6 +1399,149 @@ final class StreamCTest extends TestCase
             [0 => 1, 7 => 1, 13 => 1],
             [2 => 2, 4 => 2, 11 => 2, 15 => 2],
             [3 => 3, 9 => 3, 16 => 3, 19 => 3],
+        ], $result);
+    }
+    
+    public function test_stream_file_Producers_resource_file(): void
+    {
+        $this->examineTextFileReader(Producers::resource(__DIR__.'/ConditionsTest.php'));
+    }
+    
+    public function test_stream_file_Producers_getAdapter_file(): void
+    {
+        $this->examineTextFileReader(Producers::getAdapter(__DIR__.'/ConditionsTest.php'));
+    }
+    
+    public function test_stream_file_Producers_resource_with_long_readBytes(): void
+    {
+        $this->examineTextFileReader(Producers::resource(\fopen(__DIR__.'/ConditionsTest.php', 'rb'), true, 4096));
+    }
+    
+    public function test_stream_file_more_than_once(): void
+    {
+        $producer = Producers::getAdapter(__DIR__.'/ConditionsTest.php');
+        
+        $this->examineTextFileReader($producer);
+        $this->examineTextFileReader($producer);
+    }
+    
+    private function examineTextFileReader(Producer $producer): void
+    {
+        $countAllLines = 0;
+        $countNonEmptyLines = 0;
+        
+        Stream::from($producer)
+            ->countIn($countAllLines)
+            ->trim()
+            ->notEmpty()
+            ->countIn($countNonEmptyLines)
+            ->run();
+        
+        self::assertSame(42, $countAllLines);
+        self::assertSame(32, $countNonEmptyLines);
+    }
+    
+    public function test_stream_few_times_over_datetime_sequence(): void
+    {
+        $dates = Stream::from(Producers::dateTimeSeq('2001-01-01'))->limit(3)->toArray();
+        
+        self::assertSame([
+            '2001-01-01 00:00:00',
+            '2001-01-02 00:00:00',
+            '2001-01-03 00:00:00',
+        ], \array_map(static fn(\DateTimeImmutable $dt): string => $dt->format('Y-m-d H:i:s'), $dates));
+    }
+    
+    public function test_count_number_of_working_days_in_date_range_using_dateTimeSeq_producer(): void
+    {
+        $workingDays = Producers::dateTimeSeq('2024-12-01', '1 day', '2024-12-31')
+            ->stream()
+            ->omit(Filters::time()->isDay(Day::SAT, Day::SUN))
+            ->omit(Filters::time()->inSet(['2024-12-25', '2024-12-26']))
+            ->count();
+        
+        self::assertSame(20, $workingDays->get());
+    }
+    
+    public function test_count_number_of_working_days_in_date_range_using_mutable_variable_and_call(): void
+    {
+        $day = new \DateTime('2024-12-01');
+        
+        $workingDays = Stream::empty()
+            ->filter(Filters::time()->isNotDay(Day::SAT, Day::SUN))
+            ->filter(Filters::time()->notInSet(['2024-12-25', '2024-12-26']))
+            ->count();
+        
+        Producers::readFrom($day)
+            ->stream()
+            ->feed($workingDays)
+            ->call(static function () use ($day) {
+                $day->modify('+1 day');
+            })
+            ->until(Filters::time()->is('2025-01-01'))
+            ->run();
+        
+        self::assertSame(20, $workingDays->get());
+    }
+    
+    public function test_count_number_of_working_days_in_date_range_using_loop_stream_and_countIn(): void
+    {
+        $workingDays = 0;
+        
+        Stream::of(new \DateTimeImmutable('2024-12-01'))
+            ->feed(Stream::empty()
+                ->omit(Filters::time()->isDay(Day::SAT, Day::SUN))
+                ->omit(Filters::time()->inSet(['2024-12-25', '2024-12-26']))
+                ->countIn($workingDays)
+            )
+            ->map(static fn(\DateTimeImmutable $dt): \DateTimeImmutable => $dt->modify('+1 day'))
+            ->while(Filters::time()->before('2025-01-01'))
+            ->loop(true);
+            
+        self::assertSame(20, $workingDays);
+    }
+    
+    public function test_count_number_of_working_days_in_date_range_using_queue_producer_and_dedicated_filter(): void
+    {
+        $isDayOff = Filters::time()->isDay(Day::SAT, Day::SUN)
+            ->or(Filters::time()->inSet(['2024-12-25', '2024-12-26']));
+        
+        Stream::from($queue = Producers::queue([new \DateTimeImmutable('2024-12-01')]))
+            ->callWhen(Filters::NOT($isDayOff), $workingDays = Consumers::counter())
+            ->map(static fn(\DateTimeImmutable $dt): \DateTimeImmutable => $dt->modify('+1 day'))
+            ->callWhen(Filters::time()->until('2024-12-31'), $queue);
+        
+        self::assertSame(20, $workingDays->get());
+    }
+    
+    public function test_streaming_of_invalid_datetime_values_throws_exception(): void
+    {
+        $this->expectExceptionObject(UnsupportedValueException::cannotCastNonTimeObjectToString('tomorrow'));
+        
+        Stream::from([new \DateTime('now'), 'tomorrow', new \DateTimeImmutable('yesterday')])
+            ->map(Mappers::formatTime())
+            ->run();
+    }
+    
+    public function test_Day_constants_are_valid(): void
+    {
+        $result = Producers::dateTimeSeq('2024-04-15')
+            ->stream()
+            ->limit(7)
+            ->filter(Filters::time()->isDay(Day::MON, Day::TUE, Day::WED, Day::THU, Day::FRI, Day::SAT, Day::SUN))
+            ->classify(Discriminators::dayOfWeek())
+            ->map(Mappers::formatTime('d'))
+            ->castToInt()
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            Day::MON => 15,
+            Day::TUE => 16,
+            Day::WED => 17,
+            Day::THU => 18,
+            Day::FRI => 19,
+            Day::SAT => 20,
+            Day::SUN => 21,
         ], $result);
     }
 }
