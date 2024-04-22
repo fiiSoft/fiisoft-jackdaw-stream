@@ -1478,8 +1478,7 @@ final class StreamCTest extends TestCase
             ->call(static function () use ($day) {
                 $day->modify('+1 day');
             })
-            ->until(Filters::time()->is('2025-01-01'))
-            ->run();
+            ->until(Filters::time()->is('2025-01-01'));
         
         self::assertSame(20, $workingDays->get());
     }

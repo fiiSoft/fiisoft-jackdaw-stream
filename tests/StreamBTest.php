@@ -782,8 +782,7 @@ final class StreamBTest extends TestCase
                 static fn(int $n): int => $n >> 1,
                 static fn(int $n): int => (3 * $n + 1)
             )
-            ->call($queue)
-            ->run();
+            ->call($queue);
         
         $expected = '304, 152, 76, 38, 19, 58, 29, 88, 44, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1';
         

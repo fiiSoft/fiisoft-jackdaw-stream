@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.4.0
+
+A stream can be executed by directly calling methods from dependent streams passed to the feed() method.
+
 ## 7.3.0
 
 - added Producers::dateTimeSeq() to stream sequence of \DateTimeImmutable objects.

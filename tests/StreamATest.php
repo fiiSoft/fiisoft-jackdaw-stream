@@ -1324,8 +1324,7 @@ final class StreamATest extends TestCase
             ->join(Producers::tokenizer(' ', 'the quick'))
             ->collect(true);
         
-        $stream = Stream::from([1, 2])->join([7, 8])->feed($collector);
-        $stream->run();
+        Stream::from([1, 2])->join([7, 8])->feed($collector);
         
         self::assertSame(
             [1, 2, 7, 8, 'a', 'b', 10, 9, 'foo', 'bar', 'the', 'quick'],

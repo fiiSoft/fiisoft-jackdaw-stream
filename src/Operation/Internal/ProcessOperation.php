@@ -13,7 +13,7 @@ abstract class ProcessOperation extends ForkCollaborator implements Operation
     
     private ?Signal $signal = null;
     
-    final public function assignStream(Stream $stream): void
+    public function assignStream(Stream $stream): void
     {
         if ($this->next !== null) {
             $this->next->assignStream($stream);

@@ -1107,9 +1107,7 @@ final class StreamDTest extends TestCase
         
         $last = Stream::empty()->join(['d', 'e', 'f'])->feed($tail)->last();
         
-        $stream = Stream::from(['a', 'b', 'c'])->feed($last);
-        
-        $stream->run();
+        Stream::from(['a', 'b', 'c'])->feed($last);
         
         self::assertSame('f', $last->get());
         self::assertSame([1 => 'e', 2 => 'f'], $tail->toArrayAssoc());

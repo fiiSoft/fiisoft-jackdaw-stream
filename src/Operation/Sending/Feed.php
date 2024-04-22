@@ -4,7 +4,9 @@ namespace FiiSoft\Jackdaw\Operation\Sending;
 
 use FiiSoft\Jackdaw\Internal\ForkCollaborator;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Internal\SourceAware;
 use FiiSoft\Jackdaw\Operation\Internal\ProcessOperation;
+use FiiSoft\Jackdaw\Stream;
 
 final class Feed extends ProcessOperation
 {
@@ -51,5 +53,14 @@ final class Feed extends ProcessOperation
     public function streamingFinished(Signal $signal): bool
     {
         return $this->next->streamingFinished($signal);
+    }
+    
+    public function assignStream(Stream $stream): void
+    {
+        parent::assignStream($stream);
+
+        if ($this->stream instanceof SourceAware) {
+            $this->stream->assignSource($stream);
+        }
     }
 }

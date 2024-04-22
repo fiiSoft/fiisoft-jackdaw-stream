@@ -1696,8 +1696,7 @@ final class StreamFTest extends TestCase
     {
         $collector = Stream::empty()->skip(2)->limit(4)->collect(true);
         
-        $stream = Stream::from([1, 2])->join([7, 8], ['a', 'b', 'c', 'd'])->feed($collector)->onError(OnError::skip());
-        $stream->run();
+        Stream::from([1, 2])->join([7, 8], ['a', 'b', 'c', 'd'])->feed($collector)->onError(OnError::skip());
         
         self::assertSame(
             [7, 8, 'a', 'b'],

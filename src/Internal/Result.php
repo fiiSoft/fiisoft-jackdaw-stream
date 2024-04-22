@@ -10,6 +10,7 @@ use FiiSoft\Jackdaw\Transformer\Transformers;
 final class Result extends StreamPipe implements ResultApi
 {
     private Stream $stream;
+    private ?Stream $source;
     private FinalOperation $resultProvider;
     private ?ResultItem $resultItem = null;
     private ?Transformer $transformer = null;
@@ -23,11 +24,16 @@ final class Result extends StreamPipe implements ResultApi
     /**
      * @param callable|mixed|null $orElse
      */
-    public function __construct(Stream $stream, FinalOperation $resultProvider, $orElse = null)
-    {
+    public function __construct(
+        Stream $stream,
+        FinalOperation $resultProvider,
+        $orElse = null,
+        ?Stream $source = null
+    ) {
         $this->stream = $stream;
         $this->resultProvider = $resultProvider;
         $this->orElse = $orElse;
+        $this->source = $source;
     }
     
     /**
@@ -163,6 +169,10 @@ final class Result extends StreamPipe implements ResultApi
     
     private function do(): ResultItem
     {
+        if ($this->source !== null && $this->source->isNotStartedYet()) {
+            $this->source->run();
+        }
+        
         if ($this->resultItem === null && $this->stream->isNotStartedYet()) {
             $this->stream->execute();
         }
@@ -209,6 +219,11 @@ final class Result extends StreamPipe implements ResultApi
             $this->transformer = null;
             
             $this->stream->destroy();
+            
+            if ($this->source !== null) {
+                $this->source->destroy();
+                $this->source = null;
+            }
             
             if ($this->resultItem !== null) {
                 $this->resultItem->destroy();

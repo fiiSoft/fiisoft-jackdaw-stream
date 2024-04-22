@@ -6,6 +6,7 @@ use FiiSoft\Jackdaw\Internal\Result;
 use FiiSoft\Jackdaw\Internal\ResultApi;
 use FiiSoft\Jackdaw\Internal\ResultProvider;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Internal\SourceAware;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Operation\Internal\CommonOperationCode;
 use FiiSoft\Jackdaw\Operation\LastOperation;
@@ -13,11 +14,12 @@ use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Stream;
 
-abstract class FinalOperation extends StreamPipe implements LastOperation, Operation, ResultProvider
+abstract class FinalOperation extends StreamPipe implements LastOperation, Operation, ResultProvider, SourceAware
 {
     use CommonOperationCode { destroy as commonDestroy; }
     
     private Stream $stream;
+    private ?Stream $sourceStream = null;
     private ?Result $result = null;
     
     /** @var callable|mixed|null */
@@ -133,7 +135,7 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
     private function result(): Result
     {
         if ($this->result === null) {
-            $this->result = new Result($this->stream, $this, $this->orElse);
+            $this->result = new Result($this->stream, $this, $this->orElse, $this->sourceStream);
         } elseif ($this->refreshResult) {
             $this->result->refreshResult();
             $this->refreshResult = false;
@@ -171,6 +173,11 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
         if ($this->next !== null) {
             $this->next->assignStream($stream);
         }
+    }
+    
+    final public function assignSource(Stream $stream): void
+    {
+        $this->sourceStream = $stream;
     }
     
     /**

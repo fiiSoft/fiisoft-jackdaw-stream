@@ -33,8 +33,11 @@ final class Counter extends StreamState implements Consumer, StreamAware
      */
     public function get(): int
     {
-        if ($this->stream !== null && $this->stream->isNotStartedYet()) {
-            $this->stream->run();
+        if ($this->stream !== null) {
+            if ($this->stream->isNotStartedYet()) {
+                $this->stream->run();
+            }
+            
             $this->stream = null;
         }
         

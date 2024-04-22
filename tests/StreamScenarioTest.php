@@ -420,8 +420,7 @@ final class StreamScenarioTest extends TestCase
     public function test_scenario_27(): void
     {
         $consumer = Stream::empty()->onlyIntegers()->greaterThan(0)->reduce(Reducers::sum());
-        $source = Stream::from(['v', -3, 'a', 5, 'f', 2, 'u', 0, 'b', -1])->limit(7)->feed($consumer);
-        $source->run();
+        Stream::from(['v', -3, 'a', 5, 'f', 2, 'u', 0, 'b', -1])->limit(7)->feed($consumer);
     
         self::assertSame(7, $consumer->get());
     }
@@ -1180,7 +1179,7 @@ final class StreamScenarioTest extends TestCase
 
         $stream = Stream::empty()->tokenize()->reduce(Reducers::longest());
 
-        Stream::from($data)->feed($stream)->run();
+        Stream::from($data)->feed($stream);
 
         self::assertSame('adstukuo', $stream->get());
     }

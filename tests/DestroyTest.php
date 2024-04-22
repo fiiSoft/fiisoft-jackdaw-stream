@@ -76,11 +76,9 @@ final class DestroyTest extends TestCase
     {
         $onlyChars = Stream::empty()->onlyStrings()->reduce(Reducers::concat());
         
-        $stream = Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e'])
+        Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e'])
             ->feed($onlyChars)
             ->mapWhen('\is_string', '\strtoupper');
-        
-        $stream->run();
         
         self::assertSame('abcde', $onlyChars->get());
         
