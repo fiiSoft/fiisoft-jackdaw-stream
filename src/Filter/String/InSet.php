@@ -10,6 +10,9 @@ use FiiSoft\Jackdaw\Internal\Check;
 
 abstract class InSet extends StringFilterMulti
 {
+    /**
+     * @param string[] $values
+     */
     final public static function create(int $mode, array $values, bool $ignoreCase = false): self
     {
         switch ($mode) {

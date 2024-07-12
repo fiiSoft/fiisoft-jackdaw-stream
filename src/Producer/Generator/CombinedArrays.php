@@ -6,12 +6,15 @@ use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
 final class CombinedArrays extends BaseProducer
 {
+    /** @var array<int, mixed> */
     private array $keys;
+    
+    /** @var array<int, mixed> */
     private array $values;
     
     /**
-     * @param array $keys it MUST be standard numerical array indexed from 0
-     * @param array $values it MUST be standard numerical array indexed from 0
+     * @param array<int, mixed> $keys it MUST be standard numerical array indexed from 0
+     * @param array<int, mixed> $values it MUST be standard numerical array indexed from 0
      */
     public function __construct(array $keys, array $values)
     {

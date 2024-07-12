@@ -9,10 +9,13 @@ final class Flattener extends BaseProducer
 {
     public const MAX_LEVEL = 128;
     
+    /** @var iterable<string|int, mixed> */
     private iterable $iterable = [];
+    
     private int $maxLevel;
     
     /**
+     * @param iterable<string|int, mixed> $iterable
      * @param int $level 0 means no nesting restrictions (well, almost)
      */
     public function __construct(iterable $iterable = [], int $level = 0)
@@ -25,6 +28,9 @@ final class Flattener extends BaseProducer
         yield from $this->iterate($this->iterable, 1);
     }
     
+    /**
+     * @param iterable<string|int, mixed> $values
+     */
     private function iterate(iterable $values, int $level): \Generator
     {
         if ($level < $this->maxLevel) {
@@ -56,7 +62,7 @@ final class Flattener extends BaseProducer
     }
     
     /**
-     * @param iterable $iterable date to flatten
+     * @param iterable<string|int, mixed> $iterable date to flatten
      * @return $this fluent interface
      */
     public function setIterable(iterable $iterable): self

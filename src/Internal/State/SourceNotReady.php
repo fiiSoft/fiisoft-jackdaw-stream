@@ -18,10 +18,13 @@ final class SourceNotReady extends Source
         
         $this->initializeSource();
         
-        $isValid = $this->currentSource->valid();
-        $this->sourceIsReady();
+        if ($this->currentSource->valid()) {
+            $this->sourceIsReady();
+            
+            return true;
+        }
         
-        return $isValid;
+        return false;
     }
     
     public function setNextItem(Item $item): void

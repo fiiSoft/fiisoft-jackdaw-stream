@@ -6,8 +6,12 @@ use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
 final class TraversableAdapter extends BaseProducer
 {
+    /** @var \Traversable<string|int, mixed> */
     private \Traversable $iterator;
     
+    /**
+     * @param \Traversable<string|int, mixed> $iterator
+     */
     public function __construct(\Traversable $iterator)
     {
         $this->iterator = $iterator;

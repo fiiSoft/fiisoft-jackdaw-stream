@@ -18,10 +18,10 @@ use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidVersion;
 use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
-use FiiSoft\Jackdaw\Producer\Internal\PushProducer;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseArrayIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseNumericalArrayIterator;
+use FiiSoft\Jackdaw\Producer\MultiProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
@@ -671,9 +671,9 @@ final class ProducersTest extends TestCase
         }
     }
     
-    public function test_PusProducer_can_hold_other_producers(): void
+    public function test_MultiProducer_can_hold_other_producers(): void
     {
-        $push = new PushProducer();
+        $push = MultiProducer::oneTime();
         $producer1 = Producers::getAdapter(['a', 'b']);
         $producer2 = Producers::sequentialInt();
         

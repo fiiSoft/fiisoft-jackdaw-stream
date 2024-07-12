@@ -15,7 +15,7 @@ final class Dispatch extends DispatchOperation
     private Discriminator $discriminator;
     
     /**
-     * @param DiscriminatorReady|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
      * @param HandlerReady[] $handlers
      */
     public function __construct($discriminator, array $handlers)

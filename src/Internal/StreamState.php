@@ -6,11 +6,7 @@ use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
 
 abstract class StreamState
 {
-    /**
-     * Used in: Counter, Result
-     *
-     * @return bool true when Stream has not been started yet
-     */
+    //Counter, Result, Stream
     protected function isNotStartedYet(): bool
     {
         throw ImpossibleSituationException::called(__METHOD__);

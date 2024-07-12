@@ -6,11 +6,20 @@ use FiiSoft\Jackdaw\Filter\Filter;
 
 abstract class StringFilterMulti extends StringFilter
 {
+    /** @var array<string, int|bool> */
     protected array $values = [];
+    
+    /** @var string[] */
     protected array $oryginal;
     
+    /**
+     * @param string[] $values
+     */
     abstract protected static function create(int $mode, array $values, bool $ignoreCase = false): self;
     
+    /**
+     * @param string[] $values
+     */
     final protected function __construct(int $mode, array $values, bool $ignoreCase)
     {
         parent::__construct($mode, $ignoreCase);

@@ -6,8 +6,12 @@ use FiiSoft\Jackdaw\Stream;
 
 final class ArrayAdapter extends BaseIterableCollector
 {
+    /** @var array<string|int, mixed> */
     private array $storage;
     
+    /**
+     * @param array<string|int, mixed> $storage
+     */
     public function __construct(array &$storage, bool $allowsKeys = true)
     {
         parent::__construct($allowsKeys);

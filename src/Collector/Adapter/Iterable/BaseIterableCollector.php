@@ -6,6 +6,9 @@ use FiiSoft\Jackdaw\Collector\BaseCollector;
 use FiiSoft\Jackdaw\Collector\IterableCollector;
 use FiiSoft\Jackdaw\Internal\Helper;
 
+/**
+ * @implements \IteratorAggregate<string|int, mixed>
+ */
 abstract class BaseIterableCollector extends BaseCollector implements IterableCollector, \IteratorAggregate
 {
     final public function toString(string $separator = ','): string

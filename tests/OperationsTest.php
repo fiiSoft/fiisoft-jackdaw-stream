@@ -119,14 +119,14 @@ final class OperationsTest extends TestCase
     
     public function test_Ending_operation(): void
     {
-        $operation = new Ending();
+        $operation = $this->endingOperation();
         
         self::assertFalse($operation->streamingFinished(new Signal(Stream::empty())));
     }
     
     public function test_Ending_operation_cannot_be_removed_from_chain(): void
     {
-        $operation = new Ending();
+        $operation = $this->endingOperation();
         $this->expectExceptionObject(ImpossibleSituationException::called('removeFromChain', $operation));
         
         $operation->removeFromChain();
@@ -134,18 +134,18 @@ final class OperationsTest extends TestCase
     
     public function test_Ending_operation_has_to_be_the_last_operation_in_chain(): void
     {
-        $operation = new Ending();
+        $operation = $this->endingOperation();
         $this->expectExceptionObject(ImpossibleSituationException::called('setNext', $operation));
     
-        $operation->setNext(new Ending());
+        $operation->setNext($this->endingOperation());
     }
     
     public function test_Ending_cannot_prepend_other_operation(): void
     {
-        $operation = new Ending();
+        $operation = $this->endingOperation();
         $this->expectExceptionObject(ImpossibleSituationException::called('prepend', $operation));
         
-        $operation->prepend(new Ending());
+        $operation->prepend($this->endingOperation());
     }
     
     public function test_Initial_operation_have_to_be_first_operation_in_chain(): void
@@ -153,7 +153,7 @@ final class OperationsTest extends TestCase
         $operation = new Initial();
         $this->expectExceptionObject(ImpossibleSituationException::called('setPrev', $operation));
     
-        $operation->setPrev(new Ending());
+        $operation->setPrev($this->endingOperation());
     }
     
     public function test_Initial_cannot_prepend_other_operation(): void
@@ -161,7 +161,7 @@ final class OperationsTest extends TestCase
         $operation = new Initial();
         $this->expectExceptionObject(ImpossibleSituationException::called('prepend', $operation));
     
-        $operation->prepend(new Ending());
+        $operation->prepend($this->endingOperation());
     }
     
     public function test_Initial_operation_passes_signal_to_next_operation(): void
@@ -664,7 +664,7 @@ final class OperationsTest extends TestCase
     {
         //given
         $limit = new Limit(1);
-        $ending = new Ending();
+        $ending = $this->endingOperation();
         
         $limit->setNext($ending, true);
         
@@ -673,6 +673,14 @@ final class OperationsTest extends TestCase
         
         //then
         self::assertSame($limit, $prev);
+    }
+    
+    private function endingOperation(): Ending
+    {
+        /* @var $ending Ending */
+        $ending = (new Initial())->getNext();
+        
+        return $ending;
     }
     
     public function test_UnpackTuple_can_handle_numerical_array(): void

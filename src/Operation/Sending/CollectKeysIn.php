@@ -12,7 +12,7 @@ final class CollectKeysIn extends BaseOperation
     private Collector $collector;
     
     /**
-     * @param Collector|\ArrayAccess|\SplHeap|\SplPriorityQueue $collector
+     * @param Collector|\ArrayAccess<string|int, mixed>|\SplHeap<mixed>|\SplPriorityQueue<int, mixed> $collector
      */
     public function __construct($collector)
     {

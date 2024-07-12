@@ -9,8 +9,7 @@ use FiiSoft\Jackdaw\Stream;
 final class Reduce extends ReduceFinal
 {
     /**
-     * @param Stream $stream
-     * @param Reducer|callable|array $reducer
+     * @param Reducer|callable|array<Reducer|callable> $reducer
      * @param callable|mixed|null $orElse
      */
     public function __construct(Stream $stream, $reducer, $orElse = null)

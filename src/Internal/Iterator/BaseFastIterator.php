@@ -5,12 +5,18 @@ namespace FiiSoft\Jackdaw\Internal\Iterator;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Stream;
 
+/**
+ * @implements \Iterator<string|int, mixed>
+ */
 abstract class BaseFastIterator extends StreamPipe implements \Iterator
 {
     protected \Iterator $iterator;
     
     private Stream $stream;
     
+    /**
+     * @param iterable<string|int, mixed> $iterator
+     */
     final public static function create(Stream $stream, iterable $iterator): self
     {
         if (\version_compare(\PHP_VERSION, '8.1.0') >= 0) {
@@ -22,6 +28,9 @@ abstract class BaseFastIterator extends StreamPipe implements \Iterator
         return new FastIterator($stream, $iterator);
     }
     
+    /**
+     * @param iterable<string|int, mixed> $iterator
+     */
     final protected function __construct(Stream $stream, iterable $iterator)
     {
         $this->stream = $stream;

@@ -4,5 +4,6 @@ namespace FiiSoft\Jackdaw\Registry;
 
 final class Storage
 {
+    /** @var array<string, mixed> */
     public array $registered = [];
 }

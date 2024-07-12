@@ -6,6 +6,7 @@ use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
 
 final class FieldsComparator extends BaseComparator
 {
+    /** @var array<string|int, bool> */
     private array $fields = [];
     
     /**

@@ -26,6 +26,9 @@ final class MinMax extends BaseReducer
         }
     }
     
+    /**
+     * @return array{min:float|int, max:float|int}
+     */
     public function result(): array
     {
         return [

@@ -1,5 +1,7 @@
 <?php declare(strict_types=1);
 
+//composer require --dev gowork/values >=0.5.0
+
 use GW\Value\Wrap;
 
 require_once  __DIR__ .'/../vendor/autoload.php';

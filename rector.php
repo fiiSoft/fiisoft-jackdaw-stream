@@ -1,6 +1,5 @@
 <?php declare(strict_types=1);
 
-use Rector\CodeQuality\Rector\Array_\CallableThisArrayToAnonymousFunctionRector;
 use Rector\CodeQuality\Rector\Empty_\SimplifyEmptyCheckOnEmptyArrayRector;
 use Rector\CodeQuality\Rector\Expression\InlineIfToExplicitIfRector;
 use Rector\CodeQuality\Rector\Foreach_\UnusedForeachValueToArrayKeysRector;
@@ -85,7 +84,6 @@ return static function (RectorConfig $configurator): void {
         AddParamTypeBasedOnPHPUnitDataProviderRector::class,
         StringClassNameToClassConstantRector::class,
         UnwrapFutureCompatibleIfPhpVersionRector::class,
-        CallableThisArrayToAnonymousFunctionRector::class,
         ParenthesizeNestedTernaryRector::class,
         StrictStringParamConcatRector::class,
         LogicalToBooleanRector::class,

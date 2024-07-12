@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Collector;
 
@@ -9,13 +9,11 @@ interface Collector extends HandlerReady
     /**
      * @param string|int $key
      * @param mixed $value
-     * @return void
      */
     public function set($key, $value): void;
     
     /**
      * @param mixed $value
-     * @return void
      */
     public function add($value): void;
     

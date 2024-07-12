@@ -502,7 +502,7 @@ final class StreamETest extends TestCase
         $stream = Stream::from(['a b', 'c d'])
             ->tokenize()
             ->call($counter = Consumers::counter())
-            ->gatherWhile(fn(): bool => $counter->count() <= 3, true);
+            ->gatherWhile(fn(): bool => $counter->get() <= 3, true);
         
         $result = $stream->toArray();
         

@@ -6,8 +6,13 @@ use FiiSoft\Jackdaw\Operation\Filtering\Unique\ComparisonStrategy;
 
 final class StandardComparator extends ComparisonStrategy
 {
+    /** @var array<int, bool> */
     private array $intsMap = [];
+    
+    /** @var array<string, bool> */
     private array $stringsMap = [];
+    
+    /** @var array<int, mixed> */
     private array $otherValues = [];
     
     /**

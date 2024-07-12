@@ -45,6 +45,9 @@ final class SendToMany extends BaseOperation
         }
     }
     
+    /**
+     * @return Consumer[]
+     */
     public function getConsumers(): array
     {
         return $this->consumers;

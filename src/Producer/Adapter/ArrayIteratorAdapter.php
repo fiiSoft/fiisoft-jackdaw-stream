@@ -6,8 +6,12 @@ use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
 final class ArrayIteratorAdapter extends BaseProducer
 {
+    /** @var \ArrayIterator<string|int, mixed> */
     private \ArrayIterator $iterator;
     
+    /**
+     * @param \ArrayIterator<string|int, mixed> $iterator
+     */
     public function __construct(\ArrayIterator $iterator)
     {
         $this->iterator = $iterator;

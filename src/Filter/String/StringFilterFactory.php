@@ -64,11 +64,17 @@ final class StringFilterFactory extends FilterFactory
         return $this->getStringFilter(NotEndsWith::create($this->mode, $value, $ignoreCase));
     }
     
+    /**
+     * @param string[] $values
+     */
     public function inSet(array $values, bool $ignoreCase = false): StringFilter
     {
         return $this->getStringFilter(InSet::create($this->mode, $values, $ignoreCase));
     }
     
+    /**
+     * @param string[] $values
+     */
     public function notInSet(array $values, bool $ignoreCase = false): StringFilter
     {
         return $this->getStringFilter(NotInSet::create($this->mode, $values, $ignoreCase));

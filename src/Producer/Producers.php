@@ -6,9 +6,9 @@ use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayIteratorAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\CallableAdapter;
-use FiiSoft\Jackdaw\Producer\Adapter\TraversableAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ReferenceAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\RegistryAdapter;
+use FiiSoft\Jackdaw\Producer\Adapter\TraversableAdapter;
 use FiiSoft\Jackdaw\Producer\Generator\CollatzGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedGeneral;
@@ -20,6 +20,7 @@ use FiiSoft\Jackdaw\Producer\Generator\SequentialInt;
 use FiiSoft\Jackdaw\Producer\Generator\TimeIterator;
 use FiiSoft\Jackdaw\Producer\Generator\Tokenizer;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidGenerator;
+use FiiSoft\Jackdaw\Producer\Internal\EmptyProducer;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
 use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
 use FiiSoft\Jackdaw\Registry\RegReader;
@@ -27,7 +28,7 @@ use FiiSoft\Jackdaw\Registry\RegReader;
 final class Producers
 {
     /**
-     * @param array<ProducerReady|resource|callable|iterable|object|scalar> $elements
+     * @param array<ProducerReady|resource|callable|iterable<string|int, mixed>|object|scalar> $elements
      */
     public static function from(array $elements): Producer
     {
@@ -39,7 +40,8 @@ final class Producers
     }
     
     /**
-     * @param array<ProducerReady|resource|callable|iterable|object|scalar> $elements
+     * @param array<ProducerReady|resource|callable|iterable<string|int, mixed>|object|scalar> $elements
+     * @return array<int, mixed>
      */
     public static function prepare(array $elements): array
     {
@@ -74,12 +76,12 @@ final class Producers
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable|string $producer
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|string $producer
      */
     public static function getAdapter($producer): Producer
     {
         if (\is_array($producer)) {
-            return new ArrayAdapter($producer);
+            return self::fromArray($producer);
         }
         
         if ($producer instanceof Producer) {
@@ -125,13 +127,21 @@ final class Producers
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable|string ...$producers
+     * @param ProducerReady|resource|callable|iterable<string|int, mixed>|string ...$producers
      */
     public static function multiSourced(...$producers): Producer
     {
-        return new MultiProducer(
+        return MultiProducer::repeatable(
             ...\array_map(static fn($producer): Producer => self::getAdapter($producer), $producers)
-        );
+        )->prepare();
+    }
+    
+    /**
+     * @param array<string|int, mixed> $producer
+     */
+    private static function fromArray(array $producer): Producer
+    {
+        return empty($producer) ? new EmptyProducer() : new ArrayAdapter($producer);
     }
     
     public static function fromPDOStatement(\PDOStatement $statement, ?int $fetchMode = null): Producer
@@ -140,8 +150,8 @@ final class Producers
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable|string $keys
-     * @param ProducerReady|resource|callable|iterable|string $values
+     * @param ProducerReady|resource|callable|iterable<int, mixed>|string $keys
+     * @param ProducerReady|resource|callable|iterable<int, mixed>|string $values
      */
     public static function combinedFrom($keys, $values): Producer
     {
@@ -216,11 +226,17 @@ final class Producers
         return new Tokenizer($tokens, $string);
     }
     
+    /**
+     * @param iterable<string|int, mixed> $iterable
+     */
     public static function flattener(iterable $iterable = [], int $level = 0): Flattener
     {
         return new Flattener($iterable, $level);
     }
     
+    /**
+     * @param array<string|int, mixed> $elements
+     */
     public static function queue(array $elements = []): QueueProducer
     {
         return new QueueProducer($elements);

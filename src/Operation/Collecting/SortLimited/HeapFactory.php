@@ -9,6 +9,9 @@ use FiiSoft\Jackdaw\Internal\Item;
 
 final class HeapFactory
 {
+    /**
+     * @return \SplHeap<Item>
+     */
     public static function createHeapForSorting(Sorting $sorting): \SplHeap
     {
         $reversed = $sorting->isReversed();
@@ -38,6 +41,9 @@ final class HeapFactory
         return $reversed ? self::assoc_standard_reversed() : self::assoc_standard_normal();
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function value_custom_normal(Comparator $comparator): \SplHeap
     {
         return new class ($comparator) extends \SplHeap {
@@ -57,6 +63,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function value_custom_reversed(Comparator $comparator): \SplHeap
     {
         return new class ($comparator) extends \SplHeap {
@@ -76,6 +85,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function key_custom_normal(Comparator $comparator): \SplHeap
     {
         return new class ($comparator) extends \SplHeap {
@@ -95,6 +107,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function key_custom_reversed(Comparator $comparator): \SplHeap
     {
         return new class ($comparator) extends \SplHeap {
@@ -114,6 +129,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function assoc_custom_normal(Comparator $comparator): \SplHeap
     {
         return new class ($comparator) extends \SplHeap {
@@ -135,6 +153,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function assoc_custom_reversed(Comparator $comparator): \SplHeap
     {
         return new class ($comparator) extends \SplHeap {
@@ -156,6 +177,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function assoc_standard_normal(): \SplHeap
     {
         return new class extends \SplHeap {
@@ -173,6 +197,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function assoc_standard_reversed(): \SplHeap
     {
         return new class extends \SplHeap {
@@ -190,6 +217,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function value_standard_normal(): \SplHeap
     {
         return new class extends \SplHeap {
@@ -203,6 +233,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function value_standard_reversed(): \SplHeap
     {
         return new class extends \SplHeap {
@@ -216,6 +249,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function key_standard_normal(): \SplHeap
     {
         return new class extends \SplHeap {
@@ -229,6 +265,9 @@ final class HeapFactory
         };
     }
     
+    /**
+     * @return \SplHeap<Item>
+     */
     private static function key_standard_reversed(): \SplHeap
     {
         return new class extends \SplHeap {

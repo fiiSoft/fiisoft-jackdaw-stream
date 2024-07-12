@@ -9,10 +9,14 @@ use FiiSoft\Jackdaw\Operation\Mapping\Aggregate\SingleAggregate;
 
 abstract class Aggregate extends BaseOperation
 {
+    /** @var array<string|int> */
     protected array $keys;
     
     protected int $index = 0;
     
+    /**
+     * @param array<string|int> $keys
+     */
     final public static function create(array $keys): self
     {
         if (self::isParamKeysValid($keys)) {
@@ -26,6 +30,9 @@ abstract class Aggregate extends BaseOperation
         throw InvalidParamException::describe('keys', $keys);
     }
     
+    /**
+     * @param array<string|int> $keys
+     */
     private static function isParamKeysValid(array $keys): bool
     {
         if (empty($keys)) {
@@ -45,6 +52,9 @@ abstract class Aggregate extends BaseOperation
         return true;
     }
     
+    /**
+     * @param array<string|int> $keys
+     */
     protected function __construct(array $keys)
     {
         $this->keys = $keys;

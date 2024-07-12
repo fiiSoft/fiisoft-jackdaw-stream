@@ -12,6 +12,7 @@ final class MultiExtract extends Extract
     private array $fields;
     
     /**
+     * @param array<string|int> $fields
      * @param mixed|null $orElse
      */
     protected function __construct(array $fields, $orElse = null)
@@ -26,7 +27,9 @@ final class MultiExtract extends Extract
     }
     
     /**
-     * @inheritDoc
+     * @param mixed $value
+     * @param mixed $key
+     * @return array<string|int, mixed>
      */
     public function map($value, $key = null): array
     {

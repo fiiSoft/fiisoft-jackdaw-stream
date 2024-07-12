@@ -10,11 +10,11 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Initial extends ProtectedCloning implements Operation
 {
-    private ?Operation $next = null;
+    private Operation $next;
     
     public function __construct()
     {
-        $this->setNext(new Ending());
+        $this->next = new Ending($this);
     }
     
     public function handle(Signal $signal): void
@@ -24,14 +24,12 @@ final class Initial extends ProtectedCloning implements Operation
     
     public function assignStream(Stream $stream): void
     {
-        if ($this->next !== null) {
-            $this->next->assignStream($stream);
-        }
+        $this->next->assignStream($stream);
     }
     
     public function setNext(Operation $next, bool $direct = false): Operation
     {
-        if ($this->next !== null && !$direct) {
+        if (!$direct) {
             $next->setNext($this->next);
         }
         
@@ -51,7 +49,7 @@ final class Initial extends ProtectedCloning implements Operation
         throw ImpossibleSituationException::called(__METHOD__);
     }
     
-    public function getNext(): ?Operation
+    public function getNext(): Operation
     {
         return $this->next;
     }
@@ -63,12 +61,12 @@ final class Initial extends ProtectedCloning implements Operation
     
     public function getLast(): Operation
     {
-        return $this->next !== null ? $this->next->getLast() : $this;
+        return $this->next->getLast();
     }
     
     public function removeFromChain(): Operation
     {
-        return $this->next;
+        return $this->next instanceof Ending ? $this : $this->next;
     }
     
     public function streamingFinished(Signal $signal): bool
@@ -78,19 +76,22 @@ final class Initial extends ProtectedCloning implements Operation
     
     protected function __clone()
     {
-        if ($this->next !== null) {
-            $this->next = clone $this->next;
-            $this->next->setPrev($this);
-        }
+        $this->next = clone $this->next;
+        $this->next->setPrev($this);
     }
     
     public function destroy(): void
     {
-        $this->next = null;
+        $this->next->destroy();
     }
     
     public function buildStream(iterable $stream): iterable
     {
         return $stream;
+    }
+    
+    public function resume(): void
+    {
+        $this->next->resume();
     }
 }

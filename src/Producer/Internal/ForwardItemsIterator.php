@@ -27,6 +27,9 @@ final class ForwardItemsIterator extends BaseProducer
         $this->items = [];
     }
     
+    /**
+     * @param array<Item> $items
+     */
     public function with(array $items): self
     {
         $this->items = $items;

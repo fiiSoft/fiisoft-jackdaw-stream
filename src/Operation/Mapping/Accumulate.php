@@ -14,7 +14,9 @@ abstract class Accumulate extends BaseOperation implements Reindexable
 {
     protected Filter $filter;
     
+    /** @var array<string|int, mixed> */
     protected array $data = [];
+    
     protected int $index = 0;
     protected bool $reverse;
     

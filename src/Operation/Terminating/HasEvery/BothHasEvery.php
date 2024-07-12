@@ -8,8 +8,12 @@ use FiiSoft\Jackdaw\Stream;
 
 final class BothHasEvery extends HasEvery
 {
+    /** @var array<string|int, mixed> */
     private array $keys;
     
+    /**
+     * @inheritDoc
+     */
     protected function __construct(Stream $stream, array $values)
     {
         parent::__construct($stream, $values);

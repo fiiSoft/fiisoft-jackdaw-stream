@@ -23,11 +23,17 @@ abstract class CircularItemBuffer implements ItemBuffer
             : new CircularItemBufferNotFull($client, new \SplFixedArray($size));
     }
     
+    /**
+     * @param \SplFixedArray<Item> $buffer
+     */
     protected static function full(ItemBufferClient $client, \SplFixedArray $buffer): self
     {
         return new CircularItemBufferFull($client, $buffer);
     }
     
+    /**
+     * @param \SplFixedArray<Item> $buffer
+     */
     private function __construct(ItemBufferClient $client, \SplFixedArray $buffer)
     {
         $this->client = $client;
@@ -35,6 +41,9 @@ abstract class CircularItemBuffer implements ItemBuffer
         $this->size = $buffer->getSize();
     }
     
+    /**
+     * @inheritDoc
+     */
     final public function fetchData(bool $reindex = false, int $skip = 0): array
     {
         $result = [];

@@ -5,8 +5,6 @@ namespace FiiSoft\Jackdaw\Producer\Generator\Uuid\Ramsey;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\Exception\UuidUnavailableException;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidVersion;
-use Ramsey\Uuid\Nonstandard\UuidV6;
-use Ramsey\Uuid\Rfc4122\UuidV4;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
@@ -19,9 +17,9 @@ abstract class RamseyUuidGenerator implements UuidGenerator
     {
         if ($version === null) {
             //@codeCoverageIgnoreStart
-            if (\class_exists(UuidV6::class)) {
+            if (\method_exists(Uuid::class, 'uuid6')) {
                 $version = UuidVersion::v6();
-            } elseif (\class_exists(UuidV4::class)) {
+            } elseif (\method_exists(Uuid::class, 'uuid4')) {
                 $version = UuidVersion::v4();
             } else {
                 $version = UuidVersion::nil();

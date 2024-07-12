@@ -10,7 +10,6 @@ use FiiSoft\Jackdaw\Transformer\Transformers;
 final class Result extends StreamPipe implements ResultApi
 {
     private Stream $stream;
-    private ?Stream $source;
     private FinalOperation $resultProvider;
     private ?ResultItem $resultItem = null;
     private ?Transformer $transformer = null;
@@ -21,19 +20,23 @@ final class Result extends StreamPipe implements ResultApi
     /** @var callable|mixed|null */
     private $orElse;
     
+    /** @var Stream[] */
+    private array $parents;
+    
     /**
      * @param callable|mixed|null $orElse
+     * @param Stream[] $parents
      */
     public function __construct(
         Stream $stream,
         FinalOperation $resultProvider,
         $orElse = null,
-        ?Stream $source = null
+        array $parents = []
     ) {
         $this->stream = $stream;
         $this->resultProvider = $resultProvider;
         $this->orElse = $orElse;
-        $this->source = $source;
+        $this->parents = $parents;
     }
     
     /**
@@ -169,8 +172,10 @@ final class Result extends StreamPipe implements ResultApi
     
     private function do(): ResultItem
     {
-        if ($this->source !== null && $this->source->isNotStartedYet()) {
-            $this->source->run();
+        foreach ($this->parents as $parent) {
+            if ($parent->isNotStartedYet()) {
+                $parent->run();
+            }
         }
         
         if ($this->resultItem === null && $this->stream->isNotStartedYet()) {
@@ -220,9 +225,9 @@ final class Result extends StreamPipe implements ResultApi
             
             $this->stream->destroy();
             
-            if ($this->source !== null) {
-                $this->source->destroy();
-                $this->source = null;
+            foreach ($this->parents as $key => $parent) {
+                unset($this->parents[$key]);
+                $parent->destroy();
             }
             
             if ($this->resultItem !== null) {

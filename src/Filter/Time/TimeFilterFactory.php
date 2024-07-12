@@ -148,7 +148,7 @@ final class TimeFilterFactory extends FilterFactory
     }
     
     /**
-     * @param array $days at least one of Day::* constants
+     * @param string ...$days at least one of Day::* constants
      */
     public function isDay(...$days): Filter
     {
@@ -156,7 +156,7 @@ final class TimeFilterFactory extends FilterFactory
     }
     
     /**
-     * @param array $days at least one of Day::* constants
+     * @param string ...$days at least one of Day::* constants
      */
     public function isNotDay(...$days): Filter
     {

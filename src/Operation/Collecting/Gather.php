@@ -11,7 +11,9 @@ use FiiSoft\Jackdaw\Producer\Producers;
 
 abstract class Gather extends BaseOperation implements Reindexable
 {
+    /** @var array<string|int, mixed> */
     protected array $data = [];
+    
     private bool $reindex;
     
     final public static function create(bool $reindex = false): self

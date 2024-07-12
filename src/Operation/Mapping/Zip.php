@@ -12,7 +12,7 @@ use FiiSoft\Jackdaw\Producer\Producers;
 abstract class Zip extends BaseOperation
 {
     /**
-     * @param array<ProducerReady|resource|callable|iterable|scalar> $sources
+     * @param array<ProducerReady|resource|callable|iterable<string|int, mixed>|scalar> $sources
      */
     final public static function create(array $sources): self
     {

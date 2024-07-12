@@ -7,8 +7,6 @@ use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidVersion;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\Uuid;
-use Symfony\Component\Uid\UuidV4;
-use Symfony\Component\Uid\UuidV6;
 
 abstract class SymfonyUuidGenerator implements UuidGenerator
 {
@@ -19,9 +17,9 @@ abstract class SymfonyUuidGenerator implements UuidGenerator
     {
         if ($version === null) {
             //@codeCoverageIgnoreStart
-            if (\class_exists(UuidV6::class)) {
+            if (\method_exists(Uuid::class, 'v6')) {
                 $version = UuidVersion::v6();
-            } elseif (\class_exists(UuidV4::class)) {
+            } elseif (\method_exists(Uuid::class, 'v4')) {
                 $version = UuidVersion::v4();
             } else {
                 $version = UuidVersion::nil();

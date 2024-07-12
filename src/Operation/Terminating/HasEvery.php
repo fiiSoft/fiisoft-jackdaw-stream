@@ -12,10 +12,14 @@ use FiiSoft\Jackdaw\Stream;
 
 abstract class HasEvery extends SimpleFinal
 {
+    /** @var array<string|int, mixed> */
     protected array $values;
     
     protected bool $hasEvery = false;
     
+    /**
+     * @param array<string|int, mixed> $values
+     */
     final public static function create(Stream $stream, array $values, int $mode = Check::VALUE): self
     {
         $values = \array_unique($values, \SORT_REGULAR);
@@ -32,6 +36,9 @@ abstract class HasEvery extends SimpleFinal
         }
     }
     
+    /**
+     * @param array<string|int, mixed> $values
+     */
     protected function __construct(Stream $stream, array $values)
     {
         parent::__construct($stream);

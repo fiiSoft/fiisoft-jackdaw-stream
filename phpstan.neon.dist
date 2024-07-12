@@ -1,8 +1,6 @@
 parameters:
     level: 7
-    checkMissingIterableValueType: false
     treatPhpDocTypesAsCertain: false
-    checkGenericClassInNonGenericObjectType: false
     excludePaths:
         analyse:
             - src/Filter/OnlyIn/Mixed/MixedBothOnlyIn.php
@@ -16,17 +14,11 @@ parameters:
         - '#Property FiiSoft\\Jackdaw\\Collector\\Adapter\\ArrayAccessAdapter::\$buffer is never read, only written.#'
         - '#.*::(toJsonAssoc|toJson)\(\) should return string but returns string\|false.#'
         -
-            message: '#Cannot assign offset int\|string to SplFixedArray.#'
-            path: 'src/Collector/Adapter/Iterable/SplFixedArrayAdapter.php'
-        -
             message: '#Parameter \#1 \$function of class ReflectionFunction constructor expects Closure\|string, callable\(\): mixed given.#'
             path: 'src/Internal/Helper.php'
         -
             message: '#Method FiiSoft\\Jackdaw\\Mapper\\JsonEncode::map\(\) should return string but returns string\|false.#'
             path: 'src/Mapper/JsonEncode.php'
-        -
-            message: '#Method FiiSoft\\Jackdaw\\Mapper\\Split::map\(\) should return array but returns array<int, string>\|false.#'
-            path: 'src/Mapper/Split.php'
         -
             message: '#Parameter \#2 \$length of function fgets expects int<0, max>, int given.#'
             path: 'src/Producer/Resource/TextFileReader.php'
@@ -34,11 +26,8 @@ parameters:
             message: '#Cannot access an offset on *#'
             path: 'src/Producer/Producers.php'
         -
-            message: '#Parameter \#1 \$operation of method FiiSoft\\Jackdaw\\Internal\\Pipe::replaceLastOperation\(\) expects FiiSoft\\Jackdaw\\Operation\\Operation, FiiSoft\\Jackdaw\\Operation\\Internal\\Limitable given.#'
-            path: 'src/Internal/Pipe.php'
-        -
-            message: '#Parameter \#1 \$buffer of class FiiSoft\\Jackdaw\\Producer\\Internal\\CircularBufferIterator constructor expects .*#'
-            path: 'src/Operation/Internal/ItemBuffer/CircularItemBuffer.php'
-        -
             message: '#Parameter \#1 \$str of function md5 expects string, string\|false given.#'
             path: 'src/Reducer/CountUnique.php'
+        -
+            message: '#Method FiiSoft\\Jackdaw\\Mapper\\Split::map\(\) should return array<int, string> but returns array<int, string>\|false.#'
+            path: 'src/Mapper/Split.php'

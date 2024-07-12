@@ -1,5 +1,7 @@
 <?php declare(strict_types=1);
 
+//composer require --dev bertptrs/phpstreams >=0.1.0
+
 use phpstreams\Stream;
 
 require_once  __DIR__ .'/../vendor/autoload.php';

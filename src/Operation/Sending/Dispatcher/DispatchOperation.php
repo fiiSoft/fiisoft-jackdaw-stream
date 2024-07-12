@@ -45,9 +45,7 @@ abstract class DispatchOperation extends StreamPipe implements Operation
     
     final public function assignStream(Stream $stream): void
     {
-        if ($this->next !== null) {
-            $this->next->assignStream($stream);
-        }
+        $this->next->assignStream($stream);
     }
     
     final public function streamingFinished(Signal $signal): bool

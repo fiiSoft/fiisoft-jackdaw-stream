@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Internal;
 
@@ -10,6 +10,9 @@ use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 
+/**
+ * @extends \IteratorAggregate<string|int, mixed>
+ */
 interface ResultApi extends HandlerReady, ResultCaster, Destroyable, \Countable, \IteratorAggregate
 {
     public function found(): bool;
@@ -42,7 +45,7 @@ interface ResultApi extends HandlerReady, ResultCaster, Destroyable, \Countable,
     public function key();
     
     /**
-     * @return array with two values: first is key, second is value, both indexed numerically
+     * @return array{}|array{string|int, mixed} with two values: first is key, second is value, both indexed numerically
      */
     public function tuple(): array;
     

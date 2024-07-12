@@ -37,13 +37,24 @@ abstract class StringFilter extends BaseFilter
         return $copy;
     }
     
+    /**
+     * @inheritDoc
+     */
     final public function buildStream(iterable $stream): iterable
     {
         return $this->ignoreCase ? $this->compareCaseInsensitive($stream) : $this->compareCaseSensitive($stream);
     }
     
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
     abstract protected function compareCaseInsensitive(iterable $stream): iterable;
     
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
     abstract protected function compareCaseSensitive(iterable $stream): iterable;
     
     abstract public function negate(): StringFilter;

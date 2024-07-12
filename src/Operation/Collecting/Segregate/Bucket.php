@@ -9,6 +9,8 @@ use FiiSoft\Jackdaw\Internal\Item;
 final class Bucket implements Destroyable
 {
     public ?Item $item = null;
+    
+    /** @var array<string|int, mixed> */
     public array $data = [];
     
     private ?int $limit = null;

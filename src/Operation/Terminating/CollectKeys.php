@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Internal\Signal;
 
 final class CollectKeys extends SimpleFinal
 {
+    /** @var array<int, mixed> */
     private array $collected = [];
     
     public function handle(Signal $signal): void

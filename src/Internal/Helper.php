@@ -63,7 +63,7 @@ final class Helper
     }
     
     /**
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      */
     public static function areFieldsValid($fields): bool
     {
@@ -160,6 +160,9 @@ final class Helper
         return \gettype($value);
     }
     
+    /**
+     * @param iterable<mixed, mixed> $iterator
+     */
     public static function createItemProducer(Item $item, iterable $iterator): \Iterator
     {
         return (static function () use ($iterator, $item) {

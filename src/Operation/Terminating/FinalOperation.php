@@ -11,22 +11,24 @@ use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Operation\Internal\CommonOperationCode;
 use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Stream;
 
 abstract class FinalOperation extends StreamPipe implements LastOperation, Operation, ResultProvider, SourceAware
 {
-    use CommonOperationCode { destroy as commonDestroy; }
+    use CommonOperationCode { destroy as commonDestroy; resume as commonResume; }
     
     private Stream $stream;
-    private ?Stream $sourceStream = null;
     private ?Result $result = null;
+    
+    /** @var Stream[] */
+    private array $parents = [];
     
     /** @var callable|mixed|null */
     private $orElse;
     
     private bool $isCloning = false;
     private bool $refreshResult = false;
+    private bool $isResuming = false;
     
     /**
      * @param callable|mixed|null $orElse
@@ -135,7 +137,7 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
     private function result(): Result
     {
         if ($this->result === null) {
-            $this->result = new Result($this->stream, $this, $this->orElse, $this->sourceStream);
+            $this->result = new Result($this->stream, $this, $this->orElse, $this->parents);
         } elseif ($this->refreshResult) {
             $this->result->refreshResult();
             $this->refreshResult = false;
@@ -148,6 +150,7 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
     {
         $this->result = null;
         $this->refreshResult = false;
+        $this->isResuming = false;
         
         if ($this->next !== null) {
             $this->next = clone $this->next;
@@ -170,20 +173,16 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
     {
         $this->stream = $stream;
         
-        if ($this->next !== null) {
-            $this->next->assignStream($stream);
-        }
+        $this->next->assignStream($stream);
     }
     
     final public function assignSource(Stream $stream): void
     {
-        $this->sourceStream = $stream;
+        $this->parents[\spl_object_id($stream)] = $stream;
     }
     
     /**
-     * Create new stream from the current one and set provided Producer as source of data for it.
-     *
-     * @param ProducerReady|resource|callable|iterable|string $producer
+     * @inheritDoc
      */
     final public function wrap($producer): LastOperation
     {
@@ -225,5 +224,22 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
             
             $this->stream->destroy();
         }
+    }
+    
+    final public function resume(): void
+    {
+        if (!$this->isResuming) {
+            $this->isResuming = true;
+            try {
+                $this->stream->resume();
+            } finally {
+                $this->isResuming = false;
+            }
+        }
+    }
+    
+    protected function finish(): void
+    {
+        $this->stream->finish();
     }
 }

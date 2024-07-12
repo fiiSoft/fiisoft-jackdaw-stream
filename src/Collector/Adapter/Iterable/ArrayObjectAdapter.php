@@ -6,8 +6,12 @@ use FiiSoft\Jackdaw\Stream;
 
 final class ArrayObjectAdapter extends BaseIterableCollector
 {
+    /** @var \ArrayObject<string|int, mixed> */
     private \ArrayObject $buffer;
     
+    /**
+     * @param \ArrayObject<string|int, mixed> $buffer
+     */
     public function __construct(\ArrayObject $buffer, ?bool $allowKeys = true)
     {
         parent::__construct($allowKeys);
@@ -45,6 +49,9 @@ final class ArrayObjectAdapter extends BaseIterableCollector
         return Stream::from($this->buffer);
     }
     
+    /**
+     * @return \ArrayObject<string|int, mixed>
+     */
     public function getIterator(): \ArrayObject
     {
         return $this->buffer;

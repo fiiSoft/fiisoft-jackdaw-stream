@@ -45,6 +45,10 @@ final class FilterMany extends BaseOperation
             : $this->buildStandardStream($stream);
     }
     
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
     private function buildOptimisedStream(iterable $stream): iterable
     {
         foreach ($this->checks as $check) {
@@ -56,6 +60,10 @@ final class FilterMany extends BaseOperation
         return $stream;
     }
     
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
     private function buildStandardStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {

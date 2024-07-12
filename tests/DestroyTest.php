@@ -10,15 +10,16 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
 use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\SingleItemBuffer;
 use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
-use FiiSoft\Jackdaw\Producer\Internal\PushProducer;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseArrayIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseNumericalArrayIterator;
+use FiiSoft\Jackdaw\Producer\MultiProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
@@ -90,7 +91,7 @@ final class DestroyTest extends TestCase
         $stream = Stream::from(['a b', 'c d'])
             ->tokenize()
             ->call($counter = Consumers::counter())
-            ->gatherUntil(static fn(): bool => $counter->count() > 3, true);
+            ->gatherUntil(static fn(): bool => $counter->get() > 3, true);
         
         $result = $stream->toArray();
         
@@ -171,11 +172,11 @@ final class DestroyTest extends TestCase
         ];
     }
     
-    public function test_PushProducer_destroy(): void
+    public function test_MultiProducer_destroy(): void
     {
         //given
         $otherProducer = Producers::getAdapter(['a', 'b']);
-        $producer = new PushProducer($otherProducer);
+        $producer = MultiProducer::repeatable($otherProducer);
         
         //when
         $producer->destroy();
@@ -683,6 +684,23 @@ final class DestroyTest extends TestCase
         $buffer->destroy();
         //then
         self::assertSame(0, $buffer->count());
+    }
+    
+    public function test_multiple_nested_streams_destroy(): void
+    {
+        $stream1 = Stream::from(['a', 1, 'b', 2])->onlyIntegers();
+        $stream2 = Stream::empty()->join([3, 4, 5])->map(Mappers::increment(2));
+        $stream3 = Stream::from([7, 6, 5, 4, 3])->greaterThan(3)->lessThan(7);
+        $stream4 = Stream::empty()->collect(true);
+        
+        $stream1->feed($stream2);
+        $stream2->feed($stream4);
+        
+        $stream3->feed($stream4);
+        
+        self::assertSame([3, 4, 5, 6, 7, 6, 5, 4], $stream4->toArray());
+        
+        $stream4->destroy();
     }
     
     /**

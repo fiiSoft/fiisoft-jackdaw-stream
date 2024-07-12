@@ -1,5 +1,7 @@
 <?php declare(strict_types=1);
 
+//composer require --dev illuminate/collections >=8.20.0
+
 use Illuminate\Support\Collection;
 
 require_once  __DIR__ .'/../vendor/autoload.php';

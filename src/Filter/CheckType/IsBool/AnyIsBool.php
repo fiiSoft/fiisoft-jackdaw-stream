@@ -14,6 +14,9 @@ final class AnyIsBool extends IsBool
         return \is_bool($value) || \is_bool($key);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {

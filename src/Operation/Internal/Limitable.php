@@ -1,8 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
-interface Limitable
+use FiiSoft\Jackdaw\Operation\Operation;
+
+interface Limitable extends Operation
 {
     public function createWithLimit(int $limit): self;
     

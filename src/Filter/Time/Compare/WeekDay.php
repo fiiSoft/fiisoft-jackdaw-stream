@@ -10,11 +10,12 @@ final class WeekDay extends TimeComparator
 {
     private bool $isDay;
     
+    /** @var string[] */
     private array $days;
     
     /**
      * @param bool $isDay false value means "is not day"
-     * @param array $days it MUST be array of Day::* constants
+     * @param string[] $days it MUST be array of Day::* constants
      */
     public function __construct(bool $isDay, array $days)
     {
@@ -47,6 +48,9 @@ final class WeekDay extends TimeComparator
         return new self(!$this->isDay, \array_flip($this->days));
     }
     
+    /**
+     * @param string[] $days
+     */
     private function areDaysValid(array $days): bool
     {
         if (empty($days)) {

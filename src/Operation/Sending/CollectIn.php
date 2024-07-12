@@ -13,7 +13,7 @@ abstract class CollectIn extends BaseOperation
     protected Collector $collector;
     
     /**
-     * @param Collector|\ArrayAccess|\SplHeap|\SplPriorityQueue $collector
+     * @param Collector|\ArrayAccess<string|int, mixed>|\SplHeap<mixed>|\SplPriorityQueue<int, mixed> $collector
      */
     final public static function create($collector, ?bool $reindex = null): self
     {

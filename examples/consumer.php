@@ -4,6 +4,9 @@ use FiiSoft\Jackdaw\Stream;
 
 require_once  __DIR__ .'/../vendor/autoload.php';
 
+//run this:
+//> php producer.php | php consumer.php
+
 Stream::from(STDIN)
     ->trim()
     ->castToInt()

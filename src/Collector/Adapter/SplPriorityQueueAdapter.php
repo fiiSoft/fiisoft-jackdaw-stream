@@ -6,12 +6,13 @@ use FiiSoft\Jackdaw\Collector\BaseCollector;
 
 final class SplPriorityQueueAdapter extends BaseCollector
 {
+    /** @var \SplPriorityQueue<int, mixed> */
     private \SplPriorityQueue $queue;
     
     private int $priority = 0;
     
     /**
-     * @param \SplPriorityQueue $queue
+     * @param \SplPriorityQueue<int, mixed> $queue
      */
     public function __construct(\SplPriorityQueue $queue, ?bool $allowKeys = true)
     {
@@ -20,6 +21,10 @@ final class SplPriorityQueueAdapter extends BaseCollector
         $this->queue = $queue;
     }
     
+    /**
+     * @param int $key
+     * @param mixed $value
+     */
     public function set($key, $value): void
     {
         $this->queue->insert($value, $key);

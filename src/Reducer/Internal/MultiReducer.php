@@ -11,8 +11,12 @@ final class MultiReducer extends BaseReducer
     /** @var Reducer[]  */
     private array $pattern = [];
     
+    /** @var array<string|int, mixed>|null  */
     private ?array $result = null;
     
+    /**
+     * @param array<string|int, mixed> $pattern
+     */
     public function __construct(array $pattern)
     {
         if (empty($pattern)) {
@@ -33,7 +37,7 @@ final class MultiReducer extends BaseReducer
     }
     
     /**
-     * @inheritDoc
+     * @return array<string|int, mixed>|null
      */
     public function result(): ?array
     {

@@ -11,7 +11,7 @@ abstract class ProcessOperation extends ForkCollaborator implements Operation
 {
     use CommonOperationCode;
     
-    private ?Signal $signal = null;
+    private static ?Signal $signal = null;
     
     public function assignStream(Stream $stream): void
     {
@@ -30,10 +30,10 @@ abstract class ProcessOperation extends ForkCollaborator implements Operation
     
     final protected function createSignal(): Signal
     {
-        if ($this->signal === null) {
-            $this->signal = new Signal(Stream::empty());
+        if (self::$signal === null) {
+            self::$signal = new Signal(Stream::empty());
         }
         
-        return $this->signal;
+        return self::$signal;
     }
 }

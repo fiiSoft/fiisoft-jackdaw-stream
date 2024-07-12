@@ -9,10 +9,11 @@ use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
 final class Remove extends StateMapper
 {
+    /** @var array<string|int> */
     private array $fields;
     
     /**
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      */
     public function __construct($fields)
     {

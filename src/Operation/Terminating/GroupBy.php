@@ -10,7 +10,7 @@ use FiiSoft\Jackdaw\Operation\Terminating\GroupBy\GroupByReindexKeys;
 abstract class GroupBy extends GroupingOperation
 {
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
     final public static function create($discriminator, ?bool $reindex = null): self
     {

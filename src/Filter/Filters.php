@@ -133,6 +133,9 @@ final class Filters
         return NotNull::create($mode);
     }
     
+    /**
+     * @param array<string|int, mixed> $values
+     */
     public static function onlyIn(array $values, ?int $mode = null): Filter
     {
         return OnlyIn::create($mode, $values);
@@ -240,7 +243,7 @@ final class Filters
      * It only passes array (or \ArrayAccess) values containing the specified field(s).
      * Currently, only VALUE mode is supported and attempting to change it will result in an exception.
      *
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      */
     public static function onlyWith($fields, bool $allowNulls = false): Filter
     {

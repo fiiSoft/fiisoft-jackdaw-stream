@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.0.0
+
+Changed behaviour of methods Counter::get() and Counter::count().
+Added ability to trigger processing of all parent streams by the last element in chain of execution.
+These changes are highly experimental and uncertain. 
+
 ## 7.4.0
 
 A stream can be executed by directly calling methods from dependent streams passed to the feed() method.

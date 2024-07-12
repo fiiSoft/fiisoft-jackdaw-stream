@@ -13,7 +13,7 @@ abstract class ToTime extends BaseMapper
     private ?\DateTimeZone $timeZone = null;
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      * @param \DateTimeZone|string|null $inTimeZone
      */
     final public static function create(

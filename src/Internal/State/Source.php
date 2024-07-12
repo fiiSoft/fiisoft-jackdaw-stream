@@ -8,15 +8,15 @@ use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Pipe;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Producer\Internal\PushProducer;
+use FiiSoft\Jackdaw\Producer\MultiProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Producer\Producers;
-use FiiSoft\Jackdaw\Producer\Tech\MultiSourcedProducer;
 use FiiSoft\Jackdaw\Stream;
 
 abstract class Source extends StreamSource implements Destroyable
 {
+    /** @var Producer<string|int, mixed> */
     public Producer $producer;
     
     protected \Iterator $currentSource;
@@ -31,6 +31,9 @@ abstract class Source extends StreamSource implements Destroyable
     
     private bool $isDestroying = false;
     
+    /**
+     * @param Producer<string|int, mixed> $producer
+     */
     public function __construct(
         bool $isLoop,
         Stream $stream,
@@ -52,11 +55,11 @@ abstract class Source extends StreamSource implements Destroyable
     }
     
     /**
-     * @param array<ProducerReady|resource|callable|iterable|string> $producers
+     * @param array<ProducerReady|resource|callable|iterable<string|int, mixed>|string> $producers
      */
     final public function addProducers(array $producers): void
     {
-        if ($this->producer instanceof MultiSourcedProducer) {
+        if ($this->producer instanceof MultiProducer) {
             foreach ($producers as $producer) {
                 $this->producer->addProducer(Producers::getAdapter($producer));
             }
@@ -84,12 +87,18 @@ abstract class Source extends StreamSource implements Destroyable
         $this->currentSource = Helper::createItemProducer($this->item, $this->producer);
     }
     
+    /**
+     * @inheritDoc
+     */
     final protected function restartWith(Producer $producer, Operation $operation): void
     {
         $this->pipe->head = $operation;
         $this->sourceIsNotReady($producer);
     }
     
+    /**
+     * @inheritDoc
+     */
     final protected function continueWith(Producer $producer, Operation $operation): void
     {
         $this->stack->states[] = $this;
@@ -132,16 +141,21 @@ abstract class Source extends StreamSource implements Destroyable
     
     final protected function prepareSubstream(bool $isLoop): void
     {
-        if (! $this->producer instanceof PushProducer) {
-            if (!$isLoop) {
-                $this->pipe->prepare();
-            }
-            
-            $this->isLoop = $isLoop;
-            $this->sourceIsNotReady(new PushProducer($this->producer));
+        if ($this->producer instanceof MultiProducer && $this->producer->isOneTime()) {
+            return;
         }
+        
+        if (!$isLoop) {
+            $this->pipe->prepare();
+        }
+        
+        $this->isLoop = $isLoop;
+        $this->sourceIsNotReady(MultiProducer::oneTime($this->producer));
     }
     
+    /**
+     * @param Producer<string|int, mixed> $producer
+     */
     private function sourceIsNotReady(Producer $producer): void
     {
         $this->stream->setSource(new SourceNotReady(

@@ -4,13 +4,13 @@ namespace FiiSoft\Jackdaw\Reducer;
 
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
-use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Reducer\Internal\MultiReducer;
 
 final class Reducers
 {
     /**
-     * @param Reducer|callable|array $reducer callable must accepts two arguments: accumulator and current value
+     * @param Reducer|callable|array<Reducer|callable> $reducer
+     *        callable must accepts two arguments: accumulator and current value
      */
     public static function getAdapter($reducer): Reducer
     {
@@ -102,7 +102,7 @@ final class Reducers
     }
     
     /**
-     * @param DiscriminatorReady|callable|array|null $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|null $discriminator
      */
     public static function countUnique($discriminator = null): Reducer
     {

@@ -8,8 +8,12 @@ use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
 final class Remap extends StateMapper
 {
+    /** @var array<string|int> */
     private array $keys;
     
+    /**
+     * @param array<string|int> $keys
+     */
     public function __construct(array $keys)
     {
         if (!$this->isParamKeysValid($keys)) {
@@ -19,6 +23,9 @@ final class Remap extends StateMapper
         $this->keys = $keys;
     }
     
+    /**
+     * @param array<string|int> $keys
+     */
     private function isParamKeysValid(array $keys): bool
     {
         if (empty($keys)) {

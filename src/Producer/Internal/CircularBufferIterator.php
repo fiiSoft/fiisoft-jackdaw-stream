@@ -8,14 +8,14 @@ use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
 final class CircularBufferIterator extends BaseProducer
 {
-    /** @var \ArrayAccess<int, Item>|array<int, Item> */
+    /** @var \SplFixedArray<Item>|\ArrayAccess<int, Item>|array<int, Item> */
     private $buffer;
     
     private int $count; //number of elements in buffer
     private int $index; //index of first element
     
     /**
-     * @param \ArrayAccess<int, Item>|array<int, Item> $buffer
+     * @param \SplFixedArray<Item>|\ArrayAccess<int, Item>|array<int, Item> $buffer
      */
     public function __construct($buffer, int $count, int $index)
     {

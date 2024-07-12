@@ -13,6 +13,7 @@ use FiiSoft\Jackdaw\Operation\Mapping\Chunk\OneReindexKeys;
 
 abstract class Chunk extends BaseOperation implements Reindexable
 {
+    /** @var array<string|int, mixed> */
     protected array $chunked = [];
     
     protected int $index = 0;

@@ -41,7 +41,7 @@ final class Consumers
     
     public static function counter(): Counter
     {
-        return new Counter();
+        return new StreamCounter();
     }
     
     public static function printer(int $mode = Check::BOTH): Consumer

@@ -18,7 +18,9 @@ abstract class Uptrends extends BaseOperation implements Reindexable
     protected Comparison $comparison;
     protected ?Item $previous = null;
     
+    /** @var array<string|int, mixed> */
     protected array $trend = [];
+    
     protected int $index = 0;
     protected bool $downtrend;
     

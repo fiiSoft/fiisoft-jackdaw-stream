@@ -12,7 +12,7 @@ abstract class Extract extends StateMapper
     protected $orElse;
     
     /**
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      * @param mixed|null $orElse
      */
     final public static function create($fields, $orElse = null): self

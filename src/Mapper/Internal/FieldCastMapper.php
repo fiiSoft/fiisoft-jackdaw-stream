@@ -7,10 +7,11 @@ use FiiSoft\Jackdaw\Mapper\Mapper;
 
 trait FieldCastMapper
 {
+    /** @var array<string|int> */
     protected array $fields;
     
     /**
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      */
     final protected function __construct($fields)
     {

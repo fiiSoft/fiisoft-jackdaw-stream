@@ -7,7 +7,7 @@
     ],
     "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
     "license": "MIT",
-    "version": "7.4.0",
+    "version": "8.0.0",
     "authors": [
         {
             "name": "fiiSoft",
@@ -25,7 +25,14 @@
         "ramsey/uuid": "To use RandomUuid generator (backed by ramsey/uuid) as Producer for Stream",
         "symfony/uid": "To use RandomUuid generator (backed by symfony/uid) as Producer for Stream",
         "symfony/console": "To use Symfony console output as error logger",
-        "psr/log": "To use PsrLogger as error logger"
+        "psr/log": "To use PsrLogger as error logger",
+        "aimeos/map": "To call certain scripts in examples directory",
+        "bertptrs/phpstreams": "To call certain scripts in examples directory",
+        "ebanx/stream": "To call certain scripts in examples directory",
+        "gowork/values": "To call certain scripts in examples directory",
+        "illuminate/collections": "To call certain scripts in examples directory",
+        "loophp/collection": "To call certain scripts in examples directory",
+        "sanmai/pipeline": "To call certain scripts in examples directory"
     },
     "autoload": {
         "psr-4": {
@@ -39,26 +46,19 @@
     },
     "require-dev": {
         "phpunit/phpunit": ">=9.3.0",
-        "ramsey/uuid": ">=4.0.0",
-        "gowork/values": ">=0.5.0",
         "symfony/console": ">=4.1.6",
+        "symfony/uid": ">=5.0.0",
+        "ramsey/uuid": ">=4.0.0",
         "psr/log": ">=1.0.0",
-        "sanmai/pipeline": ">=6.7.0",
-        "aimeos/map": ">=1.0.0",
-        "loophp/collection": ">=5.0.0",
-        "illuminate/collections": ">=8.20.0",
-        "ebanx/stream": ">=1.0.0",
-        "bertptrs/phpstreams": ">=0.1.0",
         "squizlabs/php_codesniffer": ">=3.4.0",
         "phpstan/phpstan": ">=1.10.31",
         "phpstan/phpstan-deprecation-rules": ">=1.0.0",
         "phpstan/phpstan-phpunit": ">=1.0.0",
         "phpstan/extension-installer": ">=1.1.0",
         "rector/rector": ">=0.18.3",
-        "symfony/uid": ">=5.0.0",
         "phpmd/phpmd": ">=2.0.0",
         "vimeo/psalm": ">=5.0.0",
-        "infection/infection": "^0.26.6"
+        "infection/infection": ">=0.26.6"
     },
     "scripts": {
         "check": [

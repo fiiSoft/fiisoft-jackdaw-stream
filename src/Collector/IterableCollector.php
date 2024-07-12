@@ -4,12 +4,18 @@ namespace FiiSoft\Jackdaw\Collector;
 
 use FiiSoft\Jackdaw\Stream;
 
+/**
+ * @extends \Traversable<string|int, mixed>
+ */
 interface IterableCollector extends Collector, \Traversable, \Countable
 {
     public function clear(): void;
     
     public function stream(): Stream;
     
+    /**
+     * @return array<string|int, mixed>
+     */
     public function toArray(): array;
     
     public function toString(string $separator = ','): string;

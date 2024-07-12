@@ -14,7 +14,9 @@ final class Tokenize extends StateMapper
     }
     
     /**
-     * @inheritDoc
+     * @param string $value
+     * @param mixed $key
+     * @return string[]
      */
     public function map($value, $key = null): array
     {

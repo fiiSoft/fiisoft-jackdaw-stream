@@ -8,8 +8,12 @@ final class Alternately implements Discriminator
 {
     private \Iterator $iterator;
     
+    /** @var array<string|int> */
     private array $classifiers;
     
+    /**
+     * @param array<string|int> $classifiers
+     */
     public function __construct(array $classifiers)
     {
         if (empty($classifiers)) {

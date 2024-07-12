@@ -7,10 +7,14 @@ use FiiSoft\Jackdaw\Operation\Mapping\Aggregate;
 
 final class FullAggregate extends Aggregate
 {
+    /** @var array<string|int, mixed> */
     private array $aggregated = [];
     
     private int $size;
     
+    /**
+     * @param array<string|int> $keys
+     */
     protected function __construct(array $keys)
     {
         parent::__construct($keys);

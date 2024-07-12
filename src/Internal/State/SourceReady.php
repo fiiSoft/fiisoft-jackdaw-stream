@@ -10,6 +10,9 @@ use FiiSoft\Jackdaw\Stream;
 
 final class SourceReady extends Source
 {
+    /**
+     * @param Producer<string|int, mixed> $producer
+     */
     public function __construct(
         bool $isLoop,
         Stream $stream,

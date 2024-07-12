@@ -10,8 +10,12 @@ use FiiSoft\Jackdaw\Internal\ResultItem;
 use FiiSoft\Jackdaw\Operation\Terminating\GroupBy;
 use FiiSoft\Jackdaw\Stream;
 
+/**
+ * @implements \Iterator<string|int, mixed>
+ */
 abstract class BaseStreamCollection implements Destroyable, \Iterator
 {
+    /** @var array<string|int> */
     protected array $keys;
     
     private GroupBy $groupBy;
@@ -19,9 +23,14 @@ abstract class BaseStreamCollection implements Destroyable, \Iterator
     /** @var ResultItem [] */
     private array $results = [];
     
+    /** @var array<string|int, mixed> */
     private array $dataCollection;
+    
     private bool $isDestroying = false;
     
+    /**
+     * @param array<string|int, mixed> $dataCollection
+     */
     final public static function create(GroupBy $groupBy, array $dataCollection): self
     {
         if (\version_compare(\PHP_VERSION, '8.1.0') >= 0) {
@@ -33,6 +42,9 @@ abstract class BaseStreamCollection implements Destroyable, \Iterator
         return new StreamCollection($groupBy, $dataCollection);
     }
     
+    /**
+     * @param array<string|int, mixed> $dataCollection
+     */
     final protected function __construct(GroupBy $groupBy, array $dataCollection)
     {
         $this->groupBy = $groupBy;
@@ -63,7 +75,7 @@ abstract class BaseStreamCollection implements Destroyable, \Iterator
     }
     
     /**
-     * @return array raw data
+     * @return array<string|int, mixed> raw data
      */
     final public function toArray(): array
     {
@@ -84,7 +96,7 @@ abstract class BaseStreamCollection implements Destroyable, \Iterator
     }
     
     /**
-     * @return string[]|int[]
+     * @return array<string|int>
      */
     final public function classifiers(): array
     {

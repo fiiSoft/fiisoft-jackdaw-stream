@@ -5,9 +5,10 @@ namespace FiiSoft\Jackdaw\Filter;
 use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
+use FiiSoft\Jackdaw\Internal\StreamBuilder;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 
-interface Filter extends MapperReady, ConditionReady, DiscriminatorReady, ComparatorReady
+interface Filter extends MapperReady, ConditionReady, DiscriminatorReady, ComparatorReady, StreamBuilder
 {
     /**
      * @param mixed $value
@@ -20,8 +21,6 @@ interface Filter extends MapperReady, ConditionReady, DiscriminatorReady, Compar
     public function negate(): Filter;
     
     public function getMode(): ?int;
-    
-    public function buildStream(iterable $stream): iterable;
     
     public function checkValue(): Filter;
     

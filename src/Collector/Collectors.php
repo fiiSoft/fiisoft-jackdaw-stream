@@ -12,10 +12,14 @@ use FiiSoft\Jackdaw\Collector\Adapter\SplHeapAdapter;
 use FiiSoft\Jackdaw\Collector\Adapter\SplPriorityQueueAdapter;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 
+/**
+ * @template K of string|int
+ * @template M of mixed
+ */
 final class Collectors
 {
     /**
-     * @param Collector|\ArrayAccess|\SplHeap|\SplPriorityQueue $collector
+     * @param Collector|\ArrayAccess<K,M>|\SplHeap<M>|\SplPriorityQueue<int, M> $collector
      */
     public static function getAdapter($collector, ?bool $allowsKeys = null): Collector
     {
@@ -47,7 +51,7 @@ final class Collectors
     }
     
     /**
-     * @param IterableCollector|\ArrayIterator|\ArrayObject|\SplFixedArray $collector
+     * @param IterableCollector|\ArrayIterator<K,M>|\ArrayObject<K,M>|\SplFixedArray<M> $collector
      */
     public static function iterable($collector, ?bool $allowsKeys = null): IterableCollector
     {
@@ -82,13 +86,17 @@ final class Collectors
     }
     
     /**
-     * @param array $storage REFERENCE
+     * @param array<string|int, mixed> $storage REFERENCE
+     * @return IterableCollector<string|int, mixed>
      */
     public static function array(array &$storage, bool $allowsKeys = true): IterableCollector
     {
         return new ArrayAdapter($storage, $allowsKeys);
     }
     
+    /**
+     * @param \SplPriorityQueue<int, mixed> $queue
+     */
     public static function wrapSplPriorityQueue(
         \SplPriorityQueue $queue,
         bool $allowsKeys = true

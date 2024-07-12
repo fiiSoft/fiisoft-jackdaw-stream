@@ -6,8 +6,12 @@ use FiiSoft\Jackdaw\Collector\BaseCollector;
 
 final class ArrayAccessAdapter extends BaseCollector
 {
+    /** @var \ArrayAccess<string|int, mixed> */
     private \ArrayAccess $buffer;
     
+    /**
+     * @param \ArrayAccess<string|int, mixed> $buffer
+     */
     public function __construct(\ArrayAccess $buffer, ?bool $allowKeys = true)
     {
         parent::__construct($allowKeys);

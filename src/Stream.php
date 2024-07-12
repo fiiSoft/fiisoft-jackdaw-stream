@@ -26,10 +26,13 @@ use FiiSoft\Jackdaw\Operation\Sending\{CollectIn, CollectKeysIn, CountIn, Dispat
 use FiiSoft\Jackdaw\Operation\Special\{Assert, Assert\AssertionFailed, Iterate, Limit, Until};
 use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, FinalOperation, Find, First, Fold, GroupBy, Has,
     HasEvery, HasOnly, IsEmpty, Last, Reduce};
-use FiiSoft\Jackdaw\Producer\{Internal\EmptyProducer, Internal\PushProducer, Producer, ProducerReady, Producers};
+use FiiSoft\Jackdaw\Producer\{Internal\EmptyProducer, MultiProducer, Producer, ProducerReady, Producers};
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Registry\RegWriter;
 
+/**
+ * @implements \IteratorAggregate<string|int, mixed>
+ */
 final class Stream extends StreamSource
     implements HandlerReady, SignalHandler, Executable, Destroyable, \IteratorAggregate
 {
@@ -39,6 +42,9 @@ final class Stream extends StreamSource
     private Stack $stack;
     private Pipe $pipe;
     
+    /** @var Stream[] */
+    private array $parents = [];
+    
     private bool $isExecuted = false;
     private bool $isLoop = false;
     private bool $isFirstProducer = true;
@@ -46,6 +52,7 @@ final class Stream extends StreamSource
     private bool $isInitialized = false;
     private bool $isStarted = false;
     private bool $canFinish = true;
+    private bool $isResuming = false;
     
     /** @var StreamPipe[] */
     private array $pushToStreams = [];
@@ -60,7 +67,7 @@ final class Stream extends StreamSource
     private array $onErrorHandlers = [];
     
     /**
-     * @param ProducerReady|resource|callable|iterable|object|scalar ...$elements
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|object|scalar ...$elements
      */
     public static function of(...$elements): Stream
     {
@@ -68,7 +75,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable|string $producer
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|string $producer
      */
     public static function from($producer): Stream
     {
@@ -107,21 +114,14 @@ final class Stream extends StreamSource
     
     private function prepareForFork(): void
     {
-        $this->pipe->prepare();
+        $this->resetState();
         
         $this->isInitialized = false;
         $this->isExecuted = false;
         $this->isStarted = false;
-        $this->isLoop = false;
-        $this->isFirstProducer = true;
-        $this->canFinish = true;
         
-        $this->pushToStreams = [];
-        $this->onFinishHandlers = [];
-        $this->onSuccessHandlers = [];
-        $this->onErrorHandlers = [];
-        
-        $this->producer = new PushProducer();
+        $this->pipe->prepare();
+        $this->producer = MultiProducer::oneTime();
         
         $this->initialize();
     }
@@ -172,6 +172,9 @@ final class Stream extends StreamSource
         return $this->filter(Filters::notEmpty($mode));
     }
     
+    /**
+     * @param array<mixed> $values
+     */
     public function without(array $values, int $mode = Check::VALUE): Stream
     {
         if (\count($values) === 1) {
@@ -183,6 +186,9 @@ final class Stream extends StreamSource
         return $this->omit($filter);
     }
     
+    /**
+     * @param array<mixed> $values
+     */
     public function only(array $values, int $mode = Check::VALUE): Stream
     {
         if (\count($values) === 1) {
@@ -197,7 +203,7 @@ final class Stream extends StreamSource
     /**
      * It only passes array (or \ArrayAccess) values containing the specified field(s).
      *
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      */
     public function onlyWith($fields, bool $allowNulls = false): Stream
     {
@@ -372,7 +378,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      */
     public function castToInt($fields = null): Stream
     {
@@ -380,7 +386,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      */
     public function castToFloat($fields = null): Stream
     {
@@ -388,7 +394,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      */
     public function castToString($fields = null): Stream
     {
@@ -396,7 +402,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      */
     public function castToBool($fields = null): Stream
     {
@@ -404,7 +410,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      * @param \DateTimeZone|string|null $inTimeZone
      */
     public function castToTime($fields = null, ?string $fromFormat = null, $inTimeZone = null): Stream
@@ -428,7 +434,7 @@ final class Stream extends StreamSource
      * Change names of keys in array-like values.
      * It requires array (or \ArrayAccessAdapter) value to work with.
      *
-     * @param array $keys map names of keys to rename (before => after)
+     * @param array<string|int> $keys map names of keys to rename (before => after)
      */
     public function remap(array $keys): Stream
     {
@@ -500,7 +506,7 @@ final class Stream extends StreamSource
      * It works very similarly to mapKey - the difference is that it uses Discriminator as mapper
      * and guarantees that key is string, int or bool.
      *
-     * @param DiscriminatorReady|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
      */
     public function classify($discriminator): Stream
     {
@@ -558,7 +564,7 @@ final class Stream extends StreamSource
      * It works in a similar way to method collectIn() and allows to store values with keys
      * in given array $buffer instead of Collector.
      *
-     * @param \ArrayAccess|array $buffer REFERENCE
+     * @param \ArrayAccess<string|int, mixed>|array<string|int, mixed> $buffer REFERENCE
      */
     public function storeIn(&$buffer, bool $reindex = false): Stream
     {
@@ -567,8 +573,8 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Collector|\ArrayAccess|\SplHeap|\SplPriorityQueue $collector
-     */
+     * @param Collector|\ArrayAccess<string|int, mixed>|\SplHeap<mixed>|\SplPriorityQueue<int, mixed> $collector
+    */
     public function collectIn($collector, ?bool $reindex = null): Stream
     {
         $this->chainOperation(CollectIn::create($collector, $reindex));
@@ -576,7 +582,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Collector|\ArrayAccess|\SplHeap|\SplPriorityQueue $collector
+     * @param Collector|\ArrayAccess<string|int, mixed>|\SplHeap<mixed>|\SplPriorityQueue<int, mixed> $collector
      */
     public function collectKeysIn($collector): Stream
     {
@@ -666,7 +672,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable|string ...$producers
+     * @param ProducerReady|resource|callable|iterable<string|int, mixed>|string ...$producers
      */
     public function join(...$producers): Stream
     {
@@ -818,7 +824,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
     public function chunkBy($discriminator, bool $reindex = false): Stream
     {
@@ -856,6 +862,9 @@ final class Stream extends StreamSource
         return $this;
     }
     
+    /**
+     * @param array<string|int> $keys
+     */
     public function aggregate(array $keys): Stream
     {
         $this->chainOperation(Aggregate::create($keys));
@@ -890,7 +899,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      * @param mixed|null $orElse
      */
     public function extract($fields, $orElse = null): Stream
@@ -907,7 +916,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param array|string|int $fields
+     * @param string|int ...$fields
      */
     public function remove(...$fields): Stream
     {
@@ -993,7 +1002,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param DiscriminatorReady|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
      * @param HandlerReady[] $handlers
      */
     public function dispatch($discriminator, array $handlers): Stream
@@ -1089,7 +1098,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
     public function categorize($discriminator, ?bool $reindex = null): Stream
     {
@@ -1130,7 +1139,7 @@ final class Stream extends StreamSource
      * Creates a numeric array where the first item comes from this stream, and the next items come from all passed
      * providers of subsequent values. In the event that any supplier runs out, null is inserted in its place.
      *
-     * @param array<ProducerReady|resource|callable|iterable|scalar> $sources
+     * @param array<ProducerReady|resource|callable|iterable<string|int, mixed>|scalar> $sources
      */
     public function zip(...$sources): Stream
     {
@@ -1148,7 +1157,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param DiscriminatorReady|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
      */
     public function fork($discriminator, LastOperation $prototype): Stream
     {
@@ -1246,7 +1255,7 @@ final class Stream extends StreamSource
     /**
      * Create new stream from the current one and set provided Producer as source of data for it.
      *
-     * @param ProducerReady|resource|callable|iterable|string $producer
+     * @param ProducerReady|resource|callable|iterable<string|int, mixed>|string $producer
      */
     public function wrap($producer): Stream
     {
@@ -1336,12 +1345,17 @@ final class Stream extends StreamSource
     
     /**
      * It works in the same way as toArray(true).
+     *
+     * @return array<string|int, mixed>
      */
     public function toArrayAssoc(): array
     {
         return $this->toArray(true);
     }
     
+    /**
+     * @return array<string|int, mixed>
+     */
     public function toArray(bool $preserveKeys = false): array
     {
         $buffer = [];
@@ -1393,7 +1407,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Reducer|callable|array $reducer
+     * @param Reducer|callable|array<Reducer|callable> $reducer
      * @param callable|mixed|null $orElse (default null)
      */
     public function reduce($reducer, $orElse = null): LastOperation
@@ -1436,16 +1450,25 @@ final class Stream extends StreamSource
         return $this->runLast(new Has($this, $value, $mode));
     }
     
+    /**
+     * @param array<string|int, mixed> $values
+     */
     public function hasAny(array $values, int $mode = Check::VALUE): LastOperation
     {
         return $this->has(Filters::onlyIn($values, $mode));
     }
     
+    /**
+     * @param array<string|int, mixed> $values
+     */
     public function hasEvery(array $values, int $mode = Check::VALUE): LastOperation
     {
         return $this->runLast(HasEvery::create($this, $values, $mode));
     }
     
+    /**
+     * @param array<string|int, mixed> $values
+     */
     public function hasOnly(array $values, int $mode = Check::VALUE): LastOperation
     {
         return $this->runLast(HasOnly::create($this, $values, $mode));
@@ -1516,7 +1539,7 @@ final class Stream extends StreamSource
     /**
      * It collects repeatable values in collections by given discriminator.
      *
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
     public function groupBy($discriminator, ?bool $reindex = null): BaseStreamCollection
     {
@@ -1542,7 +1565,6 @@ final class Stream extends StreamSource
     
     private function runLast(FinalOperation $operation): LastOperation
     {
-        \assert($operation instanceof Operation);
         $next = $this->chainOperation($operation);
         
         \assert($next instanceof LastOperation);
@@ -1573,7 +1595,34 @@ final class Stream extends StreamSource
     {
         $this->canFinish = true;
         
+        if (!empty($this->parents)) {
+            foreach ($this->parents as $key => $parent) {
+                unset($this->parents[$key]);
+                
+                if ($parent->isNotStartedYet()) {
+                    $parent->run();
+                }
+            }
+            
+            if ($this->isExecuted) {
+                return;
+            }
+        }
+        
         $this->execute();
+    }
+    
+    protected function resume(): void
+    {
+        if ($this->isInitialized && !$this->isResuming) {
+            $this->isResuming = true;
+            try {
+                $this->pipe->resume();
+                $this->signal->resume();
+            } finally {
+                $this->isResuming = false;
+            }
+        }
     }
     
     protected function execute(): void
@@ -1590,7 +1639,13 @@ final class Stream extends StreamSource
     
     protected function isNotStartedYet(): bool
     {
-        return !$this->isStarted;
+        $notStarted = !$this->isStarted && !$this->isExecuted;
+        
+        foreach ($this->parents as $parent) {
+            $notStarted = $notStarted && $parent->isNotStartedYet();
+        }
+        
+        return $notStarted;
     }
     
     private function iterateStream(): void
@@ -1644,25 +1699,33 @@ final class Stream extends StreamSource
         if ($this->isDestroying) {
             return;
         }
-        
+    
         $this->isDestroying = true;
         $this->isExecuted = true;
-        $this->isLoop = false;
-        $this->isFirstProducer = true;
-        $this->canFinish = true;
-        
-        $this->pushToStreams = [];
-        $this->onFinishHandlers = [];
-        $this->onSuccessHandlers = [];
-        $this->onErrorHandlers = [];
         
         $this->pipe->destroy();
         $this->producer->destroy();
+        $this->parents = [];
         
         if ($this->isInitialized) {
             $this->stack->destroy();
             $this->source->destroy();
         }
+        
+        $this->resetState();
+    }
+    
+    private function resetState(): void
+    {
+        $this->isLoop = false;
+        $this->isFirstProducer = true;
+        $this->canFinish = true;
+        $this->isResuming = false;
+        
+        $this->pushToStreams = [];
+        $this->onFinishHandlers = [];
+        $this->onSuccessHandlers = [];
+        $this->onErrorHandlers = [];
     }
     
     private function initialize(): void
@@ -1687,6 +1750,9 @@ final class Stream extends StreamSource
             foreach ($this->pushToStreams as $key => $stream) {
                 if ($this->isLoop || !$stream->continueIteration()) {
                     unset($this->pushToStreams[$key]);
+                    
+                    $stream->resume();
+                    $stream->finish();
                 }
             }
         }
@@ -1754,11 +1820,17 @@ final class Stream extends StreamSource
         return false;
     }
     
+    /**
+     * @inheritDoc
+     */
     protected function restartWith(Producer $producer, Operation $operation): void
     {
         $this->source->restartWith($producer, $operation);
     }
     
+    /**
+     * @inheritDoc
+     */
     protected function continueWith(Producer $producer, Operation $operation): void
     {
         $this->isFirstProducer = false;
@@ -1809,5 +1881,12 @@ final class Stream extends StreamSource
     {
         $this->source = $state;
         $this->producer = $state->producer;
+    }
+    
+    protected function assignParent(Stream $stream): void
+    {
+        if ($stream !== $this) {
+            $this->parents[\spl_object_id($stream)] = $stream;
+        }
     }
 }

@@ -1,10 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
+use FiiSoft\Jackdaw\Internal\StreamBuilder;
 
-interface Mapper extends MapperReady, DiscriminatorReady
+interface Mapper extends MapperReady, DiscriminatorReady, StreamBuilder
 {
     /**
      * @param mixed $value
@@ -27,6 +28,4 @@ interface Mapper extends MapperReady, DiscriminatorReady
      * @return Mapper a new instance that "knows" it's for mapping keys instead of values
      */
     public function makeKeyMapper(): Mapper;
-    
-    public function buildStream(iterable $stream): iterable;
 }

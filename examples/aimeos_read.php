@@ -1,5 +1,7 @@
 <?php declare(strict_types=1);
 
+//composer require --dev aimeos/map >=1.0.0
+
 use Aimeos\Map;
 
 require_once  __DIR__ .'/../vendor/autoload.php';

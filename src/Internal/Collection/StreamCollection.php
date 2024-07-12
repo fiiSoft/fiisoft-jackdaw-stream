@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Internal\Collection;
 final class StreamCollection extends BaseStreamCollection
 {
     /**
-     * @return string|int
+     * @return string|int|false
      */
     public function key()
     {

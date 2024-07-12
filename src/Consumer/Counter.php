@@ -2,50 +2,16 @@
 
 namespace FiiSoft\Jackdaw\Consumer;
 
-use FiiSoft\Jackdaw\Internal\StreamAware;
-use FiiSoft\Jackdaw\Internal\StreamState;
-use FiiSoft\Jackdaw\Stream;
-
-final class Counter extends StreamState implements Consumer, StreamAware
+interface Counter extends Consumer
 {
-    private int $count = 0;
-    
-    private ?Stream $stream = null;
+    /**
+     * Experimental method, so better use get() instead.
+     * It triggers iterating over all streams for which this counter is assigned (if any) and returns total count.
+     */
+    public function count(): int;
     
     /**
-     * @inheritDoc
+     * It returns current (running) value of counter and doesn't trigger iterating over assigned streams.
      */
-    public function consume($value, $key): void
-    {
-        ++$this->count;
-    }
-    
-    /**
-     * Alias for method get() for convenient use.
-     */
-    public function count(): int
-    {
-        return $this->get();
-    }
-    
-    /**
-     * Alias for method count() for convenient use.
-     */
-    public function get(): int
-    {
-        if ($this->stream !== null) {
-            if ($this->stream->isNotStartedYet()) {
-                $this->stream->run();
-            }
-            
-            $this->stream = null;
-        }
-        
-        return $this->count;
-    }
-    
-    public function assignStream(Stream $stream): void
-    {
-        $this->stream = $stream;
-    }
+    public function get(): int;
 }

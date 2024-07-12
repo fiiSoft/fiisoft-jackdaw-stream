@@ -12,7 +12,7 @@ use FiiSoft\Jackdaw\Producer\Producers;
 abstract class Categorize extends GroupingOperation
 {
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
     final public static function create($discriminator, ?bool $reindex = null): self
     {

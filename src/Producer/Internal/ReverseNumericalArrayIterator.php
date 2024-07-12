@@ -6,10 +6,14 @@ use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
 final class ReverseNumericalArrayIterator extends BaseProducer
 {
+    /** @var array<int, mixed> */
     private array $data;
     
     private bool $reindex;
     
+    /**
+     * @param array<int, mixed> $data
+     */
     public function __construct(array $data, bool $reindex = false)
     {
         $this->data = $data;

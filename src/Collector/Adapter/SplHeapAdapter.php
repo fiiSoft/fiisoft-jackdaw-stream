@@ -7,8 +7,12 @@ use FiiSoft\Jackdaw\Collector\Collector;
 
 final class SplHeapAdapter implements Collector
 {
+    /** @var \SplHeap<mixed> */
     private \SplHeap $heap;
     
+    /**
+     * @param \SplHeap<mixed> $heap
+     */
     public function __construct(\SplHeap $heap)
     {
         $this->heap = $heap;

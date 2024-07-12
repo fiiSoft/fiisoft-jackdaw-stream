@@ -27,8 +27,18 @@ abstract class OnlyIn extends BaseFilter
 {
     private const MIXED = 0, INTS = 1, STRINGS = 2, OTHER = 3;
     
-    protected array $ints = [], $strings = [], $other = [];
+    /** @var array<int, bool> */
+    protected array $ints = [];
     
+    /** @var array<string, bool> */
+    protected array $strings = [];
+    
+    /** @var array<int, mixed> */
+    protected array $other = [];
+    
+    /**
+     * @param array<string|int, mixed> $values
+     */
     final public static function create(?int $mode, array $values): Filter
     {
         if (empty($values)) {
@@ -50,6 +60,11 @@ abstract class OnlyIn extends BaseFilter
         return self::createFilter($mode, $ints, $strings, $other);
     }
     
+    /**
+     * @param array<int, bool> $ints
+     * @param array<string, bool> $strings
+     * @param array<int, mixed> $other
+     */
     private static function createFilter(?int $mode, array $ints, array $strings, array $other): self
     {
         $mode = Check::getMode($mode);
@@ -106,6 +121,11 @@ abstract class OnlyIn extends BaseFilter
         }
     }
     
+    /**
+     * @param array<int, bool> $ints
+     * @param array<string, bool> $strings
+     * @param array<int, mixed> $other
+     */
     final protected function __construct(int $mode, array $ints, array $strings, array $other)
     {
         parent::__construct($mode);
@@ -127,6 +147,11 @@ abstract class OnlyIn extends BaseFilter
             : $this;
     }
     
+    /**
+     * @param array<int, bool> $ints
+     * @param array<string, bool> $strings
+     * @param array<int, mixed> $other
+     */
     private static function determineWorkMode(array $ints, array $strings, array $other): int
     {
         $map = [

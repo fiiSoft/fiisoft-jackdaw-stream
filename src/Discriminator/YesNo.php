@@ -19,7 +19,7 @@ final class YesNo implements Discriminator
     private $no;
     
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator it SHOULD returns boolean values
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator it SHOULD returns boolean values
      * @param string|int $yes
      * @param string|int $no value of it must be different than value of $yes
      */

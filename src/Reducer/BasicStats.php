@@ -37,7 +37,7 @@ final class BasicStats extends Internal\BaseReducer
     }
     
     /**
-     * @inheritDoc
+     * @return array{count:int, min:float|int, max:float|int, sum:float|int, avg:float|int}
      */
     public function result(): array
     {

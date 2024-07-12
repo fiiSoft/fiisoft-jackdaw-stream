@@ -12,8 +12,8 @@ final class CombinedGeneral extends BaseProducer
     private Producer $keys, $values;
     
     /**
-     * @param ProducerReady|resource|callable|iterable|string $keys
-     * @param ProducerReady|resource|callable|iterable|string $values
+     * @param ProducerReady|resource|callable|iterable<int, mixed>|string $keys
+     * @param ProducerReady|resource|callable|iterable<int, mixed>|string $values
      */
     public function __construct($keys, $values)
     {

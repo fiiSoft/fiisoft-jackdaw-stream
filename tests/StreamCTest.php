@@ -1510,7 +1510,7 @@ final class StreamCTest extends TestCase
             ->map(static fn(\DateTimeImmutable $dt): \DateTimeImmutable => $dt->modify('+1 day'))
             ->callWhen(Filters::time()->until('2024-12-31'), $queue);
         
-        self::assertSame(20, $workingDays->get());
+        self::assertSame(20, $workingDays->count());
     }
     
     public function test_streaming_of_invalid_datetime_values_throws_exception(): void
@@ -1542,5 +1542,236 @@ final class StreamCTest extends TestCase
             Day::SAT => 20,
             Day::SUN => 21,
         ], $result);
+    }
+    
+    public function test_trigger_stream_by_calling_last_operation_in_deeply_nested_stream(): void
+    {
+        $stream1 = Stream::from(['a', 1, 'b', 2])->onlyIntegers();
+        $stream2 = Stream::empty()->join([3, 4, 5])->map(Mappers::increment(2));
+        $stream3 = Stream::empty()->greaterThan(3)->lessThan(7);
+        $stream4 = Stream::empty()->collect();
+        
+        $stream1->feed($stream2);
+        $stream2->feed($stream3);
+        $stream3->feed($stream4);
+        
+        self::assertSame([4, 5, 6], $stream4->toArray());
+    }
+    
+    public function test_iterate_over_multiple_streams_when_triggerring_stream_has_many_parents(): void
+    {
+        $stream1 = Stream::from(['a', 1, 'b', 2])->onlyIntegers();
+        $stream2 = Stream::empty()->join([3, 4, 5])->map(Mappers::increment(2));
+        $stream3 = Stream::from([7, 6, 5, 4, 3])->greaterThan(3)->lessThan(7);
+        $stream4 = Stream::empty()->collect(true);
+        
+        $stream1->feed($stream2);
+        $stream2->feed($stream4);
+        
+        $stream3->feed($stream4);
+        
+        self::assertSame([3, 4, 5, 6, 7, 6, 5, 4], $stream4->toArray());
+    }
+    
+    public function test_use_counter_by_many_streams_in_the_same_time(): void
+    {
+        $counter = Consumers::counter();
+        
+        $stream1 = Stream::from(['a', 1, 'b', 2])->onlyIntegers()->call($counter);
+        $stream2 = Stream::empty()->join([3, 4, 5])->map(Mappers::increment(2))->call($counter);
+        $stream3 = Stream::empty()->join([1, 5, 9])->greaterThan(3)->lessThan(7)->call($counter);
+        $stream4 = Stream::empty()->call($counter)->collect();
+        
+        //s1->s2->s3->s4; s1->s4
+        $stream1->feed($stream2, $stream4);
+        $stream2->feed($stream3);
+        $stream3->feed($stream4);
+    
+        //s1:[1] c:1
+        //s1 -> [1] -> s2, s2 -> [3], s2:[3] c:2
+        //s2 -> [3] -> s3
+        //s1 -> [1] -> s4, s4:[1] c:3
+        
+        //s1:[2] c:4
+        //s1 -> [2] -> s2, s2 -> [4], s2:[4] c:5
+        //s2 -> [4] -> s3, s3:[4] c:6
+        //s3 -> [4] -> s4, s4:[4] c:7
+        //s1 -> [2] -> s4, s4:[2] c:8
+        
+        //s2:[5] c:9
+        //s2 -> [5] -> s3, s3:[5] c:10
+        //s3 -> [5] -> s4, s4:[5] c:11
+        
+        //s2:[6] c:12
+        //s2 -> [6] -> s3, s3:[6] c:13
+        //s3 -> [6] -> s4, s4:[6] c:14
+        
+        //s2:[7] c:15
+        //s2 -> [7] -> s3
+        
+        //s3:[5] c:16
+        //s3 -> [5] -> s4, s4:[5] c:17
+        
+        self::assertSame(17, $counter->count());
+    }
+    
+    public function test_how_Counter_methods_get_and_count_work(): void
+    {
+        //given
+        $counter = Consumers::counter();
+        Stream::from(['a', 1, 'b', 2])->onlyIntegers()->call($counter);
+        
+        //method get() returns current value hold by counter
+        self::assertSame(0, $counter->get());
+        
+        //method count() triggers stream iterating
+        self::assertSame(2, $counter->count());
+        
+        //and then, get() returns counted value
+        self::assertSame(2, $counter->get());
+        
+        //both method can be called again but it does nothing
+        self::assertSame(2, $counter->count());
+        self::assertSame(2, $counter->get());
+    }
+    
+    public function test_Counter_method_count_can_be_called_after_iterating_the_stream(): void
+    {
+        //given
+        $counter = Consumers::counter();
+        $stream = Stream::from(['a', 1, 'b', 2])->onlyIntegers()->call($counter);
+        
+        //when
+        $stream->run();
+        
+        //then
+        self::assertSame(2, $counter->get());
+        self::assertSame(2, $counter->count());
+    }
+    
+    public function test_trigger_processing_by_the_last_element_from_feedMany_operation(): void
+    {
+        $stream1 = Stream::from(['a', 'b']);
+        $stream2 = Stream::from(['c', 'd']);
+        $stream3 = Stream::from(['e', 'f'])->collect(true);
+        $stream4 = Stream::from(['g', 'h'])->collect(true);
+        
+        $stream1->feed($stream2);
+        $stream2->feed($stream3, $stream4);
+        
+        //s1->s2->[s3,s4]
+        
+        self::assertSame('abcdgh', $stream4->toString(''));
+        self::assertSame('abcdef', $stream3->toString(''));
+    }
+    
+    public function test_trigger_processing_by_the_first_stream_with_feedMany(): void
+    {
+        //given
+        $stream1 = Stream::from(['a', 'b']);
+        $stream2 = Stream::from(['c', 'd']);
+        $stream3 = Stream::from(['e', 'f'])->collect(true);
+        $stream4 = Stream::from(['g', 'h'])->collect(true);
+        
+        $stream1->feed($stream2);
+        $stream2->feed($stream3, $stream4);
+        
+        //when
+        $stream1->run();
+        
+        //then
+        self::assertSame('abcdgh', $stream4->toString(''));
+        self::assertSame('abcdef', $stream3->toString(''));
+    }
+    
+    public function test_onFinish_and_onSuccess_handlers_are_executed_only_once_1(): void
+    {
+        //given
+        $cntSuccess = 0;
+        $cntFinish = 0;
+        
+        $onSuccess = static function () use (&$cntSuccess) {
+            ++$cntSuccess;
+        };
+        
+        $onFinish = static function () use (&$cntFinish) {
+            ++$cntFinish;
+        };
+        
+        $stream1 = Stream::from(['a', 'b'])->onSuccess($onSuccess)->onFinish($onFinish);
+        $stream2 = Stream::from(['c', 'd'])->onSuccess($onSuccess)->onFinish($onFinish);
+        $stream3 = Stream::from(['e', 'f'])->onSuccess($onSuccess)->onFinish($onFinish)->collect(true);
+        $stream4 = Stream::from(['g', 'h'])->onSuccess($onSuccess)->onFinish($onFinish)->collect(true);
+        
+        $stream1->feed($stream2);
+        $stream2->feed($stream3, $stream4);
+        
+        //when
+        $stream1->run();
+        
+        //then
+        self::assertSame(4, $cntSuccess);
+        self::assertSame(4, $cntFinish);
+    }
+    
+    public function test_onFinish_and_onSuccess_handlers_are_executed_only_once_2(): void
+    {
+        //given
+        $cntSuccess = 0;
+        $cntFinish = 0;
+        
+        $onSuccess = static function () use (&$cntSuccess) {
+            ++$cntSuccess;
+        };
+        
+        $onFinish = static function () use (&$cntFinish) {
+            ++$cntFinish;
+        };
+        
+        $stream1 = Stream::from(['a', 'b'])->onSuccess($onSuccess)->onFinish($onFinish);
+        $stream2 = Stream::from(['c', 'd'])->onSuccess($onSuccess)->onFinish($onFinish);
+        $stream3 = Stream::from(['e', 'f'])->onSuccess($onSuccess)->onFinish($onFinish)->collect(true);
+        $stream4 = Stream::from(['g', 'h'])->onSuccess($onSuccess)->onFinish($onFinish)->collect(true);
+        
+        $stream1->feed($stream2);
+        $stream2->feed($stream3, $stream4);
+        
+        //when
+        $stream4->toString();
+        $stream3->toString();
+        
+        //then
+        self::assertSame(4, $cntSuccess);
+        self::assertSame(4, $cntFinish);
+    }
+    
+    public function test_LastOperation_in_fork_doesnt_trigger_streaming_of_parent_stream(): void
+    {
+        $collector = Stream::empty()->castToString()->reduce(Reducers::concat());
+        
+        Stream::from(['a', 1, 'b', 2])->fork('is_string', $collector);
+        
+        self::assertFalse($collector->found());
+        self::assertNull($collector->get());
+    }
+    
+    public function test_when_triggered_stream_has_more_than_one_independent_parents(): void
+    {
+        //given
+        $stream1 = Stream::from(['a', 'b']);
+        $stream2 = Stream::from(['c', 'd']);
+        $stream3 = Stream::from(['e', 'f'])->collect(true);
+        $stream4 = Stream::from(['g', 'h'])->collect(true);
+        
+        //s1->s4, s2->[s3,s4]
+        $stream1->feed($stream4);
+        $stream2->feed($stream3, $stream4);
+        
+        //when
+        $stream1->run();
+        
+        //then
+        self::assertSame('abghcd', $stream4->toString(''));
+        self::assertSame('cdef', $stream3->toString(''));
     }
 }

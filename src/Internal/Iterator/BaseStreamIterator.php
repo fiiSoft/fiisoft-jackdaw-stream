@@ -6,6 +6,9 @@ use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Stream;
 
+/**
+ * @implements \Iterator<string|int, mixed>
+ */
 abstract class BaseStreamIterator extends StreamPipe implements \Iterator
 {
     protected Item $item;

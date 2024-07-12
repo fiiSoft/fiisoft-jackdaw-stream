@@ -12,6 +12,9 @@ final class ProducerAdapter extends StateMapper
     private Item $item;
     private \Iterator $source;
     
+    /**
+     * @param Producer<string|int, mixed> $producer
+     */
     public function __construct(Producer $producer)
     {
         $this->item = new Item();

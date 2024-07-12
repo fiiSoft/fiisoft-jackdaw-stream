@@ -15,6 +15,7 @@ abstract class ChunkBy extends BaseOperation implements Reindexable
 {
     protected Discriminator $discriminator;
     
+    /** @var array<string|int, mixed> */
     protected array $chunked = [];
     
     /** @var string|int|bool|null */
@@ -23,7 +24,7 @@ abstract class ChunkBy extends BaseOperation implements Reindexable
     private bool $reindex;
     
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
     final public static function create($discriminator, bool $reindex = false): self
     {
@@ -33,7 +34,7 @@ abstract class ChunkBy extends BaseOperation implements Reindexable
     }
     
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
     final protected function __construct($discriminator, bool $reindex = false)
     {

@@ -15,7 +15,7 @@ final class FilterAdapter implements Transformer
     }
     
     /**
-     * @inheritDoc
+     * @return array<string|int, mixed>
      */
     public function transform($value, $key): array
     {

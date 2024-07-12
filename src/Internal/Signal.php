@@ -33,12 +33,18 @@ final class Signal extends Collaborator
         $this->isWorking = false;
     }
     
+    /**
+     * @inheritDoc
+     */
     public function restartWith(Producer $producer, Operation $operation): void
     {
         $this->resume();
         $this->stream->restartWith($producer, $operation);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function continueWith(Producer $producer, Operation $operation): void
     {
         $this->stream->continueWith($producer, $operation);

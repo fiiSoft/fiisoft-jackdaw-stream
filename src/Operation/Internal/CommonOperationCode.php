@@ -30,15 +30,15 @@ trait CommonOperationCode
     
     final public function prepend(Operation $operation): void
     {
-        if ($this->prev !== null) {
-            $this->prev->setNext($operation, true);
-            $operation->setNext($this);
-        }
+        $this->prev->setNext($operation, true);
+        
+        $operation->setNext($this);
     }
     
     final public function removeFromChain(): Operation
     {
         $this->prev->setNext($this->next, true);
+        
         return $this->prev;
     }
     
@@ -54,7 +54,12 @@ trait CommonOperationCode
     
     final public function getLast(): Operation
     {
-        return $this->next !== null ? $this->next->getLast() : $this;
+        return $this->next->getLast();
+    }
+    
+    public function resume(): void
+    {
+        $this->next->resume();
     }
     
     public function destroy(): void

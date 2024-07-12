@@ -11,6 +11,9 @@ final class MultiMapper extends StateMapper
     /** @var Mapper[]  */
     private array $pattern = [];
     
+    /**
+     * @param array<string|int, mixed> $pattern
+     */
     public function __construct(array $pattern)
     {
         if (empty($pattern)) {
@@ -21,7 +24,9 @@ final class MultiMapper extends StateMapper
     }
     
     /**
-     * @inheritDoc
+     * @param mixed $value
+     * @param mixed $key
+     * @return array<string|int, mixed>
      */
     public function map($value, $key = null): array
     {

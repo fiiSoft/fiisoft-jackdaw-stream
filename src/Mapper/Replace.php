@@ -7,17 +7,17 @@ use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
 final class Replace extends StateMapper
 {
-    /** @var array|string */
+    /** @var string[]|string */
     private $search;
     
-    /** @var array|string */
+    /** @var string[]|string */
     private $replace;
     
     /**
      * It works with strings and produces strings. Internally, it's a wrapper for \str_replace.
      *
-     * @param array|string $search
-     * @param array|string $replace
+     * @param string[]|string $search
+     * @param string[]|string $replace
      */
     public function __construct($search, $replace)
     {

@@ -9,7 +9,7 @@ use FiiSoft\Jackdaw\Mapper\Cast\ToInt\ToIntSimple;
 abstract class ToInt extends BaseMapper
 {
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      */
     final public static function create($fields = null): self
     {

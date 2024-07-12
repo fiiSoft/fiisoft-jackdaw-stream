@@ -13,11 +13,11 @@ final class CountUnique extends BaseReducer
 {
     private ?Discriminator $discriminator = null;
     
-    /** @var int[]|string[]  */
+    /** @var array<string|int, int> */
     private array $values = [];
     
     /**
-     * @param DiscriminatorReady|callable|array|null $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|null $discriminator
      */
     public function __construct($discriminator = null)
     {
@@ -64,7 +64,7 @@ final class CountUnique extends BaseReducer
     }
     
     /**
-     * @inheritDoc
+     * @return array<string|int, int>
      */
     public function result(): array
     {

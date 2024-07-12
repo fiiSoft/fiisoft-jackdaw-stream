@@ -7,7 +7,9 @@ use FiiSoft\Jackdaw\Mapper\MoveTo;
 final class MoveToField extends MoveTo
 {
     /**
-     * @inheritDoc
+     * @param mixed $value
+     * @param mixed $key
+     * @return array<string|int, mixed>
      */
     public function map($value, $key = null): array
     {

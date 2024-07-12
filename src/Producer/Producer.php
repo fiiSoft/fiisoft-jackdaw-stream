@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Producer;
 
@@ -7,15 +7,9 @@ use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Stream;
 
 /**
- * @template K
- * @template V
+ * @extends \IteratorAggregate<string|int, mixed>
  */
 interface Producer extends Destroyable, ProducerReady, MapperReady, \IteratorAggregate
 {
     public function stream(): Stream;
-    
-    /**
-     * @return \Traversable<K, V>
-     */
-    public function getIterator(): \Traversable;
 }

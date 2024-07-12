@@ -237,6 +237,9 @@ final class ResultItem implements ResultApi
         return new \ArrayIterator([]);
     }
     
+    /**
+     * @return array<string|int, mixed>|null
+     */
     private function asArray(bool $preserveKeys = true): ?array
     {
         if ($this->found || $this->finalValue !== null) {

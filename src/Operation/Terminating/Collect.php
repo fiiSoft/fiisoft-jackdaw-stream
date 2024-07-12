@@ -10,6 +10,7 @@ use FiiSoft\Jackdaw\Stream;
 
 abstract class Collect extends SimpleFinal implements Reindexable
 {
+    /** @var array<string|int, mixed> */
     protected array $collected = [];
     
     private bool $reindex;

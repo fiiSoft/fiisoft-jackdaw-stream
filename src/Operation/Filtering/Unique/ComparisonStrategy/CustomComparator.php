@@ -9,6 +9,7 @@ final class CustomComparator extends ComparisonStrategy
 {
     private Comparator $comparator;
     
+    /** @var array<int, mixed> */
     private array $values = [];
     
     private int $count = 0, $last = 0;

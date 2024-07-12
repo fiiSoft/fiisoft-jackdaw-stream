@@ -7,8 +7,12 @@ use FiiSoft\Jackdaw\Collector\Collector;
 
 final class SplDoublyLinkedListAdapter implements Collector
 {
+    /** @var \SplDoublyLinkedList<mixed> */
     private \SplDoublyLinkedList $list;
     
+    /**
+     * @param \SplDoublyLinkedList<mixed> $list
+     */
     public function __construct(\SplDoublyLinkedList $list)
     {
         $this->list = $list;

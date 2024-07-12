@@ -6,8 +6,12 @@ use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
 final class ArrayAdapter extends BaseProducer
 {
+    /** @var array<string|int, mixed> */
     private array $source;
     
+    /**
+     * @param array<string|int, mixed> $source
+     */
     public function __construct(array $source)
     {
         $this->source = $source;

@@ -1,5 +1,7 @@
 <?php declare(strict_types=1);
 
+//composer require --dev loophp/collection >=5.0.0
+
 use loophp\collection\Collection;
 use loophp\collection\Contract\Operation\Sortable;
 

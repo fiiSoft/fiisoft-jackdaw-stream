@@ -16,7 +16,7 @@ use FiiSoft\Jackdaw\Registry\RegReader;
 final class Discriminators
 {
     /**
-     * @param DiscriminatorReady|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
      */
     public static function getAdapter($discriminator): Discriminator
     {
@@ -52,7 +52,7 @@ final class Discriminators
     }
     
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
     public static function prepare($discriminator): Discriminator
     {
@@ -85,13 +85,16 @@ final class Discriminators
         return new ByValue();
     }
     
+    /**
+     * @param array<string|int> $classifiers
+     */
     public static function alternately(array $classifiers): Discriminator
     {
         return new Alternately($classifiers);
     }
     
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      * @param string|int $yes
      * @param string|int $no value of it must be different than value of $yes
      */

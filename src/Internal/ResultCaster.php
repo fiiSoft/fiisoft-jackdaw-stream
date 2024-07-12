@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Internal;
 
@@ -16,10 +16,15 @@ interface ResultCaster extends ProducerReady, MapperReady
      */
     public function toJsonAssoc(?int $flags = null): string;
     
+    /**
+     * @return array<string|int, mixed>
+     */
     public function toArray(bool $preserveKeys = false): array;
     
     /**
      * It works in the same way as toArray(true).
+     *
+     * @return array<string|int, mixed>
      */
     public function toArrayAssoc(): array;
 }

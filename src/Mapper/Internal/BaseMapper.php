@@ -43,11 +43,18 @@ abstract class BaseMapper implements Mapper
         return $copy;
     }
     
+    /**
+     * @inheritDoc
+     */
     final public function buildStream(iterable $stream): iterable
     {
         return $this->isValueMapper ? $this->buildValueMapper($stream) : $this->buildKeyMapper($stream);
     }
     
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
     protected function buildValueMapper(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
@@ -55,6 +62,10 @@ abstract class BaseMapper implements Mapper
         }
     }
     
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
     protected function buildKeyMapper(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {

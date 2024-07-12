@@ -58,9 +58,20 @@ final class Feed extends ProcessOperation
     public function assignStream(Stream $stream): void
     {
         parent::assignStream($stream);
-
+        
         if ($this->stream instanceof SourceAware) {
             $this->stream->assignSource($stream);
+        } elseif ($this->stream instanceof ForkCollaborator) {
+            $this->stream->assignParent($stream);
         }
+    }
+    
+    public function resume(): void
+    {
+        if ($this->stream !== null) {
+            $this->stream->resume();
+        }
+        
+        parent::resume();
     }
 }

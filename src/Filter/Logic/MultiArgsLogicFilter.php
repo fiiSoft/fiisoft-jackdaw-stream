@@ -54,6 +54,9 @@ abstract class MultiArgsLogicFilter extends LogicFilter
         return $this->mode;
     }
     
+    /**
+     * @return Filter[]
+     */
     final protected function negatedFilters(): array
     {
         return \array_map(static fn(Filter $filter): Filter => $filter->negate(), $this->filters);

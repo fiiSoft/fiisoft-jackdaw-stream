@@ -2,16 +2,30 @@
 
 namespace FiiSoft\Jackdaw\Producer;
 
+use FiiSoft\Jackdaw\Producer\Internal\EmptyProducer;
 use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
-use FiiSoft\Jackdaw\Producer\Tech\MultiSourcedProducer;
 
-final class MultiProducer extends BaseProducer implements MultiSourcedProducer
+final class MultiProducer extends BaseProducer
 {
     /** @var Producer[] */
     private array $producers = [];
     
-    public function __construct(Producer ...$producers)
+    private bool $onceTimeIterator;
+    
+    public static function repeatable(Producer ...$producers): MultiProducer
     {
+        return new self(false, ...$producers);
+    }
+    
+    public static function oneTime(Producer ...$producers): MultiProducer
+    {
+        return new self(true, ...$producers);
+    }
+    
+    private function __construct(bool $onceTimeIterator, Producer ...$producers)
+    {
+        $this->onceTimeIterator = $onceTimeIterator;
+        
         $this->merge($producers);
     }
     
@@ -26,9 +40,9 @@ final class MultiProducer extends BaseProducer implements MultiSourcedProducer
     private function merge(array $producers): void
     {
         foreach ($producers as $producer) {
-            if ($producer instanceof MultiSourcedProducer) {
+            if ($producer instanceof self) {
                 $this->merge($producer->getProducers());
-            } else {
+            } elseif (! $producer instanceof EmptyProducer) {
                 $this->producers[] = $producer;
             }
         }
@@ -39,8 +53,25 @@ final class MultiProducer extends BaseProducer implements MultiSourcedProducer
         foreach ($this->producers as $producer) {
             yield from $producer;
         }
+        
+        if ($this->onceTimeIterator) {
+            $this->producers = [];
+        }
     }
     
+    public function isOneTime(): bool
+    {
+        return $this->onceTimeIterator;
+    }
+    
+    public function prepare(): Producer
+    {
+        return \count($this->producers) === 1 ? $this->producers[0] : $this;
+    }
+    
+    /**
+     * @return Producer[]
+     */
     public function getProducers(): array
     {
         return $this->producers;

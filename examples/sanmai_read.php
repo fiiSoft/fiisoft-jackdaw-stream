@@ -1,5 +1,7 @@
 <?php declare(strict_types=1);
 
+//composer require --dev sanmai/pipeline >=6.7.0
+
 use function Pipeline\take;
 
 require_once  __DIR__ .'/../vendor/autoload.php';

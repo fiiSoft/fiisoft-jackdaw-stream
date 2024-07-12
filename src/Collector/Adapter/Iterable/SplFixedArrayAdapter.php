@@ -6,12 +6,16 @@ use FiiSoft\Jackdaw\Stream;
 
 final class SplFixedArrayAdapter extends BaseIterableCollector
 {
+    /** @var \SplFixedArray<mixed> */
     private \SplFixedArray $fixedArray;
     
     private int $index = 0;
     
     private bool $valueSet = false;
     
+    /**
+     * @param \SplFixedArray<mixed> $fixedArray
+     */
     public function __construct(\SplFixedArray $fixedArray, ?bool $allowKeys)
     {
         parent::__construct($allowKeys);
@@ -19,6 +23,10 @@ final class SplFixedArrayAdapter extends BaseIterableCollector
         $this->fixedArray = $fixedArray;
     }
     
+    /**
+     * @param int $key
+     * @param mixed $value
+     */
     public function set($key, $value): void
     {
         $this->fixedArray[$key] = $value;

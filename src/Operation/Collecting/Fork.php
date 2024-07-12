@@ -21,7 +21,7 @@ final class Fork extends ProcessOperation
     private array $streams = [];
     
     /**
-     * @param DiscriminatorReady|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
      */
     public function __construct($discriminator, ForkCollaborator $prototype)
     {
@@ -81,6 +81,9 @@ final class Fork extends ProcessOperation
         return true;
     }
     
+    /**
+     * @return array<string|int, mixed>
+     */
     private function extractData(): array
     {
         return \array_map(

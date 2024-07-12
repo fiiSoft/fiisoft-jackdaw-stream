@@ -83,6 +83,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
     
     private bool $isPrepared = false;
     private bool $isDestroying = false;
+    private bool $isResuming = false;
     
     public function __construct()
     {
@@ -116,6 +117,10 @@ final class Pipe extends ProtectedCloning implements Destroyable
         }
     }
     
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
     public function buildStream(iterable $stream): iterable
     {
         for ($node = $this->head; $node !== null; $node = $node->getNext()) {
@@ -138,7 +143,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
      */
     public function chainOperation(Operation $operation, Stream $stream)
     {
-        if ($this->isPrepared) {
+        if ($this->cannotChain($operation)) {
             throw PipeExceptionFactory::cannotAddOperationToStartedStream();
         }
         
@@ -154,6 +159,16 @@ final class Pipe extends ProtectedCloning implements Destroyable
         $this->replacement = null;
         
         return $replacement;
+    }
+    
+    private function cannotChain(Operation $operation): bool
+    {
+        return $this->isPrepared && !$this->isFeedOperation($operation);
+    }
+    
+    private function isFeedOperation(Operation $operation): bool
+    {
+        return $operation instanceof Feed || $operation instanceof FeedMany;
     }
     
     public function append(Operation $operation): void
@@ -627,5 +642,17 @@ final class Pipe extends ProtectedCloning implements Destroyable
         }
         
         return $prev !== null;
+    }
+    
+    public function resume(): void
+    {
+        if (!$this->isResuming) {
+            $this->isResuming = true;
+            try {
+                $this->head->resume();
+            } finally {
+                $this->isResuming = false;
+            }
+        }
     }
 }

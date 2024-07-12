@@ -33,6 +33,8 @@ interface ItemBuffer extends Destroyable
     /**
      * Returns collected data as array, with original keys or reindexed.
      * When param $skip is greather than 0, it skips $skip elements at the beginning.
+     *
+     * @return array<string|int, mixed>
      */
     public function fetchData(bool $reindex = false, int $skip = 0): array;
 }

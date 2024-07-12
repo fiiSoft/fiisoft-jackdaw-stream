@@ -12,10 +12,14 @@ use FiiSoft\Jackdaw\Stream;
 
 abstract class HasOnly extends SimpleFinal
 {
+    /** @var array<string|int, mixed> */
     protected array $values;
     
     protected bool $hasOnly = true;
     
+    /**
+     * @param array<string|int, mixed> $values
+     */
     final public static function create(Stream $stream, array $values, int $mode = Check::VALUE): self
     {
         switch (Check::getMode($mode)) {
@@ -30,6 +34,9 @@ abstract class HasOnly extends SimpleFinal
         }
     }
     
+    /**
+     * @param array<string|int, mixed> $values
+     */
     final protected function __construct(Stream $stream, array $values)
     {
         $this->values = \array_unique($values, \SORT_REGULAR);

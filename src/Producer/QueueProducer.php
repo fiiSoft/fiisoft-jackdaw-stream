@@ -13,6 +13,9 @@ final class QueueProducer extends BaseProducer implements Consumer
     
     private int $autoKey = 0;
     
+    /**
+     * @param array<string|int, mixed> $elements
+     */
     public function __construct(array $elements = [])
     {
         $this->appendMany($elements);
@@ -30,7 +33,7 @@ final class QueueProducer extends BaseProducer implements Consumer
     }
     
     /**
-     * @param array $elements
+     * @param array<string|int, mixed> $elements
      * @return $this fluent interface
      */
     public function appendMany(array $elements): self
@@ -55,7 +58,7 @@ final class QueueProducer extends BaseProducer implements Consumer
     }
     
     /**
-     * @param array $elements
+     * @param array<string|int, mixed> $elements
      * @param bool $reverse
      * @return $this fluent interface
      */

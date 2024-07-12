@@ -9,11 +9,11 @@ use FiiSoft\Jackdaw\Operation\Sending\StoreIn\StoreInReindexKeys;
 
 abstract class StoreIn extends BaseOperation
 {
-    /** @var \ArrayAccess|array */
+    /** @var \ArrayAccess<string|int, mixed>|array<string|int, mixed> */
     protected $buffer;
     
     /**
-     * @param \ArrayAccess|array $buffer REFERENCE
+     * @param \ArrayAccess<string|int, mixed>|array<string|int, mixed> $buffer REFERENCE
      */
     final public static function create(&$buffer, bool $reindex = false): self
     {
@@ -21,7 +21,7 @@ abstract class StoreIn extends BaseOperation
     }
     
     /**
-     * @param \ArrayAccess|array $buffer REFERENCE
+     * @param \ArrayAccess<string|int, mixed>|array<string|int, mixed> $buffer REFERENCE
      */
     final protected function __construct(&$buffer)
     {

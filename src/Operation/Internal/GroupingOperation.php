@@ -13,10 +13,11 @@ abstract class GroupingOperation extends BaseOperation
 {
     protected Discriminator $discriminator;
     
+    /** @var array<string|int, mixed> */
     protected array $collections = [];
     
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
     final protected static function shouldReindex($discriminator, ?bool $reindex = null): bool
     {
@@ -32,7 +33,7 @@ abstract class GroupingOperation extends BaseOperation
     }
     
     /**
-     * @param DiscriminatorReady|callable|array|string|int $discriminator
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
     final protected function __construct($discriminator)
     {

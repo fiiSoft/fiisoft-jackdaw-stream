@@ -19,7 +19,9 @@ final class Split extends StateMapper
     }
     
     /**
-     * @inheritDoc
+     * @param string $value
+     * @param mixed $key
+     * @return array<int, string>
      */
     public function map($value, $key = null): array
     {

@@ -6,7 +6,9 @@ use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
 final class Concat extends BaseReducer
 {
+    /** @var string[] */
     private array $pieces = [];
+    
     private string $separator;
     
     public function __construct(string $separator = '')

@@ -1,12 +1,13 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamAware;
+use FiiSoft\Jackdaw\Internal\StreamBuilder;
 
-interface Operation extends StreamAware, Destroyable
+interface Operation extends StreamAware, Destroyable, StreamBuilder
 {
     public function handle(Signal $signal): void;
     
@@ -29,5 +30,5 @@ interface Operation extends StreamAware, Destroyable
      */
     public function streamingFinished(Signal $signal): bool;
     
-    public function buildStream(iterable $stream): iterable;
+    public function resume(): void;
 }

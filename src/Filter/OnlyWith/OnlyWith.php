@@ -10,13 +10,14 @@ use FiiSoft\Jackdaw\Internal\Check;
 
 abstract class OnlyWith extends BaseFilter
 {
+    /** @var array<string|int> */
     protected array $fields;
     
     /**
      * It only passes array (or \ArrayAccess) values containing the specified field(s).
      * Currently, only VALUE mode is supported and attempting to change it will result in an exception.
      *
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      */
     final public static function create($fields, bool $allowNulls): self
     {
@@ -24,7 +25,7 @@ abstract class OnlyWith extends BaseFilter
     }
     
     /**
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      */
     final protected function __construct($fields)
     {

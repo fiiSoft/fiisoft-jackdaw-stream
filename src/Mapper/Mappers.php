@@ -127,7 +127,7 @@ final class Mappers
     }
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      */
     public static function toInt($fields = null): Mapper
     {
@@ -135,7 +135,7 @@ final class Mappers
     }
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      */
     public static function toString($fields = null): Mapper
     {
@@ -143,7 +143,7 @@ final class Mappers
     }
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      */
     public static function toFloat($fields = null): Mapper
     {
@@ -151,7 +151,7 @@ final class Mappers
     }
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      */
     public static function toBool($fields = null): Mapper
     {
@@ -159,7 +159,7 @@ final class Mappers
     }
     
     /**
-     * @param array|string|int|null $fields
+     * @param array<string|int>|string|int|null $fields
      * @param \DateTimeZone|string|null $inTimeZone
      */
     public static function toTime($fields = null, ?string $fromFormat = null, $inTimeZone = null): Mapper
@@ -188,8 +188,8 @@ final class Mappers
     /**
      * It works with strings and produces strings. Internally, it's a wrapper for \str_replace().
      *
-     * @param array|string $search
-     * @param array|string $replace
+     * @param string[]|string $search
+     * @param string[]|string $replace
      */
     public static function replace($search, $replace): Mapper
     {
@@ -215,7 +215,7 @@ final class Mappers
     }
     
     /**
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      * @param mixed|null $orElse
      */
     public static function extract($fields, $orElse = null): Mapper
@@ -250,7 +250,7 @@ final class Mappers
     }
     
     /**
-     * @param array|string|int $fields
+     * @param array<string|int>|string|int $fields
      */
     public static function remove($fields): Mapper
     {
@@ -300,6 +300,9 @@ final class Mappers
         return new Trim($chars);
     }
     
+    /**
+     * @param array<string|int> $keys
+     */
     public static function remap(array $keys): Mapper
     {
         return new Remap($keys);

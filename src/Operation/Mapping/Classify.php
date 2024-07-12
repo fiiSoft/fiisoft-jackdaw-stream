@@ -13,7 +13,7 @@ final class Classify extends BaseOperation
     private Discriminator $discriminator;
     
     /**
-     * @param DiscriminatorReady|callable|array $discriminator
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
      */
     public function __construct($discriminator)
     {

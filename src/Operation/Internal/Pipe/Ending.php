@@ -9,7 +9,12 @@ use FiiSoft\Jackdaw\Stream;
 
 final class Ending implements Operation
 {
-    private ?Operation $prev = null;
+    private Operation $prev;
+    
+    public function __construct(Initial $prev)
+    {
+        $this->prev = $prev;
+    }
     
     public function handle(Signal $signal): void
     {
@@ -41,14 +46,14 @@ final class Ending implements Operation
         return null;
     }
     
-    public function getPrev(): ?Operation
+    public function getPrev(): Operation
     {
         return $this->prev;
     }
     
     public function getLast(): Operation
     {
-        return $this->prev ?? $this;
+        return $this->prev;
     }
     
     public function removeFromChain(): Operation
@@ -63,11 +68,16 @@ final class Ending implements Operation
     
     public function destroy(): void
     {
-        $this->prev = null;
+        //noop
     }
     
     public function buildStream(iterable $stream): iterable
     {
         return $stream;
+    }
+    
+    public function resume(): void
+    {
+        //noop
     }
 }
