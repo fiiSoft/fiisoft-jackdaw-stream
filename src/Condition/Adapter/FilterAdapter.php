@@ -14,6 +14,9 @@ final class FilterAdapter implements Condition
         $this->filter = $filter->inMode($mode);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function isTrueFor($value, $key): bool
     {
         return $this->filter->isAllowed($value, $key);

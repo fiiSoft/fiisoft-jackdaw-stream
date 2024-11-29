@@ -9,6 +9,7 @@ use FiiSoft\Jackdaw\Filter\Number\NotInside\BothNotInside;
 use FiiSoft\Jackdaw\Filter\Number\NotInside\KeyNotInside;
 use FiiSoft\Jackdaw\Filter\Number\NotInside\ValueNotInside;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class NotInside extends TwoArgs
 {
@@ -37,7 +38,7 @@ abstract class NotInside extends TwoArgs
             case Check::ANY:
                 return new AnyNotInside($mode, $lower, $higher);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

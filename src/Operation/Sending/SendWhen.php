@@ -37,12 +37,10 @@ final class SendWhen extends BaseOperation
     
     public function handle(Signal $signal): void
     {
-        $item = $signal->item;
-        
-        if ($this->condition->isTrueFor($item->value, $item->key)) {
-            $this->consumer->consume($item->value, $item->key);
+        if ($this->condition->isTrueFor($signal->item->value, $signal->item->key)) {
+            $this->consumer->consume($signal->item->value, $signal->item->key);
         } elseif ($this->elseConsumer !== null) {
-            $this->elseConsumer->consume($item->value, $item->key);
+            $this->elseConsumer->consume($signal->item->value, $signal->item->key);
         }
         
         $this->next->handle($signal);

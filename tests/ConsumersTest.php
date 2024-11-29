@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Consumer\Exception\ConsumerExceptionFactory;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Registry\Registry;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class ConsumersTest extends TestCase
@@ -39,6 +40,7 @@ final class ConsumersTest extends TestCase
     /**
      * @dataProvider getDataForTestPrinterConsumerSimplyEchoOutputToStdout
      */
+    #[DataProvider('getDataForTestPrinterConsumerSimplyEchoOutputToStdout')]
     public function test_Printer_consumer_simply_echo_output_to_stdout(int $mode, string $expectedOutput): void
     {
         $consumer = Consumers::printer($mode);

@@ -22,7 +22,7 @@ final class FormatTime extends StateMapper
     /**
      * @inheritDoc
      */
-    public function map($value, $key = null)
+    public function map($value, $key = null): string
     {
         if ($value instanceof \DateTimeInterface) {
             return $value->format($this->format);

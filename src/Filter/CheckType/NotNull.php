@@ -8,12 +8,13 @@ use FiiSoft\Jackdaw\Filter\CheckType\NotNull\KeyNotNull;
 use FiiSoft\Jackdaw\Filter\CheckType\NotNull\ValueNotNull;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class NotNull extends CheckType
 {
     final public static function create(?int $mode): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

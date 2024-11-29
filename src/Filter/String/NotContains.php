@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\String\NotContains\BothNotContains;
 use FiiSoft\Jackdaw\Filter\String\NotContains\KeyNotContains;
 use FiiSoft\Jackdaw\Filter\String\NotContains\ValueNotContains;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class NotContains extends StringFilterSingle
 {
@@ -22,7 +23,7 @@ abstract class NotContains extends StringFilterSingle
             case Check::ANY:
                 return new AnyNotContains($mode, $value, $ignoreCase);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

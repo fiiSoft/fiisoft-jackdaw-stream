@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Number\LessThan\BothLessThan;
 use FiiSoft\Jackdaw\Filter\Number\LessThan\KeyLessThan;
 use FiiSoft\Jackdaw\Filter\Number\LessThan\ValueLessThan;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class LessThan extends SingleArg
 {
@@ -26,7 +27,7 @@ abstract class LessThan extends SingleArg
             case Check::ANY:
                 return new AnyLessThan($mode, $value);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

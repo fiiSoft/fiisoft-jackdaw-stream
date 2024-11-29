@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Number\Equal\BothEqual;
 use FiiSoft\Jackdaw\Filter\Number\Equal\KeyEqual;
 use FiiSoft\Jackdaw\Filter\Number\Equal\ValueEqual;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class Equal extends SingleArg
 {
@@ -26,7 +27,7 @@ abstract class Equal extends SingleArg
             case Check::ANY:
                 return new AnyEqual($mode, $value);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

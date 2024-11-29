@@ -7,13 +7,18 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class CountIn extends BaseOperation
 {
+    /** @var int REFERENCE */
     private int $counter;
     
     /**
-     * @param int $counter REFERENCE
+     * @param int|null $counter REFERENCE
      */
-    public function __construct(int &$counter)
+    public function __construct(?int &$counter)
     {
+        if ($counter === null) {
+            $counter = 0;
+        }
+        
         $this->counter = &$counter;
     }
     

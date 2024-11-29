@@ -21,6 +21,8 @@ use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Internal\Mode;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class ComparatorsTest extends TestCase
@@ -238,6 +240,7 @@ final class ComparatorsTest extends TestCase
     /**
      * @dataProvider getDataForTestItemComparator
      */
+    #[DataProvider('getDataForTestItemComparator')]
     public function test_ItemComparator(Sorting $sorting, array $first, array $second, int $expected): void
     {
         $item1 = new Item($first[0], $first[1]);
@@ -447,7 +450,7 @@ final class ComparatorsTest extends TestCase
     
     public function test_DoubleComparison_throws_exception_when_param_mode_is_invalid(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(Check::VALUE));
+        $this->expectExceptionObject(Mode::invalidModeException(Check::VALUE));
         
         Comparison::double(Check::VALUE);
     }
@@ -504,6 +507,7 @@ final class ComparatorsTest extends TestCase
     /**
      * @dataProvider getDataForTestAdapterOfComparatorReady
      */
+    #[DataProvider('getDataForTestAdapterOfComparatorReady')]
     public function test_adapter_of_ComparatorReady(ComparatorReady $comparator): void
     {
         $adapter = Comparators::getAdapter($comparator);

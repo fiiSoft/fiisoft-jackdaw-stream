@@ -12,6 +12,7 @@ use FiiSoft\Jackdaw\Filter\Generic\ModeIndependent\TwoArgs;
 use FiiSoft\Jackdaw\Filter\Generic\ModeIndependent\ZeroArgs;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class GenericFilter extends BaseFilter
 {
@@ -27,7 +28,7 @@ abstract class GenericFilter extends BaseFilter
         
         switch ($numOfArgs) {
             case 1:
-                $mode = Check::getMode($mode);
+                $mode = Mode::get($mode);
                 
                 switch ($mode) {
                     case Check::VALUE:

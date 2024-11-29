@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Collector\DefaultCollector;
 use FiiSoft\Jackdaw\Collector\IterableCollector;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Stream;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class CollectorsTest extends TestCase
@@ -194,6 +195,7 @@ final class CollectorsTest extends TestCase
     /**
      * @dataProvider getDataForTestVariousSplClassesCanBeUsedAsCollectors
      */
+    #[DataProvider('getDataForTestVariousSplClassesCanBeUsedAsCollectors')]
     public function test_various_SPL_classes_can_be_used_as_collectors($wrapped, array $expected): void
     {
         $collector = Collectors::getAdapter($wrapped, false);
@@ -235,6 +237,7 @@ final class CollectorsTest extends TestCase
     /**
      * @dataProvider getDataForTestSomeCollectorsAreIterable
      */
+    #[DataProvider('getDataForTestSomeCollectorsAreIterable')]
     public function test_some_collectors_are_iterable_and_countable_and_have_other_features($collector): void
     {
         $collector = Collectors::iterable($collector);
@@ -283,6 +286,7 @@ final class CollectorsTest extends TestCase
     /**
      * @dataProvider getDataForTestSomeCollectorsAllowToPreserveKeys
      */
+    #[DataProvider('getDataForTestSomeCollectorsAllowToPreserveKeys')]
     public function test_some_collectors_allows_to_preserve_keys($wrapped, array $expected): void
     {
         $collector = Collectors::getAdapter($wrapped);
@@ -317,6 +321,7 @@ final class CollectorsTest extends TestCase
     /**
      * @dataProvider getDataForTestSomeIterableCollectorsAllowToPreserveKeys
      */
+    #[DataProvider('getDataForTestSomeIterableCollectorsAllowToPreserveKeys')]
     public function test_some_iterable_collectors_allows_to_preserve_keys($wrapped, array $expected): void
     {
         $collector = Collectors::iterable($wrapped);
@@ -348,6 +353,7 @@ final class CollectorsTest extends TestCase
     /**
      * @dataProvider getDataForTestSomeIterableCollectorsAllowToReindexKeys
      */
+    #[DataProvider('getDataForTestSomeIterableCollectorsAllowToReindexKeys')]
     public function test_some_iterable_collectors_allows_to_reindex_keys($wrapped): void
     {
         $collector = Collectors::iterable($wrapped, false);
@@ -398,6 +404,7 @@ final class CollectorsTest extends TestCase
     /**
      * @dataProvider getDataForTestSomeAdaptersThrowExceptionWhenKeyIsSet
      */
+    #[DataProvider('getDataForTestSomeAdaptersThrowExceptionWhenKeyIsSet')]
     public function test_some_adapters_throw_exception_when_key_is_set($splObject): void
     {
         $this->expectExceptionObject(CollectorExceptionFactory::cannotSetKeys($splObject));

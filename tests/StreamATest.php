@@ -417,10 +417,10 @@ final class StreamATest extends TestCase
     
     public function test_fork_throws_exception_on_invalid_type_of_prototype(): void
     {
-        $this->expectExceptionObject(StreamExceptionFactory::forkOperationRequiresForkCollaborator());
-        
-        $prototype = $this->getMockForAbstractClass(LastOperation::class);
-        
+        $this->expectExceptionObject(StreamExceptionFactory::unsupportedTypeOfForkPrototype());
+
+        $prototype = $this->createMock(LastOperation::class);
+
         Stream::empty()->fork('is_string', $prototype);
     }
     
@@ -1164,8 +1164,6 @@ final class StreamATest extends TestCase
     
     public function test_until(): void
     {
-        $count = 0;
-    
         Stream::of('a', 'v', 3, 'z')
             ->until('is_int')
             ->countIn($count)
@@ -1824,5 +1822,17 @@ final class StreamATest extends TestCase
             ->toArray();
         
         self::assertSame([2, 2, 6], $result);
+    }
+    
+    public function test_flat_only_arrays(): void
+    {
+        $data = [5, ['q', 'w', 'e'], 2, ['a'], 3, 1, ['z', 'x']];
+        
+        $result = Stream::from($data)
+            ->filter('is_array')
+            ->flat()
+            ->toArray();
+        
+        self::assertSame(['q', 'w', 'e', 'a', 'z', 'x'], $result);
     }
 }

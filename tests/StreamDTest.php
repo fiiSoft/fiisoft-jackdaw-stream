@@ -19,7 +19,10 @@ use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseNumericalArrayIterator;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
+use FiiSoft\Jackdaw\Registry\Registry;
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class StreamDTest extends TestCase
@@ -992,8 +995,6 @@ final class StreamDTest extends TestCase
             ->toArray();
         
         self::assertSame($rowset, $result);
-        
-        Stream::from($rowset)->filter('is_int')->limit(4)->first()->get();
     }
     
     public function test_stream_can_abort_processing_silently_on_error(): void
@@ -1041,6 +1042,7 @@ final class StreamDTest extends TestCase
     /**
      * @dataProvider getDataForTestIterateProducerWithOnErrorHandler
      */
+    #[DataProvider('getDataForTestIterateProducerWithOnErrorHandler')]
     public function test_iterate_producer_with_onerror_handler($producer): void
     {
         self::assertSame(
@@ -1464,9 +1466,7 @@ final class StreamDTest extends TestCase
     
     public function test_use_Discriminator_as_Mapper_with_onerror_handler(): void
     {
-        $data = [6, 2, 4, 3, 1, 2, 5];
-        
-        $result = Stream::from($data)
+        $result = Stream::from([6, 2, 4, 3, 1, 2, 5])
             ->onError(OnError::skip())
             ->map(Discriminators::evenOdd())
             ->reduce(Reducers::countUnique());
@@ -1477,7 +1477,7 @@ final class StreamDTest extends TestCase
     public function test_fork_by_even_and_odd_keys(): void
     {
         $result = Stream::from(['a', 'b', 'c', 'd', 'e', 'f', 'g'])
-            ->fork(Discriminators::evenOdd(Check::KEY), Stream::empty()->reduce(Reducers::concat()))
+            ->fork(Discriminators::evenOdd(Check::KEY), Reducers::concat())
             ->toArrayAssoc();
         
         self::assertSame([
@@ -1495,6 +1495,538 @@ final class StreamDTest extends TestCase
             ->get();
         
         self::assertSame(2, $result);
+    }
+    
+    public function test_read_interleaved_data_1(): void
+    {
+        $result = Stream::from([5, 'aaa', 7, 'bbb', 2, 'ccc', 5, 'ddd', 3, 'eee', 6, 'fff'])
+            ->skipUntil(3)
+            ->skip(1)
+            ->first();
+            
+        self::assertSame('eee', $result->get());
+        self::assertSame(9, $result->key());
+    }
+    
+    public function test_read_interleaved_data_2(): void
+    {
+        $result = Stream::from([5, 'aaa', 'bbb', 2, 'ccc', 'ddd', 9, 'eee', 'fff', 3, 'ggg', 'hhh', 8, 'iii', 'jjj'])
+            ->skipUntil(9)
+            ->skip(1)
+            ->limit(2)
+            ->collect();
+            
+        self::assertSame([7 => 'eee', 8 => 'fff'], $result->get());
+    }
+    
+    public function test_read_interleaved_data_3(): void
+    {
+        $result = Stream::from([5, 'aaa', 'bbb', 2, 'ccc', 'ddd', 9, 'eee', 'fff', 2, 'ggg', 'hhh', 8, 'iii', 'jjj'])
+            ->chunk(3, true)
+            ->filterBy(0, 2)
+            ->extract([1, 2])
+            ->collect();
+            
+        self::assertSame([
+            1 => [1 => 'ccc', 2 => 'ddd'],
+            3 => [1 => 'ggg', 2 => 'hhh'],
+        ], $result->get());
+    }
+    
+    public function test_read_interleaved_data_4(): void
+    {
+        $result = Stream::from([5, 'aaa', 'bbb', 2, 'ccc', 'ddd', 9, 'eee', 'fff', 2, 'ggg', 'hhh', 8, 'iii', 'jjj'])
+            ->chunk(3, true)
+            ->filterBy(0, 2)
+            ->extract([1, 2])
+            ->collect(true);
+            
+        self::assertSame([
+            0 => [1 => 'ccc', 2 => 'ddd'],
+            1 => [1 => 'ggg', 2 => 'hhh'],
+        ], $result->get());
+    }
+    
+    public function test_read_interleaved_data_5(): void
+    {
+        $result = Stream::from([5, 'aaa', 'bbb', 2, 'ccc', 'ddd', 9, 'eee', 'fff', 2, 'ggg', 'hhh', 8, 'iii', 'jjj'])
+            ->chunk(3, true)
+            ->filterBy(0, 2)
+            ->extract([1, 2])
+            ->map('\array_values')
+            ->collect(true);
+            
+        self::assertSame([
+            ['ccc', 'ddd'],
+            ['ggg', 'hhh'],
+        ], $result->get());
+    }
+    
+    public function test_read_interleaved_data_6(): void
+    {
+        $result = Stream::from([5, 'aaa', 'bbb', 2, 'ccc', 'ddd', 9, 'eee', 'fff', 2, 'ggg', 'hhh', 8, 'iii', 'jjj'])
+            ->chunk(3, true)
+            ->filterBy(0, 2)
+            ->extract([1, 2])
+            ->flatMap('\array_values')
+            ->collect(true);
+            
+        self::assertSame(['ccc', 'ddd', 'ggg', 'hhh'], $result->get());
+    }
+    
+    public function test_read_interleaved_data_7(): void
+    {
+        $result = Stream::from([5, 'aaa', 'bbb', 2, 'ccc', 'ddd', 9, 'eee', 'fff', 2, 'ggg', 'hhh', 8, 'iii', 'jjj'])
+            ->chunk(3)
+            ->filter(static fn(array $p): bool => $p[\array_key_first($p)] === 2)
+            ->map(static function (array $p): array {
+                unset($p[\array_key_first($p)]);
+                return $p;
+            })
+            ->collect();
+            
+        self::assertSame([
+            [4 => 'ccc', 'ddd'],
+            [10 => 'ggg', 'hhh'],
+        ], $result->toArray());
+    }
+    
+    public function test_read_interleaved_data_8(): void
+    {
+        $result = Stream::from([5, 'aaa', 'bbb', 2, 'ccc', 'ddd', 9, 'eee', 'fff', 2, 'ggg', 'hhh', 8, 'iii', 'jjj'])
+            ->chunk(3)
+            ->mapKey('\array_key_first')
+            ->filter(static fn(array $v, int $k): bool => $v[$k] === 2)
+            ->map(static function (array $v, int $k): array {
+                unset($v[$k]);
+                return $v;
+            })
+            ->collect();
+            
+        self::assertSame([
+            [4 => 'ccc', 'ddd'],
+            [10 => 'ggg', 'hhh'],
+        ], $result->toArray());
+    }
+    
+    public function test_read_interleaved_data_9(): void
+    {
+        $result = Stream::from([5, 'aaa', 2, 'bbb', 9, 'ccc', 3, 'ddd', 8, 'eee'])
+            ->filter(9)
+            ->readNext()
+            ->first();
+            
+        self::assertSame('ccc', $result->get());
+        self::assertSame(5, $result->key());
+        
+        self::assertSame([5 => 'ccc'], $result->toArrayAssoc());
+        self::assertSame(['ccc'], $result->toArray());
+    }
+    
+    public function test_read_interleaved_data_10(): void
+    {
+        $data = [5, 'aaa', 2, 'bbb', 9, 'ccc', 2, 'ddd', 8, 'eee', 2, 'fff'];
+        
+        $result = Stream::from($data)
+            ->filter(2)
+            ->readNext()
+            ->collect();
+            
+        self::assertSame([
+            3 => 'bbb',
+            7 => 'ddd',
+            11 => 'fff',
+        ], $result->toArrayAssoc());
+    }
+    
+    public function test_read_interleaved_data_11(): void
+    {
+        $data = [5, 'aaa', 'bbb', 2, 'ccc', 'ddd', 9, 'eee', 'fff', 2, 'ggg', 'hhh', 8, 'iii', 'jjj'];
+
+        $result = Stream::from($data)
+            ->filter(2)
+            ->readMany(2)
+            ->chunk(2)
+            ->collect();
+
+        self::assertSame([
+            [4 => 'ccc', 'ddd'],
+            [10 => 'ggg', 'hhh'],
+        ], $result->toArray());
+    }
+    
+    public function test_read_interleaved_data_11_reindex_keys(): void
+    {
+        $data = [5, 'aaa', 'bbb', 2, 'ccc', 'ddd', 9, 'eee', 'fff', 2, 'ggg', 'hhh', 8, 'iii', 'jjj'];
+
+        $result = Stream::from($data)
+            ->filter(2)
+            ->readMany(2, true)
+            ->chunk(2)
+            ->collect();
+
+        self::assertSame([
+            ['ccc', 'ddd'],
+            ['ggg', 'hhh'],
+        ], $result->toArray());
+    }
+    
+    public function test_read_interleaved_data_12(): void
+    {
+        $reg = Registry::new();
+        
+        $result = Stream::from($this->dataForInterleavedReadMany())
+            ->remember($reg->valueKey('quantity', 'index'))
+            ->readMany($reg->read('quantity'))
+            ->fork($reg->read('index'), Reducers::sum())
+            ->toArrayAssoc();
+        
+        $this->examineInterleavedReadManyResult($result);
+    }
+    
+    public function test_read_interleaved_data_13(): void
+    {
+        $entry = Registry::new()->valueKey();
+        
+        $result = Stream::from($this->dataForInterleavedReadMany())
+            ->remember($entry)
+            ->readMany($entry->value())
+            ->fork($entry->key(), Reducers::sum())
+            ->toArrayAssoc();
+        
+        $this->examineInterleavedReadManyResult($result);
+    }
+    
+    public function test_read_interleaved_data_14(): void
+    {
+        $entry = Registry::new()->entry(Check::BOTH);
+        
+        $result = Stream::from($this->dataForInterleavedReadMany())
+            ->remember($entry)
+            ->readMany($entry->value())
+            ->fork($entry->key(), Reducers::sum())
+            ->toArrayAssoc();
+        
+        $this->examineInterleavedReadManyResult($result);
+    }
+    
+    public function test_read_interleaved_data_15(): void
+    {
+        $result = Stream::from($this->dataForInterleavedReadMany())
+            ->putValueKeyIn($quantity, $key)
+            ->readMany(IntNum::readFrom($quantity))
+            ->fork(Discriminators::readFrom($key), Reducers::sum())
+            ->toArrayAssoc();
+        
+        $this->examineInterleavedReadManyResult($result);
+    }
+    
+    public function test_read_interleaved_data_16(): void
+    {
+        $entry = Registry::new()->entry(Check::BOTH);
+        
+        $result = Stream::from($this->dataForInterleavedReadMany())
+            ->remember($entry)
+            ->readMany($entry->value())
+            ->categorize($entry->key())
+            ->map(Reducers::sum())
+            ->toArrayAssoc();
+            
+        $this->examineInterleavedReadManyResult($result);
+    }
+    
+    private function dataForInterleavedReadMany(): array
+    {
+        return [
+            2, -4, 7, //3
+            1, 9, //9
+            4, 3, -2, 6, 8, //15
+            3, 2, 5, -1, //6
+            5, 0, 8, 2, 3, //13
+        ];
+    }
+    
+    private function examineInterleavedReadManyResult(array $result): void
+    {
+        self::assertSame([
+            0 => 3,
+            3 => 9,
+            5 => 15,
+            10 => 6,
+            14 => 13,
+        ], $result);
+    }
+    
+    public function test_filter_readNext_filter(): void
+    {
+        $result = Stream::from([5, 'a', 2, 'ccc', 9, 'e', 2, 'g', 8, 'jjj', 2, 'kkk', 1, 'll', 2])
+            ->filter(Filters::number()->eq(2))
+            ->readNext()
+            ->filter(Filters::length()->eq(3));
+            
+        self::assertSame([3 => 'ccc', 11 => 'kkk'], $result->toArrayAssoc());
+    }
+    
+    public function test_filter_readNext_tokenize_sort(): void
+    {
+        $result = Stream::from([5, 'a', 2, 'c d e', 9, 'e', 2, 'g h', 8, 'jjj', 2, 'k m n', 1, 'll', 2])
+            ->filter(Filters::number()->eq(2))
+            ->readNext()
+            ->tokenize()
+            ->rsort();
+
+        self::assertSame('nmkhgedc', $result->toString(''));
+    }
+    
+    public function test_consequtive_readNext(): void
+    {
+        $result = Stream::from([5, 'a', 2, 'c', 'd', 'e g h', 8, 'jjj', 2, 'o', 'p', 'k m n', 1, 'll', 2, 'w', 'a'])
+            ->filter(Filters::number()->eq(2))
+            ->readNext()
+            ->readNext()
+            ->readNext()
+            ->tokenize()
+            ->rsort();
+        
+        self::assertSame('nmkhge', $result->toString(''));
+    }
+    
+    public function test_multiple_readNext(): void
+    {
+        $result = Stream::from([5, 'a', 2, 'c', 'd', 'e g h', 8, 'jjj', 2, 'o', 'p', 'k m n', 1, 'll', 2, 'w', 'a'])
+            ->filter(Filters::number()->eq(2))
+            ->readNext(3)
+            ->tokenize()
+            ->rsort();
+        
+        self::assertSame('nmkhge', $result->toString(''));
+    }
+    
+    public function test_readWhile_1(): void
+    {
+        $result = Stream::from([5, 'a', 2, 'w', 'a',  2, 'c', 'd', 'e g h', 8, 'jjj', 2, 'o', 'p', 'k m n', 1, 'll'])
+            ->filter(2)
+            ->readWhile('is_string')
+            ->tokenize()
+            ->sort();
+        
+        self::assertSame('acdeghkmnopw', $result->toString(''));
+    }
+    
+    public function test_readWhile_2(): void
+    {
+        $data = [1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
+        
+        self::assertSame(
+            ['b', 'c', 'e', 'f'],
+            Stream::from($data)->filter(2)->readWhile('is_string')->toArray()
+        );
+    }
+    
+    public function test_readWhile_3(): void
+    {
+        $result = Stream::from([5, 'a', 2, 'w', 'a',  2, 'c', 'd', 'e g h', 8, 'jjj', 2, 'o', 'p', 'k m n', 1, 'll'])
+            ->filter(2)
+            ->countIn($numOfSeries)
+            ->readWhile('is_string', null, true)
+            ->categorize(Discriminators::readFrom($numOfSeries));
+        
+        self::assertSame([
+            1 => ['w', 'a'],
+            2 => ['c', 'd', 'e g h'],
+            3 => ['o', 'p', 'k m n']
+        ], $result->toArrayAssoc());
+    }
+    
+    public function test_readUntil_1(): void
+    {
+        $result = Stream::from([5, 'a', 2, 'c', 'd', 'e g h', 8, 'jjj', 2, 'o', 'p', 2, 'w', 'a', 'k m n', 1, 'll'])
+            ->filter(2)
+            ->readUntil('is_int')
+            ->tokenize()
+            ->sort();
+        
+        self::assertSame('acdeghkmnopw', $result->toString(''));
+    }
+    
+    public function test_readUntil_2(): void
+    {
+        $data = [1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
+        
+        self::assertSame(
+            ['b', 'c', 'e', 'f'],
+            Stream::from($data)->filter(2)->readUntil('is_int')->toArray()
+        );
+    }
+    
+    public function test_readUntil_3(): void
+    {
+        $result = Stream::from([5, 'a', 2, 'c', 'd', 'e g h', 8, 'jjj', 2, 'o', 'p', 2, 'w', 'a', 'k m n', 1, 'll'])
+            ->filter(2)
+            ->countIn($numOfSeries)
+            ->readUntil('is_int', null, true)
+            ->categorize(Discriminators::readFrom($numOfSeries));
+        
+        self::assertSame([
+            1 => ['c', 'd', 'e g h'],
+            2 => ['o', 'p'],
+            3 => ['w', 'a', 'k m n']
+        ], $result->toArrayAssoc());
+    }
+    
+    public function test_tokenize_before_readNext(): void
+    {
+        $result = Stream::from(['aaa bbb ccc', 'ddd eee', 'fff'])
+            ->tokenize()
+            ->readNext()
+            ->toArray();
+        
+        self::assertSame(['bbb', 'ddd', 'fff'], $result);
+    }
+    
+    public function test_find_sequence_in_stream_using_window_1(): void
+    {
+        $result = Stream::from(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i'])
+            ->window(3)
+            ->concat('')
+            ->find(Filters::same('rty'));
+        
+        self::assertTrue($result->found());
+        self::assertSame(3, $result->key());
+    }
+    
+    public function test_find_sequence_in_stream_using_window_2(): void
+    {
+        $result = Stream::from(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i'])
+            ->window(3)
+            ->concat('')
+            ->find(Filters::same('ry'));
+        
+        self::assertFalse($result->found());
+    }
+    
+    public function test_find_sequence_in_stream_using_window_3(): void
+    {
+        $result = Stream::from(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i'])
+            ->window(3, 1, true)
+            ->find(['r', 't', 'y']);
+        
+        self::assertTrue($result->found());
+        self::assertSame(3, $result->key());
+    }
+    
+    public function test_find_sequence_in_stream_using_readNext_1(): void
+    {
+        $result = Stream::from(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i'])
+            ->filter(Filters::same('r'))
+            ->putIn($atKey, Check::KEY)
+            ->readNext()
+            ->filter(Filters::same('t'))
+            ->readNext()
+            ->filter(Filters::same('y'))
+            ->first();
+        
+        self::assertTrue($result->found());
+        self::assertSame(3, $atKey);
+    }
+    
+    public function test_find_sequence_in_stream_using_readNext_2(): void
+    {
+        $result = Stream::from(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i'])
+            ->filter(Filters::same('r'))
+            ->readNext()
+            ->filter(Filters::same('o'))
+            ->readNext()
+            ->filter(Filters::same('y'))
+            ->first();
+        
+        self::assertFalse($result->found());
+    }
+    
+    public function test_readMany_on_empty_stream(): void
+    {
+        self::assertEmpty(Stream::empty()->readMany(2)->toArray());
+    }
+    
+    public function test_readNext_on_empty_stream(): void
+    {
+        self::assertEmpty(Stream::empty()->readNext()->toArray());
+    }
+    
+    public function test_readWhile_on_empty_stream(): void
+    {
+        self::assertEmpty(Stream::empty()->readWhile('is_string')->toArray());
+    }
+    
+    public function test_readUntil_on_empty_stream(): void
+    {
+        self::assertEmpty(Stream::empty()->readUntil('is_string')->toArray());
+    }
+    
+    public function test_readNext_as_first_operation_in_stream(): void
+    {
+        $data = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        
+        self::assertSame(['b', 'd', 'f', 'h'], Stream::from($data)->readNext(1)->toArray());
+        self::assertSame(['c', 'f'], Stream::from($data)->readNext(2)->toArray());
+        self::assertSame(['d', 'h'], Stream::from($data)->readNext(3)->toArray());
+        self::assertSame(['e'], Stream::from($data)->readNext(4)->toArray());
+        self::assertSame(['h'], Stream::from($data)->readNext(7)->toArray());
+        self::assertSame([], Stream::from($data)->readNext(8)->toArray());
+    }
+    
+    public function test_readMany_as_first_operation_in_stream(): void
+    {
+        $data = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        
+        self::assertSame(['b', 'd', 'f', 'h'], Stream::from($data)->readMany(1)->toArray());
+        self::assertSame(['b', 'c', 'e', 'f', 'h'], Stream::from($data)->readMany(2)->toArray());
+        self::assertSame(['b', 'c', 'd', 'f', 'g', 'h'], Stream::from($data)->readMany(3)->toArray());
+        self::assertSame(['b', 'c', 'd', 'e', 'g', 'h'], Stream::from($data)->readMany(4)->toArray());
+        self::assertSame(['b', 'c', 'd', 'e', 'f', 'h'], Stream::from($data)->readMany(5)->toArray());
+        self::assertSame(['b', 'c', 'd', 'e', 'f', 'g'], Stream::from($data)->readMany(6)->toArray());
+        self::assertSame(['b', 'c', 'd', 'e', 'f', 'g', 'h'], Stream::from($data)->readMany(7)->toArray());
+        self::assertSame(['b', 'c', 'd', 'e', 'f', 'g', 'h'], Stream::from($data)->readMany(8)->toArray());
+    }
+    
+    public function test_readWhile_as_first_operation_in_stream_keep_keys(): void
+    {
+        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
+        
+        self::assertSame(
+            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
+            Stream::from($data)->readWhile('is_string')->toArray()
+        );
+    }
+    
+    public function test_readUntil_as_first_operation_in_stream_keep_keys(): void
+    {
+        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
+        
+        self::assertSame(
+            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
+            Stream::from($data)->readUntil('is_int')->toArray()
+        );
+    }
+    
+    public function test_readWhile_as_first_operation_in_stream_reindex_keys(): void
+    {
+        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
+        
+        self::assertSame(
+            ['g', 'h', 'i'],
+            Stream::from($data)->readWhile('is_string', null, true)->toArrayAssoc()
+        );
+    }
+    
+    public function test_readUntil_as_first_operation_in_stream_reindex_keys(): void
+    {
+        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
+        
+        self::assertSame(
+            ['g', 'h', 'i'],
+            Stream::from($data)->readUntil('is_int', null, true)->toArrayAssoc()
+        );
     }
     
     /**

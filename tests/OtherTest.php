@@ -2,15 +2,15 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
-use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
-use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Internal\Mode;
 use FiiSoft\Jackdaw\Mapper\Exception\MapperExceptionFactory;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
-use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
-use FiiSoft\Jackdaw\Operation\Filtering\Unique\ItemByItemChecker\FullAssocChecker;
+use FiiSoft\Jackdaw\ValueRef\Adapter\CompoundIntValue;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class OtherTest extends TestCase
@@ -32,17 +32,17 @@ final class OtherTest extends TestCase
     
     public function test_Check_can_validate_param_mode(): void
     {
-        self::assertSame(Check::VALUE, Check::getMode(Check::VALUE));
-        self::assertSame(Check::KEY, Check::getMode(Check::KEY));
-        self::assertSame(Check::BOTH, Check::getMode(Check::BOTH));
-        self::assertSame(Check::ANY, Check::getMode(Check::ANY));
+        self::assertSame(Check::VALUE, Mode::get(Check::VALUE));
+        self::assertSame(Check::KEY, Mode::get(Check::KEY));
+        self::assertSame(Check::BOTH, Mode::get(Check::BOTH));
+        self::assertSame(Check::ANY, Mode::get(Check::ANY));
     }
     
     public function test_Check_throws_exception_when_param_mode_is_invalid(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
-        Check::getMode(0);
+        Mode::get(0);
     }
     
     public function test_how_ArrayObject_handles_isset_on_null_values(): void
@@ -222,6 +222,7 @@ final class OtherTest extends TestCase
     /**
      * @dataProvider getDataForTestHelperCanDescribeValues
      */
+    #[DataProvider('getDataForTestHelperCanDescribeValues')]
     public function test_Helper_can_describe_values($value, string $expected): void
     {
         self::assertSame($expected, Helper::describe($value));
@@ -423,19 +424,6 @@ final class OtherTest extends TestCase
         self::assertNull($object['bar']);
     }
     
-    public function test_FullAssocChecker_throws_exception_when_Comparator_is_invalid(): void
-    {
-        //Assert
-        $this->expectExceptionObject(OperationExceptionFactory::invalidComparator());
-        
-        //Arrange
-        $comparator = Comparators::getAdapter('is_string');
-        self::assertInstanceOf(GenericComparator::class, $comparator);
-        
-        //Act
-        new FullAssocChecker($comparator);
-    }
-    
     public function test_array_shift_does_not_preserve_numerical_keys(): void
     {
         $arr = ['a' => 1, 'b' => 2, 0 => 'c', 1 => 'd', 'e' => 3];
@@ -506,5 +494,21 @@ final class OtherTest extends TestCase
             'Cannot set or change time zone Africa/Bissau from string 2010-08-20 12:00:00',
             $exception->getMessage()
         );
+    }
+    
+    public function test_merge_numerical_arrays(): void
+    {
+        $a = ['a', 'b', 'c'];
+        $b = ['d' , 'e'];
+        
+        self::assertSame(['a', 'b', 'c', 'd', 'e'], [...$a, ...$b]);
+    }
+    
+    public function test_CompoundIntValue_can_holds_constant_IntValue(): void
+    {
+        $value = new CompoundIntValue(IntNum::constant(1), IntNum::constant(2));
+        
+        self::assertSame(3, $value->int());
+        self::assertTrue($value->isConstant());
     }
 }

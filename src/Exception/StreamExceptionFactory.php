@@ -19,9 +19,9 @@ final class StreamExceptionFactory
         return InvalidParamException::create('Looped message sending is not supported in Dispatch operation');
     }
     
-    public static function forkOperationRequiresForkCollaborator(): JackdawException
+    public static function unsupportedTypeOfForkPrototype(): JackdawException
     {
-        return InvalidParamException::create('Only ForkCollaborator prototype is supported');
+        return InvalidParamException::create('Unsupported type of prototype in Fork operation');
     }
     
     public static function cannotExecuteStreamMoreThanOnce(): JackdawException

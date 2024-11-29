@@ -10,7 +10,7 @@ final class ImpossibleSituationException extends JackdawException
             $method = \get_class($object).'::'.$method;
         }
         
-        return new self('Method '.$method.' should never be called');
+        return self::create('Method '.$method.' should never be called');
     }
     
     /**

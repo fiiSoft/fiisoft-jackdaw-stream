@@ -4,9 +4,10 @@ namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Internal\ResultApi;
 use FiiSoft\Jackdaw\Internal\SignalHandler;
+use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 
-interface LastOperation extends ResultApi, SignalHandler
+interface LastOperation extends ResultApi, SignalHandler, ForkReady
 {
     /**
      * Create new stream from the current one and set provided Producer as source of data for it.

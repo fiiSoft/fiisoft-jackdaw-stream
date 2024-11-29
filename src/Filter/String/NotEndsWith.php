@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\String\NotEndsWith\BothNotEndsWith;
 use FiiSoft\Jackdaw\Filter\String\NotEndsWith\KeyNotEndsWith;
 use FiiSoft\Jackdaw\Filter\String\NotEndsWith\ValueNotEndsWith;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class NotEndsWith extends StringFilterSingle
 {
@@ -22,7 +23,7 @@ abstract class NotEndsWith extends StringFilterSingle
             case Check::ANY:
                 return new AnyNotEndsWith($mode, $value, $ignoreCase);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

@@ -24,6 +24,7 @@ use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class DestroyTest extends TestCase
@@ -147,6 +148,7 @@ final class DestroyTest extends TestCase
     /**
      * @dataProvider getDataForTestGeneralProducerDestroy
      */
+    #[DataProvider('getDataForTestGeneralProducerDestroy')]
     public function test_general_producer_destroy(Producer $producer): void
     {
         //when
@@ -417,7 +419,7 @@ final class DestroyTest extends TestCase
             })
             ->fork(
                 Discriminators::alternately(['odd', 'even']),
-                Stream::empty()->reduce(Reducers::concat())
+                Reducers::concat()
             );
         
         self::assertEmpty($stream->toArrayAssoc());
@@ -539,6 +541,7 @@ final class DestroyTest extends TestCase
     /**
      * @dataProvider getDataForTestUniqueDestroy
      */
+    #[DataProvider('getDataForTestUniqueDestroy')]
     public function test_Unique_destroy($comparator, int $mode, array $expected): void
     {
         //given

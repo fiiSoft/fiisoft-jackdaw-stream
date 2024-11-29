@@ -3,15 +3,20 @@
 namespace FiiSoft\Jackdaw\Registry\Writer;
 
 use FiiSoft\Jackdaw\Registry\Exception\RegistryExceptionFactory;
-use FiiSoft\Jackdaw\Registry\RegWriter;
+use FiiSoft\Jackdaw\Registry\Reader\DefaultReader;
+use FiiSoft\Jackdaw\Registry\RegReader;
 use FiiSoft\Jackdaw\Registry\Storage;
+use FiiSoft\Jackdaw\Registry\ValueKeyWriter;
 
-final class FullWriter implements RegWriter
+final class FullWriter implements ValueKeyWriter
 {
     private Storage $storage;
     
     private string $value;
     private string $key;
+    
+    private ?RegReader $valueReader = null;
+    private ?RegReader $keyReader = null;
     
     public function __construct(Storage $storage, string $value, string $key)
     {
@@ -48,5 +53,23 @@ final class FullWriter implements RegWriter
         } else {
             throw RegistryExceptionFactory::cannotSetValue();
         }
+    }
+    
+    public function value(): RegReader
+    {
+        if ($this->valueReader === null) {
+            $this->valueReader = new DefaultReader($this->storage, $this->value);
+        }
+        
+        return $this->valueReader;
+    }
+    
+    public function key(): RegReader
+    {
+        if ($this->keyReader === null) {
+            $this->keyReader = new DefaultReader($this->storage, $this->key);
+        }
+        
+        return $this->keyReader;
     }
 }

@@ -42,7 +42,7 @@ final class Registry
         return new KeyWriter($this->storage, $name);
     }
     
-    public function valueKey(string $value, string $key): RegWriter
+    public function valueKey(string $value = 'value', string $key = 'key'): ValueKeyWriter
     {
         return new FullWriter($this->storage, $value, $key);
     }

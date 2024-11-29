@@ -11,6 +11,7 @@ use FiiSoft\Jackdaw\Filter\Logic\OpOR\FilterOR;
 use FiiSoft\Jackdaw\Filter\Logic\OpOR\FilterORBoth;
 use FiiSoft\Jackdaw\Filter\Time\Day;
 use FiiSoft\Jackdaw\Internal\Check;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class FiltersBTest extends TestCase
@@ -418,6 +419,7 @@ final class FiltersBTest extends TestCase
     /**
      * @dataProvider allModes
      */
+    #[DataProvider('allModes')]
     public function test_negation_of_filters_should_always_gets_opposite_result(int $mode): void
     {
         $and = $this->filterAND($mode);
@@ -552,6 +554,7 @@ final class FiltersBTest extends TestCase
     /**
      * @dataProvider allModes
      */
+    #[DataProvider('allModes')]
     public function test_double_negation_of_AND_should_give_initial_filter(int $mode): void
     {
         $filter = $this->filterAND($mode);
@@ -562,6 +565,7 @@ final class FiltersBTest extends TestCase
     /**
      * @dataProvider allModes
      */
+    #[DataProvider('allModes')]
     public function test_double_negation_of_OR_should_give_initial_filter(int $mode): void
     {
         $filter = $this->filterOR($mode);
@@ -687,6 +691,11 @@ final class FiltersBTest extends TestCase
     public function test_filter_notEmpty(): void
     {
         $this->examineFilter(Filters::notEmpty(), '25.0', '');
+    }
+    
+    public function test_filter_isArray(): void
+    {
+        $this->examineFilter(Filters::isArray(), [], '');
     }
     
     public function test_filter_notNull(): void

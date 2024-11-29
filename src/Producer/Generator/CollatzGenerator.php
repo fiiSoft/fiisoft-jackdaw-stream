@@ -13,7 +13,7 @@ final class CollatzGenerator extends BaseProducer
     private ?int $startNumber = null;
     private int $count = 0;
     
-    public function __construct(int $startNumber = null)
+    public function __construct(?int $startNumber = null)
     {
         if ($startNumber !== null && $startNumber < 1) {
             throw InvalidParamException::describe('startNumber', $startNumber);

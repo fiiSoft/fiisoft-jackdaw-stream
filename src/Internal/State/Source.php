@@ -3,10 +3,8 @@
 namespace FiiSoft\Jackdaw\Internal\State;
 
 use FiiSoft\Jackdaw\Internal\Destroyable;
-use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Pipe;
-use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Producer\MultiProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
@@ -19,39 +17,31 @@ abstract class Source extends StreamSource implements Destroyable
     /** @var Producer<string|int, mixed> */
     public Producer $producer;
     
+    protected SourceData  $data;
+    
     protected \Iterator $currentSource;
     protected NextValue $nextValue;
     protected Stream $stream;
-    protected Signal $signal;
-    protected Stack $stack;
-    protected Pipe $pipe;
     protected Item $item;
     
-    protected bool $isLoop;
+    private Sources $sources;
+    private Pipe $pipe;
     
     private bool $isDestroying = false;
     
     /**
      * @param Producer<string|int, mixed> $producer
      */
-    public function __construct(
-        bool $isLoop,
-        Stream $stream,
-        Producer $producer,
-        Signal $signal,
-        Pipe $pipe,
-        Stack $stack,
-        ?NextValue $nextValue = null
-    ) {
+    public function __construct(SourceData $data, Producer $producer)
+    {
+        $this->data = $data;
         $this->producer = $producer;
-        $this->isLoop = $isLoop;
-        $this->stream = $stream;
-        $this->signal = $signal;
-        $this->stack = $stack;
-        $this->pipe = $pipe;
-        $this->nextValue = $nextValue ?? new NextValue();
+        $this->stream = $data->stream;
+        $this->sources = $data->sources;
+        $this->pipe = $data->pipe;
+        $this->nextValue = $data->nextValue;
         
-        $this->item = $this->signal->item;
+        $this->item = $data->signal->item;
     }
     
     /**
@@ -68,6 +58,22 @@ abstract class Source extends StreamSource implements Destroyable
         }
     }
     
+    final protected function restartWith(Producer $producer, Operation $operation): void
+    {
+        $this->pipe->head = $operation;
+        $this->sourceIsNotReady($producer);
+    }
+    
+    final protected function continueWith(Producer $producer, Operation $operation): void
+    {
+        $this->sources->stack[] = $this;
+        
+        $this->pipe->stack[] = $this->pipe->head;
+        $this->pipe->head = $operation;
+        
+        $this->sourceIsNotReady($producer);
+    }
+    
     /**
      * @return bool true when stack is empty
      */
@@ -75,38 +81,22 @@ abstract class Source extends StreamSource implements Destroyable
     {
         $this->pipe->head = \array_pop($this->pipe->stack);
         
-        if (!empty($this->stack->states)) {
-            $this->stream->setSource(\array_pop($this->stack->states));
+        if (!empty($this->sources->stack)) {
+            $this->stream->setSource(\array_pop($this->sources->stack));
         }
         
-        return empty($this->stack->states);
+        return empty($this->sources->stack);
     }
     
-    final protected function initializeSource(): void
+    final protected function swapHead(Operation $operation): void
     {
-        $this->currentSource = Helper::createItemProducer($this->item, $this->producer);
-    }
-    
-    /**
-     * @inheritDoc
-     */
-    final protected function restartWith(Producer $producer, Operation $operation): void
-    {
+        $this->pipe->heads[] = $this->pipe->head;
         $this->pipe->head = $operation;
-        $this->sourceIsNotReady($producer);
     }
     
-    /**
-     * @inheritDoc
-     */
-    final protected function continueWith(Producer $producer, Operation $operation): void
+    final protected function restoreHead(): void
     {
-        $this->stack->states[] = $this;
-        
-        $this->pipe->stack[] = $this->pipe->head;
-        $this->pipe->head = $operation;
-        
-        $this->sourceIsNotReady($producer);
+        $this->pipe->head = \array_pop($this->pipe->heads);
     }
     
     final protected function forget(Operation $operation): void
@@ -149,7 +139,6 @@ abstract class Source extends StreamSource implements Destroyable
             $this->pipe->prepare();
         }
         
-        $this->isLoop = $isLoop;
         $this->sourceIsNotReady(MultiProducer::oneTime($this->producer));
     }
     
@@ -159,13 +148,18 @@ abstract class Source extends StreamSource implements Destroyable
     private function sourceIsNotReady(Producer $producer): void
     {
         $this->stream->setSource(new SourceNotReady(
-            $this->isLoop, $this->stream, $producer, $this->signal, $this->pipe, $this->stack
+            $this->data, $producer
         ));
     }
     
-    abstract public function hasNextItem(): bool;
+    final protected function setNextItem(Item $item): void
+    {
+        $this->nextValue->isSet = true;
+        $this->nextValue->key = $item->key;
+        $this->nextValue->value = $item->value;
+    }
     
-    abstract public function setNextItem(Item $item): void;
+    abstract public function hasNextItem(): bool;
     
     final public function destroy(): void
     {
@@ -173,7 +167,7 @@ abstract class Source extends StreamSource implements Destroyable
             $this->isDestroying = true;
             
             $this->producer->destroy();
-            $this->stack->destroy();
+            $this->sources->destroy();
         }
     }
 }

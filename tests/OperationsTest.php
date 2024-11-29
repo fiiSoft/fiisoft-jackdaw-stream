@@ -2,50 +2,30 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Pipe;
 use FiiSoft\Jackdaw\Internal\ResultItem;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Operation\Collecting\Segregate;
-use FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
-use FiiSoft\Jackdaw\Operation\Collecting\Tail;
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
-use FiiSoft\Jackdaw\Operation\Filtering\EveryNth;
-use FiiSoft\Jackdaw\Operation\Filtering\FilterBy;
+use FiiSoft\Jackdaw\Operation\Filtering\Unique\ItemByItemChecker\FullAssocChecker;
+use FiiSoft\Jackdaw\Operation\Internal\Operations as OP;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Initial;
-use FiiSoft\Jackdaw\Operation\Mapping\Aggregate;
-use FiiSoft\Jackdaw\Operation\Mapping\Chunk;
-use FiiSoft\Jackdaw\Operation\Mapping\Flat;
-use FiiSoft\Jackdaw\Operation\Mapping\MapFieldWhen;
-use FiiSoft\Jackdaw\Operation\Mapping\MapKey;
-use FiiSoft\Jackdaw\Operation\Mapping\MapKeyValue;
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatch;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Handlers;
-use FiiSoft\Jackdaw\Operation\Sending\FeedMany;
-use FiiSoft\Jackdaw\Operation\Sending\SendTo;
-use FiiSoft\Jackdaw\Operation\Sending\SendToMax;
-use FiiSoft\Jackdaw\Operation\Sending\StoreIn;
 use FiiSoft\Jackdaw\Operation\Special\Iterate;
-use FiiSoft\Jackdaw\Operation\Special\Limit;
-use FiiSoft\Jackdaw\Operation\Terminating\Collect;
-use FiiSoft\Jackdaw\Operation\Terminating\CollectKeys;
-use FiiSoft\Jackdaw\Operation\Terminating\Count;
-use FiiSoft\Jackdaw\Operation\Terminating\Find;
-use FiiSoft\Jackdaw\Operation\Terminating\First;
-use FiiSoft\Jackdaw\Operation\Terminating\Has;
-use FiiSoft\Jackdaw\Operation\Terminating\HasEvery;
-use FiiSoft\Jackdaw\Operation\Terminating\Reduce;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\ValueRef\Exception\WrongIntValueException;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class OperationsTest extends TestCase
@@ -54,24 +34,25 @@ final class OperationsTest extends TestCase
     {
         $this->expectExceptionObject(InvalidParamException::byName('length'));
         
-        new Tail(0);
+        OP::tail(0);
     }
     
     public function test_SendToMax_throws_exception_when_limit_is_invalid(): void
     {
         $this->expectExceptionObject(InvalidParamException::byName('times'));
-        
-        new SendToMax(0, Consumers::counter());
+     
+        OP::callMax(0, Consumers::counter());
     }
     
     /**
      * @dataProvider getDataForTestAggregateThrowsExceptionWhenParamKeysIsInvalid
      */
+    #[DataProvider('getDataForTestAggregateThrowsExceptionWhenParamKeysIsInvalid')]
     public function test_Aggregate_throws_exception_when_param_keys_is_invalid($keys): void
     {
         $this->expectExceptionObject(InvalidParamException::byName('keys'));
         
-        Aggregate::create($keys);
+        OP::aggregate($keys);
     }
     
     public static function getDataForTestAggregateThrowsExceptionWhenParamKeysIsInvalid(): array
@@ -88,10 +69,10 @@ final class OperationsTest extends TestCase
     
     public function test_Flat_has_limit_of_levels(): void
     {
-        $flat = new Flat();
+        $flat = OP::flat();
         $maxLevel = $flat->maxLevel();
         
-        $flat->mergeWith(new Flat());
+        $flat->mergeWith(OP::flat());
         self::assertSame($maxLevel, $flat->maxLevel());
     }
     
@@ -107,21 +88,21 @@ final class OperationsTest extends TestCase
     {
         $this->expectExceptionObject(InvalidParamException::byName('field'));
         
-        new MapFieldWhen('', 'is_string', 'strtolower');
+        OP::mapFieldWhen('', 'is_string', 'strtolower');
     }
     
     public function test_SortLimited_throws_exception_when_param_limit_is_invalid(): void
     {
         $this->expectExceptionObject(InvalidParamException::byName('limit'));
         
-        SortLimited::create(0);
+        OP::sortLimited(0);
     }
     
     public function test_Ending_operation(): void
     {
         $operation = $this->endingOperation();
         
-        self::assertFalse($operation->streamingFinished(new Signal(Stream::empty())));
+        self::assertFalse($operation->streamingFinished($this->signal()));
     }
     
     public function test_Ending_operation_cannot_be_removed_from_chain(): void
@@ -170,11 +151,11 @@ final class OperationsTest extends TestCase
         $flag = false;
         $initial = new Initial();
         
-        $initial->setNext(new SendTo(static function () use (&$flag): void {
+        $initial->setNext(OP::call(static function () use (&$flag): void {
             $flag = true;
         }));
         
-        $signal = new Signal(Stream::empty());
+        $signal = $this->signal();
         $signal->item->key = 'a';
         $signal->item->value = 'a';
         
@@ -191,14 +172,14 @@ final class OperationsTest extends TestCase
         $passedData = [];
         
         $initial = new Initial();
-        $chunk = Chunk::create(5, true);
+        $chunk = OP::chunk(5, true);
         
         $initial->setNext($chunk);
-        $chunk->setNext(new SendTo(static function ($value, $key) use (&$passedData): void {
+        $chunk->setNext(OP::call(static function ($value, $key) use (&$passedData): void {
             $passedData[$key] = $value;
         }));
         
-        $signal = new Signal(Stream::empty());
+        $signal = $this->signal();
         $signal->item->key = 'a';
         
         //when
@@ -239,22 +220,22 @@ final class OperationsTest extends TestCase
     {
         $this->expectExceptionObject(InvalidParamException::byName('streams'));
         
-        new FeedMany();
+        OP::feed();
     }
     
     public function test_MapKey_can_merge_Value_with_FieldValue(): void
     {
-        $first = new MapKey(Mappers::value());
-        $second = new MapKey(Mappers::fieldValue('foo'));
+        $first = OP::mapKey(Mappers::value());
+        $second = OP::mapKey(Mappers::fieldValue('foo'));
         
         self::assertTrue($first->mergeWith($second));
-        self::assertFalse($first->mergeWith(new MapKey(Mappers::simple('bar'))));
+        self::assertFalse($first->mergeWith(OP::mapKey(Mappers::simple('bar'))));
     }
     
     public function test_MapKey_can_merge_FieldValue_with_Value(): void
     {
-        $first = new MapKey(Mappers::fieldValue('foo'));
-        $second = new MapKey(Mappers::value());
+        $first = OP::mapKey(Mappers::fieldValue('foo'));
+        $second = OP::mapKey(Mappers::value());
         
         self::assertTrue($first->mergeWith($second));
     }
@@ -263,17 +244,18 @@ final class OperationsTest extends TestCase
     {
         $this->expectExceptionObject(OperationExceptionFactory::invalidKeyValueMapper(3));
         
-        MapKeyValue::create(static fn($a, $b, $c): bool => true);
+        OP::mapKeyValue(static fn($a, $b, $c): bool => true);
     }
     
     /**
      * @dataProvider getDataForTestMapKeyValueThrowsExceptionWhenDeclaredTypeOfValueOfMapperIsNotArray
      */
+    #[DataProvider('getDataForTestMapKeyValueThrowsExceptionWhenDeclaredTypeOfValueOfMapperIsNotArray')]
     public function test_MapKeyValue_throws_exception_when_return_type_of_mapper_is_not_array(callable $mapper): void
     {
         $this->expectExceptionObject(OperationExceptionFactory::wrongTypeOfKeyValueMapper());
         
-        MapKeyValue::create($mapper);
+        OP::mapKeyValue($mapper);
     }
     
     public static function getDataForTestMapKeyValueThrowsExceptionWhenDeclaredTypeOfValueOfMapperIsNotArray(): \Generator
@@ -296,7 +278,7 @@ final class OperationsTest extends TestCase
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $first = new First($stream);
+        $first = OP::first($stream);
         $this->addToPipe($pipe, $first);
         
         $this->sendToPipe([8, 3, 5], $pipe, $signal);
@@ -306,11 +288,12 @@ final class OperationsTest extends TestCase
     /**
      * @dataProvider getDataForCollect
      */
+    #[DataProvider('getDataForCollect')]
     public function test_Collect_basic(bool $reindex, array $dataSet, array $expected): void
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $collect = Collect::create($stream, $reindex);
+        $collect = OP::collect($stream, $reindex);
         $this->addToPipe($pipe, $collect);
         
         $this->sendToPipe($dataSet, $pipe, $signal);
@@ -331,11 +314,12 @@ final class OperationsTest extends TestCase
     /**
      * @dataProvider getDataForCollectKeys
      */
+    #[DataProvider('getDataForCollectKeys')]
     public function test_CollectKeys_basic(array $dataSet, array $expected): void
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $collectKeys = new CollectKeys($stream);
+        $collectKeys = OP::collectKeys($stream);
         $this->addToPipe($pipe, $collectKeys);
         
         $this->sendToPipe($dataSet, $pipe, $signal);
@@ -355,11 +339,12 @@ final class OperationsTest extends TestCase
     /**
      * @dataProvider getDataForCount
      */
+    #[DataProvider('getDataForCount')]
     public function test_Count_basic(array $dataSet, int $expected): void
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $count = new Count($stream);
+        $count = OP::count($stream);
         $this->addToPipe($pipe, $count);
         
         $this->sendToPipe($dataSet, $pipe, $signal);
@@ -379,11 +364,12 @@ final class OperationsTest extends TestCase
     /**
      * @dataProvider getDataForTestHas
      */
+    #[DataProvider('getDataForTestHas')]
     public function test_Has_basic(int $mode, $predicate, array $dataSet, bool $expected): void
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $has = new Has($stream, $predicate, $mode);
+        $has = OP::has($stream, $predicate, $mode);
         $this->addToPipe($pipe, $has);
         
         $this->sendToPipe($dataSet, $pipe, $signal);
@@ -405,20 +391,19 @@ final class OperationsTest extends TestCase
     /**
      * @dataProvider getDataForTestFind
      */
+    #[DataProvider('getDataForTestFind')]
     public function test_Find_basic(int $mode, $predicate, array $dataSet, ?array $expected): void
     {
+        //given
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $find = new Find($stream, $predicate, $mode);
+        $find = OP::find($stream, $predicate, $mode);
         $this->addToPipe($pipe, $find);
         
+        //when
         $this->sendToPipe($dataSet, $pipe, $signal);
         
-        $this->assertFindResultIsCorrect($find, $expected);
-    }
-    
-    private function assertFindResultIsCorrect(Find $find, ?array $expected): void
-    {
+        //then
         self::assertSame($expected !== null, $find->hasResult());
         
         if ($expected !== null) {
@@ -447,11 +432,12 @@ final class OperationsTest extends TestCase
     /**
      * @dataProvider getDataForTestReduce
      */
+    #[DataProvider('getDataForTestReduce')]
     public function test_Reduce_basic(array $dataSet, ?string $expected): void
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $reduce = new Reduce($stream, Reducers::concat());
+        $reduce = OP::reduce($stream, Reducers::concat());
         $this->addToPipe($pipe, $reduce);
         
         $this->sendToPipe($dataSet, $pipe, $signal);
@@ -471,8 +457,8 @@ final class OperationsTest extends TestCase
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $collect = Collect::create($stream);
-        $this->addToPipe($pipe, new Tail(2), $collect);
+        $collect = OP::collect($stream);
+        $this->addToPipe($pipe, OP::tail(2), $collect);
         
         $this->sendToPipe(['a', 'b', 'c', 'd'], $pipe, $signal);
         self::assertSame([2 => 'c', 'd'], $collect->get());
@@ -546,11 +532,12 @@ final class OperationsTest extends TestCase
     /**
      * @dataProvider getDataForTestHasEvery
      */
+    #[DataProvider('getDataForTestHasEvery')]
     public function test_HasEvery_basic(int $mode, array $values, array $dataSet, bool $expected): void
     {
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $hasEvery = HasEvery::create($stream, $values, $mode);
+        $hasEvery = OP::hasEvery($stream, $values, $mode);
         $this->addToPipe($pipe, $hasEvery);
         
         $this->sendToPipe($dataSet, $pipe, $signal);
@@ -571,7 +558,7 @@ final class OperationsTest extends TestCase
     
     public function test_changing_limit_of_SortLimited(): void
     {
-        $sortLimited = SortLimited::create(5);
+        $sortLimited = OP::sortLimited(5);
         self::assertSame(5, $sortLimited->limit());
         
         self::assertTrue($sortLimited->applyLimit(3));
@@ -596,17 +583,17 @@ final class OperationsTest extends TestCase
     {
         $this->expectExceptionObject(InvalidParamException::byName('handlers'));
         
-        new Dispatch('is_string', []);
+        OP::dispatch('is_string', []);
     }
     
     public function test_Dispatch_throws_exception_when_there_is_no_handler_defined_for_classifier(): void
     {
         //Arrange
-        $signal = new Signal(Stream::empty());
+        $signal = $this->signal();
         $signal->item->key = 1;
         $signal->item->value = 'foo';
         
-        $dispatch = new Dispatch('is_string', ['yes' => Consumers::counter()]);
+        $dispatch = OP::dispatch('is_string', ['yes' => Consumers::counter()]);
         
         //Assert
         $this->expectExceptionObject(OperationExceptionFactory::handlerIsNotDefined($signal->item->key));
@@ -621,11 +608,11 @@ final class OperationsTest extends TestCase
         $this->expectExceptionObject(OperationExceptionFactory::handlerIsNotDefined('ohno'));
         
         //Arrange
-        $signal = new Signal(Stream::empty());
+        $signal = $this->signal();
         $signal->item->key = 1;
         $signal->item->value = 'foo';
         
-        $dispatch = new Dispatch(
+        $dispatch = OP::dispatch(
             static fn($v, $k): string => 'ohno',
             ['yes' => Consumers::counter()]
         );
@@ -647,12 +634,12 @@ final class OperationsTest extends TestCase
         
         $object = new \stdClass();
         
-        StoreIn::create($object);
+        OP::storeIn($object);
     }
     
     public function test_Segregate_can_handle_limit_zero_properly(): void
     {
-        $segregate = new Segregate(3);
+        $segregate = OP::segregate(3);
         
         self::assertFalse($segregate->applyLimit(0));
         
@@ -663,7 +650,7 @@ final class OperationsTest extends TestCase
     public function test_Ending_can_return_previous_operation(): void
     {
         //given
-        $limit = new Limit(1);
+        $limit = OP::limit(1);
         $ending = $this->endingOperation();
         
         $limit->setNext($ending, true);
@@ -713,7 +700,7 @@ final class OperationsTest extends TestCase
     {
         $this->expectExceptionObject(InvalidParamException::byName('num'));
         
-        new EveryNth(0);
+        OP::everyNth(0);
     }
     
     public function test_FilterBy_throws_exception_when_param_field_is_invalid(): void
@@ -722,12 +709,12 @@ final class OperationsTest extends TestCase
         
         $this->expectExceptionObject(InvalidParamException::describe('field', $field));
         
-        new FilterBy($field, 'is_int');
+        OP::filterBy($field, 'is_int');
     }
     
     public function test_Limit_can_change_its_limit_and_create_new_Limit(): void
     {
-        $limit = new Limit(8);
+        $limit = OP::limit(8);
         self::assertSame(8, $limit->limit());
         
         self::assertTrue($limit->applyLimit(3));
@@ -735,20 +722,6 @@ final class OperationsTest extends TestCase
         
         $limit = $limit->createWithLimit(5);
         self::assertSame(5, $limit->limit());
-    }
-    
-    /**
-     * @return Item[]
-     */
-    private function convertToItems(array $data): array
-    {
-        $items = [];
-        
-        foreach ($data as $key => $value) {
-            $items[] = new Item($key, $value);
-        }
-        
-        return $items;
     }
     
     private static function generateVariationsWithValues(array $cases, $dataSet): \Generator
@@ -805,6 +778,9 @@ final class OperationsTest extends TestCase
         return $this->getPropertyFromStream($stream, 'signal');
     }
     
+    /**
+     * @return mixed
+     */
     private function getPropertyFromStream(Stream $stream, string $property)
     {
         $method = (new \ReflectionObject($stream))->getMethod('initialize');
@@ -815,5 +791,41 @@ final class OperationsTest extends TestCase
         $prop->setAccessible(true);
         
         return $prop->getValue($stream);
+    }
+    
+    public function test_FullAssocChecker_throws_exception_when_Comparator_is_invalid(): void
+    {
+        //Assert
+        $this->expectExceptionObject(OperationExceptionFactory::invalidComparator());
+        
+        //Arrange
+        $comparator = Comparators::getAdapter('is_string');
+        self::assertInstanceOf(GenericComparator::class, $comparator);
+        
+        //Act
+        new FullAssocChecker($comparator);
+    }
+    
+    public function test_ReadMany_throws_exception_when_number_of_repetitions_is_invalid(): void
+    {
+        $provider = IntNum::constant(-1);
+        
+        $this->expectExceptionObject(WrongIntValueException::invalidNumber($provider));
+        
+        OP::readMany($provider);
+    }
+    
+    public function test_ReadNext_throws_exception_when_number_of_repetitions_is_invalid(): void
+    {
+        $provider = IntNum::constant(-1);
+        
+        $this->expectExceptionObject(WrongIntValueException::invalidNumber($provider));
+        
+        OP::readNext($provider);
+    }
+    
+    private function signal(): Signal
+    {
+        return new Signal(Stream::empty());
     }
 }

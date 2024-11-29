@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Internal\State;
 
-use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Internal\Helper;
 
 final class SourceNotReady extends Source
 {
@@ -16,7 +16,7 @@ final class SourceNotReady extends Source
             return true;
         }
         
-        $this->initializeSource();
+        $this->currentSource = Helper::createItemProducer($this->item, $this->producer);
         
         if ($this->currentSource->valid()) {
             $this->sourceIsReady();
@@ -27,24 +27,12 @@ final class SourceNotReady extends Source
         return false;
     }
     
-    public function setNextItem(Item $item): void
-    {
-        $this->nextValue->isSet = true;
-        $this->nextValue->key = $item->key;
-        $this->nextValue->value = $item->value;
-    }
-    
     private function sourceIsReady(): void
     {
         $this->stream->setSource(new SourceReady(
-            $this->isLoop,
-            $this->stream,
+            $this->data,
             $this->producer,
-            $this->signal,
-            $this->pipe,
-            $this->stack,
-            $this->currentSource,
-            $this->nextValue
+            $this->currentSource
         ));
     }
 }

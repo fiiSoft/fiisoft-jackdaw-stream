@@ -2,37 +2,18 @@
 
 namespace FiiSoft\Jackdaw\Internal\State;
 
-use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Internal\Pipe;
-use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Producer\Producer;
-use FiiSoft\Jackdaw\Stream;
 
 final class SourceReady extends Source
 {
     /**
      * @param Producer<string|int, mixed> $producer
      */
-    public function __construct(
-        bool $isLoop,
-        Stream $stream,
-        Producer $producer,
-        Signal $signal,
-        Pipe $pipe,
-        Stack $stack,
-        \Iterator $currentSource,
-        ?NextValue $nextValue = null
-    ) {
-        parent::__construct($isLoop, $stream, $producer, $signal, $pipe, $stack, $nextValue);
+    public function __construct(SourceData $data, Producer $producer, \Iterator $currentSource)
+    {
+        parent::__construct($data, $producer);
         
         $this->currentSource = $currentSource;
-    }
-    
-    public function setNextItem(Item $item): void
-    {
-        $this->nextValue->isSet = true;
-        $this->nextValue->key = $item->key;
-        $this->nextValue->value = $item->value;
     }
     
     public function hasNextItem(): bool

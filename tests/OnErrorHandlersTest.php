@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Handler\Exception\HandlerExceptionFactory;
 use FiiSoft\Jackdaw\Handler\Logger\LogFormatter;
 use FiiSoft\Jackdaw\Handler\Logger\Loggers;
 use FiiSoft\Jackdaw\Handler\OnError;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -87,6 +88,7 @@ final class OnErrorHandlersTest extends TestCase
     /**
      * @dataProvider getDataForTestLogFormatterDescribesData
      */
+    #[DataProvider('getDataForTestLogFormatterDescribesData')]
     public function test_LogFormatter_describes_data($value, $key, string $message): void
     {
         self::assertStringContainsString($message, LogFormatter::format(new \RuntimeException(), $value, $key));

@@ -15,7 +15,6 @@ final class Result extends StreamPipe implements ResultApi
     private ?Transformer $transformer = null;
     
     private bool $isDestroying = false;
-    private bool $createResult = true;
     
     /** @var callable|mixed|null */
     private $orElse;
@@ -172,32 +171,26 @@ final class Result extends StreamPipe implements ResultApi
     
     private function do(): ResultItem
     {
-        foreach ($this->parents as $parent) {
-            if ($parent->isNotStartedYet()) {
-                $parent->run();
+        if ($this->resultItem === null) {
+            
+            foreach ($this->parents as $parent) {
+                if ($parent->isNotStartedYet()) {
+                    $parent->run();
+                }
+            }
+            
+            if ($this->stream->isNotStartedYet()) {
+                $this->stream->execute();
+            }
+            
+            if ($this->resultProvider->hasResult()) {
+                $this->resultItem = ResultItem::createFound($this->resultProvider->getResult(), $this->transformer);
+            } else {
+                $this->resultItem = ResultItem::createNotFound($this->orElse);
             }
         }
         
-        if ($this->resultItem === null && $this->stream->isNotStartedYet()) {
-            $this->stream->execute();
-        }
-        
-        if ($this->createResult) {
-            $this->createResultItem();
-        }
-        
         return $this->resultItem;
-    }
-    
-    private function createResultItem(): void
-    {
-        if ($this->resultProvider->hasResult()) {
-            $this->resultItem = ResultItem::createFound($this->resultProvider->getResult(), $this->transformer);
-        } else {
-            $this->resultItem = ResultItem::createNotFound($this->orElse);
-        }
-        
-        $this->createResult = false;
     }
     
     protected function prepareSubstream(bool $isLoop): void
@@ -212,7 +205,7 @@ final class Result extends StreamPipe implements ResultApi
     
     protected function refreshResult(): void
     {
-        $this->createResult = true;
+        $this->resultItem = null;
     }
     
     public function destroy(): void

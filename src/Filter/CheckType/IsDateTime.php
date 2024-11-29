@@ -7,12 +7,13 @@ use FiiSoft\Jackdaw\Filter\CheckType\IsDateTime\BothIsDateTime;
 use FiiSoft\Jackdaw\Filter\CheckType\IsDateTime\KeyIsDateTime;
 use FiiSoft\Jackdaw\Filter\CheckType\IsDateTime\ValueIsDateTime;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class IsDateTime extends CheckType
 {
     final public static function create(?int $mode): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

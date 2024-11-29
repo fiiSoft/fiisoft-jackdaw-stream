@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\String\Contains\BothContains;
 use FiiSoft\Jackdaw\Filter\String\Contains\KeyContains;
 use FiiSoft\Jackdaw\Filter\String\Contains\ValueContains;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class Contains extends StringFilterSingle
 {
@@ -22,7 +23,7 @@ abstract class Contains extends StringFilterSingle
             case Check::ANY:
                 return new AnyContains($mode, $value, $ignoreCase);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

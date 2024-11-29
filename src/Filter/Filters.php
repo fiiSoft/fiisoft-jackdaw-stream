@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Filter;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Filter\CheckType\IsArray;
 use FiiSoft\Jackdaw\Filter\CheckType\IsBool;
 use FiiSoft\Jackdaw\Filter\CheckType\IsCountable;
 use FiiSoft\Jackdaw\Filter\CheckType\IsDateTime;
@@ -63,6 +64,9 @@ final class Filters
                     case 'is_bool':
                     case '\is_bool':
                         return self::isBool($mode);
+                    case 'is_array':
+                    case '\is_array':
+                        return self::isArray($mode);
                     default:
                         //noop
                 }
@@ -228,6 +232,11 @@ final class Filters
     public static function isFloat(?int $mode = null): Filter
     {
         return IsFloat::create($mode);
+    }
+    
+    public static function isArray(?int $mode = null): Filter
+    {
+        return IsArray::create($mode);
     }
     
     /**

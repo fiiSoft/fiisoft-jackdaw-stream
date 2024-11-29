@@ -33,21 +33,30 @@ final class Signal extends Collaborator
         $this->isWorking = false;
     }
     
-    /**
-     * @inheritDoc
-     */
     public function restartWith(Producer $producer, Operation $operation): void
     {
         $this->resume();
         $this->stream->restartWith($producer, $operation);
     }
     
-    /**
-     * @inheritDoc
-     */
     public function continueWith(Producer $producer, Operation $operation): void
     {
         $this->stream->continueWith($producer, $operation);
+    }
+    
+    public function swapHead(Operation $operation): void
+    {
+        $this->stream->swapHead($operation);
+    }
+    
+    public function restoreHead(): void
+    {
+        $this->stream->restoreHead();
+    }
+    
+    public function setNextItem(Item $item): void
+    {
+        $this->stream->setNextItem($item);
     }
     
     public function forget(Operation $operation): void

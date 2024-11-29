@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Number\IsEven\BothIsEven;
 use FiiSoft\Jackdaw\Filter\Number\IsEven\KeyIsEven;
 use FiiSoft\Jackdaw\Filter\Number\IsEven\ValueIsEven;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class IsEven extends ZeroArg
 {
@@ -23,7 +24,7 @@ abstract class IsEven extends ZeroArg
             case Check::ANY:
                 return new AnyIsEven($mode);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

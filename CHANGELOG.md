@@ -1,9 +1,18 @@
 # Changelog
 
+## 8.1.0
+
+- added some unique, experimental operations: readNext(), readMany(), readWhile(), readUntil()  
+- added sugar-syntaxt operation putValueKeyIn()  
+- added new concepts - IntValue, IntProvider   
+- operation fork() can handle Reducer and IterableCollector directly (using Stream is not necessary in such cases)
+
+Code seems to be compatible with PHP 8.4 (can run all tests).  
+
 ## 8.0.0
 
-Changed behaviour of methods Counter::get() and Counter::count().
-Added ability to trigger processing of all parent streams by the last element in chain of execution.
+Changed behaviour of methods Counter::get() and Counter::count().  
+Added ability to trigger processing of all parent streams by the last element in chain of execution.  
 These changes are highly experimental and uncertain. 
 
 ## 7.4.0

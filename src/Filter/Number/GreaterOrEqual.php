@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual\BothGreaterOrEqual;
 use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual\KeyGreaterOrEqual;
 use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual\ValueGreaterOrEqual;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class GreaterOrEqual extends SingleArg
 {
@@ -26,7 +27,7 @@ abstract class GreaterOrEqual extends SingleArg
             case Check::ANY:
                 return new AnyGreaterOrEqual($mode, $value);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

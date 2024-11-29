@@ -1,8 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Consumer;
+namespace FiiSoft\Jackdaw\Consumer\Reference;
 
-final class Reference implements Consumer
+use FiiSoft\Jackdaw\Consumer\Consumer;
+
+final class RefValueKey implements Consumer
 {
     /** @var mixed REFERENCE */
     private $value;

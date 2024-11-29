@@ -7,12 +7,13 @@ use FiiSoft\Jackdaw\Filter\CheckType\IsCountable\BothIsCountable;
 use FiiSoft\Jackdaw\Filter\CheckType\IsCountable\KeyIsCountable;
 use FiiSoft\Jackdaw\Filter\CheckType\IsCountable\ValueIsCountable;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class IsCountable extends CheckType
 {
     final public static function create(?int $mode): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

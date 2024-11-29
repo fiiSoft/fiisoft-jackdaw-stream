@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\String\NotInSet\BothNotInSet;
 use FiiSoft\Jackdaw\Filter\String\NotInSet\KeyNotInSet;
 use FiiSoft\Jackdaw\Filter\String\NotInSet\ValueNotInSet;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class NotInSet extends StringFilterMulti
 {
@@ -25,7 +26,7 @@ abstract class NotInSet extends StringFilterMulti
             case Check::ANY:
                 return new AnyNotInSet($mode, $values, $ignoreCase);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

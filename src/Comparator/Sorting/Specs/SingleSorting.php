@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Comparator\Comparable;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 final class SingleSorting extends Sorting
 {
@@ -25,7 +26,7 @@ final class SingleSorting extends Sorting
         parent::__construct();
         
         $this->reversed = $reversed;
-        $this->mode = Check::getMode($mode);
+        $this->mode = Mode::get($mode);
         $this->comparator = Comparators::getAdapter($comparator);
     }
     

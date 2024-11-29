@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\String\IsNot\BothIsNot;
 use FiiSoft\Jackdaw\Filter\String\IsNot\KeyIsNot;
 use FiiSoft\Jackdaw\Filter\String\IsNot\ValueIsNot;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class StrIsNot extends StringFilterSingle
 {
@@ -22,7 +23,7 @@ abstract class StrIsNot extends StringFilterSingle
             case Check::ANY:
                 return new AnyIsNot($mode, $value, $ignoreCase);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

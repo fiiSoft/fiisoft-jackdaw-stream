@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Consumer;
 
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 final class StdoutWriter implements Consumer
 {
@@ -12,7 +13,7 @@ final class StdoutWriter implements Consumer
     public function __construct(string $separator = \PHP_EOL, int $mode = Check::VALUE)
     {
         $this->separator = $separator;
-        $this->mode = Check::getMode($mode);
+        $this->mode = Mode::get($mode);
     }
     
     public function consume($value, $key): void

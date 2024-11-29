@@ -11,6 +11,7 @@ use FiiSoft\Jackdaw\Transformer\Exception\TransformerExceptionFactory;
 use FiiSoft\Jackdaw\Transformer\GenericTransformer;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class TransformersTest extends TestCase
@@ -64,6 +65,7 @@ final class TransformersTest extends TestCase
     /**
      * @dataProvider getDataForTestReducerAdapterWithIterableValue
      */
+    #[DataProvider('getDataForTestReducerAdapterWithIterableValue')]
     public function test_ReducerAdapter_with_iterable_value(Transformer $transformer, $expected): void
     {
         self::assertSame($expected, $transformer->transform([1, 2, 3], 'a'));

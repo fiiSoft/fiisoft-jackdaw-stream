@@ -22,7 +22,7 @@ final class RegistryTest extends TestCase
             ->limit(2)
             ->remember($reg->key('foo'))
             ->remember($reg->value('bar'))
-            ->remember($reg->valueKey('value', 'key'))
+            ->remember($reg->valueKey())
             ->run();
         
         //then
@@ -152,7 +152,7 @@ final class RegistryTest extends TestCase
         //given
         $registry = Registry::new();
         
-        $writer = $registry->valueKey('value', 'key');
+        $writer = $registry->valueKey();
         $valueReader = $registry->read('value');
         $keyReader = $registry->read('key');
         
@@ -179,6 +179,44 @@ final class RegistryTest extends TestCase
     {
         $this->expectExceptionObject(RegistryExceptionFactory::cannotSetValue());
         
-        Registry::new()->valueKey('value', 'key')->set('wrong value');
+        Registry::new()->valueKey()->set('wrong value');
+    }
+    
+    public function test_RegEntry_throws_exception_when_is_asked_for_value_reader_but_writes_key(): void
+    {
+        $this->expectExceptionObject(RegistryExceptionFactory::cannotCreateReaderOfType('value', Check::KEY));
+        
+        Registry::new()->entry(Check::KEY)->value();
+    }
+    
+    public function test_RegEntry_throws_exception_when_is_asked_for_key_reader_but_writes_value(): void
+    {
+        $this->expectExceptionObject(RegistryExceptionFactory::cannotCreateReaderOfType('key', Check::VALUE));
+        
+        Registry::new()->entry(Check::VALUE)->key();
+    }
+    
+    public function test_RegEntry_can_provide_value_reader(): void
+    {
+        //given
+        $reg = Registry::new()->entry(Check::VALUE);
+        
+        //when
+        $reg->set('foo');
+        
+        //then
+        self::assertSame('foo', $reg->value()->read());
+    }
+    
+    public function test_RegEntry_can_provide_key_reader(): void
+    {
+        //given
+        $reg = Registry::new()->entry(Check::KEY);
+        
+        //when
+        $reg->set('foo');
+        
+        //then
+        self::assertSame('foo', $reg->key()->read());
     }
 }

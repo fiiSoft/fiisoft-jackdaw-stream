@@ -2,12 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Collector;
 
+use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
 use FiiSoft\Jackdaw\Stream;
 
 /**
  * @extends \Traversable<string|int, mixed>
  */
-interface IterableCollector extends Collector, \Traversable, \Countable
+interface IterableCollector extends Collector, ForkReady, \Traversable, \Countable
 {
     public function clear(): void;
     

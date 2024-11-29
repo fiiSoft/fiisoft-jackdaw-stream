@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\String\EndsWith\BothEndsWith;
 use FiiSoft\Jackdaw\Filter\String\EndsWith\KeyEndsWith;
 use FiiSoft\Jackdaw\Filter\String\EndsWith\ValueEndsWith;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class EndsWith extends StringFilterSingle
 {
@@ -22,7 +23,7 @@ abstract class EndsWith extends StringFilterSingle
             case Check::ANY:
                 return new AnyEndsWith($mode, $value, $ignoreCase);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

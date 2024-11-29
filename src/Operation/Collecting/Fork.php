@@ -2,81 +2,52 @@
 
 namespace FiiSoft\Jackdaw\Operation\Collecting;
 
-use FiiSoft\Jackdaw\Discriminator\Discriminator;
+use FiiSoft\Jackdaw\Collector\IterableCollector;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
+use FiiSoft\Jackdaw\Exception\StreamExceptionFactory;
 use FiiSoft\Jackdaw\Internal\ForkCollaborator;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Collecting\Fork\CollectorFork;
+use FiiSoft\Jackdaw\Operation\Collecting\Fork\ReducerFork;
+use FiiSoft\Jackdaw\Operation\Collecting\Fork\StreamFork;
 use FiiSoft\Jackdaw\Operation\Internal\ProcessOperation;
-use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Producer\Producers;
-use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\Reducer\Reducer;
 
-final class Fork extends ProcessOperation
+abstract class Fork extends ProcessOperation
 {
-    private Discriminator $discriminator;
-    private ForkCollaborator $prototype;
-    
-    /** @var Stream[] */
-    private array $streams = [];
-    
     /**
      * @param DiscriminatorReady|callable|array<string|int> $discriminator
      */
-    public function __construct($discriminator, ForkCollaborator $prototype)
+    public static function create($discriminator, ForkReady $prototype): Fork
     {
-        $this->discriminator = Discriminators::getAdapter($discriminator);
-        $this->prototype = $prototype;
-    }
-    
-    public function handle(Signal $signal): void
-    {
-        $classifier = $this->discriminator->classify($signal->item->value, $signal->item->key);
-        if (\is_bool($classifier)) {
-            $classifier = (int) $classifier;
-        }
-    
-        if (isset($this->streams[$classifier])) {
-            $stream = $this->streams[$classifier];
-        } else {
-            $stream = $this->prototype->cloneStream();
-            $this->streams[$classifier] = $stream;
+        $discriminator = Discriminators::getAdapter($discriminator);
+        
+        if ($prototype instanceof ForkCollaborator) {
+            return new StreamFork($discriminator, $prototype);
         }
         
-        $stream->process($signal);
-    }
-    
-    public function buildStream(iterable $stream): iterable
-    {
-        $signal = $this->createSignal();
-        $item = $signal->item;
-        
-        foreach ($stream as $item->key => $item->value) {
-            $classifier = $this->discriminator->classify($signal->item->value, $signal->item->key);
-            if (\is_bool($classifier)) {
-                $classifier = (int) $classifier;
-            }
-            
-            if (isset($this->streams[$classifier])) {
-                $fork = $this->streams[$classifier];
-            } else {
-                $fork = $this->prototype->cloneStream();
-                $this->streams[$classifier] = $fork;
-            }
-            
-            $fork->process($signal);
+        if ($prototype instanceof Reducer) {
+            return new ReducerFork($discriminator, $prototype);
         }
         
-        yield from $this->extractData();
+        if ($prototype instanceof IterableCollector) {
+            return new CollectorFork($discriminator, $prototype);
+        }
         
-        $this->destroySubstreams();
+        throw StreamExceptionFactory::unsupportedTypeOfForkPrototype();
     }
     
-    public function streamingFinished(Signal $signal): bool
+    protected function __construct()
+    {
+    }
+    
+    final public function streamingFinished(Signal $signal): bool
     {
         $signal->restartWith(Producers::getAdapter($this->extractData()), $this->next);
         
-        $this->destroySubstreams();
+        $this->cleanUp();
         
         return true;
     }
@@ -84,36 +55,17 @@ final class Fork extends ProcessOperation
     /**
      * @return array<string|int, mixed>
      */
-    private function extractData(): array
-    {
-        return \array_map(
-            static fn(FinalOperation $op) => $op->get(),
-            \array_filter(
-                \array_map(
-                    static fn(Stream $stream): ?FinalOperation => $stream->getFinalOperation(),
-                    $this->streams
-                ),
-                static fn(?FinalOperation $op): bool => $op !== null
-            )
-        );
-    }
+    abstract protected function extractData(): array;
     
-    public function destroy(): void
+    final public function destroy(): void
     {
         if (!$this->isDestroying) {
             
-            $this->destroySubstreams();
+            $this->cleanUp();
             
             parent::destroy();
         }
     }
     
-    private function destroySubstreams(): void
-    {
-        foreach ($this->streams as $stream) {
-            $stream->destroy();
-        }
-        
-        $this->streams = [];
-    }
+    abstract protected function cleanUp(): void;
 }

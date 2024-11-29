@@ -4,10 +4,10 @@ namespace FiiSoft\Jackdaw\Internal\State;
 
 use FiiSoft\Jackdaw\Internal\Destroyable;
 
-final class Stack implements Destroyable
+final class Sources implements Destroyable
 {
     /** @var Source[] */
-    public array $states = [];
+    public array $stack = [];
     
     private bool $isDestroying = false;
     
@@ -16,8 +16,8 @@ final class Stack implements Destroyable
         if (!$this->isDestroying) {
             $this->isDestroying = true;
             
-            $temp = $this->states;
-            $this->states = [];
+            $temp = $this->stack;
+            $this->stack = [];
             
             foreach ($temp as $state) {
                 $state->destroy();

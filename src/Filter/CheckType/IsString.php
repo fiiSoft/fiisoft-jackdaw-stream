@@ -7,12 +7,13 @@ use FiiSoft\Jackdaw\Filter\CheckType\IsString\BothIsString;
 use FiiSoft\Jackdaw\Filter\CheckType\IsString\KeyIsString;
 use FiiSoft\Jackdaw\Filter\CheckType\IsString\ValueIsString;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class IsString extends CheckType
 {
     final public static function create(?int $mode): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

@@ -7,12 +7,13 @@ use FiiSoft\Jackdaw\Filter\CheckType\IsNumeric\BothIsNumeric;
 use FiiSoft\Jackdaw\Filter\CheckType\IsNumeric\KeyIsNumeric;
 use FiiSoft\Jackdaw\Filter\CheckType\IsNumeric\ValueIsNumeric;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class IsNumeric extends CheckType
 {
     final public static function create(?int $mode): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

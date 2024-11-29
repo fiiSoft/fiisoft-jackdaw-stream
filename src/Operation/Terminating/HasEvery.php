@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Operation\Terminating;
 
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Internal\Mode;
 use FiiSoft\Jackdaw\Operation\Terminating\HasEvery\AnyHasEvery;
 use FiiSoft\Jackdaw\Operation\Terminating\HasEvery\BothHasEvery;
 use FiiSoft\Jackdaw\Operation\Terminating\HasEvery\KeyHasEvery;
@@ -24,7 +25,7 @@ abstract class HasEvery extends SimpleFinal
     {
         $values = \array_unique($values, \SORT_REGULAR);
         
-        switch (Check::getMode($mode)) {
+        switch (Mode::get($mode)) {
             case Check::VALUE:
                 return new ValueHasEvery($stream, $values);
             case Check::KEY:

@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\String\InSet\BothInSet;
 use FiiSoft\Jackdaw\Filter\String\InSet\KeyInSet;
 use FiiSoft\Jackdaw\Filter\String\InSet\ValueInSet;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class InSet extends StringFilterMulti
 {
@@ -25,7 +26,7 @@ abstract class InSet extends StringFilterMulti
             case Check::ANY:
                 return new AnyInSet($mode, $values, $ignoreCase);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

@@ -20,6 +20,9 @@ use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\ValueRef\Exception\WrongIntValueException;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class StreamETest extends TestCase
@@ -562,6 +565,7 @@ final class StreamETest extends TestCase
     /**
      * @dataProvider getDataForTestZipWithOneSource
      */
+    #[DataProvider('getDataForTestZipWithOneSource')]
     public function test_Zip_with_one_source($source): void
     {
         $result = Stream::from([3 => 'a', 2 => 'b', 1 => 'c'])
@@ -587,8 +591,6 @@ final class StreamETest extends TestCase
     
     public function test_CountIn(): void
     {
-        $count = 0;
-        
         $result = Stream::from(['a', 'b', 1, 'c', 2, 4])
             ->onlyStrings()
             ->countIn($count)
@@ -723,6 +725,7 @@ final class StreamETest extends TestCase
     /**
      * @dataProvider getDataForTestSortByValueAndKey
      */
+    #[DataProvider('getDataForTestSortByValueAndKey')]
     public function test_Sort_by_value_and_key(Sorting $normal, Sorting $reversed, array $expected): void
     {
         $data = [3 => 'b', 5 => 'a', 2 => 'c', 4 => 'b', 1 => 'd', 6 => 'a'];
@@ -761,6 +764,7 @@ final class StreamETest extends TestCase
     /**
      * @dataProvider getDataForTestSortByKeyAndValue
      */
+    #[DataProvider('getDataForTestSortByKeyAndValue')]
     public function test_Sort_by_key_and_value(Sorting $normal, Sorting $reversed, array $expected): void
     {
         $keys = [1, 3, 1, 2];
@@ -834,6 +838,7 @@ final class StreamETest extends TestCase
     /**
      * @dataProvider getDataForTestSortByCustomComparator
      */
+    #[DataProvider('getDataForTestSortByCustomComparator')]
     public function test_Sort_by_custom_comparator($sorting, array $expected): void
     {
         $data = [5 => 'a', 2 => 'c', 3 => 'a', 1 => 'b', 4 => 'c'];
@@ -1067,6 +1072,11 @@ final class StreamETest extends TestCase
     public function test_filter_stream_by_notNull(): void
     {
         $this->examineFilter(Filters::notNull(), '', null);
+    }
+    
+    public function test_filter_stream_by_isArray(): void
+    {
+        $this->examineFilter(Filters::isArray(), [], '');
     }
     
     public function test_filter_stream_by_time_is(): void
@@ -1687,5 +1697,241 @@ final class StreamETest extends TestCase
             ->toArrayAssoc();
         
         self::assertSame([0 => 1, 1 => 2, 3 => 1], $actual);
+    }
+    
+    public function test_use_callable_as_intValueRefs(): void
+    {
+        $result = Stream::from([3, 'a', 'b', 'c', 2, 'd', 'e', 1, 'f', 2, 'g', 'h', 1, 'i'])
+            ->onlyIntegers()
+            ->putIn($number)
+            ->readNext(static function () use (&$number): int {
+                return $number;
+            })
+            ->toArrayAssoc();
+        
+        self::assertSame([3 => 'c', 6 => 'e', 8 => 'f', 11 => 'h', 13 => 'i'], $result);
+    }
+    
+    public function test_IntNum_throws_exception_when_param_for_getAdapter_is_invalid(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::byName('value'));
+        
+        IntNum::getAdapter(15.0);
+    }
+    
+    public function test_readNext_can_handle_volatile_integer_providers(): void
+    {
+        $one = 1;
+        $result = [];
+        
+        Stream::from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+            ->storeIn($result, true)
+            ->readNext($one)
+            ->readNext(static fn(): int => 1)
+            ->readNext(IntNum::readFrom($one))
+            ->storeIn($result, true)
+            ->run();
+            
+        self::assertSame([1, 4, 5, 8, 9, 12, 13], $result);
+    }
+    
+    public function test_readNext_throws_exception_when_current_howMany_is_invalid(): void
+    {
+        $intProvider = static fn(): int => -1;
+        
+        $this->expectExceptionObject(
+            WrongIntValueException::invalidNumber(IntNum::getAdapter($intProvider))
+        );
+        
+        Stream::from([1, 2, 3])->onlyIntegers()->readNext($intProvider)->run();
+    }
+    
+    /**
+     * @dataProvider getDataForTestReadManyThrowsExceptionWhenCurrentHowManyIsInvalid
+     */
+    #[DataProvider('getDataForTestReadManyThrowsExceptionWhenCurrentHowManyIsInvalid')]
+    public function test_readMany_throws_exception_when_current_howMany_is_invalid(bool $reindex): void
+    {
+        $howMany = static fn(): int => -1;
+        
+        $this->expectExceptionObject(WrongIntValueException::invalidNumber(IntNum::getAdapter($howMany)));
+        
+        Stream::from([1, 2, 3, 4, 5])
+            ->onlyIntegers()
+            ->readMany($howMany, $reindex)
+            ->run();
+    }
+    
+    public static function getDataForTestReadManyThrowsExceptionWhenCurrentHowManyIsInvalid(): array
+    {
+        return [[true], [false]];
+    }
+    
+    public function test_exception_is_thrown_when_quantity_of_consecutive_numbers_is_insufficient(): void
+    {
+        $this->expectExceptionObject(WrongIntValueException::noMoreIntegersToIterateOver());
+        
+        $data = [
+            '1', '2',
+            '---', 'a', 'b', 'c', 'd',
+            '---', 'e', 'f', 'g', 'h',
+            '---', 'i', 'j', 'k', 'l',
+            '---', 'm', 'n', 'o', 'p',
+        ];
+        
+        Stream::from($data)
+            ->filter('---')
+            ->readMany([2, 1, 0], true)
+            ->toArray();
+    }
+    
+    public function test_readMany_does_not_read_next_values_when_the_number_of_readings_is_0(): void
+    {
+        $data = [
+            '1', '2',
+            '---', 'a', 'b', 'c', 'd',
+            '---', 'e', 'f', 'g', 'h',
+            '---', 'i', 'j', 'k', 'l',
+            '---', 'm', 'n', 'o', 'p',
+        ];
+        
+        $result = Stream::from($data)
+            ->filter('---')
+            ->readMany(IntNum::infinitely([2, 1, 0]))
+            ->toArray();
+        
+        self::assertSame(['a', 'b', 'e', 'm', 'n'], $result);
+    }
+    
+    public function test_array_of_numbers_can_be_used_as_IntProvider_for_consecutive_readings(): void
+    {
+        $data = [
+            '1', '2',
+            '---', 'a', 'b', 'c', 'd',
+            '---', 'e', 'f', 'g', 'h',
+            '---', 'i', 'j', 'k', 'l',
+            '---', 'm', 'n', 'o', 'p',
+        ];
+        
+        $result = Stream::from($data)
+            ->filter('---')
+            ->readMany([2, 1, 0, 2])
+            ->toArray();
+        
+        self::assertSame(['a', 'b', 'e', 'm', 'n'], $result);
+    }
+    
+    public function test_InfiniteIterator_can_be_used_as_IntProvider_for_consecutive_readings(): void
+    {
+        $data = [
+            '1', '2',
+            '---', 'a', 'b', 'c', 'd',
+            '---', 'e', 'f', 'g', 'h',
+            '---', 'i', 'j', 'k', 'l',
+            '---', 'm', 'n', 'o', 'p',
+        ];
+        
+        $result = Stream::from($data)
+            ->filter('---')
+            ->readMany(new \InfiniteIterator(new \ArrayIterator([2, 1, 0])))
+            ->toArray();
+        
+        self::assertSame(['a', 'b', 'e', 'm', 'n'], $result);
+    }
+    
+    public function test_Iterator_can_be_used_as_IntProvider_for_consecutive_readings_1(): void
+    {
+        $data = [
+            '1', '2',
+            '---', 'a', 'b', 'c', 'd',
+            '---', 'e', 'f', 'g', 'h',
+            '---', 'i', 'j', 'k', 'l',
+            '---', 'm', 'n', 'o', 'p',
+        ];
+        
+        $result = Stream::from($data)
+            ->filter('---')
+            ->readMany(new \ArrayIterator([2, 1, 0, 2]))
+            ->toArray();
+        
+        self::assertSame(['a', 'b', 'e', 'm', 'n'], $result);
+    }
+    
+    public function test_Iterator_can_be_used_as_IntProvider_for_consecutive_readings_2(): void
+    {
+        $data = [
+            '1', '2',
+            '---', 'a', 'b', 'c', 'd',
+            '---', 'e', 'f', 'g', 'h',
+            '---', 'i', 'j', 'k', 'l',
+            '---', 'm', 'n', 'o', 'p',
+        ];
+        
+        $result = Stream::from($data)
+            ->filter('---')
+            ->readMany(IntNum::infinitely(new \ArrayIterator([2, 1, 0])))
+            ->toArray();
+        
+        self::assertSame(['a', 'b', 'e', 'm', 'n'], $result);
+    }
+    
+    public function test_consecutive_call(): void
+    {
+        $data = ['a', 'bbb', 'ccccc', 'ddddddd', 'eeeeee', 'ffff', 'gg'];
+        
+        $concatenator = Reducers::concat();
+        $shortest = Reducers::shortest();
+        $longest = Reducers::longest();
+        $counter = Consumers::counter();
+        $buffer = [];
+        
+        $collector = static function (string $value) use (&$buffer) {
+            $buffer[] = $value;
+        };
+        
+        Stream::from($data)
+            ->call($concatenator)
+            ->call($shortest, $longest)
+            ->call(Consumers::idle())
+            ->call($collector, $counter)
+            ->run();
+        
+        self::assertSame(\implode('', $data), $concatenator->result());
+        self::assertSame($data, $buffer);
+        self::assertSame('a', $shortest->result());
+        self::assertSame('ddddddd', $longest->result());
+        self::assertSame(\count($data), $counter->get());
+    }
+    
+    public function test_filter_stream_with_various_filters_and_unique_between_them(): void
+    {
+        $data = [
+            'a', 1, 'b', -1, 2, 'c', -2, 3, 'd', 4, -3, 'e', 2, 5, -2, 'f', 3, 6, -5, 'g', 1, 7, -2, 'h', 8, 'i', 5,
+        ];
+        
+        $result = Stream::from($data)
+            ->onlyIntegers()
+            ->greaterThan(0)
+            ->unique()
+            ->filter(Filters::number()->between(2, 6))
+            ->toArray();
+        
+        self::assertSame([2, 3, 4, 5, 6], $result);
+    }
+    
+    public function test_readNext_does_nothing_when_number_of_values_to_read_is_zero(): void
+    {
+        $readNext = static function (): int {
+            static $skip = 0;
+            $skip = $skip === 0 ? 1 : 0;
+            return $skip;
+        };
+        
+        $result = Stream::from([1, 'a', 'b', 2, 'c', 'd', 3, 'e', 'f', 4, 'g', 'h'])
+            ->onlyStrings()
+            ->readNext($readNext)
+            ->toArray();
+        
+        self::assertSame(['b', 'c', 3, 'e', 4, 'g'], $result);
     }
 }

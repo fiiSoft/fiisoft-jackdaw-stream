@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Number\Between\BothBetween;
 use FiiSoft\Jackdaw\Filter\Number\Between\KeyBetween;
 use FiiSoft\Jackdaw\Filter\Number\Between\ValueBetween;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class Between extends TwoArgs
 {
@@ -36,7 +37,7 @@ abstract class Between extends TwoArgs
             case Check::ANY:
                 return new AnyBetween($mode, $lower, $higher);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

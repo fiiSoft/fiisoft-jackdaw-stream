@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Number\NotEqual\BothNotEqual;
 use FiiSoft\Jackdaw\Filter\Number\NotEqual\KeyNotEqual;
 use FiiSoft\Jackdaw\Filter\Number\NotEqual\ValueNotEqual;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class NotEqual extends SingleArg
 {
@@ -26,7 +27,7 @@ abstract class NotEqual extends SingleArg
             case Check::ANY:
                 return new AnyNotEqual($mode, $value);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

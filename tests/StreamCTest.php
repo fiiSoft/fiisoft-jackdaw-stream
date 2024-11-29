@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
@@ -22,6 +23,7 @@ use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Registry\Registry;
 use FiiSoft\Jackdaw\Stream;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class StreamCTest extends TestCase
@@ -37,6 +39,7 @@ final class StreamCTest extends TestCase
     /**
      * @dataProvider getDataForTestSortByFieldsInVariousWays
      */
+    #[DataProvider('getDataForTestSortByFieldsInVariousWays')]
     public function test_sort_by_fields_in_various_ways(Stream $example): void
     {
         self::assertSame([5, 9, 6, 2, 7], $example->extract('id')->toArray());
@@ -223,6 +226,7 @@ final class StreamCTest extends TestCase
     /**
      * @dataProvider getDataForTestUniqueThoroughly
      */
+    #[DataProvider('getDataForTestUniqueThoroughly')]
     public function test_Unique_compare_values_by_default_comparator_in_various_ways(array $data, array $expected): void
     {
         self::assertSame(
@@ -259,6 +263,7 @@ final class StreamCTest extends TestCase
     /**
      * @dataProvider getDataForTestUniqueThoroughly
      */
+    #[DataProvider('getDataForTestUniqueThoroughly')]
     public function test_Unique_compare_values_by_custom_comparator_in_various_ways(array $data, array $expected): void
     {
         $comparator = static fn($a, $b): int => \gettype($a) <=> \gettype($b) ?: $a <=> $b;
@@ -475,7 +480,7 @@ final class StreamCTest extends TestCase
                     $discriminator->set('bar');
                 }
             )
-            ->fork($discriminator, Stream::empty()->reduce(Reducers::sum()))
+            ->fork($discriminator, Reducers::sum())
             ->toArrayAssoc();
         
         //then
@@ -565,6 +570,7 @@ final class StreamCTest extends TestCase
     /**
      * @dataProvider getDataForTestWindow
      */
+    #[DataProvider('getDataForTestWindow')]
     public function test_window_with_reindex(int $size, int $step, $expected): void
     {
         if ($expected instanceof \Exception) {
@@ -656,6 +662,7 @@ final class StreamCTest extends TestCase
     /**
      * @dataProvider getDataForTestEveryNthElement
      */
+    #[DataProvider('getDataForTestEveryNthElement')]
     public function test_everyNth_element(int $num, array $expected): void
     {
         self::assertSame($expected, Stream::from(['a', 'b', 'c', 'd'])->everyNth($num)->toArrayAssoc());
@@ -703,8 +710,6 @@ final class StreamCTest extends TestCase
                 $num = !$num;
             }
         };
-        
-        $countIterations = 0;
         
         $countIntegers = Stream::from($infiniteProducer)
             ->countIn($countIterations)
@@ -1103,7 +1108,7 @@ final class StreamCTest extends TestCase
                 1 => $concatStrings
             ])
             ->onlyIntegers()
-            ->fork(Discriminators::evenOdd(), Stream::empty()->collect(true));
+            ->fork(Discriminators::evenOdd(), Collectors::values());
         
         $actual = $prototype->wrap(['a', 3, 'b', 2, 'c', 5, 'd', 4, 'e', 1, 'f', 6, 'g', 7, 'h', 8])->toArrayAssoc();
         
@@ -1226,6 +1231,7 @@ final class StreamCTest extends TestCase
     /**
      * @dataProvider getDataForTestUntilWithFilterInVariousWays
      */
+    #[DataProvider('getDataForTestUntilWithFilterInVariousWays')]
     public function test_until_with_filter_in_various_ways(Stream $stream): void
     {
         self::assertSame(['a' => 'b', 'c' => 1, 2 => 'd'], $stream->toArrayAssoc());
@@ -1364,6 +1370,7 @@ final class StreamCTest extends TestCase
     /**
      * @dataProvider getDataForTestOmitRepsUsingComparatorReadyAdapterForPairsComparison
      */
+    #[DataProvider('getDataForTestOmitRepsUsingComparatorReadyAdapterForPairsComparison')]
     public function test_omitReps_using_ComparatorReady_adapter_for_pairs_comparison(Comparison $comparison): void
     {
         $data = [
@@ -1427,9 +1434,6 @@ final class StreamCTest extends TestCase
     
     private function examineTextFileReader(Producer $producer): void
     {
-        $countAllLines = 0;
-        $countNonEmptyLines = 0;
-        
         Stream::from($producer)
             ->countIn($countAllLines)
             ->trim()
@@ -1485,8 +1489,6 @@ final class StreamCTest extends TestCase
     
     public function test_count_number_of_working_days_in_date_range_using_loop_stream_and_countIn(): void
     {
-        $workingDays = 0;
-        
         Stream::of(new \DateTimeImmutable('2024-12-01'))
             ->feed(Stream::empty()
                 ->omit(Filters::time()->isDay(Day::SAT, Day::SUN))

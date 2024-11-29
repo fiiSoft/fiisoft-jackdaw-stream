@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
 final class ReferenceAdapter extends BaseProducer
 {
-    /** @var mixed */
+    /** @var mixed REFERENCE */
     private $variable;
     
     private int $index = 0;

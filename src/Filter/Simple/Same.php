@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Simple\Same\BothSame;
 use FiiSoft\Jackdaw\Filter\Simple\Same\KeySame;
 use FiiSoft\Jackdaw\Filter\Simple\Same\ValueSame;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class Same extends SimpleFilter
 {
@@ -16,7 +17,7 @@ abstract class Same extends SimpleFilter
      */
     final public static function create(?int $mode, $desired): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

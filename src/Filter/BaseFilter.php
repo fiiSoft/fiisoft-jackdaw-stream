@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter;
 
-use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class BaseFilter extends AbstractFilter
 {
@@ -12,7 +12,7 @@ abstract class BaseFilter extends AbstractFilter
     {
         parent::__construct();
         
-        $this->mode = Check::getMode($mode);
+        $this->mode = Mode::get($mode);
     }
     
     final public function getMode(): int

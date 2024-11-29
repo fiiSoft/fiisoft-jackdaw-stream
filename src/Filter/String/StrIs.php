@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\String\Is\BothIs;
 use FiiSoft\Jackdaw\Filter\String\Is\KeyIs;
 use FiiSoft\Jackdaw\Filter\String\Is\ValueIs;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class StrIs extends StringFilterSingle
 {
@@ -22,7 +23,7 @@ abstract class StrIs extends StringFilterSingle
             case Check::ANY:
                 return new AnyIs($mode, $value, $ignoreCase);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

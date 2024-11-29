@@ -8,12 +8,13 @@ use FiiSoft\Jackdaw\Filter\CheckType\NotEmpty\KeyNotEmpty;
 use FiiSoft\Jackdaw\Filter\CheckType\NotEmpty\ValueNotEmpty;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class NotEmpty extends CheckType
 {
     final public static function create(?int $mode): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

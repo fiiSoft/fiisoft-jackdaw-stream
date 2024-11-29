@@ -22,7 +22,7 @@ $prototype = Stream::empty()
 
 //-----------------
 
-echo 'Produce Collatz series using recursive feed of stream with values produced by its self:', PHP_EOL;
+echo 'Produce Collatz series using recursive feed of stream with values produced by itself:', PHP_EOL;
 
 $prototype->wrap([$startNumber])->loop()->run();
 

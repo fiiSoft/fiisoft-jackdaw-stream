@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Simple\NotEqual\BothNotEqual;
 use FiiSoft\Jackdaw\Filter\Simple\NotEqual\KeyNotEqual;
 use FiiSoft\Jackdaw\Filter\Simple\NotEqual\ValueNotEqual;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class NotEqual extends SimpleFilter
 {
@@ -16,7 +17,7 @@ abstract class NotEqual extends SimpleFilter
      */
     final public static function create(?int $mode, $desired): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

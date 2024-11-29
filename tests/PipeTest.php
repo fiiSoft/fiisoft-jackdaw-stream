@@ -12,70 +12,27 @@ use FiiSoft\Jackdaw\Internal\Exception\PipeExceptionFactory;
 use FiiSoft\Jackdaw\Internal\Pipe;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Operation\Collecting\Categorize;
-use FiiSoft\Jackdaw\Operation\Collecting\Gather;
-use FiiSoft\Jackdaw\Operation\Collecting\Reverse;
-use FiiSoft\Jackdaw\Operation\Collecting\Segregate;
-use FiiSoft\Jackdaw\Operation\Collecting\ShuffleAll;
-use FiiSoft\Jackdaw\Operation\Collecting\Sort;
-use FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
-use FiiSoft\Jackdaw\Operation\Collecting\Tail;
+use FiiSoft\Jackdaw\Operation\Collecting\{Gather, Reverse, Segregate, ShuffleAll, Sort, SortLimited,
+    SortLimited\SingleSortLimited, Tail};
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
-use FiiSoft\Jackdaw\Operation\Filtering\EveryNth;
-use FiiSoft\Jackdaw\Operation\Filtering\Filter;
-use FiiSoft\Jackdaw\Operation\Filtering\FilterBy;
-use FiiSoft\Jackdaw\Operation\Filtering\FilterByMany;
-use FiiSoft\Jackdaw\Operation\Filtering\FilterMany;
-use FiiSoft\Jackdaw\Operation\Mapping\Flip;
-use FiiSoft\Jackdaw\Operation\Filtering\OmitReps;
-use FiiSoft\Jackdaw\Operation\Filtering\Skip;
-use FiiSoft\Jackdaw\Operation\Filtering\SkipWhile;
-use FiiSoft\Jackdaw\Operation\Filtering\Unique;
-use FiiSoft\Jackdaw\Operation\Filtering\Uptrends;
+use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Filter, FilterByMany, FilterMany, OmitReps, Skip, SkipWhile, Unique,
+    Uptrends};
+use FiiSoft\Jackdaw\Operation\Internal\Operations as OP;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Initial;
 use FiiSoft\Jackdaw\Operation\Internal\Shuffle;
-use FiiSoft\Jackdaw\Operation\Mapping\Accumulate;
-use FiiSoft\Jackdaw\Operation\Mapping\Aggregate;
-use FiiSoft\Jackdaw\Operation\Mapping\Chunk;
-use FiiSoft\Jackdaw\Operation\Mapping\ChunkBy;
-use FiiSoft\Jackdaw\Operation\Mapping\Classify;
-use FiiSoft\Jackdaw\Operation\Mapping\Flat;
-use FiiSoft\Jackdaw\Operation\Mapping\Map;
-use FiiSoft\Jackdaw\Operation\Mapping\MapFieldWhen;
-use FiiSoft\Jackdaw\Operation\Mapping\MapKey;
-use FiiSoft\Jackdaw\Operation\Mapping\MapKeyValue;
-use FiiSoft\Jackdaw\Operation\Mapping\MapMany;
-use FiiSoft\Jackdaw\Operation\Mapping\MapWhen;
-use FiiSoft\Jackdaw\Operation\Mapping\Reindex;
-use FiiSoft\Jackdaw\Operation\Mapping\Scan;
-use FiiSoft\Jackdaw\Operation\Mapping\Tokenize;
-use FiiSoft\Jackdaw\Operation\Mapping\Tuple;
-use FiiSoft\Jackdaw\Operation\Mapping\UnpackTuple;
-use FiiSoft\Jackdaw\Operation\Mapping\Window;
+use FiiSoft\Jackdaw\Operation\Mapping\{Accumulate, Aggregate, Chunk, ChunkBy, Flat, Map, MapFieldWhen, MapKey, MapMany,
+    MapWhen, Reindex, Tokenize, Tuple, UnpackTuple, Window};
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Operation\Sending\CollectIn;
-use FiiSoft\Jackdaw\Operation\Sending\Feed;
-use FiiSoft\Jackdaw\Operation\Sending\FeedMany;
-use FiiSoft\Jackdaw\Operation\Sending\SendTo;
-use FiiSoft\Jackdaw\Operation\Sending\SendToMany;
-use FiiSoft\Jackdaw\Operation\Special\Limit;
-use FiiSoft\Jackdaw\Operation\Special\ShuffleChunks;
-use FiiSoft\Jackdaw\Operation\Special\Until;
-use FiiSoft\Jackdaw\Operation\Terminating\Collect;
-use FiiSoft\Jackdaw\Operation\Terminating\CollectKeys;
-use FiiSoft\Jackdaw\Operation\Terminating\Count;
-use FiiSoft\Jackdaw\Operation\Terminating\Find;
-use FiiSoft\Jackdaw\Operation\Terminating\First;
-use FiiSoft\Jackdaw\Operation\Terminating\Has;
-use FiiSoft\Jackdaw\Operation\Terminating\HasEvery;
-use FiiSoft\Jackdaw\Operation\Terminating\HasOnly;
-use FiiSoft\Jackdaw\Operation\Terminating\IsEmpty;
-use FiiSoft\Jackdaw\Operation\Terminating\Last;
+use FiiSoft\Jackdaw\Operation\Sending\{FeedMany, SendToMany};
+use FiiSoft\Jackdaw\Operation\Special\{Limit, ReadManyWhile, ReadNext, ShuffleChunks, Until};
+use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, Find, First, Has, HasEvery, HasOnly, IsEmpty,
+    Last};
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class PipeTest extends TestCase
@@ -83,6 +40,7 @@ final class PipeTest extends TestCase
     /**
      * @dataProvider getDataForTestGeneralChainOperations
      */
+    #[DataProvider('getDataForTestGeneralChainOperations')]
     public function test_general_chain_operations(...$testData): void
     {
         //prepare
@@ -114,240 +72,289 @@ final class PipeTest extends TestCase
         $discriminator = Discriminators::getAdapter('is_string');
         
         yield 'Accumulate_Reindex_custom' => [
-            Accumulate::create('is_subclass_of'), new Reindex(1), Accumulate::class, Reindex::class
+            OP::accumulate('is_subclass_of'), OP::reindex(1), Accumulate::class, Reindex::class
         ];
-        yield 'Accumulate_Reindex_default' => [Accumulate::create('is_string'), new Reindex(), Accumulate::class];
-        
+        yield 'Accumulate_Reindex_default' => [OP::accumulate('is_string'), OP::reindex(), Accumulate::class];
+
         yield 'Aggregate_Reindex_custom' => [
-            Aggregate::create(['a']), new Reindex(1), Aggregate::class, Reindex::class
+            OP::aggregate(['a']), OP::reindex(1), Aggregate::class, Reindex::class
         ];
-        yield 'Aggregate_Reindex_default' => [Aggregate::create(['a']), new Reindex(), Aggregate::class];
+        yield 'Aggregate_Reindex_default' => [OP::aggregate(['a']), OP::reindex(), Aggregate::class];
+
+        yield 'Chunk_Flat_1' => [OP::chunk(1), OP::flat(1)];
+        yield 'Chunk_Flat_3' => [OP::chunk(2, true), OP::flat(1), Chunk::class, Flat::class];
+        yield 'Chunk_Flat_2' => [OP::chunk(3), OP::flat(), Flat::class];
+        yield 'Chunk_Flat_4' => [OP::chunk(4, true), OP::flat(), Chunk::class, Flat::class];
+        yield 'Chunk_Reindex_custom' => [OP::chunk(2), OP::reindex(1), Chunk::class, Reindex::class];
+        yield 'Chunk_Reindex_default' => [OP::chunk(2), OP::reindex(), Chunk::class];
+
+        yield 'EveryNth_1' => [OP::everyNth(1)];
+        yield 'EveryNth_2' => [OP::everyNth(2), EveryNth::class];
+        yield 'EveryNth_EveryNth' => [OP::everyNth(2), OP::everyNth(3), EveryNth::class];
+
+        yield 'Feed_Feed' => [OP::feed($stream), OP::feed($stream), FeedMany::class];
+
+        yield 'Filter_Filter_Unique_Filter' => [
+            OP::filter('is_string'), OP::filter('is_string'), OP::unique(), OP::filter('is_string'),
+            FilterMany::class, OmitReps::class, Unique::class
+        ];
         
-        yield 'Chunk_Flat_1' => [Chunk::create(1), new Flat(1)];
-        yield 'Chunk_Flat_3' => [Chunk::create(2, true), new Flat(1), Chunk::class, Flat::class];
-        yield 'Chunk_Flat_2' => [Chunk::create(3), new Flat(), Flat::class];
-        yield 'Chunk_Flat_4' => [Chunk::create(4, true), new Flat(), Chunk::class, Flat::class];
-        yield 'Chunk_Reindex_custom' => [Chunk::create(2), new Reindex(1), Chunk::class, Reindex::class];
-        yield 'Chunk_Reindex_default' => [Chunk::create(2), new Reindex(), Chunk::class];
-        
-        yield 'EveryNth_1' => [new EveryNth(1)];
-        yield 'EveryNth_2' => [new EveryNth(2), EveryNth::class];
-        yield 'EveryNth_EveryNth' => [new EveryNth(2), new EveryNth(3), EveryNth::class];
-        
-        yield 'Feed_Feed' => [new Feed($stream), new Feed($stream), FeedMany::class];
-        
-        yield 'Filter_First' => [new Filter('is_string'), new First($stream), Find::class];
-        
+        yield 'Filter_First' => [OP::filter('is_string'), OP::first($stream), Find::class];
+
         yield 'FilterBy_FilterBy' => [
-            new FilterBy('a', 'is_int'),
-            new FilterBy('b', 'is_string'),
+            OP::filterBy('a', 'is_int'),
+            OP::filterBy('b', 'is_string'),
             FilterByMany::class
         ];
-        
-        yield 'Flip_Collect' => [new Flip(), Collect::create($stream), CollectKeys::class];
-        yield 'Flip_CollectKeys' => [new Flip(), new CollectKeys($stream), Collect::class];
-        
-        yield 'Gather_Flat_1' => [Gather::create(), new Flat(), Flat::class];
-        yield 'Gather_Flat_2' => [Gather::create(true), new Flat(), Reindex::class, Flat::class];
-        yield 'Gather_Flat_3' => [Gather::create(), new Flat(1)];
-        yield 'Gather_Flat_4' => [Gather::create(true), new Flat(1), Reindex::class];
-        yield 'Gather_Flat_5' => [Gather::create(true), new Flat(2), Reindex::class, Flat::class];
-        yield 'Gather_Reindex_custom' => [Gather::create(), new Reindex(1), Gather::class, Reindex::class];
-        yield 'Gather_Reindex_default' => [Gather::create(), new Reindex(), Gather::class];
-        
-        yield 'Limit_equal' => [new Limit(5), Limit::class];
-        yield 'Limit_greater' => [new Limit(7), new Tail(5), Limit::class, Skip::class];
-        yield 'Limit_one_Shuffle' => [new Limit(1), Shuffle::create(), Limit::class];
-        yield 'Limit_First' => [new Limit(5), new First($stream), First::class];
-        
-        yield 'MakeTuple_UnpackTuple' => [Tuple::create(), UnpackTuple::create()];
-        
-        yield 'MapFieldWhen_normal' => [new MapFieldWhen('foo', 'is_string', $mapper), MapFieldWhen::class];
-        yield 'MapFieldWhen_barren' => [new MapFieldWhen('foo', 'is_string', $mapper, $mapper), Map::class];
-        
-        yield 'MapKey_Unpacktuple' => [new MapKey(1), UnpackTuple::create(), UnpackTuple::class];
-        
-        yield 'MapToBool_MapToBool' => [new Map(Mappers::toBool()), new Map(Mappers::toBool()), Map::class];
-        yield 'MapToBool_MapToInt' => [new Map(Mappers::toBool()), new Map(Mappers::toInt()), MapMany::class];
-        
-        yield 'MapTokenize_Flat' => [new Map(Mappers::tokenize()), new Flat(), Tokenize::class];
-        
-        yield 'MapWhen_normal_1' => [new MapWhen('is_string', 'strtoupper'), MapWhen::class];
-        yield 'MapWhen_normal_2' => [new MapWhen('is_string', 'strtoupper', Mappers::value()), MapWhen::class];
-        yield 'MapWhen_normal_3' => [new MapWhen('is_string', Mappers::shuffle(), Mappers::reverse()), MapWhen::class];
-        yield 'MapWhen_barren_1' => [new MapWhen('is_string', Mappers::value())];
-        yield 'MapWhen_barren_2' => [new MapWhen('is_string', Mappers::value(), Mappers::value())];
-        yield 'MapWhen_simple_1' => [new MapWhen('is_string', $mapper, $mapper), Map::class];
-        yield 'MapWhen_simple_2' => [new MapWhen('is_string', Mappers::shuffle(), Mappers::shuffle()), Map::class];
-        
-        yield 'MapWhen_ToInt_ToInt' => [new MapWhen('is_int', Mappers::toInt(), Mappers::toInt()), Map::class];
-        yield 'MapWhen_ToInt_ToFloat' => [new MapWhen('is_int', Mappers::toInt(), Mappers::toFloat()), MapWhen::class];
-        
+
+        yield 'Flip_Collect' => [OP::flip(), OP::collect($stream), CollectKeys::class];
+        yield 'Flip_CollectKeys' => [OP::flip(), OP::collectKeys($stream), Collect::class];
+
+        yield 'Gather_Flat_1' => [OP::gather(), OP::flat(), Flat::class];
+        yield 'Gather_Flat_2' => [OP::gather(true), OP::flat(), Reindex::class, Flat::class];
+        yield 'Gather_Flat_3' => [OP::gather(), OP::flat(1)];
+        yield 'Gather_Flat_4' => [OP::gather(true), OP::flat(1), Reindex::class];
+        yield 'Gather_Flat_5' => [OP::gather(true), OP::flat(2), Reindex::class, Flat::class];
+        yield 'Gather_Reindex_custom' => [OP::gather(), OP::reindex(1), Gather::class, Reindex::class];
+        yield 'Gather_Reindex_default' => [OP::gather(), OP::reindex(), Gather::class];
+
+        yield 'Limit_equal' => [OP::limit(5), Limit::class];
+        yield 'Limit_greater' => [OP::limit(7), OP::tail(5), Limit::class, Skip::class];
+        yield 'Limit_one_Shuffle' => [OP::limit(1), OP::shuffle(), Limit::class];
+        yield 'Limit_First' => [OP::limit(5), OP::first($stream), First::class];
+
+        yield 'MakeTuple_UnpackTuple' => [OP::makeTuple(), OP::unpackTuple()];
+
+        yield 'MapFieldWhen_normal' => [OP::mapFieldWhen('foo', 'is_string', $mapper), MapFieldWhen::class];
+        yield 'MapFieldWhen_barren' => [OP::mapFieldWhen('foo', 'is_string', $mapper, $mapper), Map::class];
+
+        yield 'MapKey_Unpacktuple' => [OP::mapKey(1), OP::unpackTuple(), UnpackTuple::class];
+
+        yield 'MapToBool_MapToBool' => [OP::map(Mappers::toBool()), OP::map(Mappers::toBool()), Map::class];
+        yield 'MapToBool_MapToInt' => [OP::map(Mappers::toBool()), OP::map(Mappers::toInt()), MapMany::class];
+
+        yield 'MapTokenize_Flat' => [OP::map(Mappers::tokenize()), OP::flat(), Tokenize::class];
+
+        yield 'MapWhen_normal_1' => [OP::mapWhen('is_string', 'strtoupper'), MapWhen::class];
+        yield 'MapWhen_normal_2' => [OP::mapWhen('is_string', 'strtoupper', Mappers::value()), MapWhen::class];
+        yield 'MapWhen_normal_3' => [OP::mapWhen('is_string', Mappers::shuffle(), Mappers::reverse()), MapWhen::class];
+        yield 'MapWhen_barren_1' => [OP::mapWhen('is_string', Mappers::value())];
+        yield 'MapWhen_barren_2' => [OP::mapWhen('is_string', Mappers::value(), Mappers::value())];
+        yield 'MapWhen_simple_1' => [OP::mapWhen('is_string', $mapper, $mapper), Map::class];
+        yield 'MapWhen_simple_2' => [OP::mapWhen('is_string', Mappers::shuffle(), Mappers::shuffle()), Map::class];
+
+        yield 'MapWhen_ToInt_ToInt' => [OP::mapWhen('is_int', Mappers::toInt(), Mappers::toInt()), Map::class];
+        yield 'MapWhen_ToInt_ToFloat' => [OP::mapWhen('is_int', Mappers::toInt(), Mappers::toFloat()), MapWhen::class];
+
         yield 'MapWhen_ToInt_two_different_fields' => [
-            new MapWhen('is_int', Mappers::toInt('id'), Mappers::toInt('age')), MapWhen::class
+            OP::mapWhen('is_int', Mappers::toInt('id'), Mappers::toInt('age')), MapWhen::class
         ];
-        
+
         yield 'MapWhen_ToInt_two_the_same_fields' => [
-            new MapWhen('is_int', Mappers::toInt('id'), Mappers::toInt('id')), Map::class
+            OP::mapWhen('is_int', Mappers::toInt('id'), Mappers::toInt('id')), Map::class
         ];
-        
+
         yield 'MapWhen_ToInt_simple_and_field' => [
-            new MapWhen('is_int', Mappers::toInt(), Mappers::toInt('id')), MapWhen::class
+            OP::mapWhen('is_int', Mappers::toInt(), Mappers::toInt('id')), MapWhen::class
+        ];
+
+        yield 'MapWhen_ToInt_ToFloat_the_same_fields' => [
+            OP::mapWhen('is_int', Mappers::toInt('id'), Mappers::toFloat('id')), MapWhen::class
         ];
         
-        yield 'MapWhen_ToInt_ToFloat_the_same_fields' => [
-            new MapWhen('is_int', Mappers::toInt('id'), Mappers::toFloat('id')), MapWhen::class
+        yield 'ReadNext_as_first_operation' => [OP::readNext(), Skip::class, EveryNth::class];
+        
+        yield 'ReadNext_stacked_as_first_operation' => [
+            OP::readNext(), OP::readNext(), Skip::class, EveryNth::class
+        ];
+        
+        yield 'ReadNext_stacked_not_first' => [
+            OP::map('strtoupper'), OP::readNext(), OP::readNext(), OP::readNext(),
+            Map::class, ReadNext::class
+        ];
+        
+        yield 'ReadNext_with_constant_zero' => [OP::filter('is_string'), OP::readNext(0), Filter::class];
+        
+        yield 'ReadMany_as_ReadNext_first_operation' => [OP::readMany(1), Skip::class, EveryNth::class];
+        
+        yield 'ReadMany_as_ReadNext_inner_operation_keep_keys' => [
+            OP::map('intval'), OP::readMany(1), Map::class, ReadNext::class
+        ];
+        
+        yield 'ReadMany_as_ReadNext_inner_operation_reindex_keys' => [
+            OP::map('intval'), OP::readMany(1, true), Map::class, ReadNext::class, MapKey::class
+        ];
+        
+        yield 'ReadMany_as_first_operation' => [OP::readMany(2), Skip::class, Window::class, Flat::class];
+        
+        yield 'ReadMany_with_constant_zero' => [OP::filter('is_string'), OP::readMany(0), Filter::class];
+        
+        yield 'ReadWhile_as_first_operation' => [OP::readWhile('is_string'), Skip::class, Filter::class];
+        
+        yield 'ReadWhile_as_first_operation_reindex_keys' => [
+            OP::readWhile('is_string', null, true), ReadManyWhile::class
+        ];
+        
+        yield 'ReadUntil_as_first_operation' => [OP::readUntil('is_string'), Skip::class, Filter::class];
+        
+        yield 'ReadUntil_as_first_operation_reindex_keys' => [
+            OP::readUntil('is_string', null, true), ReadManyWhile::class
         ];
         
         yield 'Reindex_Accumulate_1' => [
-            new Reindex(), Accumulate::create('is_string'), Reindex::class, Accumulate::class
+            OP::reindex(), OP::accumulate('is_string'), Reindex::class, Accumulate::class
         ];
         yield 'Reindex_Accumulate_2' => [
-            new Reindex(), Accumulate::create('is_string', Check::VALUE, true), Accumulate::class
+            OP::reindex(), OP::accumulate('is_string', true, Check::VALUE), Accumulate::class
         ];
         yield 'Reindex_Accumulate_3' => [
-            new Reindex(1, 2), Accumulate::create('is_string'), Reindex::class, Accumulate::class
+            OP::reindex(1, 2), OP::accumulate('is_string'), Reindex::class, Accumulate::class
         ];
         yield 'Reindex_Accumulate_4' => [
-            new Reindex(1, 2), Accumulate::create('is_string', Check::VALUE, true), Accumulate::class
+            OP::reindex(1, 2), OP::accumulate('is_string', true, Check::VALUE), Accumulate::class
         ];
-        yield 'Reindex_Chunk_1' => [new Reindex(), Chunk::create(3), Reindex::class, Chunk::class];
-        yield 'Reindex_Chunk_2' => [new Reindex(), Chunk::create(3, true), Chunk::class];
-        yield 'Reindex_Chunk_3' => [new Reindex(1, 2), Chunk::create(3), Reindex::class, Chunk::class];
-        yield 'Reindex_Chunk_4' => [new Reindex(1, 2), Chunk::create(3, true), Chunk::class];
-        yield 'Reindex_ChunkBy_1' => [new Reindex(), ChunkBy::create($discriminator), Reindex::class, ChunkBy::class];
-        yield 'Reindex_ChunkBy_2' => [new Reindex(), ChunkBy::create($discriminator, true), ChunkBy::class];
-        yield 'Reindex_ChunkBy_3' => [new Reindex(1, 2), ChunkBy::create($discriminator), Reindex::class, ChunkBy::class];
-        yield 'Reindex_ChunkBy_4' => [new Reindex(1, 2), ChunkBy::create($discriminator, true), ChunkBy::class];
-        yield 'Reindex_Collect_1' => [new Reindex(), Collect::create($stream), Reindex::class, Collect::class];
-        yield 'Reindex_Collect_2' => [new Reindex(), Collect::create($stream, true), Collect::class];
-        yield 'Reindex_Collect_3' => [new Reindex(1, 2), Collect::create($stream), Reindex::class, Collect::class];
-        yield 'Reindex_Collect_4' => [new Reindex(1, 2), Collect::create($stream, true), Collect::class];
-        yield 'Reindex_Count' => [new Reindex(), new Count($stream), Count::class];
-        yield 'Reindex_Gather_1' => [new Reindex(), Gather::create(), Gather::class];
-        yield 'Reindex_Gather_2' => [new Reindex(1), Gather::create(), Reindex::class, Gather::class];
-        yield 'Reindex_Gather_3' => [new Reindex(0, 2), Gather::create(), Reindex::class, Gather::class];
-        yield 'Reindex_Gather_4' => [new Reindex(), Gather::create(true), Gather::class];
-        yield 'Reindex_Gather_5' => [new Reindex(1), Gather::create(true), Gather::class];
-        yield 'Reindex_Gather_6' => [new Reindex(0, 2), Gather::create(true), Gather::class];
-        yield 'Reindex_Segregate_1' => [new Reindex(), new Segregate(), Reindex::class, Segregate::class];
-        yield 'Reindex_Segregate_2' => [new Reindex(), new Segregate(null, true, Compare::values()), Segregate::class];
-        yield 'Reindex_Segregate_3' => [new Reindex(1, 2), new Segregate(), Reindex::class, Segregate::class];
+        yield 'Reindex_Chunk_1' => [OP::reindex(), OP::chunk(3), Reindex::class, Chunk::class];
+        yield 'Reindex_Chunk_2' => [OP::reindex(), OP::chunk(3, true), Chunk::class];
+        yield 'Reindex_Chunk_3' => [OP::reindex(1, 2), OP::chunk(3), Reindex::class, Chunk::class];
+        yield 'Reindex_Chunk_4' => [OP::reindex(1, 2), OP::chunk(3, true), Chunk::class];
+        yield 'Reindex_ChunkBy_1' => [OP::reindex(), OP::chunkBy($discriminator), Reindex::class, ChunkBy::class];
+        yield 'Reindex_ChunkBy_2' => [OP::reindex(), OP::chunkBy($discriminator, true), ChunkBy::class];
+        yield 'Reindex_ChunkBy_3' => [OP::reindex(1, 2), OP::chunkBy($discriminator), Reindex::class, ChunkBy::class];
+        yield 'Reindex_ChunkBy_4' => [OP::reindex(1, 2), OP::chunkBy($discriminator, true), ChunkBy::class];
+        yield 'Reindex_Collect_1' => [OP::reindex(), OP::collect($stream), Reindex::class, Collect::class];
+        yield 'Reindex_Collect_2' => [OP::reindex(), OP::collect($stream, true), Collect::class];
+        yield 'Reindex_Collect_3' => [OP::reindex(1, 2), OP::collect($stream), Reindex::class, Collect::class];
+        yield 'Reindex_Collect_4' => [OP::reindex(1, 2), OP::collect($stream, true), Collect::class];
+        yield 'Reindex_Count' => [OP::reindex(), OP::count($stream), Count::class];
+        yield 'Reindex_Gather_1' => [OP::reindex(), OP::gather(), Gather::class];
+        yield 'Reindex_Gather_2' => [OP::reindex(1), OP::gather(), Reindex::class, Gather::class];
+        yield 'Reindex_Gather_3' => [OP::reindex(0, 2), OP::gather(), Reindex::class, Gather::class];
+        yield 'Reindex_Gather_4' => [OP::reindex(), OP::gather(true), Gather::class];
+        yield 'Reindex_Gather_5' => [OP::reindex(1), OP::gather(true), Gather::class];
+        yield 'Reindex_Gather_6' => [OP::reindex(0, 2), OP::gather(true), Gather::class];
+        yield 'Reindex_Segregate_1' => [OP::reindex(), OP::segregate(), Reindex::class, Segregate::class];
+        yield 'Reindex_Segregate_2' => [OP::reindex(), OP::segregate(null, true, Compare::values()), Segregate::class];
+        yield 'Reindex_Segregate_3' => [OP::reindex(1, 2), OP::segregate(), Reindex::class, Segregate::class];
         yield 'Reindex_Segregate_4' => [
-            new Reindex(1, 2), new Segregate(null, true, Compare::values()), Segregate::class
+            OP::reindex(1, 2), OP::segregate(null, true, Compare::values()), Segregate::class
         ];
-        yield 'Reindex_UnpackTuple' => [new Reindex(), UnpackTuple::create(), UnpackTuple::class];
-        yield 'Reindex_Uptrends_1' => [new Reindex(), Uptrends::create(), Reindex::class, Uptrends::class];
-        yield 'Reindex_Uptrends_2' => [new Reindex(), Uptrends::create(true), Uptrends::class];
-        yield 'Reindex_Uptrends_3' => [new Reindex(1, 2), Uptrends::create(), Reindex::class, Uptrends::class];
+        yield 'Reindex_UnpackTuple' => [OP::reindex(), OP::unpackTuple(), UnpackTuple::class];
+        yield 'Reindex_Uptrends_1' => [OP::reindex(), OP::accumulateUptrends(), Reindex::class, Uptrends::class];
+        yield 'Reindex_Uptrends_2' => [OP::reindex(), OP::accumulateUptrends(true), Uptrends::class];
+        yield 'Reindex_Uptrends_3' => [OP::reindex(1, 2), OP::accumulateUptrends(), Reindex::class, Uptrends::class];
         yield 'Reindex_Uptrends_4' => [
-            new Reindex(1, 2), Uptrends::create(true), Uptrends::class
+            OP::reindex(1, 2), OP::accumulateUptrends(true), Uptrends::class
         ];
         
-        yield 'Reverse_Count' => [new Reverse(), new Count($stream), Count::class];
-        yield 'Reverse_Find' => [new Reverse(), new Find($stream, 'foo'), Find::class];
-        yield 'Reverse_First' => [new Reverse(), new First($stream), Last::class];
-        yield 'Reverse_Has' => [new Reverse(), new Has($stream, 'foo'), Has::class];
-        yield 'Reverse_HasEvery' => [new Reverse(), HasEvery::create($stream, ['foo']), HasEvery::class];
-        yield 'Reverse_HasOnly' => [new Reverse(), HasOnly::create($stream, ['foo']), HasOnly::class];
-        yield 'Reverse_Last' => [new Reverse(), new Last($stream), First::class];
-        yield 'Reverse_Shuffle' => [new Reverse(), Shuffle::create(), Shuffle::class];
-        yield 'Reverse_Shuffle_chunked' => [new Reverse(), Shuffle::create(3), Reverse::class, Shuffle::class];
-        yield 'Reverse_Sort' => [new Reverse(), new Sort(), Sort::class];
-        yield 'Reverse_SortLimited' => [new Reverse(), SortLimited::create(3), SortLimited::class];
-        yield 'Reverse_Tail' => [new Reverse(), new Tail(6), Limit::class, Reverse::class];
+        yield 'Reverse_Count' => [OP::reverse(), OP::count($stream), Count::class];
+        yield 'Reverse_Find' => [OP::reverse(), OP::find($stream, 'foo'), Find::class];
+        yield 'Reverse_First' => [OP::reverse(), OP::first($stream), Last::class];
+        yield 'Reverse_Has' => [OP::reverse(), OP::has($stream, 'foo'), Has::class];
+        yield 'Reverse_HasEvery' => [OP::reverse(), OP::hasEvery($stream, ['foo']), HasEvery::class];
+        yield 'Reverse_HasOnly' => [OP::reverse(), OP::hasOnly($stream, ['foo']), HasOnly::class];
+        yield 'Reverse_Last' => [OP::reverse(), OP::last($stream), First::class];
+        yield 'Reverse_Shuffle' => [OP::reverse(), OP::shuffle(), Shuffle::class];
+        yield 'Reverse_Shuffle_chunked' => [OP::reverse(), OP::shuffle(3), Reverse::class, Shuffle::class];
+        yield 'Reverse_Sort' => [OP::reverse(), OP::sort(), Sort::class];
+        yield 'Reverse_SortLimited' => [OP::reverse(), OP::sortLimited(3), SortLimited::class];
+        yield 'Reverse_Tail' => [OP::reverse(), OP::tail(6), Limit::class, Reverse::class];
         
-        yield 'Segregate_equal' => [new Segregate(5), new Tail(5), Segregate::class];
-        yield 'Segregate_greater' => [new Segregate(7), new Tail(5), Segregate::class, Skip::class];
-        yield 'Segregate_one_Shuffle' => [new Segregate(1), Shuffle::create(), Segregate::class];
-        yield 'Segregate_Reindex_custom' => [new Segregate(2), new Reindex(1), Segregate::class, Reindex::class];
-        yield 'Segregate_Reindex_default' => [new Segregate(2), new Reindex(), Segregate::class];
+        yield 'Segregate_equal' => [OP::segregate(5), OP::tail(5), Segregate::class];
+        yield 'Segregate_greater' => [OP::segregate(7), OP::tail(5), Segregate::class, Skip::class];
+        yield 'Segregate_one_Shuffle' => [OP::segregate(1), OP::shuffle(), Segregate::class];
+        yield 'Segregate_Reindex_custom' => [OP::segregate(2), OP::reindex(1), Segregate::class, Reindex::class];
+        yield 'Segregate_Reindex_default' => [OP::segregate(2), OP::reindex(), Segregate::class];
         
-        yield 'SendTo_SendTo' => [new SendTo(Consumers::counter()), new SendTo(Consumers::counter()), SendToMany::class];
+        yield 'SendTo_SendTo' => [OP::call(Consumers::counter()), OP::call(Consumers::counter()), SendToMany::class];
         yield 'SendTo_SendToMany' => [
-            new SendTo(Consumers::counter()), new SendToMany(Consumers::counter()), SendToMany::class
+            OP::call(Consumers::counter()), OP::call(Consumers::counter()), SendToMany::class
         ];
         yield 'SendToMany_SendTo' => [
-            new SendToMany(Consumers::counter()), new SendTo(Consumers::counter()), SendToMany::class
+            OP::call(Consumers::counter()), OP::call(Consumers::counter()), SendToMany::class
         ];
         yield 'SendToMany_SendToMany' => [
-            new SendToMany(Consumers::counter()), new SendToMany(Consumers::counter()), SendToMany::class
+            OP::call(Consumers::counter()), OP::call(Consumers::counter()), SendToMany::class
         ];
         
-        yield 'Shuffle_Count' => [Shuffle::create(), new Count($stream), Count::class];
-        yield 'Shuffle_Find' => [Shuffle::create(), new Find($stream, 'foo'), Find::class];
-        yield 'Shuffle_Has' => [Shuffle::create(), new Has($stream, 'foo'), Has::class];
-        yield 'Shuffle_HasEvery' => [Shuffle::create(), HasEvery::create($stream, ['foo']), HasEvery::class];
-        yield 'Shuffle_HasOnly' => [Shuffle::create(), HasOnly::create($stream, ['foo']), HasOnly::class];
-        yield 'Shuffle_Reverse' => [Shuffle::create(), new Reverse(), Shuffle::class];
-        yield 'Shuffle_Shuffle' => [Shuffle::create(), Shuffle::create(), Shuffle::class];
-        yield 'Shuffle_Sort' => [Shuffle::create(), new Sort(), Sort::class];
-        yield 'Shuffle_SortLimited' => [Shuffle::create(), SortLimited::create(3), SortLimited::class];
+        yield 'Shuffle_Count' => [OP::shuffle(), OP::count($stream), Count::class];
+        yield 'Shuffle_Find' => [OP::shuffle(), OP::find($stream, 'foo'), Find::class];
+        yield 'Shuffle_Has' => [OP::shuffle(), OP::has($stream, 'foo'), Has::class];
+        yield 'Shuffle_HasEvery' => [OP::shuffle(), OP::hasEvery($stream, ['foo']), HasEvery::class];
+        yield 'Shuffle_HasOnly' => [OP::shuffle(), OP::hasOnly($stream, ['foo']), HasOnly::class];
+        yield 'Shuffle_Reverse' => [OP::shuffle(), OP::reverse(), Shuffle::class];
+        yield 'Shuffle_Shuffle' => [OP::shuffle(), OP::shuffle(), Shuffle::class];
+        yield 'Shuffle_Sort' => [OP::shuffle(), OP::sort(), Sort::class];
+        yield 'Shuffle_SortLimited' => [OP::shuffle(), OP::sortLimited(3), SortLimited::class];
         
-        yield 'Sort_Count' => [new Sort(), new Count($stream), Count::class];
-        yield 'Sort_Find' => [new Sort(), new Find($stream, 'foo'), Find::class];
-        yield 'Sort_First' => [new Sort(), new First($stream), SortLimited::class, First::class];
-        yield 'Sort_Has' => [new Sort(), new Has($stream, 'foo'), Has::class];
-        yield 'Sort_HasEvery' => [new Sort(), HasEvery::create($stream, ['foo']), HasEvery::class];
-        yield 'Sort_HasOnly' => [new Sort(), HasOnly::create($stream, ['foo']), HasOnly::class];
-        yield 'Sort_Last' => [new Sort(), new Last($stream), SortLimited::class, First::class];
-        yield 'Sort_Shuffle' => [new Sort(), Shuffle::create(), Shuffle::class];
-        yield 'Sort_Shuffle_chunked' => [new Sort(), Shuffle::create(5), Sort::class, Shuffle::class];
-        yield 'Sort_Sort' => [new Sort(), new Sort(), Sort::class];
-        yield 'Sort_SortLimited' => [new Sort(), SortLimited::create(15), SortLimited::class];
-        yield 'Sort_Tail' => [new Sort(), new Tail(5), SortLimited::class, Reverse::class];
+        yield 'Sort_Count' => [OP::sort(), OP::count($stream), Count::class];
+        yield 'Sort_Find' => [OP::sort(), OP::find($stream, 'foo'), Find::class];
+        yield 'Sort_First' => [OP::sort(), OP::first($stream), SortLimited::class, First::class];
+        yield 'Sort_Has' => [OP::sort(), OP::has($stream, 'foo'), Has::class];
+        yield 'Sort_HasEvery' => [OP::sort(), OP::hasEvery($stream, ['foo']), HasEvery::class];
+        yield 'Sort_HasOnly' => [OP::sort(), OP::hasOnly($stream, ['foo']), HasOnly::class];
+        yield 'Sort_Last' => [OP::sort(), OP::last($stream), SortLimited::class, First::class];
+        yield 'Sort_Shuffle' => [OP::sort(), OP::shuffle(), Shuffle::class];
+        yield 'Sort_Shuffle_chunked' => [OP::sort(), OP::shuffle(5), Sort::class, Shuffle::class];
+        yield 'Sort_Sort' => [OP::sort(), OP::sort(), Sort::class];
+        yield 'Sort_SortLimited' => [OP::sort(), OP::sortLimited(15), SortLimited::class];
+        yield 'Sort_Tail' => [OP::sort(), OP::tail(5), SortLimited::class, Reverse::class];
         
-        yield 'SortLimited_equal' => [SortLimited::create(5), new Tail(5), SortLimited::class];
-        yield 'SortLimited_greater' => [SortLimited::create(7), new Tail(5), SortLimited::class, Skip::class];
-        yield 'SortLimited_one_Shuffle' => [SortLimited::create(1), Shuffle::create(), SortLimited::class];
+        yield 'SortLimited_equal' => [OP::sortLimited(5), OP::tail(5), SortLimited::class];
+        yield 'SortLimited_greater' => [OP::sortLimited(7), OP::tail(5), SortLimited::class, Skip::class];
+        yield 'SortLimited_one_Shuffle' => [OP::sortLimited(1), OP::shuffle(), SortLimited::class];
         yield 'SortLimited_First' => [
-            SortLimited::create(5), new First($stream), SortLimited\SingleSortLimited::class, First::class
+            OP::sortLimited(5), OP::first($stream), SingleSortLimited::class, First::class
         ];
-        yield 'SortLimited_Reverse' => [SortLimited::create(1), new Reverse(), SortLimited::class];
+        yield 'SortLimited_Reverse' => [OP::sortLimited(1), OP::reverse(), SortLimited::class];
         
-        yield 'Tail_Last' => [new Tail(3), new Last($stream), Last::class];
-        yield 'Tail_Tail' => [new Tail(3), new Tail(2), Tail::class];
+        yield 'Tail_Last' => [OP::tail(3), OP::last($stream), Last::class];
+        yield 'Tail_Tail' => [OP::tail(3), OP::tail(2), Tail::class];
         
-        yield 'Tokenize_Reindex_custom' => [new Tokenize(' '), new Reindex(1), Tokenize::class, Reindex::class];
-        yield 'Tokenize_Reindex_default' => [new Tokenize(' '), new Reindex(), Tokenize::class];
+        yield 'Tokenize_Reindex_custom' => [OP::tokenize(), OP::reindex(1), Tokenize::class, Reindex::class];
+        yield 'Tokenize_Reindex_default' => [OP::tokenize(), OP::reindex(), Tokenize::class];
         
-        yield 'Tuple_Reindex_custom' => [Tuple::create(), new Reindex(1), Tuple::class, Reindex::class];
-        yield 'Tuple_Reindex_default' => [Tuple::create(), new Reindex(), Tuple::class];
+        yield 'Tuple_Reindex_custom' => [OP::makeTuple(), OP::reindex(1), Tuple::class, Reindex::class];
+        yield 'Tuple_Reindex_default' => [OP::makeTuple(), OP::reindex(), Tuple::class];
         
-        yield 'Unique' => [new Unique(), OmitReps::class, Unique::class];
+        yield 'Unique' => [OP::unique(), OmitReps::class, Unique::class];
         yield 'Unique_FilterBy' => [
-            new Unique(), new FilterBy('a', 'is_int'), new FilterBy('b', 'is_string'),
+            OP::unique(), OP::filterBy('a', 'is_int'), OP::filterBy('b', 'is_string'),
             FilterByMany::class, OmitReps::class, Unique::class
         ];
         
-        yield 'UnpackTuple_MakeTuple' => [UnpackTuple::create(), Tuple::create()];
+        yield 'UnpackTuple_MakeTuple' => [OP::unpackTuple(), OP::makeTuple()];
         
-        yield 'Window_normal' => [new Window(2), Window::class];
-        yield 'Window_reindex' => [new Window(2, 1, true), Window::class];
-        yield 'Window_as_Chunk' => [new Window(1, 1), Chunk::class];
-        yield 'Window_Flat_1_normal' => [new Window(1, 1), new Flat(1)];
-        yield 'Window_Flat_1_reindex' => [new Window(1, 1, true), new Flat(1), Chunk::class, Flat::class];
-        yield 'Window_Flat_2_normal' => [new Window(1, 1), new Flat(), Flat::class];
-        yield 'Window_Flat_2_reindex' => [new Window(1, 1, true), new Flat(), Chunk::class, Flat::class];
-        yield 'Window_Flat_3_normal' => [new Window(2, 1), new Flat(), Window::class, Flat::class];
-        yield 'Window_Flat_3_reindex' => [new Window(2, 1, true), new Flat(), Window::class, Flat::class];
-        yield 'Window_Flat_4_normal' => [new Window(2, 1), new Flat(1), Window::class, Flat::class];
-        yield 'Window_Flat_4_reindex' => [new Window(2, 1, true), new Flat(1), Window::class, Flat::class];
+        yield 'Window_normal' => [OP::window(2), Window::class];
+        yield 'Window_reindex' => [OP::window(2, 1, true), Window::class];
+        yield 'Window_as_Chunk' => [OP::window(1, 1), Chunk::class];
+        yield 'Window_Flat_1_normal' => [OP::window(1, 1), OP::flat(1)];
+        yield 'Window_Flat_1_reindex' => [OP::window(1, 1, true), OP::flat(1), Chunk::class, Flat::class];
+        yield 'Window_Flat_2_normal' => [OP::window(1, 1), OP::flat(), Flat::class];
+        yield 'Window_Flat_2_reindex' => [OP::window(1, 1, true), OP::flat(), Chunk::class, Flat::class];
+        yield 'Window_Flat_3_normal' => [OP::window(2, 1), OP::flat(), Window::class, Flat::class];
+        yield 'Window_Flat_3_reindex' => [OP::window(2, 1, true), OP::flat(), Window::class, Flat::class];
+        yield 'Window_Flat_4_normal' => [OP::window(2, 1), OP::flat(1), Window::class, Flat::class];
+        yield 'Window_Flat_4_reindex' => [OP::window(2, 1, true), OP::flat(1), Window::class, Flat::class];
         
         //special cases
         
         yield 'Reverse_Unique_Shuffle_Filter' => [
-            new Reverse(), new Unique(), Shuffle::create(), new Filter('is_string'),
+            OP::reverse(), OP::unique(), OP::shuffle(), OP::filter('is_string'),
+            Filter::class, Reverse::class, OmitReps::class, Unique::class, Shuffle::class
+        ];
+        
+        yield 'Reverse_Unique_Shuffle_Filter_Filter' => [
+            OP::reverse(), OP::unique(), OP::shuffle(), OP::filter('is_string'), OP::filter('is_int'),
             FilterMany::class, Reverse::class, OmitReps::class, Unique::class, Shuffle::class
         ];
         
         yield 'IsEmpty' => [
-            new Segregate(3), Categorize::create(Discriminators::byKey()), new Classify(Discriminators::byKey()),
-            Chunk::create(3), ChunkBy::create(Discriminators::byField('foo')), new Flip(),
-            new MapFieldWhen('foo', 'is_string', Mappers::shuffle()), new Flat(), new OmitReps(),
-            MapKeyValue::create(static fn($v, $k): array => [$k => $v]), Gather::create(), new MapKey(Mappers::value()),
-            new Map('strtolower'), new Reindex(), new Reverse(), new Scan(0, Reducers::sum()), Shuffle::create(),
-            Tuple::create(), new Tail(4), new Unique(), new Sort(), SortLimited::create(5), new IsEmpty($stream, true),
+            OP::segregate(3), OP::categorize(Discriminators::byKey()), OP::classify(Discriminators::byKey()),
+            OP::chunk(3), OP::chunkBy(Discriminators::byField('foo')), OP::flip(),
+            OP::mapFieldWhen('foo', 'is_string', Mappers::shuffle()), OP::flat(), OP::omitReps(),
+            OP::mapKeyValue(static fn($v, $k): array => [$k => $v]), OP::gather(), OP::mapKey(Mappers::value()),
+            OP::map('strtolower'), OP::reindex(), OP::reverse(), OP::scan(0, Reducers::sum()), OP::shuffle(),
+            OP::makeTuple(), OP::tail(4), OP::unique(), OP::sort(), OP::sortLimited(5), OP::isEmpty($stream),
             IsEmpty::class
         ];
     }
@@ -355,6 +362,7 @@ final class PipeTest extends TestCase
     /**
      * @dataProvider getDataForTestChainFlatFlat
      */
+    #[DataProvider('getDataForTestChainFlatFlat')]
     public function test_chain_Flat_Flat(int $firstLevel, int $secondLevel, int $expected): void
     {
         //given
@@ -362,8 +370,8 @@ final class PipeTest extends TestCase
         $pipe = $this->getPipeFromStream($stream);
         
         //when
-        $flat = new Flat($firstLevel);
-        $this->chainOperations($pipe, $stream, $flat, new Flat($secondLevel));
+        $flat = OP::flat($firstLevel);
+        $this->chainOperations($pipe, $stream, $flat, OP::flat($secondLevel));
         
         //then
         $this->assertPipeContainsOperations($pipe, Flat::class);
@@ -385,6 +393,7 @@ final class PipeTest extends TestCase
     /**
      * @dataProvider getDataForTestChainShuffleShuffle
      */
+    #[DataProvider('getDataForTestChainShuffleShuffle')]
     public function test_chain_Shuffle_Shuffle(?int $firstChunkSize, ?int $secondChunkSize, bool $isChunked): void
     {
         //given
@@ -392,8 +401,8 @@ final class PipeTest extends TestCase
         $pipe = $this->getPipeFromStream($stream);
         
         //when
-        $shuffle = Shuffle::create($firstChunkSize);
-        $this->chainOperations($pipe, $stream, $shuffle, Shuffle::create($secondChunkSize));
+        $shuffle = OP::shuffle($firstChunkSize);
+        $this->chainOperations($pipe, $stream, $shuffle, OP::shuffle($secondChunkSize));
         
         //then
         if ($isChunked) {
@@ -418,10 +427,10 @@ final class PipeTest extends TestCase
         //given
         $stream = Stream::empty();
         $pipe = $this->getPipeFromStream($stream);
-        $operation = new Segregate(5);
+        $operation = OP::segregate(5);
         
         //when
-        $this->chainOperations($pipe, $stream, $operation, new First($stream));
+        $this->chainOperations($pipe, $stream, $operation, OP::first($stream));
         
         //then
         self::assertSame(1, $operation->limit());
@@ -432,10 +441,10 @@ final class PipeTest extends TestCase
         //given
         [$stream, $pipe, ] = $this->prepare();
 
-        $everyNth = new EveryNth(2);
+        $everyNth = OP::everyNth(2);
 
         //when
-        $this->chainOperations($pipe, $stream, $everyNth, new EveryNth(3));
+        $this->chainOperations($pipe, $stream, $everyNth, OP::everyNth(3));
 
         //then
         $this->assertPipeContainsOperations($pipe, EveryNth::class);
@@ -447,8 +456,8 @@ final class PipeTest extends TestCase
         //given
         [$stream, $pipe, $signal] = $this->prepare();
 
-        $last = new Last($stream);
-        $this->addOperations($pipe, new Sort(), $last);
+        $last = OP::last($stream);
+        $this->addOperations($pipe, OP::sort(), $last);
 
         //when
         $this->sendToPipe([6, 2, 3, 8, 1, 9], $pipe, $signal);
@@ -462,8 +471,8 @@ final class PipeTest extends TestCase
         //given
         [$stream, $pipe, $signal] = $this->prepare();
 
-        $last = new Last($stream);
-        $this->addOperations($pipe, new Tail(4), $last);
+        $last = OP::last($stream);
+        $this->addOperations($pipe, OP::tail(4), $last);
 
         //when
         $this->sendToPipe([6, 2, 3, 8, 1, 9], $pipe, $signal);
@@ -477,8 +486,8 @@ final class PipeTest extends TestCase
         //given
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $last = new Last($stream);
-        $this->addOperations($pipe, Gather::create(), $last);
+        $last = OP::last($stream);
+        $this->addOperations($pipe, OP::gather(), $last);
         
         //when
         $this->sendToPipe([6, 2], $pipe, $signal);
@@ -490,12 +499,13 @@ final class PipeTest extends TestCase
     /**
      * @dataProvider getDataForTestStackedIsEmpty
      */
+    #[DataProvider('getDataForTestStackedIsEmpty')]
     public function test_stacked_isEmpty(string $operation): void
     {
         //given
         [$stream, $pipe, $signal] = $this->prepare();
 
-        $isEmpty = new IsEmpty($stream, true);
+        $isEmpty = OP::isEmpty($stream);
         $this->addOperations($pipe, $this->createOperation($operation), $isEmpty);
 
         //when
@@ -517,12 +527,13 @@ final class PipeTest extends TestCase
     /**
      * @dataProvider createAllOperationModeVariations
      */
+    #[DataProvider('createAllOperationModeVariations')]
     public function test_stacked_hasOnly_result_false(int $mode, string $operation): void
     {
         //given
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $hasOnly = HasOnly::create($stream, [2, 3], $mode);
+        $hasOnly = OP::hasOnly($stream, [2, 3], $mode);
         $this->addOperations($pipe, $this->createOperation($operation), $hasOnly);
         
         //when
@@ -537,7 +548,7 @@ final class PipeTest extends TestCase
         //given
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $hasOnly = HasOnly::create($stream, [0, 1], Check::BOTH);
+        $hasOnly = OP::hasOnly($stream, [0, 1], Check::BOTH);
         $this->addOperations($pipe, $this->createOperation('sort'), $hasOnly);
         
         //when
@@ -550,12 +561,13 @@ final class PipeTest extends TestCase
     /**
      * @dataProvider createAllOperationModeVariations
      */
+    #[DataProvider('createAllOperationModeVariations')]
     public function test_stacked_hasEvery(int $mode, string $operation): void
     {
         //given
         [$stream, $pipe, $signal] = $this->prepare();
         
-        $hasEvery = HasEvery::create($stream, [2, 4], $mode);
+        $hasEvery = OP::hasEvery($stream, [2, 4], $mode);
         $this->addOperations($pipe, $this->createOperation($operation), $hasEvery);
         
         //when
@@ -568,12 +580,13 @@ final class PipeTest extends TestCase
     /**
      * @dataProvider createAllOperationModeVariations
      */
+    #[DataProvider('createAllOperationModeVariations')]
     public function test_stacked_has(int $mode, string $operation): void
     {
         //given
         [$stream, $pipe, $signal] = $this->prepare();
 
-        $hasEvery = HasEvery::create($stream, [2, 4], $mode);
+        $hasEvery = OP::hasEvery($stream, [2, 4], $mode);
         $this->addOperations($pipe, $this->createOperation($operation), $hasEvery);
 
         //when
@@ -601,10 +614,10 @@ final class PipeTest extends TestCase
         
         $this->initializeStream($stream);
         
-        $pipe = new Pipe();
-        $pipe->chainOperation(new Filter(Filters::greaterThan(5)), $stream);
-        $pipe->chainOperation(CollectIn::create($collector), $stream);
-        $pipe->chainOperation(new Limit(5), $stream);
+        $pipe = new Pipe($stream);
+        $pipe->chainOperation(OP::filter(Filters::greaterThan(5)));
+        $pipe->chainOperation(OP::collectIn($collector));
+        $pipe->chainOperation(OP::limit(5));
         $pipe->prepare();
         
         //when
@@ -629,8 +642,8 @@ final class PipeTest extends TestCase
         $this->expectExceptionObject(PipeExceptionFactory::cannotClonePipeWithNoneEmptyStack());
         
         //Arrange
-        $pipe = new Pipe();
-        $pipe->stack[] = new Limit(1);
+        $pipe = new Pipe(Stream::empty());
+        $pipe->stack[] = OP::limit(1);
         
         //Act
         $method = (new \ReflectionObject($pipe))->getMethod('__clone');
@@ -643,9 +656,9 @@ final class PipeTest extends TestCase
         //given
         [, $pipe, $signal] = $this->prepare();
         
-        $sort = new Sort();
-        $accumulate = Accumulate::create('is_string');
-        $filter = new Filter('is_int');
+        $sort = OP::sort();
+        $accumulate = OP::accumulate('is_string');
+        $filter = OP::filter('is_int');
         
         $this->addOperations($pipe, $sort, $accumulate, $filter);
         $pipe->prepare();
@@ -675,9 +688,9 @@ final class PipeTest extends TestCase
         //given
         [, $pipe, $signal] = $this->prepare();
         
-        $filter = new Filter('is_int');
-        $sort = new Sort();
-        $map = new Map(Mappers::trim());
+        $filter = OP::filter('is_int');
+        $sort = OP::sort();
+        $map = OP::map(Mappers::trim());
         
         $this->addOperations($pipe, $filter, $sort, $map);
         $pipe->prepare();
@@ -710,7 +723,7 @@ final class PipeTest extends TestCase
         //given
         [$stream, $pipe] = $this->prepare();
         
-        $operation = new Until(Filters::NOT('is_string'));
+        $operation = OP::until(Filters::NOT('is_string'));
         self::assertTrue($operation->shouldBeInversed());
         
         //when
@@ -730,7 +743,7 @@ final class PipeTest extends TestCase
         $this->expectExceptionObject(OperationExceptionFactory::cannotInverseOperation());
         
         //Arrange
-        $operation = new Until('is_string');
+        $operation = OP::until('is_string');
         self::assertFalse($operation->shouldBeInversed());
         
         //Act
@@ -742,7 +755,7 @@ final class PipeTest extends TestCase
         //given
         [$stream, $pipe] = $this->prepare();
         
-        $operation = new SkipWhile(Filters::NOT('is_string'));
+        $operation = OP::skipWhile(Filters::NOT('is_string'));
         self::assertTrue($operation->shouldBeInversed());
         
         //when
@@ -762,7 +775,7 @@ final class PipeTest extends TestCase
         $this->expectExceptionObject(OperationExceptionFactory::cannotInverseOperation());
         
         //Arrange
-        $operation = new SkipWhile('is_string');
+        $operation = OP::skipWhile('is_string');
         self::assertFalse($operation->shouldBeInversed());
         
         //Act
@@ -772,9 +785,9 @@ final class PipeTest extends TestCase
     private function createOperation(string $name): Operation
     {
         switch ($name) {
-            case 'gather': return Gather::create();
-            case 'sort': return new Sort();
-            case 'reverse': return new Reverse();
+            case 'gather': return OP::gather();
+            case 'sort': return OP::sort();
+            case 'reverse': return OP::reverse();
             default:
                 throw new \InvalidArgumentException('Cannot create operation '.$name);
         }
@@ -799,6 +812,8 @@ final class PipeTest extends TestCase
     
     private function assertPipeContainsOperations(Pipe $pipe, string ...$classes): void
     {
+        $pipe->prepare();
+        
         $next = $pipe->head;
         if ($next instanceof Initial) {
             $next = $next->getNext();
@@ -814,8 +829,10 @@ final class PipeTest extends TestCase
     
     private function chainOperations(Pipe $pipe, Stream $stream, Operation ...$operations): void
     {
+        $pipe->assignStream($stream);
+        
         foreach ($operations as $operation) {
-            $pipe->chainOperation($operation, $stream);
+            $pipe->chainOperation($operation);
         }
     }
     
@@ -848,6 +865,9 @@ final class PipeTest extends TestCase
         return $this->getPropertyFromStream($stream, 'signal');
     }
     
+    /**
+     * @return mixed
+     */
     private function getPropertyFromStream(Stream $stream, string $property)
     {
         $this->initializeStream($stream);

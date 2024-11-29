@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\String\StartsWith\BothStartsWith;
 use FiiSoft\Jackdaw\Filter\String\StartsWith\KeyStartsWith;
 use FiiSoft\Jackdaw\Filter\String\StartsWith\ValueStartsWith;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class StartsWith extends StringFilterSingle
 {
@@ -22,7 +23,7 @@ abstract class StartsWith extends StringFilterSingle
             case Check::ANY:
                 return new AnyStartsWith($mode, $value, $ignoreCase);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

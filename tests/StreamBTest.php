@@ -18,6 +18,7 @@ use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Registry\Registry;
 use FiiSoft\Jackdaw\Stream;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class StreamBTest extends TestCase
@@ -800,7 +801,7 @@ final class StreamBTest extends TestCase
             ->flat(1)
             ->fork(
                 static fn(array $row): string => $row['age'] >= 18 ? 'adult' : 'kid',
-                Stream::empty()->collect(true)
+                Collectors::values()
             )
             ->omit('kid', Check::KEY)
             ->flat(1)
@@ -984,7 +985,7 @@ final class StreamBTest extends TestCase
     public function test_stacked_fork_and_last(): void
     {
         $result = Stream::from([1, 'a', 2, 'b', 3, 'c'])
-            ->fork('is_string', Stream::empty()->reduce(Reducers::concat()))
+            ->fork('is_string', Reducers::concat())
             ->last();
         
         self::assertSame('abc', $result->get());
@@ -1093,7 +1094,7 @@ final class StreamBTest extends TestCase
                 Stream::empty()
                     ->fork(
                         clone $discriminator,
-                        Stream::empty()->reduce(Reducers::sum())
+                        Reducers::sum()
                     )
                     ->first()
             )
@@ -1108,6 +1109,7 @@ final class StreamBTest extends TestCase
     /**
      * @dataProvider getAllPossibleTypesOfSourceForStream
      */
+    #[DataProvider('getAllPossibleTypesOfSourceForStream')]
     public function test_execute_stream_with_all_possible_kinds_of_source(string $mode): void
     {
         //Arrange
@@ -1314,7 +1316,7 @@ final class StreamBTest extends TestCase
     public function test_Fork_Gather_reindex(): void
     {
         $result = Stream::from(['a' => 1, 2 => 'b', 'c' => 3])
-            ->fork(Discriminators::alternately(['foo', 'bar']), Stream::empty()->collect())
+            ->fork(Discriminators::alternately(['foo', 'bar']), Collectors::default())
             ->gather(true)
             ->toArrayAssoc();
         
@@ -1329,7 +1331,7 @@ final class StreamBTest extends TestCase
     public function test_Fork_Gather_preserveKeys(): void
     {
         $result = Stream::from(['a' => 1, 2 => 'b', 'c' => 3])
-            ->fork(Discriminators::alternately(['foo', 'bar']), Stream::empty()->collect())
+            ->fork(Discriminators::alternately(['foo', 'bar']), Collectors::default())
             ->gather()
             ->toArrayAssoc();
         
@@ -1408,7 +1410,7 @@ final class StreamBTest extends TestCase
     public function test_Fork_GroupBy_preserveKeys(): void
     {
         $result = Stream::from(['a', 1, 'b', 2, 'c', 3])
-            ->fork('is_string', Stream::empty()->collect(true))
+            ->fork('is_string', Collectors::values())
             ->groupBy(Discriminators::byKey(), false);
         
         self::assertSame([
@@ -1609,6 +1611,7 @@ final class StreamBTest extends TestCase
     /**
      * @dataProvider getDataForTestFindUptrends
      */
+    #[DataProvider('getDataForTestFindUptrends')]
     public function test_find_uptrends(array $dataset, array $expected): void
     {
         $result = Stream::from($dataset)
@@ -1641,6 +1644,7 @@ final class StreamBTest extends TestCase
     /**
      * @dataProvider getDataForTestFindDowntrends
      */
+    #[DataProvider('getDataForTestFindDowntrends')]
     public function test_find_downtrends(array $dataset, array $expected): void
     {
         $result = Stream::from($dataset)
@@ -1673,6 +1677,7 @@ final class StreamBTest extends TestCase
     /**
      * @dataProvider getDataForTestFindLocalMaxima
      */
+    #[DataProvider('getDataForTestFindLocalMaxima')]
     public function test_find_local_maxima(array $data, array $expected): void
     {
         self::assertSame($expected, Stream::from($data)->onlyMaxima()->toArrayAssoc());
@@ -1752,6 +1757,7 @@ final class StreamBTest extends TestCase
     /**
      * @dataProvider getDataForTestFindLocalExtremaIncludeLimits
      */
+    #[DataProvider('getDataForTestFindLocalExtremaIncludeLimits')]
     public function test_find_local_extrema_include_limits(array $data, array $expected): void
     {
         $result = Stream::from($data)
@@ -1784,6 +1790,7 @@ final class StreamBTest extends TestCase
     /**
      * @dataProvider getDataForTestFindLocalExtremaWithoutLimits
      */
+    #[DataProvider('getDataForTestFindLocalExtremaWithoutLimits')]
     public function test_find_local_extrema_without_limits(array $data, array $expected): void
     {
         self::assertSame($expected, Stream::from($data)->onlyExtrema(false)->toArray());
@@ -1882,6 +1889,7 @@ final class StreamBTest extends TestCase
     /**
      * @dataProvider getDataForTestOmitWithVariousComparisons
      */
+    #[DataProvider('getDataForTestOmitWithVariousComparisons')]
     public function test_omit_with_various_comparisons($comparison, array $expected): void
     {
         $keys   = [5,   2,   2,   2,   1,   3,   3,   3,   4,   4];

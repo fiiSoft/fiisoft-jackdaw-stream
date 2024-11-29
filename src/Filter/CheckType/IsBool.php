@@ -7,12 +7,13 @@ use FiiSoft\Jackdaw\Filter\CheckType\IsBool\BothIsBool;
 use FiiSoft\Jackdaw\Filter\CheckType\IsBool\KeyIsBool;
 use FiiSoft\Jackdaw\Filter\CheckType\IsBool\ValueIsBool;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class IsBool extends CheckType
 {
     final public static function create(?int $mode): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

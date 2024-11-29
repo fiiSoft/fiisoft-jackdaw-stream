@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Operation\Terminating;
 
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Internal\Mode;
 use FiiSoft\Jackdaw\Operation\Terminating\HasOnly\AnyHasOnly;
 use FiiSoft\Jackdaw\Operation\Terminating\HasOnly\BothHasOnly;
 use FiiSoft\Jackdaw\Operation\Terminating\HasOnly\KeyHasOnly;
@@ -22,7 +23,7 @@ abstract class HasOnly extends SimpleFinal
      */
     final public static function create(Stream $stream, array $values, int $mode = Check::VALUE): self
     {
-        switch (Check::getMode($mode)) {
+        switch (Mode::get($mode)) {
             case Check::VALUE:
                 return new ValueHasOnly($stream, $values);
             case Check::KEY:

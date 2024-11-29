@@ -6,6 +6,7 @@ use FiiSoft\Jackdaw\Comparator\Comparator;
 use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 final class DoubleComparison extends Comparison
 {
@@ -21,7 +22,7 @@ final class DoubleComparison extends Comparison
         parent::__construct($mode, $isPairComp);
         
         if ($this->mode !== Check::BOTH && $this->mode !== Check::ANY) {
-            throw Check::invalidModeException($this->mode);
+            throw Mode::invalidModeException($this->mode);
         }
         
         $this->valueComparator = $valueComparator;

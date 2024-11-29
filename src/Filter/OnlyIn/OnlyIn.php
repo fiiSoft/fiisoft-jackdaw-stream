@@ -22,6 +22,7 @@ use FiiSoft\Jackdaw\Filter\OnlyIn\Strings\StringsBothOnlyIn;
 use FiiSoft\Jackdaw\Filter\OnlyIn\Strings\StringsKeyOnlyIn;
 use FiiSoft\Jackdaw\Filter\OnlyIn\Strings\StringsValueOnlyIn;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class OnlyIn extends BaseFilter
 {
@@ -67,7 +68,7 @@ abstract class OnlyIn extends BaseFilter
      */
     private static function createFilter(?int $mode, array $ints, array $strings, array $other): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         $workMode = self::determineWorkMode($ints, $strings, $other);
         
         if ($workMode === self::INTS) {

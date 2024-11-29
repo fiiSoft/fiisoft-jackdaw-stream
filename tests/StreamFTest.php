@@ -19,6 +19,7 @@ use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Registry\Registry;
 use FiiSoft\Jackdaw\Stream;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class StreamFTest extends TestCase
@@ -106,8 +107,6 @@ final class StreamFTest extends TestCase
     
     public function test_countIn_with_filter(): void
     {
-        $countInts = 0;
-        
         Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4])->onlyIntegers()->countIn($countInts)->run();
         
         self::assertSame(4, $countInts);
@@ -507,7 +506,7 @@ final class StreamFTest extends TestCase
         
         $ids = [];
         $avgAge = Reducers::average(2);
-        $count = Stream::empty()->fork(Discriminators::byValue(), Stream::empty()->count())->collect();
+        $count = Stream::empty()->fork(Discriminators::byValue(), Reducers::count())->collect();
         
         Stream::from($rowset)
             ->unzip(Collectors::array($ids, false), $avgAge, $count)
@@ -572,7 +571,7 @@ final class StreamFTest extends TestCase
         
         $ids = [];
         $avgAge = Reducers::average(2);
-        $count = Stream::empty()->fork(Discriminators::byValue(), Stream::empty()->count())->collect();
+        $count = Stream::empty()->fork(Discriminators::byValue(), Reducers::count())->collect();
         
         Stream::from($rowset)
             ->onError(OnError::skip())
@@ -887,8 +886,6 @@ final class StreamFTest extends TestCase
     
     public function test_countIn_with_onerror_handler(): void
     {
-        $count = 0;
-        
         Stream::from([8, 2, 5, 1, 3])->onError(OnError::skip())->countIn($count)->run();
         
         self::assertSame(5, $count);
@@ -1463,6 +1460,7 @@ final class StreamFTest extends TestCase
     /**
      * @dataProvider getDataForTestSortSegregateComparision
      */
+    #[DataProvider('getDataForTestSortSegregateComparision')]
     public function test_sort_segregate_comparision(?Sorting $sorting, array $data, bool $areTheSame): void
     {
         $result1 = Stream::from($data)->sort($sorting)->segregate()->toArrayAssoc();
@@ -1542,17 +1540,55 @@ final class StreamFTest extends TestCase
         ], $stream->toArrayAssoc());
     }
     
-    public function test_fork_with_onerror_handler(): void
+    public function test_fork_with_onerror_handler_and_reducer(): void
     {
-        $prototype = Stream::empty()->reduce(Reducers::concat());
         $stream = Stream::from(['A', 'a', 'B', 'b', 'C', 'c'])
             ->onError(OnError::skip())
-            ->fork('ctype_upper', $prototype);
+            ->fork('ctype_upper', Reducers::concat());
         
         self::assertSame([
             true => 'ABC',
             false => 'abc',
         ], $stream->toArrayAssoc());
+    }
+    
+    public function test_Fork_with_onerror_handler_and_collector_with_keys_preserved(): void
+    {
+        $result = Stream::from(['a' => 1, 2 => 'b', 'c' => 3])
+            ->onError(OnError::abort())
+            ->fork(Discriminators::alternately(['foo', 'bar']), Collectors::default())
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'foo' => ['a' => 1, 'c' => 3],
+            'bar' => [2 => 'b'],
+        ], $result);
+    }
+    
+    public function test_Fork_with_onerror_handler_and_collector_with_keys_reindexed(): void
+    {
+        $result = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4])
+            ->onError(OnError::abort())
+            ->fork(Filters::number()->isOdd(), Collectors::values())
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            1 => [1, 3],
+            0 => [2, 4],
+        ], $result);
+    }
+    
+    public function test_Fork_with_onerror_handler_and_Stream_with_boolean_discriminator(): void
+    {
+        $result = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4])
+            ->onError(OnError::abort())
+            ->fork(Filters::number()->isOdd(), Stream::empty()->flip()->collect(true))
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            1 => ['a', 'c'],
+            0 => ['b', 'd'],
+        ], $result);
     }
     
     public function test_feed(): void
@@ -1854,5 +1890,16 @@ final class StreamFTest extends TestCase
             1 => 'b',
             2 => 'a',
         ], $producer->stream()->onError(OnError::skip())->toArrayAssoc());
+    }
+    
+    public function test_ReadMany_between_filters(): void
+    {
+        $data = ['a', 'B', 'c', 'D', 'e', 'F', 'g', 'H', 'i', 'J', 'k', 'L', 'm', 'N', 'o'];
+        $big = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'];
+        
+        self::assertSame('BDFHJLN', Stream::from($data)->onlyStrings()->readMany(1)->only($big)->toString(''));
+        self::assertSame('BFHLN', Stream::from($data)->onlyStrings()->readMany(2)->only($big)->toString(''));
+        self::assertSame('BDFHJLN', Stream::from($data)->onlyStrings()->readMany(3)->only($big)->toString(''));
+        self::assertSame('BDHJLN', Stream::from($data)->onlyStrings()->readMany(4)->only($big)->toString(''));
     }
 }

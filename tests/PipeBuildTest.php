@@ -8,12 +8,10 @@ use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Operation\Collecting\Reverse;
-use FiiSoft\Jackdaw\Operation\Internal\Shuffle;
-use FiiSoft\Jackdaw\Operation\Collecting\Sort;
-use FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
+use FiiSoft\Jackdaw\Operation\Internal\Operations;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class PipeBuildTest extends TestCase
@@ -120,6 +118,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestLimitTail
      */
+    #[DataProvider('getDataForTestLimitTail')]
     public function test_Limit_Tail(int $limit, int $tail, array $expected): void
     {
         $data = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
@@ -191,10 +190,10 @@ final class PipeBuildTest extends TestCase
     public static function getDataForTestShuffleReverseSortingOperation(): array
     {
         return [
-            'Shuffle-Sort' => [Shuffle::create(), new Sort()],
-            'Shuffle-SortLimited' => [Shuffle::create(), SortLimited::create(100)],
-            'Reverse-Sort' => [new Reverse(), new Sort()],
-            'Reverse-SortLimited' => [new Reverse(), SortLimited::create(100)],
+            'Shuffle-Sort' => [Operations::shuffle(), Operations::sort()],
+            'Shuffle-SortLimited' => [Operations::shuffle(), Operations::sortLimited(100)],
+            'Reverse-Sort' => [Operations::reverse(), Operations::sort()],
+            'Reverse-SortLimited' => [Operations::reverse(), Operations::sortLimited(100)],
         ];
     }
     
@@ -238,6 +237,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestSegregateTail
      */
+    #[DataProvider('getDataForTestSegregateTail')]
     public function test_Segregate_Tail(int $buckets, int $tail, array $expected): void
     {
         $data = [4, 2, 3, 1, 4, 2, 5, 3, 2, 4, 5, 3, 6, 2];
@@ -271,6 +271,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestSortLimitedTail
      */
+    #[DataProvider('getDataForTestSortLimitedTail')]
     public function test_SortLimited_Tail(int $limit, int $tail, array $expected): void
     {
         $result = Stream::from([4, 2, 3, 1, 4, 2, 5, 3, 4, 5, 3, 6])->best($limit)->tail($tail)->toArray();
@@ -827,6 +828,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestChunkKeysPreserveFlat
      */
+    #[DataProvider('getDataForTestChunkKeysPreserveFlat')]
     public function test_Chunk_keys_preserve_Flat(int $size, int $flatLevel, array $expected): void
     {
         self::assertSame(
@@ -853,6 +855,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestChunkKeysReindexFlat
      */
+    #[DataProvider('getDataForTestChunkKeysReindexFlat')]
     public function test_Chunk_keys_reindex_Flat(int $size, int $flatLevel, array $expected): void
     {
         self::assertSame(
@@ -888,6 +891,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestWindowKeysPreserveFlat
      */
+    #[DataProvider('getDataForTestWindowKeysPreserveFlat')]
     public function test_Window_keys_preserve_Flat(int $size, int $step, int $level, array $expected): void
     {
         self::assertSame(
@@ -922,6 +926,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestWindowKeysReindexFlat
      */
+    #[DataProvider('getDataForTestWindowKeysReindexFlat')]
     public function test_Window_keys_reindex_Flat(int $size, int $step, int $level, array $expected): void
     {
         self::assertSame(
@@ -1038,6 +1043,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestReindexAccumulate
      */
+    #[DataProvider('getDataForTestReindexAccumulate')]
     public function test_Reindex_Accumulate(int $start, int $step, bool $reindex, array $expected): void
     {
         $data = [5 => 'a', 'b', 1, 'a', 'c', 2, 'b'];
@@ -1073,6 +1079,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestReindexChunk
      */
+    #[DataProvider('getDataForTestReindexChunk')]
     public function test_Reindex_Chunk(int $start, int $step, bool $reindex, array $expected): void
     {
         $data = [5 => 'a', 'b', 1, 'a', 'c', 2, 'b'];
@@ -1108,6 +1115,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestReindexChunkBy
      */
+    #[DataProvider('getDataForTestReindexChunkBy')]
     public function test_Reindex_ChunkBy(int $start, int $step, bool $reindex, array $expected): void
     {
         $result = Stream::from([5 => 'a', 'b', 1, 'a', 'c', 2, 'b'])
@@ -1151,6 +1159,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestReindexCollect
      */
+    #[DataProvider('getDataForTestReindexCollect')]
     public function test_Reindex_Collect(int $start, int $step, bool $reindex, array $expected): void
     {
         $result = Stream::from([5 => 'a', 'b', 'c', 'a'])
@@ -1173,6 +1182,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestReindexGather
      */
+    #[DataProvider('getDataForTestReindexGather')]
     public function test_Reindex_Gather(int $start, int $step, bool $reindex, array $expected): void
     {
         self::assertSame(
@@ -1196,6 +1206,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestReindexSegregate
      */
+    #[DataProvider('getDataForTestReindexSegregate')]
     public function test_Reindex_Segregate(int $start, int $step, bool $reindex, array $expected): void
     {
         $result = Stream::from([5 => 'a', 'b', 'a', 'c', 'b'])
@@ -1232,6 +1243,7 @@ final class PipeBuildTest extends TestCase
     /**
      * @dataProvider getDataForTestReindexUptrends
      */
+    #[DataProvider('getDataForTestReindexUptrends')]
     public function test_Reindex_Uptrends(int $start, int $step, bool $reindex, array $expected): void
     {
         $result = Stream::from([5 => 'a', 'b', 'a', 'b', 'c', 'b', 'a', 'c'])

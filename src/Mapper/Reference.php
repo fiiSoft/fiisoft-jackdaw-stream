@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
 
 final class Reference extends StateMapper
 {
-    /** @var mixed */
+    /** @var mixed REFERENCE */
     private $variable;
     
     /**

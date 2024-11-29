@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Simple\NotSame\BothNotSame;
 use FiiSoft\Jackdaw\Filter\Simple\NotSame\KeyNotSame;
 use FiiSoft\Jackdaw\Filter\Simple\NotSame\ValueNotSame;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class NotSame extends SimpleFilter
 {
@@ -16,7 +17,7 @@ abstract class NotSame extends SimpleFilter
      */
     final public static function create(?int $mode, $desired): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

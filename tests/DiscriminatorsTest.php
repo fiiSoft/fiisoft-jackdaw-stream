@@ -10,6 +10,7 @@ use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Exception\UnsupportedValueException;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class DiscriminatorsTest extends TestCase
@@ -17,6 +18,7 @@ final class DiscriminatorsTest extends TestCase
     /**
      * @dataProvider getDataForTestGetAdapterThrowsExceptionOnInvalidArgument
      */
+    #[DataProvider('getDataForTestGetAdapterThrowsExceptionOnInvalidArgument')]
     public function test_getAdapter_throws_exception_on_invalid_argument($discriminator): void
     {
         $this->expectExceptionObject(InvalidParamException::byName('discriminator'));

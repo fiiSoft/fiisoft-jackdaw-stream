@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Number\LessOrEqual\BothLessOrEqual;
 use FiiSoft\Jackdaw\Filter\Number\LessOrEqual\KeyLessOrEqual;
 use FiiSoft\Jackdaw\Filter\Number\LessOrEqual\ValueLessOrEqual;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class LessOrEqual extends SingleArg
 {
@@ -26,7 +27,7 @@ abstract class LessOrEqual extends SingleArg
             case Check::ANY:
                 return new AnyLessOrEqual($mode, $value);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

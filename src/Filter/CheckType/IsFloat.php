@@ -7,12 +7,13 @@ use FiiSoft\Jackdaw\Filter\CheckType\IsFloat\BothIsFloat;
 use FiiSoft\Jackdaw\Filter\CheckType\IsFloat\KeyIsFloat;
 use FiiSoft\Jackdaw\Filter\CheckType\IsFloat\ValueIsFloat;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class IsFloat extends CheckType
 {
     final public static function create(?int $mode): self
     {
-        $mode = Check::getMode($mode);
+        $mode = Mode::get($mode);
         
         switch ($mode) {
             case Check::VALUE:

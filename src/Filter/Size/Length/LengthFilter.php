@@ -5,6 +5,7 @@ namespace FiiSoft\Jackdaw\Filter\Size\Length;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Size\SizeFilter;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class LengthFilter extends SizeFilter
 {
@@ -20,7 +21,7 @@ abstract class LengthFilter extends SizeFilter
             case Check::ANY:
                 return new AnyLength($mode, $filter);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
 }

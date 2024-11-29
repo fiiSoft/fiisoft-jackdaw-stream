@@ -3,47 +3,26 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
-use FiiSoft\Jackdaw\Filter\CheckType\IsBool;
-use FiiSoft\Jackdaw\Filter\CheckType\IsFloat;
-use FiiSoft\Jackdaw\Filter\CheckType\IsInt;
-use FiiSoft\Jackdaw\Filter\CheckType\IsNull;
-use FiiSoft\Jackdaw\Filter\CheckType\IsNumeric;
-use FiiSoft\Jackdaw\Filter\CheckType\IsString;
+use FiiSoft\Jackdaw\Filter\CheckType\{IsBool, IsFloat, IsInt, IsNull, IsNumeric, IsString};
 use FiiSoft\Jackdaw\Filter\Exception\FilterExceptionFactory;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Filter\IdleFilter;
-use FiiSoft\Jackdaw\Filter\Number\Between;
-use FiiSoft\Jackdaw\Filter\Number\Equal;
-use FiiSoft\Jackdaw\Filter\Number\GreaterOrEqual;
-use FiiSoft\Jackdaw\Filter\Number\GreaterThan;
-use FiiSoft\Jackdaw\Filter\Number\Inside;
-use FiiSoft\Jackdaw\Filter\Number\IsEven;
-use FiiSoft\Jackdaw\Filter\Number\IsOdd;
-use FiiSoft\Jackdaw\Filter\Number\LessOrEqual;
-use FiiSoft\Jackdaw\Filter\Number\LessThan;
-use FiiSoft\Jackdaw\Filter\Number\NotEqual;
-use FiiSoft\Jackdaw\Filter\Number\NotInside;
-use FiiSoft\Jackdaw\Filter\Number\Outside;
+use FiiSoft\Jackdaw\Filter\Number\{Between, Equal, GreaterOrEqual, GreaterThan, Inside, IsEven, IsOdd, LessOrEqual,
+    LessThan, NotEqual, NotInside, Outside};
 use FiiSoft\Jackdaw\Filter\OnlyIn\OnlyIn;
 use FiiSoft\Jackdaw\Filter\Size\Count\CountFilter;
 use FiiSoft\Jackdaw\Filter\Size\Length\LengthFilter;
-use FiiSoft\Jackdaw\Filter\String\Contains;
-use FiiSoft\Jackdaw\Filter\String\EndsWith;
-use FiiSoft\Jackdaw\Filter\String\InSet;
-use FiiSoft\Jackdaw\Filter\String\NotContains;
-use FiiSoft\Jackdaw\Filter\String\NotEndsWith;
-use FiiSoft\Jackdaw\Filter\String\NotInSet;
-use FiiSoft\Jackdaw\Filter\String\NotStartsWith;
-use FiiSoft\Jackdaw\Filter\String\StartsWith;
-use FiiSoft\Jackdaw\Filter\String\StrIs;
-use FiiSoft\Jackdaw\Filter\String\StrIsNot;
+use FiiSoft\Jackdaw\Filter\String\{Contains, EndsWith, InSet, NotContains, NotEndsWith, NotInSet, NotStartsWith,
+    StartsWith, StrIs, StrIsNot};
 use FiiSoft\Jackdaw\Filter\Time\Compare\IdleTimeComp;
 use FiiSoft\Jackdaw\Filter\Time\Compare\Point\Is;
 use FiiSoft\Jackdaw\Filter\Time\Day;
 use FiiSoft\Jackdaw\Filter\Time\TimeFilter;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 use FiiSoft\Jackdaw\Stream;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class FiltersATest extends TestCase
@@ -58,6 +37,7 @@ final class FiltersATest extends TestCase
     /**
      * @dataProvider getDataForTestSomeNumberFiltersThrowsExceptionOnInvalidParam
      */
+    #[DataProvider('getDataForTestSomeNumberFiltersThrowsExceptionOnInvalidParam')]
     public function test_some_number_filters_throws_exception_on_invalid_param(callable $factory): void
     {
         $this->expectExceptionObject(InvalidParamException::byName('value'));
@@ -143,56 +123,56 @@ final class FiltersATest extends TestCase
     
     public function test_GenericFilter_throws_exception_on_invalid_mode(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
         Filters::getAdapter(static fn($val): bool => $val === 'a', 0);
     }
     
     public function test_IsInt_throws_exception_on_invalid_mode(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
         Filters::isInt(0);
     }
     
     public function test_IsNumeric_throws_exception_on_invalid_mode(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
         Filters::isNumeric(0);
     }
     
     public function test_NotNull_throws_exception_on_invalid_mode(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
         Filters::notNull(0);
     }
     
     public function test_NotEmpty_throws_exception_on_invalid_mode(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
         Filters::notEmpty(0);
     }
     
     public function test_IsString_throws_exception_on_invalid_mode(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
         Filters::isString(0);
     }
     
     public function test_OnlyIn_throws_exception_on_invalid_mode_hashmap(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
         Filters::onlyIn(['test'], 0);
     }
     
     public function test_OnlyIn_throws_exception_on_invalid_param_mode(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
         Filters::onlyIn([false], 0)->isAllowed('a', 'a');
     }
@@ -223,7 +203,7 @@ final class FiltersATest extends TestCase
     
     public function test_Length_throws_exception_on_invalid_mode(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
         Filters::length(0);
     }
@@ -252,6 +232,7 @@ final class FiltersATest extends TestCase
     /**
      * @dataProvider getDataForTestOnlyWithThrowsExceptionWhenModeIsUnsupported
      */
+    #[DataProvider('getDataForTestOnlyWithThrowsExceptionWhenModeIsUnsupported')]
     public function test_OnlyWith_throws_exception_when_mode_is_unsupported(int $mode): void
     {
         $this->expectExceptionObject(FilterExceptionFactory::modeNotSupportedYet($mode));
@@ -284,7 +265,7 @@ final class FiltersATest extends TestCase
     
     public function test_IsNull_throws_exception_when_mode_is_invalid(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(5));
+        $this->expectExceptionObject(Mode::invalidModeException(5));
     
         Filters::isNull(5);
     }
@@ -342,6 +323,11 @@ final class FiltersATest extends TestCase
     public function test_notNull_all_variations(): void
     {
         $this->examineFilter(static fn(int $mode): Filter => Filters::notNull($mode), 'foo', null);
+    }
+    
+    public function test_isArray_all_variations(): void
+    {
+        $this->examineFilter(static fn(int $mode): Filter => Filters::isArray($mode), [], '');
     }
     
     public function test_time_is_all_variations(): void
@@ -822,16 +808,23 @@ final class FiltersATest extends TestCase
     
     public function test_IsFloat_throws_exception_when_mode_is_invalid(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(5));
+        $this->expectExceptionObject(Mode::invalidModeException(5));
     
         Filters::isFloat(5);
     }
     
     public function test_IsBool_throws_exception_when_mode_is_invalid(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(5));
+        $this->expectExceptionObject(Mode::invalidModeException(5));
     
         Filters::isBool(5);
+    }
+    
+    public function test_IsArray_throws_exception_when_mode_is_invalid(): void
+    {
+        $this->expectExceptionObject(Mode::invalidModeException(5));
+    
+        Filters::isArray(5);
     }
     
     public function test_onlyWith_allow_nulls(): void
@@ -890,9 +883,10 @@ final class FiltersATest extends TestCase
     /**
      * @dataProvider getDataForTestFilterThrowsExceptionWhenParamModeIsInvalid
      */
+    #[DataProvider('getDataForTestFilterThrowsExceptionWhenParamModeIsInvalid')]
     public function test_filter_throws_exception_when_param_mode_is_invalid(callable $factory): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(5));
+        $this->expectExceptionObject(Mode::invalidModeException(5));
         
         $factory(5);
     }
@@ -1190,7 +1184,7 @@ final class FiltersATest extends TestCase
     
     public function test_NumberFactory_throws_exception_when_param_mode_is_invalid(): void
     {
-        $this->expectExceptionObject(Check::invalidModeException(0));
+        $this->expectExceptionObject(Mode::invalidModeException(0));
         
         Filters::number(0);
     }
@@ -1269,6 +1263,7 @@ final class FiltersATest extends TestCase
     /**
      * @dataProvider getDataForTestTimeFiltersThrowsExceptionWhenTestedValueIsNotValidDatetime
      */
+    #[DataProvider('getDataForTestTimeFiltersThrowsExceptionWhenTestedValueIsNotValidDatetime')]
     public function test_time_filters_throws_exception_when_tested_value_is_not_valid_datetime(Filter $filter): void
     {
         $time = ['array'];
@@ -1323,6 +1318,7 @@ final class FiltersATest extends TestCase
     /**
      * @dataProvider getDataForTestTimeFiltersThrowExceptionWhenArgumentIsNotValidDatetime
      */
+    #[DataProvider('getDataForTestTimeFiltersThrowExceptionWhenArgumentIsNotValidDatetime')]
     public function test_time_filters_throw_exception_when_argument_is_not_valid_datetime(callable $method): void
     {
         $time = ['array'];
@@ -1352,6 +1348,7 @@ final class FiltersATest extends TestCase
     /**
      * @dataProvider getDataForTestWeekDayFilterThrowsExceptionWhenParamDaysIsInvalid
      */
+    #[DataProvider('getDataForTestWeekDayFilterThrowsExceptionWhenParamDaysIsInvalid')]
     public function test_isDay_filter_throws_exception_when_param_days_is_invalid(...$days): void
     {
         $this->expectExceptionObject(InvalidParamException::describe('days', $days));
@@ -1362,6 +1359,7 @@ final class FiltersATest extends TestCase
     /**
      * @dataProvider getDataForTestWeekDayFilterThrowsExceptionWhenParamDaysIsInvalid
      */
+    #[DataProvider('getDataForTestWeekDayFilterThrowsExceptionWhenParamDaysIsInvalid')]
     public function test_isNotDay_filter_throws_exception_when_param_days_is_invalid(...$days): void
     {
         $this->expectExceptionObject(InvalidParamException::describe('days', $days));

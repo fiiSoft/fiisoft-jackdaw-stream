@@ -18,4 +18,13 @@ abstract class Collaborator extends StreamPipe
     
     //Signal, Stream, various operations
     abstract protected function forget(Operation $operation): void;
+    
+    //Signal, Stream, Source
+    abstract protected function swapHead(Operation $operation): void;
+    
+    //Signal, Stream, Source
+    abstract protected function restoreHead(): void;
+    
+    //Signal, Stream, Source
+    abstract protected function setNextItem(Item $item): void;
 }

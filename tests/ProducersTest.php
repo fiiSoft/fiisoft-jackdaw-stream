@@ -28,6 +28,7 @@ use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
 use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
 use FiiSoft\Jackdaw\Registry\Registry;
 use FiiSoft\Jackdaw\Stream;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\UuidInterface as RamseyUuid;
 use Symfony\Component\Uid\AbstractUid as SymfonyUuid;
@@ -523,6 +524,7 @@ final class ProducersTest extends TestCase
     /**
      * @dataProvider getDataForTestRandomAndSequentialProducersAreReusable
      */
+    #[DataProvider('getDataForTestRandomAndSequentialProducersAreReusable')]
     public function test_random_and_sequential_producers_are_reusable(Producer $producer): void
     {
         self::assertSame(3, $producer->stream()->count()->get());
@@ -771,6 +773,7 @@ final class ProducersTest extends TestCase
     /**
      * @dataProvider getDataForTestCombinedArraysNotEmpty
      */
+    #[DataProvider('getDataForTestCombinedArraysNotEmpty')]
     public function test_CombinedArrays_not_empty(CombinedArrays $producer): void
     {
         self::assertSame(2, \iterator_count($producer));
@@ -788,6 +791,7 @@ final class ProducersTest extends TestCase
     /**
      * @dataProvider getDataForTestCombinedArraysEmpty
      */
+    #[DataProvider('getDataForTestCombinedArraysEmpty')]
     public function test_CombinedArrays_empty(CombinedArrays $producer): void
     {
         self::assertSame(0, \iterator_count($producer));
@@ -805,6 +809,7 @@ final class ProducersTest extends TestCase
     /**
      * @dataProvider getDataForTestCombinedGeneralNotEmpty
      */
+    #[DataProvider('getDataForTestCombinedGeneralNotEmpty')]
     public function test_CombinedGeneral_not_empty(CombinedGeneral $producer): void
     {
         self::assertSame(2, \iterator_count($producer));
@@ -822,6 +827,7 @@ final class ProducersTest extends TestCase
     /**
      * @dataProvider getDataForTestCombinedGeneralEmpty
      */
+    #[DataProvider('getDataForTestCombinedGeneralEmpty')]
     public function test_CombinedGeneral_empty(CombinedGeneral $producer): void
     {
         self::assertSame(0, \iterator_count($producer));
@@ -936,6 +942,7 @@ final class ProducersTest extends TestCase
     /**
      * @dataProvider getDataForTestIterateProducer
      */
+    #[DataProvider('getDataForTestIterateProducer')]
     public function test_iterate_producer($producer): void
     {
         self::assertSame([1 => 'a', 3 => 'b', 5 => 'c'], \iterator_to_array(Producers::getAdapter($producer)));
@@ -1166,6 +1173,7 @@ final class ProducersTest extends TestCase
     /**
      * @dataProvider getDataForTestIterateOverDateTimeSequence
      */
+    #[DataProvider('getDataForTestIterateOverDateTimeSequence')]
     public function test_iterate_over_DateTime_sequence(
         $startDate, $interval, $endDate, ?int $limit, array $expected
     ): void
@@ -1253,6 +1261,7 @@ final class ProducersTest extends TestCase
     /**
      * @dataProvider getDataForTestDateTimeSeqProducerDoesNotDecrementWhenEndDateIsAfterStartDate
      */
+    #[DataProvider('getDataForTestDateTimeSeqProducerDoesNotDecrementWhenEndDateIsAfterStartDate')]
     public function test_dateTimeSeq_producer_does_not_decrement_when_endDate_is_after_startDate($interval): void
     {
         $dates = [];
@@ -1275,6 +1284,7 @@ final class ProducersTest extends TestCase
     /**
      * @dataProvider getDataForTestDateTimeSeqProducerAlwaysDecrementsWhenEndDateIsBeforeStartDate
      */
+    #[DataProvider('getDataForTestDateTimeSeqProducerAlwaysDecrementsWhenEndDateIsBeforeStartDate')]
     public function test_dateTimeSeq_producer_always_decrements_when_endDate_is_before_startDate($interval): void
     {
         $dates = [];

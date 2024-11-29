@@ -9,6 +9,7 @@ use FiiSoft\Jackdaw\Filter\Number\Inside\BothInside;
 use FiiSoft\Jackdaw\Filter\Number\Inside\KeyInside;
 use FiiSoft\Jackdaw\Filter\Number\Inside\ValueInside;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class Inside extends TwoArgs
 {
@@ -37,7 +38,7 @@ abstract class Inside extends TwoArgs
             case Check::ANY:
                 return new AnyInside($mode, $lower, $higher);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

@@ -16,7 +16,7 @@ final class FilterByData
     /**
      * @param string|int $field
      */
-    public function __construct($field, Filter $filter, bool $negation = null)
+    public function __construct($field, Filter $filter, bool $negation)
     {
         $this->field = $field;
         $this->filter = $filter;

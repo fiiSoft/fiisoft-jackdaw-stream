@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Number\Outside\BothOutside;
 use FiiSoft\Jackdaw\Filter\Number\Outside\KeyOutside;
 use FiiSoft\Jackdaw\Filter\Number\Outside\ValueOutside;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class Outside extends TwoArgs
 {
@@ -36,7 +37,7 @@ abstract class Outside extends TwoArgs
             case Check::ANY:
                 return new AnyOutside($mode, $lower, $higher);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

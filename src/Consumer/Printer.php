@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Consumer;
 
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 final class Printer implements Consumer
 {
@@ -10,7 +11,7 @@ final class Printer implements Consumer
     
     public function __construct(int $mode = Check::BOTH)
     {
-        $this->mode = Check::getMode($mode);
+        $this->mode = Mode::get($mode);
     }
     
     public function consume($value, $key): void

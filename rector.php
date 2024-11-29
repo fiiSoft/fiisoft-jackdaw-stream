@@ -5,6 +5,7 @@ use Rector\CodeQuality\Rector\Expression\InlineIfToExplicitIfRector;
 use Rector\CodeQuality\Rector\Foreach_\UnusedForeachValueToArrayKeysRector;
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\CodeQuality\Rector\If_\CombineIfRector;
+use Rector\CodeQuality\Rector\If_\SimplifyIfElseToTernaryRector;
 use Rector\CodeQuality\Rector\LogicalAnd\LogicalToBooleanRector;
 use Rector\CodingStyle\Rector\Assign\SplitDoubleAssignRector;
 use Rector\CodingStyle\Rector\Catch_\CatchExceptionNameMatchingTypeRector;
@@ -87,6 +88,7 @@ return static function (RectorConfig $configurator): void {
         ParenthesizeNestedTernaryRector::class,
         StrictStringParamConcatRector::class,
         LogicalToBooleanRector::class,
+        SimplifyIfElseToTernaryRector::class,
     ]);
     
     $configurator->skip([

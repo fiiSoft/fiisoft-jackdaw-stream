@@ -4,6 +4,9 @@ namespace FiiSoft\Jackdaw\Consumer;
 
 use FiiSoft\Jackdaw\Consumer\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Consumer\Adapter\RegWriterAdapter;
+use FiiSoft\Jackdaw\Consumer\Reference\RefKey;
+use FiiSoft\Jackdaw\Consumer\Reference\RefValue;
+use FiiSoft\Jackdaw\Consumer\Reference\RefValueKey;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Reducer\Reducer;
@@ -72,7 +75,7 @@ final class Consumers
      */
     public static function sendValueTo(&$value): Consumer
     {
-        return new Reference($value, $_);
+        return new RefValue($value);
     }
     
     /**
@@ -80,7 +83,7 @@ final class Consumers
      */
     public static function sendKeyTo(&$key): Consumer
     {
-        return new Reference($_, $key);
+        return new RefKey($key);
     }
     
     /**
@@ -89,7 +92,7 @@ final class Consumers
      */
     public static function sendValueKeyTo(&$value, &$key): Consumer
     {
-        return new Reference($value, $key);
+        return new RefValueKey($value, $key);
     }
     
     public static function idle(): Consumer

@@ -8,8 +8,6 @@ parameters:
         - '#Call to protected method*#'
         - '#Parameter \#1 \$stream of class FiiSoft\\Jackdaw\\Operation\\Sending\\Feed constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
         - '#Parameter \#1 ...\$streams of class FiiSoft\\Jackdaw\\Operation\\Sending\\FeedMany constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
-        - '#Property FiiSoft\\Jackdaw\\Consumer\\Reference::\$value is never read, only written.#'
-        - '#Property FiiSoft\\Jackdaw\\Consumer\\Reference::\$key is never read, only written.#'
         - '#Parameter \#4 \$length of function substr_compare expects int, null given.#'
         - '#Property FiiSoft\\Jackdaw\\Collector\\Adapter\\ArrayAccessAdapter::\$buffer is never read, only written.#'
         - '#.*::(toJsonAssoc|toJson)\(\) should return string but returns string\|false.#'
@@ -31,3 +29,15 @@ parameters:
         -
             message: '#Method FiiSoft\\Jackdaw\\Mapper\\Split::map\(\) should return array<int, string> but returns array<int, string>\|false.#'
             path: 'src/Mapper/Split.php'
+        -
+            message: '#Parameter \#1 \$fields of static method FiiSoft\\Jackdaw\\Mapper\\Mappers::remove\(\) expects array<int\|string>\|int\|string, array<array<int\|string>\|int\|string> given.#'
+            path: 'src/Stream.php'
+        -
+            message: '#Property FiiSoft\\Jackdaw\\Consumer\\Reference\\RefValueKey::\$(value|key) is never read, only written.#'
+            path: 'src/Consumer/Reference/RefValueKey.php'
+        -
+            message: '#Property FiiSoft\\Jackdaw\\Consumer\\Reference\\RefValue::\$value is never read, only written.#'
+            path: 'src/Consumer/Reference/RefValue.php'
+        -
+            message: '#Property FiiSoft\\Jackdaw\\Consumer\\Reference\\RefKey::\$key is never read, only written.#'
+            path: 'src/Consumer/Reference/RefKey.php'

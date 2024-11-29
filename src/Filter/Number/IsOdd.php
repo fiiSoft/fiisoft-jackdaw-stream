@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Number\IsOdd\BothIsOdd;
 use FiiSoft\Jackdaw\Filter\Number\IsOdd\KeyIsOdd;
 use FiiSoft\Jackdaw\Filter\Number\IsOdd\ValueIsOdd;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class IsOdd extends ZeroArg
 {
@@ -23,7 +24,7 @@ abstract class IsOdd extends ZeroArg
             case Check::ANY:
                 return new AnyIsOdd($mode);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

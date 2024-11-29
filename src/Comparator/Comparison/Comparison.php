@@ -12,6 +12,7 @@ use FiiSoft\Jackdaw\Comparator\ComparisonSpec;
 use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
 use FiiSoft\Jackdaw\Comparator\ValueKeyCombined\ValueKeyComparator;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class Comparison implements ComparisonSpec
 {
@@ -93,7 +94,7 @@ abstract class Comparison implements ComparisonSpec
     
     protected function __construct(int $mode, bool $isPairComp = false)
     {
-        $this->mode = Check::getMode($mode);
+        $this->mode = Mode::get($mode);
         $this->isPairComp = $isPairComp;
     }
     

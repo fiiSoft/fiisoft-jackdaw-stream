@@ -1043,7 +1043,7 @@ final class StreamScenarioTest extends TestCase
             4,          //even
             3,
             2,6,        //even
-            5, 7,
+            5,7,
             8,6,2,      //even
             9,
             4,2,4,6,8,  //even
@@ -1305,7 +1305,7 @@ final class StreamScenarioTest extends TestCase
         
         $result = Stream::from($data)
             ->onlyMinima()
-            ->fork(Discriminators::byValue(), Stream::empty()->count())
+            ->fork(Discriminators::byValue(), Reducers::count())
             ->rsort()
             ->first();
         
@@ -1602,7 +1602,7 @@ final class StreamScenarioTest extends TestCase
     {
         $result = Stream::from(['The brown quick Python', 'jumps over', 'the lazy Panther'])
             ->flatMap(static fn(string $v): array => \str_split(\mb_strtolower(\str_replace(' ', '', $v))))
-            ->fork(Discriminators::byValue(), Stream::empty()->count())
+            ->fork(Discriminators::byValue(), Reducers::count())
             ->omit(Filters::number()->eq(1))
             ->sort(By::both(Value::desc(), Key::asc()))
             ->toArrayAssoc();
@@ -1879,5 +1879,27 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([
             'a' => 3, 'b' => 1, 'c' => 1, 'f' => 1, 'l' => 2, 'n' => 1, 'o' => 4, 'r' => 2, 'z' => 1,
         ], $countLetters->toArrayAssoc());
+    }
+    
+    public function test_scenario_93(): void
+    {
+        $data = [
+            1, '4 - 0',
+            2, '- - 0',
+            3, '- 2 5 0',
+            4, '7 - 3 - 2 0',
+        ];
+        
+        $result = Stream::from($data)
+            ->putIn($currentId)
+            ->readNext()
+            ->tokenize(' -0')
+            ->castToInt()
+            ->categorize(Discriminators::readFrom($currentId), true)
+            ->toArrayAssoc();
+        
+        $expected = [1 => [4], 3 => [2, 5], 4 => [7, 3, 2]];
+        
+        self::assertSame($expected, $result);
     }
 }

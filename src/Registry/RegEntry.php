@@ -3,17 +3,24 @@
 namespace FiiSoft\Jackdaw\Registry;
 
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
+use FiiSoft\Jackdaw\Registry\Exception\RegistryExceptionFactory;
+use FiiSoft\Jackdaw\Registry\Reader\DefaultReader;
+use FiiSoft\Jackdaw\Registry\Reader\TupleReader;
 use FiiSoft\Jackdaw\Registry\Writer\KeyWriter;
 use FiiSoft\Jackdaw\Registry\Writer\TupleWriter;
 use FiiSoft\Jackdaw\Registry\Writer\ValueWriter;
 
-final class RegEntry implements RegWriter, RegReader
+final class RegEntry implements ValueKeyWriter, RegReader
 {
     private Storage $storage;
     private RegWriter $writer;
     
     private string $name;
     private int $mode;
+    
+    private ?RegReader $valueReader = null;
+    private ?RegReader $keyReader = null;
     
     /**
      * @param mixed|null $initialValue
@@ -40,17 +47,17 @@ final class RegEntry implements RegWriter, RegReader
     /**
      * @inheritDoc
      */
-    public function read()
+    public function set($value): void
     {
-        return $this->storage->registered[$this->name] ?? null;
+        $this->writer->set($value);
     }
     
     /**
      * @inheritDoc
      */
-    public function set($value): void
+    public function read()
     {
-        $this->writer->set($value);
+        return $this->storage->registered[$this->name] ?? null;
     }
     
     /**
@@ -63,9 +70,42 @@ final class RegEntry implements RegWriter, RegReader
         return $this->storage->registered[$this->name] ?? null;
     }
     
+    public function value(): RegReader
+    {
+        if ($this->valueReader === null) {
+            $this->valueReader = $this->createReader('value');
+        }
+        
+        return $this->valueReader;
+    }
+    
+    public function key(): RegReader
+    {
+        if ($this->keyReader === null) {
+            $this->keyReader = $this->createReader('key');
+        }
+        
+        return $this->keyReader;
+    }
+    
+    private function createReader(string $type): RegReader
+    {
+        if ($this->mode === Check::BOTH) {
+            return new TupleReader($this->storage, $this->name, $type === 'value');
+        }
+        
+        if ($type === 'value' && $this->mode === Check::VALUE
+            || $type === 'key' && $this->mode === Check::KEY
+        ) {
+            return new DefaultReader($this->storage, $this->name);
+        }
+
+        throw RegistryExceptionFactory::cannotCreateReaderOfType($type, $this->mode);
+    }
+    
     private function setMode(int $mode): void
     {
-        $this->mode = Check::getMode($mode);
+        $this->mode = Mode::get($mode);
         
         if ($this->mode === Check::ANY) {
             $this->mode = Check::BOTH;

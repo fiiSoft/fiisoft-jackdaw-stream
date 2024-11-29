@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter;
 
-use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class FilterFactory
 {
@@ -12,7 +12,7 @@ abstract class FilterFactory
     
     final protected function __construct(?int $mode, bool $isNot = false)
     {
-        $this->mode = Check::getMode($mode);
+        $this->mode = Mode::get($mode);
         $this->isNot = $isNot;
     }
     

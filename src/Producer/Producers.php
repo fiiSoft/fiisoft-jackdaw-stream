@@ -150,8 +150,8 @@ final class Producers
     }
     
     /**
-     * @param ProducerReady|resource|callable|iterable<int, mixed>|string $keys
-     * @param ProducerReady|resource|callable|iterable<int, mixed>|string $values
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<int, mixed>|string $keys
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<int, mixed>|string $values
      */
     public static function combinedFrom($keys, $values): Producer
     {
@@ -208,7 +208,7 @@ final class Producers
     /**
      * @return Producer<int, int>
      */
-    public static function collatz(int $startNumber = null): Producer
+    public static function collatz(?int $startNumber = null): Producer
     {
         return new CollatzGenerator($startNumber);
     }

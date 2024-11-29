@@ -19,6 +19,7 @@ use FiiSoft\Jackdaw\Mapper\Reverse;
 use FiiSoft\Jackdaw\Mapper\Split;
 use FiiSoft\Jackdaw\Mapper\Trim;
 use FiiSoft\Jackdaw\Reducer\Reducers;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class MappersTest extends TestCase
@@ -26,6 +27,7 @@ final class MappersTest extends TestCase
     /**
      * @dataProvider getDataForTestExtractThrowsExceptionOnInvalidParam
      */
+    #[DataProvider('getDataForTestExtractThrowsExceptionOnInvalidParam')]
     public function test_Extract_throws_exception_on_invalid_param($fields): void
     {
         $this->expectExceptionObject(InvalidParamException::byName('field'));
@@ -136,6 +138,7 @@ final class MappersTest extends TestCase
     /**
      * @dataProvider getDataForTestToTimeThrowsExceptionWhenCannotMapValue
      */
+    #[DataProvider('getDataForTestToTimeThrowsExceptionWhenCannotMapValue')]
     public function test_ToTime_throws_exception_when_cannot_map_value($wrongArg): void
     {
         $this->expectExceptionObject(MapperExceptionFactory::cannotCreateTimeObjectFrom($wrongArg));

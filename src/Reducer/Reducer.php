@@ -1,13 +1,14 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Reducer;
 
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Internal\ResultProvider;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
+use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 
-interface Reducer extends ResultProvider, ConsumerReady, MapperReady, HandlerReady
+interface Reducer extends ResultProvider, ConsumerReady, MapperReady, HandlerReady, ForkReady
 {
     /**
      * @param mixed $value

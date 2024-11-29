@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Filter\Number\GreaterThan\BothGreaterThan;
 use FiiSoft\Jackdaw\Filter\Number\GreaterThan\KeyGreaterThan;
 use FiiSoft\Jackdaw\Filter\Number\GreaterThan\ValueGreaterThan;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class GreaterThan extends SingleArg
 {
@@ -26,7 +27,7 @@ abstract class GreaterThan extends SingleArg
             case Check::ANY:
                 return new AnyGreaterThan($mode, $value);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     

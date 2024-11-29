@@ -111,4 +111,12 @@ final class Discriminators
     {
         return new DayOfWeek();
     }
+    
+    /**
+     * @param mixed $variable REFERENCE
+     */
+    public static function readFrom(&$variable): Discriminator
+    {
+        return new Reference($variable);
+    }
 }

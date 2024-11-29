@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Time\Compare\CompoundTimeComp;
 use FiiSoft\Jackdaw\Filter\Time\Compare\TimeComparator;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
 abstract class TimeFilter extends BaseFilter
 {
@@ -28,7 +29,7 @@ abstract class TimeFilter extends BaseFilter
             case Check::ANY:
                 return new AnyTime($mode, $filter);
             default:
-                throw Check::invalidModeException($mode);
+                throw Mode::invalidModeException($mode);
         }
     }
     
