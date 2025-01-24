@@ -3,6 +3,7 @@
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Registry\Registry;
 use FiiSoft\Jackdaw\Stream;
@@ -39,6 +40,13 @@ echo PHP_EOL, PHP_EOL, 'Produce Collatz series using Registry for storing curren
 
 $registry = Registry::new()->entry(Check::VALUE, $startNumber);
 $prototype->wrap($registry)->remember($registry)->run();
+
+//-----------------
+
+echo PHP_EOL, PHP_EOL, 'Produce Collatz series using Memo for storing current value:', PHP_EOL;
+
+$memo = Memo::value($startNumber);
+$prototype->wrap($memo)->remember($memo)->run();
 
 //-----------------
 

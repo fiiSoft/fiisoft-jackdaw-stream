@@ -14,6 +14,7 @@ use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyabl
     Iterator\BaseFastIterator, Iterator\BaseStreamIterator, Iterator\Interruption, Mode, Pipe, Signal, SignalHandler,
     State\Source, State\SourceData, State\SourceNotReady, State\Sources, State\StreamSource, StreamPipe};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, MapperReady, Mappers};
+use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Operation\{Internal\Operations, LastOperation, Operation};
 use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
@@ -21,7 +22,6 @@ use FiiSoft\Jackdaw\Operation\Special\{Assert\AssertionFailed, Iterate};
 use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Producer\{Internal\EmptyProducer, MultiProducer, Producer, ProducerReady, Producers};
 use FiiSoft\Jackdaw\Reducer\Reducer;
-use FiiSoft\Jackdaw\Registry\RegWriter;
 use FiiSoft\Jackdaw\ValueRef\IntProvider;
 
 /**
@@ -45,7 +45,6 @@ final class Stream extends StreamSource
     private bool $isDestroying = false;
     private bool $isInitialized = false;
     private bool $isStarted = false;
-    private bool $canFinish = true;
     private bool $isResuming = false;
     private bool $streamingFinished = false;
     
@@ -532,8 +531,6 @@ final class Stream extends StreamSource
      * This is specialized map operation which maps both key and value at the same time.
      * Callable $factory can accept zero, one (value) or two (value, key) params and MUST return array
      * with exactly one element - new pair of [key => value] passed to next step in stream.
-     *
-     * Value in this pair can be instance of Mapper and it will be used to compute real value of next element.
      */
     public function mapKV(callable $keyValueMapper): Stream
     {
@@ -789,8 +786,10 @@ final class Stream extends StreamSource
         $keyExtractor = Mappers::fieldValue($field);
         
         if ($move) {
+            $fieldRemover = Mappers::remove($field);
+            
             return $this->mapKV(static fn($value, $key): array => [
-                $keyExtractor->map($value, $key) => Mappers::remove($field)
+                $keyExtractor->map($value, $key) => $fieldRemover->map($value, $key)
             ]);
         }
         
@@ -1167,11 +1166,11 @@ final class Stream extends StreamSource
     }
     
     /**
-     * Remember key and/or value of current element in passed registry.
+     * Remember key and/or value of current element in passed writer.
      */
-    public function remember(RegWriter $registry): Stream
+    public function remember(MemoWriter $memo): Stream
     {
-        $this->chainOperation(Operations::remember($registry));
+        $this->chainOperation(Operations::remember($memo));
         return $this;
     }
     
@@ -1276,19 +1275,21 @@ final class Stream extends StreamSource
     
     /**
      * @param Filter|callable|mixed $filter
+     * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
-    public function readWhile($filter, ?int $mode = null, bool $reindex = false): Stream
+    public function readWhile($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Stream
     {
-        $this->chainOperation(Operations::readWhile($filter, $mode, $reindex));
+        $this->chainOperation(Operations::readWhile($filter, $mode, $reindex, $consumer));
         return $this;
     }
     
     /**
      * @param Filter|callable|mixed $filter
+     * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
-    public function readUntil($filter, ?int $mode = null, bool $reindex = false): Stream
+    public function readUntil($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Stream
     {
-        $this->chainOperation(Operations::readUntil($filter, $mode, $reindex));
+        $this->chainOperation(Operations::readUntil($filter, $mode, $reindex, $consumer));
         return $this;
     }
     
@@ -1620,8 +1621,6 @@ final class Stream extends StreamSource
      */
     public function run(): void
     {
-        $this->canFinish = true;
-        
         if (!empty($this->parents)) {
             foreach ($this->parents as $key => $parent) {
                 unset($this->parents[$key]);
@@ -1658,10 +1657,7 @@ final class Stream extends StreamSource
         
         $this->prepareToRun();
         $this->iterateStream();
-        
-        if ($this->canFinish) {
-            $this->finish();
-        }
+        $this->finish();
     }
     
     protected function isNotStartedYet(): bool
@@ -1746,7 +1742,6 @@ final class Stream extends StreamSource
     {
         $this->isLoop = false;
         $this->isFirstProducer = true;
-        $this->canFinish = true;
         $this->isResuming = false;
         $this->streamingFinished = false;
         

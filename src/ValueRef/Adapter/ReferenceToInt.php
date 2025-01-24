@@ -9,6 +9,7 @@ final class ReferenceToInt extends VolatileIntValue
     
     /**
      * @param int|null $variable REFERENCE
+     * @param-out int $variable
      */
     public function __construct(?int &$variable)
     {

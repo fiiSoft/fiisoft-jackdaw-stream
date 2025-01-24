@@ -17,6 +17,7 @@ use FiiSoft\Jackdaw\Filter\IdleFilter;
 use FiiSoft\Jackdaw\Filter\Time\Day;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
@@ -394,8 +395,8 @@ final class StreamCTest extends TestCase
     public function test_collatz_with_Registry_as_source_of_stream(): void
     {
         $collector = Reducers::concat(', ');
-        
         $entry = Registry::new()->entry(Check::VALUE, 304);
+        
         Stream::from($entry)
             ->callOnce($collector)
             ->mapWhen(
@@ -406,6 +407,28 @@ final class StreamCTest extends TestCase
             ->call($collector)
             ->until(1)
             ->remember($entry)
+            ->run();
+        
+        $expected = '304, 152, 76, 38, 19, 58, 29, 88, 44, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1';
+        
+        self::assertSame($expected, $collector->result());
+    }
+    
+    public function test_collatz_with_Entry_as_source_of_stream(): void
+    {
+        $collector = Reducers::concat(', ');
+        $value = Memo::value(304);
+        
+        Stream::from($value)
+            ->callOnce($collector)
+            ->mapWhen(
+                static fn(int $n): bool => ($n & 1) === 0,
+                static fn(int $n): int => $n >> 1,
+                static fn(int $n): int => (3 * $n + 1)
+            )
+            ->call($collector)
+            ->until(1)
+            ->remember($value)
             ->run();
         
         $expected = '304, 152, 76, 38, 19, 58, 29, 88, 44, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1';
@@ -1775,5 +1798,128 @@ final class StreamCTest extends TestCase
         //then
         self::assertSame('abghcd', $stream4->toString(''));
         self::assertSame('cdef', $stream3->toString(''));
+    }
+    
+    public function test_use_Entry_value_holder(): void
+    {
+        $quantity = Memo::value();
+        
+        $result = Stream::from([5, 'Foo', 3, 'Bar', 'Zoo', 4, 'Joe'])
+            ->remember($quantity)
+            ->readWhile('is_string')
+            ->mapKV(static fn(string $position): array => [$position => $quantity->read()])
+            ->toArrayAssoc();
+            
+        self::assertSame([
+            'Foo' => 5,
+            'Bar' => 3,
+            'Zoo' => 3,
+            'Joe' => 4,
+        ], $result);
+    }
+    
+    public function test_use_Entry_key_holder_1(): void
+    {
+        $quantity = Memo::key();
+        
+        $result = Stream::from([5 => ['Foo'], 3 => ['Bar', 'Zoo'], 4 => ['Joe']])
+            ->remember($quantity)
+            ->flat()
+            ->mapKV(static fn(string $position): array => [$position => $quantity->read()])
+            ->toArrayAssoc();
+            
+        self::assertSame([
+            'Foo' => 5,
+            'Bar' => 3,
+            'Zoo' => 3,
+            'Joe' => 4,
+        ], $result);
+    }
+    
+    public function test_use_Entry_key_holder_2(): void
+    {
+        $quantity = Memo::key();
+        
+        $result = Stream::from([5 => ['Foo'], 3 => ['Bar', 'Zoo'], 4 => ['Joe']])
+            ->remember($quantity)
+            ->flat()
+            ->mapKey($quantity)
+            ->flip()
+            ->toArrayAssoc();
+            
+        self::assertSame([
+            'Foo' => 5,
+            'Bar' => 3,
+            'Zoo' => 3,
+            'Joe' => 4,
+        ], $result);
+    }
+    
+    public function test_use_Entry_key_holder_3(): void
+    {
+        $quantity = Memo::key();
+        
+        $result = Stream::from([5 => ['Foo'], 3 => ['Bar', 'Zoo'], 4 => ['Joe']])
+            ->remember($quantity)
+            ->flat()
+            ->flip()
+            ->map($quantity)
+            ->toArrayAssoc();
+            
+        self::assertSame([
+            'Foo' => 5,
+            'Bar' => 3,
+            'Zoo' => 3,
+            'Joe' => 4,
+        ], $result);
+    }
+    
+    public function test_use_Entry_full_holder(): void
+    {
+        //given
+        $data = ['Foo' => 5, 'Bar' => 3, 'Zoo' => 3, 'Joe' => 4];
+        $expected = [5 => ['Foo'], 3 => ['Bar', 'Zoo'], 4 => ['Joe']];
+        
+        //when
+        $item = Memo::full();
+        
+        $result = Stream::from($data)
+            ->remember($item)
+            ->map($item->key())
+            ->categorize($item->value(), true)
+            ->toArrayAssoc();
+        
+        //then
+        self::assertSame($expected, $result);
+        
+        //but much simpler way to do the same is:
+        
+        $result = Stream::from($data)
+            ->flip()
+            ->categorize(Discriminators::byKey())
+            ->toArrayAssoc();
+        
+        self::assertSame($expected, $result);
+    }
+    
+    public function test_read_from_Entry_full_holder_as_tuple(): void
+    {
+        //given
+        $data = ['Foo' => 5, 'Bar' => 3, 'Zoo' => 3, 'Joe' => 4];
+        $expected = '[["Foo",5],["Bar",3],["Zoo",3],["Joe",4]]';
+        
+        //when
+        $item = Memo::full();
+        
+        $result = Stream::from($data)
+            ->remember($item)
+            ->map($item->tuple())
+            ->toJson();
+        
+        //then
+        self::assertSame($expected, $result);
+        
+        //it works the same like:
+        self::assertSame($expected, Stream::from($data)->makeTuple()->toJson());
     }
 }

@@ -7,7 +7,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 
 abstract class BaseAdapter implements Comparator
 {
-    final public function comparator(): ?Comparator
+    final public function comparator(): Comparator
     {
         return $this;
     }

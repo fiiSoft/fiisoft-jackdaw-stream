@@ -4,14 +4,14 @@ namespace FiiSoft\Jackdaw\Discriminator;
 
 use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Discriminator\Adapter\ConditionAdapter;
+use FiiSoft\Jackdaw\Discriminator\Adapter\MemoReaderAdapter;
 use FiiSoft\Jackdaw\Discriminator\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Discriminator\Adapter\MapperAdapter;
-use FiiSoft\Jackdaw\Discriminator\Adapter\RegistryAdapter;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mapper;
-use FiiSoft\Jackdaw\Registry\RegReader;
+use FiiSoft\Jackdaw\Memo\MemoReader;
 
 final class Discriminators
 {
@@ -44,8 +44,8 @@ final class Discriminators
             return new ConditionAdapter($discriminator);
         }
         
-        if ($discriminator instanceof RegReader) {
-            return new RegistryAdapter($discriminator);
+        if ($discriminator instanceof MemoReader) {
+            return new MemoReaderAdapter($discriminator);
         }
         
         throw InvalidParamException::describe('discriminator', $discriminator);

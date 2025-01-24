@@ -11,6 +11,7 @@ use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Operation\Special\Assert\AssertionFailed;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
@@ -1732,6 +1733,19 @@ final class StreamDTest extends TestCase
             ->map(Reducers::sum())
             ->toArrayAssoc();
             
+        $this->examineInterleavedReadManyResult($result);
+    }
+    
+    public function test_read_interleaved_data_17(): void
+    {
+        $item = Memo::full();
+        
+        $result = Stream::from($this->dataForInterleavedReadMany())
+            ->remember($item)
+            ->readMany($item->value())
+            ->fork($item->key(), Reducers::sum())
+            ->toArrayAssoc();
+        
         $this->examineInterleavedReadManyResult($result);
     }
     

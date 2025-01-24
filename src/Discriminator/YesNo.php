@@ -45,7 +45,9 @@ final class YesNo implements Discriminator
     }
     
     /**
-     * @inheritDoc
+     * @param mixed $value
+     * @param mixed|null $key
+     * @return string|int used to classify element to some group
      */
     public function classify($value, $key = null)
     {

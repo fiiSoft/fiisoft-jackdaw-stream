@@ -12,6 +12,7 @@ use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Exception\StreamExceptionFactory;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Exception\PipeExceptionFactory;
 use FiiSoft\Jackdaw\Internal\SignalHandler;
@@ -1835,4 +1836,102 @@ final class StreamATest extends TestCase
         
         self::assertSame(['q', 'w', 'e', 'a', 'z', 'x'], $result);
     }
+    
+    public function test_reindex_keys_in_array_values_using_mapper_simple(): void
+    {
+        $data = [
+            5 => ['a' => 1, 'b' => 2, 'c' => 3],
+            2 => ['d' => 4, 'e' => 5, 'f' => 6],
+            4 => ['g' => 7, 'h' => 8, 'i' => 9],
+        ];
+        
+        $result = Stream::from($data)
+            ->map(Mappers::reindexKeys())
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            5 => [1, 2, 3],
+            2 => [4, 5, 6],
+            4 => [7, 8, 9],
+        ], $result);
+    }
+    
+    public function test_reindex_keys_in_array_values_using_mapper_complex(): void
+    {
+        $data = [
+            5 => ['a' => 1, 'b' => 2, 'c' => 3],
+            2 => ['d' => 4, 'e' => 5, 'f' => 6],
+            4 => ['g' => 7, 'h' => 8, 'i' => 9],
+        ];
+        
+        $result = Stream::from($data)
+            ->map(Mappers::reindexKeys(1, 2))
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            5 => [1 => 1, 3 => 2, 5 => 3],
+            2 => [1 => 4, 3 => 5, 5 => 6],
+            4 => [1 => 7, 3 => 8, 5 => 9],
+        ], $result);
+    }
+    
+    public function test_reindex_keys_in_array_values_using_mapper_simple_with_onError_handler(): void
+    {
+        $data = [
+            5 => ['a' => 1, 'b' => 2, 'c' => 3],
+            2 => ['d' => 4, 'e' => 5, 'f' => 6],
+            4 => ['g' => 7, 'h' => 8, 'i' => 9],
+        ];
+        
+        $result = Stream::from($data)
+            ->onError(OnError::skip())
+            ->map(Mappers::reindexKeys())
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            5 => [1, 2, 3],
+            2 => [4, 5, 6],
+            4 => [7, 8, 9],
+        ], $result);
+    }
+    
+    public function test_reindex_keys_in_array_values_using_mapper_complex_with_onError_handler(): void
+    {
+        $data = [
+            5 => ['a' => 1, 'b' => 2, 'c' => 3],
+            2 => ['d' => 4, 'e' => 5, 'f' => 6],
+            4 => ['g' => 7, 'h' => 8, 'i' => 9],
+        ];
+        
+        $result = Stream::from($data)
+            ->onError(OnError::skip())
+            ->map(Mappers::reindexKeys(1, 2))
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            5 => [1 => 1, 3 => 2, 5 => 3],
+            2 => [1 => 4, 3 => 5, 5 => 6],
+            4 => [1 => 7, 3 => 8, 5 => 9],
+        ], $result);
+    }
+    
+    public function test_reindex_keys_in_array_values_using_mapper_complex_can_decrease_keys(): void
+    {
+        $data = [
+            5 => ['a' => 1, 'b' => 2, 'c' => 3],
+            2 => ['d' => 4, 'e' => 5, 'f' => 6],
+            4 => ['g' => 7, 'h' => 8, 'i' => 9],
+        ];
+        
+        $result = Stream::from($data)
+            ->map(Mappers::reindexKeys(5, -2))
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            5 => [5 => 1, 3 => 2, 1 => 3],
+            2 => [5 => 4, 3 => 5, 1 => 6],
+            4 => [5 => 7, 3 => 8, 1 => 9],
+        ], $result);
+    }
+    
 }

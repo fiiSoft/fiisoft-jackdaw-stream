@@ -2,15 +2,15 @@
 
 namespace FiiSoft\Jackdaw\Consumer;
 
+use FiiSoft\Jackdaw\Consumer\Adapter\MemoWriterAdapter;
 use FiiSoft\Jackdaw\Consumer\Adapter\ReducerAdapter;
-use FiiSoft\Jackdaw\Consumer\Adapter\RegWriterAdapter;
 use FiiSoft\Jackdaw\Consumer\Reference\RefKey;
 use FiiSoft\Jackdaw\Consumer\Reference\RefValue;
 use FiiSoft\Jackdaw\Consumer\Reference\RefValueKey;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Reducer\Reducer;
-use FiiSoft\Jackdaw\Registry\RegWriter;
 
 final class Consumers
 {
@@ -35,10 +35,10 @@ final class Consumers
             return new ReducerAdapter($consumer);
         }
         
-        if ($consumer instanceof RegWriter) {
-            return new RegWriterAdapter($consumer);
+        if ($consumer instanceof MemoWriter) {
+            return new MemoWriterAdapter($consumer);
         }
-    
+        
         throw InvalidParamException::describe('consumer', $consumer);
     }
     

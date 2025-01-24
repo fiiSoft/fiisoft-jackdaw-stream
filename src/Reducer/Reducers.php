@@ -41,7 +41,7 @@ final class Reducers
                 }
             }
             
-            return new GenericReducer($reducer);
+            return self::generic($reducer);
         }
         
         if (\is_array($reducer)) {
@@ -49,6 +49,15 @@ final class Reducers
         }
     
         throw InvalidParamException::describe('reducer', $reducer);
+    }
+    
+    /**
+     * @param callable $reducer it should accept two arguments: accumulator and current value,
+     *                          and must return new accumulator
+     */
+    public static function generic(callable $reducer): Reducer
+    {
+        return new GenericReducer($reducer);
     }
     
     public static function sum(): Reducer

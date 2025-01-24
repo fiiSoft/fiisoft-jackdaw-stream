@@ -6,11 +6,11 @@ use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Mapper\Adapter\DiscriminatorAdapter;
+use FiiSoft\Jackdaw\Mapper\Adapter\MemoReaderAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\GeneratorAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ProducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
-use FiiSoft\Jackdaw\Mapper\Adapter\RegistryAdapter;
 use FiiSoft\Jackdaw\Mapper\Cast\ToArray;
 use FiiSoft\Jackdaw\Mapper\Cast\ToBool;
 use FiiSoft\Jackdaw\Mapper\Cast\ToFloat;
@@ -18,9 +18,11 @@ use FiiSoft\Jackdaw\Mapper\Cast\ToInt;
 use FiiSoft\Jackdaw\Mapper\Cast\ToString;
 use FiiSoft\Jackdaw\Mapper\Cast\ToTime;
 use FiiSoft\Jackdaw\Mapper\Internal\MultiMapper;
+use FiiSoft\Jackdaw\Mapper\ReindexKeys\ReindexKeysComplex;
+use FiiSoft\Jackdaw\Mapper\ReindexKeys\ReindexKeysSimple;
+use FiiSoft\Jackdaw\Memo\MemoReader;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
-use FiiSoft\Jackdaw\Registry\RegReader;
 
 final class Mappers
 {
@@ -71,6 +73,9 @@ final class Mappers
                     case 'str_shuffle':
                     case '\str_shuffle':
                         return self::shuffle();
+                    case '\array_values':
+                    case 'array_values':
+                        return self::reindexKeys();
                     default:
                         //noop
                 }
@@ -86,9 +91,9 @@ final class Mappers
         if ($mapper instanceof Filter) {
             return new FilterAdapter($mapper);
         }
-    
-        if ($mapper instanceof RegReader) {
-            return new RegistryAdapter($mapper);
+        
+        if ($mapper instanceof MemoReader) {
+            return new MemoReaderAdapter($mapper);
         }
         
         if ($mapper instanceof Discriminator) {
@@ -361,5 +366,15 @@ final class Mappers
     public static function formatTime(string $format = 'Y-m-d H:i:s'): Mapper
     {
         return new FormatTime($format);
+    }
+    
+    /**
+     * This mapper reindexes keys numerically in array-values.
+     */
+    public static function reindexKeys(int $start = 0, int $step = 1): Mapper
+    {
+        return $start === 0 && $step === 1
+            ? new ReindexKeysSimple()
+            : new ReindexKeysComplex($start, $step);
     }
 }

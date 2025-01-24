@@ -3,11 +3,12 @@
 namespace FiiSoft\Jackdaw\Producer;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Memo\MemoReader;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ArrayIteratorAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\CallableAdapter;
+use FiiSoft\Jackdaw\Producer\Adapter\MemoReaderAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\ReferenceAdapter;
-use FiiSoft\Jackdaw\Producer\Adapter\RegistryAdapter;
 use FiiSoft\Jackdaw\Producer\Adapter\TraversableAdapter;
 use FiiSoft\Jackdaw\Producer\Generator\CollatzGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
@@ -23,7 +24,6 @@ use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidGenerator;
 use FiiSoft\Jackdaw\Producer\Internal\EmptyProducer;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
 use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
-use FiiSoft\Jackdaw\Registry\RegReader;
 
 final class Producers
 {
@@ -104,8 +104,8 @@ final class Producers
             return self::uuidFrom($producer);
         }
         
-        if ($producer instanceof RegReader) {
-            return new RegistryAdapter($producer);
+        if ($producer instanceof MemoReader) {
+            return new MemoReaderAdapter($producer);
         }
         
         if (\is_resource($producer)) {

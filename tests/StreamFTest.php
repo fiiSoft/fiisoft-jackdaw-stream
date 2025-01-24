@@ -13,6 +13,7 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Operation\Special\Assert\AssertionFailed;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseArrayIterator;
 use FiiSoft\Jackdaw\Producer\Producers;
@@ -1063,6 +1064,21 @@ final class StreamFTest extends TestCase
         
         self::assertSame([5 => 'e', 3 => 'f'], $actual);
     }
+
+    public function test_mapKeyValue_ZeroArg_with_Memo_as_value(): void
+    {
+        $key = Memo::key();
+        
+        $actual = Stream::from(['a' => 1, 'b' => 3])
+            ->countIn($itemNumber)
+            ->remember($key)
+            ->mapKV(static function () use ($key, &$itemNumber): array {
+                return [$itemNumber => $key->read()];
+            })
+            ->toArrayAssoc();
+        
+        self::assertSame([1 => 'a', 'b'], $actual);
+    }
     
     public function test_mapKeyValue_ZeroArg_with_onerror_handler(): void
     {
@@ -1083,6 +1099,22 @@ final class StreamFTest extends TestCase
             ->toArrayAssoc();
         
         self::assertSame([5 => 'e', 3 => 'f'], $actual);
+    }
+
+    public function test_mapKeyValue_ZeroArg_with_Memo_as_value_and_onerror_handler(): void
+    {
+        $key = Memo::key();
+        
+        $actual = Stream::from(['a' => 1, 'b' => 3])
+            ->onError(OnError::skip())
+            ->countIn($itemNumber)
+            ->remember($key)
+            ->mapKV(static function () use ($key, &$itemNumber): array {
+                return [$itemNumber => $key->read()];
+            })
+            ->toArrayAssoc();
+        
+        self::assertSame([1 => 'a', 'b'], $actual);
     }
     
     public function test_mapMany(): void

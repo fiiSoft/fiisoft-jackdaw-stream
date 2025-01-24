@@ -36,7 +36,7 @@ final class FilterXORAny extends BaseXOR
         }
     }
     
-    public function getMode(): ?int
+    public function getMode(): int
     {
         return Check::ANY;
     }

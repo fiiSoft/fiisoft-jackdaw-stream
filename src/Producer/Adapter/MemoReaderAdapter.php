@@ -2,16 +2,16 @@
 
 namespace FiiSoft\Jackdaw\Producer\Adapter;
 
+use FiiSoft\Jackdaw\Memo\MemoReader;
 use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
-use FiiSoft\Jackdaw\Registry\RegReader;
 
-final class RegistryAdapter extends BaseProducer
+final class MemoReaderAdapter extends BaseProducer
 {
-    private RegReader $reader;
+    private MemoReader $reader;
     
     private int $index = 0;
     
-    public function __construct(RegReader $reader)
+    public function __construct(MemoReader $reader)
     {
         $this->reader = $reader;
     }

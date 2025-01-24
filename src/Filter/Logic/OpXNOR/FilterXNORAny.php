@@ -36,7 +36,7 @@ final class FilterXNORAny extends BaseXNOR
         }
     }
     
-    public function getMode(): ?int
+    public function getMode(): int
     {
         return Check::ANY;
     }

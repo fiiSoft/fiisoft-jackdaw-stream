@@ -7,7 +7,7 @@ use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 final class PDOStatementAdapter extends BaseProducer
 {
     private \PDOStatement $statement;
-    private ?int $fetchMode;
+    private int $fetchMode;
     
     public function __construct(\PDOStatement $statement, ?int $fetchMode = null)
     {

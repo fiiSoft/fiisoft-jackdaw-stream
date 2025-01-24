@@ -3,21 +3,21 @@
 namespace FiiSoft\Jackdaw\Operation\Sending;
 
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Registry\RegWriter;
 
 final class Remember extends BaseOperation
 {
-    private RegWriter $registry;
+    private MemoWriter $memo;
     
-    public function __construct(RegWriter $registry)
+    public function __construct(MemoWriter $memo)
     {
-        $this->registry = $registry;
+        $this->memo = $memo;
     }
     
     public function handle(Signal $signal): void
     {
-        $this->registry->write($signal->item->value, $signal->item->key);
+        $this->memo->write($signal->item->value, $signal->item->key);
         
         $this->next->handle($signal);
     }
@@ -25,7 +25,7 @@ final class Remember extends BaseOperation
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            $this->registry->write($value, $key);
+            $this->memo->write($value, $key);
             
             yield $key => $value;
         }

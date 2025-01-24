@@ -36,7 +36,7 @@ final class FilterXNORBoth extends BaseXNOR
         }
     }
     
-    public function getMode(): ?int
+    public function getMode(): int
     {
         return Check::BOTH;
     }

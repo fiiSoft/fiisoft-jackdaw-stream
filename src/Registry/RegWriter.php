@@ -2,16 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Registry;
 
-use FiiSoft\Jackdaw\Consumer\ConsumerReady;
+use FiiSoft\Jackdaw\Memo\MemoWriter;
 
-interface RegWriter extends ConsumerReady
+interface RegWriter extends MemoWriter
 {
-    /**
-     * @param mixed $value
-     * @param mixed $key
-     */
-    public function write($value, $key): void;
-    
     /**
      * @param mixed $value
      */

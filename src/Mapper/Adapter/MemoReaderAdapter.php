@@ -3,13 +3,13 @@
 namespace FiiSoft\Jackdaw\Mapper\Adapter;
 
 use FiiSoft\Jackdaw\Mapper\Internal\StateMapper;
-use FiiSoft\Jackdaw\Registry\RegReader;
+use FiiSoft\Jackdaw\Memo\MemoReader;
 
-final class RegistryAdapter extends StateMapper
+final class MemoReaderAdapter extends StateMapper
 {
-    private RegReader $reader;
+    private MemoReader $reader;
     
-    public function __construct(RegReader $reader)
+    public function __construct(MemoReader $reader)
     {
         $this->reader = $reader;
     }

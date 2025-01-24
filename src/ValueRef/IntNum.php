@@ -3,12 +3,12 @@
 namespace FiiSoft\Jackdaw\ValueRef;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
-use FiiSoft\Jackdaw\Registry\RegReader;
+use FiiSoft\Jackdaw\Memo\MemoReader;
 use FiiSoft\Jackdaw\ValueRef\Adapter\CompoundIntValue;
-use FiiSoft\Jackdaw\ValueRef\Adapter\GenericIntValue;
 use FiiSoft\Jackdaw\ValueRef\Adapter\ConsecutiveIntValue;
+use FiiSoft\Jackdaw\ValueRef\Adapter\MemoIntValue;
+use FiiSoft\Jackdaw\ValueRef\Adapter\GenericIntValue;
 use FiiSoft\Jackdaw\ValueRef\Adapter\ReferenceToInt;
-use FiiSoft\Jackdaw\ValueRef\Adapter\RegistryIntValue;
 use FiiSoft\Jackdaw\ValueRef\Adapter\SimpleIntValue;
 
 final class IntNum
@@ -26,8 +26,8 @@ final class IntNum
             return $value;
         }
         
-        if ($value instanceof RegReader) {
-            return new RegistryIntValue($value);
+        if ($value instanceof MemoReader) {
+            return new MemoIntValue($value);
         }
         
         if (\is_iterable($value)) {

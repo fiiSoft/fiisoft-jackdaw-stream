@@ -3,20 +3,16 @@
 namespace FiiSoft\Jackdaw\Operation\Mapping\MapKeyValue;
 
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Operation\Mapping\MapKeyValue;
 
 final class OneArgKVMap extends MapKeyValue
 {
     public function handle(Signal $signal): void
     {
-        $item = $signal->item;
+        $keyValuePair = ($this->callable)($signal->item->value);
         
-        $keyValuePair = ($this->callable)($item->value);
-        $value = \reset($keyValuePair);
-        
-        $item->key = \key($keyValuePair);
-        $item->value = $value instanceof Mapper ? $value->map($item->value, $item->key) : $value;
+        $signal->item->value = \current($keyValuePair);
+        $signal->item->key = \key($keyValuePair);
         
         $this->next->handle($signal);
     }
@@ -26,10 +22,7 @@ final class OneArgKVMap extends MapKeyValue
         foreach ($stream as $value) {
             $keyValuePair = ($this->callable)($value);
             
-            $newValue = \reset($keyValuePair);
-            $key = \key($keyValuePair);
-            
-            yield $key => $newValue instanceof Mapper ? $newValue->map($value, $key) : $newValue;
+            yield \key($keyValuePair) => \current($keyValuePair);
         }
     }
 }

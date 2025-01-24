@@ -4,6 +4,9 @@ parameters:
     excludePaths:
         analyse:
             - src/Filter/OnlyIn/Mixed/MixedBothOnlyIn.php
+            - src/Internal/Collection/StreamCollection81.php
+            - src/Internal/Iterator/StreamIterator81.php
+            - src/Internal/Iterator/FastIterator81.php
     ignoreErrors:
         - '#Call to protected method*#'
         - '#Parameter \#1 \$stream of class FiiSoft\\Jackdaw\\Operation\\Sending\\Feed constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
@@ -27,7 +30,7 @@ parameters:
             message: '#Parameter \#1 \$str of function md5 expects string, string\|false given.#'
             path: 'src/Reducer/CountUnique.php'
         -
-            message: '#Method FiiSoft\\Jackdaw\\Mapper\\Split::map\(\) should return array<int, string> but returns array<int, string>\|false.#'
+            message: '#Method FiiSoft\\Jackdaw\\Mapper\\Split::map\(\) should return array<int, string> but returns list<string>\|false.#'
             path: 'src/Mapper/Split.php'
         -
             message: '#Parameter \#1 \$fields of static method FiiSoft\\Jackdaw\\Mapper\\Mappers::remove\(\) expects array<int\|string>\|int\|string, array<array<int\|string>\|int\|string> given.#'
@@ -41,3 +44,15 @@ parameters:
         -
             message: '#Property FiiSoft\\Jackdaw\\Consumer\\Reference\\RefKey::\$key is never read, only written.#'
             path: 'src/Consumer/Reference/RefKey.php'
+        -
+            message: '#Call to function method_exists\(\) with .+#'
+            path: 'src/Producer/Generator/Uuid/Ramsey/RamseyUuidGenerator.php'
+        -
+            message: '#Call to function method_exists\(\) with .+#'
+            path: 'src/Producer/Generator/Uuid/Symfony/SymfonyUuidGenerator.php'
+        -
+            message: '#Offset 0 on array.+ on left side of \?\? always exists and is not nullable.#'
+            path: 'src/Stream.php'
+        -
+            message: '#Method FiiSoft\\Jackdaw\\Stream::toArray\(\) should return array<int\|string, mixed> but returns array<int\|string, mixed>\|ArrayAccess<int\|string, mixed>.#'
+            path: 'src/Stream.php'

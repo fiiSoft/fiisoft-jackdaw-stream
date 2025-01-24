@@ -12,6 +12,7 @@ final class CountIn extends BaseOperation
     
     /**
      * @param int|null $counter REFERENCE
+     * @param-out int $counter
      */
     public function __construct(?int &$counter)
     {

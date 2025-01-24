@@ -1,5 +1,13 @@
 # Changelog
 
+## 9.0.0
+
+- added Memo which duplicates functionality of Registry but is simpler to use
+- Registry is now based on Memo
+- operations readWhile() and readUntil() can trigger consumer after reading sequence
+- added Mappers::reindexKeys()
+- mapKV() was changed and does not support Mapper as value returned from passed callable; this is the only change that is backward incompatible 
+
 ## 8.1.0
 
 - added some unique, experimental operations: readNext(), readMany(), readWhile(), readUntil()  

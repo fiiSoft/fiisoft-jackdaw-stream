@@ -2,15 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Registry;
 
-use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
-use FiiSoft\Jackdaw\Mapper\MapperReady;
-use FiiSoft\Jackdaw\Producer\ProducerReady;
-use FiiSoft\Jackdaw\ValueRef\IntProvider;
+use FiiSoft\Jackdaw\Memo\MemoReader;
 
-interface RegReader extends ProducerReady, MapperReady, DiscriminatorReady, IntProvider
+interface RegReader extends MemoReader
 {
-    /**
-     * @return mixed|null
-     */
-    public function read();
 }

@@ -10,6 +10,7 @@ use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\{Check, SignalHandler};
 use FiiSoft\Jackdaw\Mapper\MapperReady;
+use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Operation\{Collecting\Categorize, Collecting\Fork, Collecting\ForkReady, Collecting\Gather,
     Collecting\Reverse, Collecting\Segregate, Collecting\Sort, Collecting\SortLimited, Collecting\Tail,
     Filtering\EveryNth, Filtering\Extrema, Filtering\Filter as OperationFilter, Filtering\FilterBy,
@@ -27,7 +28,6 @@ use FiiSoft\Jackdaw\Operation\{Collecting\Categorize, Collecting\Fork, Collectin
     Terminating\Last, Terminating\Reduce};
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Reducer\Reducer;
-use FiiSoft\Jackdaw\Registry\RegWriter;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\ValueRef\IntProvider;
 
@@ -488,9 +488,9 @@ final class Operations
         return Fork::create($discriminator, $prototype);
     }
     
-    public static function remember(RegWriter $registry): Operation
+    public static function remember(MemoWriter $memo): Operation
     {
-        return new Remember($registry);
+        return new Remember($memo);
     }
     
     /**
@@ -567,18 +567,20 @@ final class Operations
     
     /**
      * @param Filter|callable|mixed $filter
+     * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
-    public static function readWhile($filter, ?int $mode = null, bool $reindex = false): Operation
+    public static function readWhile($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Operation
     {
-        return new ReadManyWhile($filter, $mode, $reindex, false);
+        return new ReadManyWhile($filter, $mode, $reindex, false, $consumer);
     }
     
     /**
      * @param Filter|callable|mixed $filter
+     * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
-    public static function readUntil($filter, ?int $mode = null, bool $reindex = false): Operation
+    public static function readUntil($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Operation
     {
-        return new ReadManyWhile($filter, $mode, $reindex, true);
+        return new ReadManyWhile($filter, $mode, $reindex, true, $consumer);
     }
     
     public static function collect(Stream $stream, bool $reindex = false): FinalOperation

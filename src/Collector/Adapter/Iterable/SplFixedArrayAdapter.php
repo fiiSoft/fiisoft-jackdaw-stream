@@ -9,6 +9,7 @@ final class SplFixedArrayAdapter extends BaseIterableCollector
     /** @var \SplFixedArray<mixed> */
     private \SplFixedArray $fixedArray;
     
+    /** @var int<0, max> */
     private int $index = 0;
     
     private bool $valueSet = false;
@@ -49,6 +50,8 @@ final class SplFixedArrayAdapter extends BaseIterableCollector
         foreach ($this->fixedArray as $value) {
             if ($value !== null) {
                 ++$count;
+            } else {
+                break;
             }
         }
         

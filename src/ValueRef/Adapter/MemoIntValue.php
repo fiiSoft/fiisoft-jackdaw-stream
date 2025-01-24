@@ -2,13 +2,13 @@
 
 namespace FiiSoft\Jackdaw\ValueRef\Adapter;
 
-use FiiSoft\Jackdaw\Registry\RegReader;
+use FiiSoft\Jackdaw\Memo\MemoReader;
 
-final class RegistryIntValue extends VolatileIntValue
+final class MemoIntValue extends VolatileIntValue
 {
-    private RegReader $reader;
+    private MemoReader $reader;
     
-    public function __construct(RegReader $reader)
+    public function __construct(MemoReader $reader)
     {
         $this->reader = $reader;
     }
