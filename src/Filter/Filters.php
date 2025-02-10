@@ -3,39 +3,41 @@
 namespace FiiSoft\Jackdaw\Filter;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
-use FiiSoft\Jackdaw\Filter\CheckType\IsArray;
-use FiiSoft\Jackdaw\Filter\CheckType\IsBool;
-use FiiSoft\Jackdaw\Filter\CheckType\IsCountable;
-use FiiSoft\Jackdaw\Filter\CheckType\IsDateTime;
-use FiiSoft\Jackdaw\Filter\CheckType\IsEmpty;
-use FiiSoft\Jackdaw\Filter\CheckType\IsFloat;
-use FiiSoft\Jackdaw\Filter\CheckType\IsInt;
-use FiiSoft\Jackdaw\Filter\CheckType\IsNull;
-use FiiSoft\Jackdaw\Filter\CheckType\IsNumeric;
-use FiiSoft\Jackdaw\Filter\CheckType\IsString;
-use FiiSoft\Jackdaw\Filter\CheckType\NotEmpty;
-use FiiSoft\Jackdaw\Filter\CheckType\NotNull;
+use FiiSoft\Jackdaw\Filter\Adapter\SequencePredicateAdapter;
+use FiiSoft\Jackdaw\Filter\CheckType\TypeFilterFactory;
+use FiiSoft\Jackdaw\Filter\CheckType\TypeFilterPicker;
 use FiiSoft\Jackdaw\Filter\Generic\GenericFilter;
 use FiiSoft\Jackdaw\Filter\Logic\OpAND\BaseAND;
 use FiiSoft\Jackdaw\Filter\Logic\OpOR\BaseOR;
 use FiiSoft\Jackdaw\Filter\Logic\OpXNOR\BaseXNOR;
 use FiiSoft\Jackdaw\Filter\Logic\OpXOR\BaseXOR;
 use FiiSoft\Jackdaw\Filter\Number\NumberFilterFactory;
+use FiiSoft\Jackdaw\Filter\Number\NumberFilterPicker;
 use FiiSoft\Jackdaw\Filter\OnlyIn\OnlyIn;
 use FiiSoft\Jackdaw\Filter\OnlyWith\OnlyWith;
-use FiiSoft\Jackdaw\Filter\Simple\Equal;
-use FiiSoft\Jackdaw\Filter\Simple\NotEqual;
-use FiiSoft\Jackdaw\Filter\Simple\NotSame;
-use FiiSoft\Jackdaw\Filter\Simple\Same;
+use FiiSoft\Jackdaw\Filter\Simple\SimpleFilterFactory;
+use FiiSoft\Jackdaw\Filter\Simple\SimpleFilterPicker;
 use FiiSoft\Jackdaw\Filter\Size\Count\CountFilterFactory;
+use FiiSoft\Jackdaw\Filter\Size\Count\CountFilterPicker;
 use FiiSoft\Jackdaw\Filter\Size\Length\LengthFilterFactory;
+use FiiSoft\Jackdaw\Filter\Size\Length\LengthFilterPicker;
+use FiiSoft\Jackdaw\Filter\String\StringFilter;
 use FiiSoft\Jackdaw\Filter\String\StringFilterFactory;
+use FiiSoft\Jackdaw\Filter\String\StringFilterPicker;
 use FiiSoft\Jackdaw\Filter\Time\TimeFilterFactory;
+use FiiSoft\Jackdaw\Filter\Time\TimeFilterPicker;
+use FiiSoft\Jackdaw\Filter\ValRef\Adapter\MemoReader\MemoFilterPicker;
+use FiiSoft\Jackdaw\Filter\ValRef\Adapter\Reference\ReferenceFilterPicker;
+use FiiSoft\Jackdaw\Filter\ValRef\FilterPicker;
+use FiiSoft\Jackdaw\Filter\ValRef\Picker\Custom\IntValNumberFilterPicker;
+use FiiSoft\Jackdaw\Memo\MemoReader;
+use FiiSoft\Jackdaw\Memo\SequencePredicate;
+use FiiSoft\Jackdaw\ValueRef\IntValue;
 
 final class Filters
 {
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function getAdapter($filter, ?int $mode = null): Filter
     {
@@ -75,6 +77,10 @@ final class Filters
             return GenericFilter::create($filter, $mode);
         }
         
+        if ($filter instanceof SequencePredicate) {
+            return new SequencePredicateAdapter($filter);
+        }
+        
         if (\is_object($filter)) {
             throw InvalidParamException::describe('filter', $filter);
         }
@@ -82,99 +88,109 @@ final class Filters
         return self::same($filter, $mode);
     }
     
-    public static function time(?int $mode = null): TimeFilterFactory
+    public static function time(?int $mode = null): TimeFilterPicker
     {
         return TimeFilterFactory::instance($mode);
     }
     
-    public static function string(?int $mode = null): StringFilterFactory
+    public static function string(?int $mode = null): StringFilterPicker
     {
         return StringFilterFactory::instance($mode);
     }
     
-    public static function size(?int $mode = null): CountFilterFactory
+    public static function size(?int $mode = null): CountFilterPicker
     {
         return CountFilterFactory::instance($mode);
     }
     
-    public static function length(?int $mode = null): LengthFilterFactory
+    public static function length(?int $mode = null): LengthFilterPicker
     {
         return LengthFilterFactory::instance($mode);
     }
     
-    public static function number(?int $mode = null): NumberFilterFactory
+    public static function number(?int $mode = null): NumberFilterPicker
     {
         return NumberFilterFactory::instance($mode);
     }
     
+    public static function type(?int $mode = null): TypeFilterPicker
+    {
+        return TypeFilterFactory::instance($mode);
+    }
+    
     public static function isEmpty(?int $mode = null): Filter
     {
-        return IsEmpty::create($mode);
+        return self::type($mode)->isEmpty();
     }
     
     public static function notEmpty(?int $mode = null): Filter
     {
-        return NotEmpty::create($mode);
+        return self::type($mode)->notEmpty();
     }
     
     public static function isDateTime(?int $mode = null): Filter
     {
-        return IsDateTime::create($mode);
+        return self::type($mode)->isDateTime();
     }
     
     public static function isCountable(?int $mode = null): Filter
     {
-        return IsCountable::create($mode);
+        return self::type($mode)->isCountable();
     }
     
     public static function isNull(?int $mode = null): Filter
     {
-        return IsNull::create($mode);
+        return self::type($mode)->isNull();
     }
     
     public static function notNull(?int $mode = null): Filter
     {
-        return NotNull::create($mode);
+        return self::type($mode)->notNull();
     }
     
-    /**
-     * @param array<string|int, mixed> $values
-     */
-    public static function onlyIn(array $values, ?int $mode = null): Filter
+    public static function isInt(?int $mode = null): Filter
     {
-        return OnlyIn::create($mode, $values);
+        return self::type($mode)->isInt();
     }
     
-    /**
-     * @param mixed $value
-     */
-    public static function equal($value, ?int $mode = null): Filter
+    public static function isNumeric(?int $mode = null): Filter
     {
-        return Equal::create($mode, $value);
+        return self::type($mode)->isNumeric();
     }
     
-    /**
-     * @param mixed $value
-     */
-    public static function notEqual($value, ?int $mode = null): Filter
+    public static function isString(?int $mode = null): Filter
     {
-        return NotEqual::create($mode, $value);
+        return self::type($mode)->isString();
     }
     
-    /**
-     * @param mixed $value
-     */
-    public static function same($value, ?int $mode = null): Filter
+    public static function isBool(?int $mode = null): Filter
     {
-        return Same::create($mode, $value);
+        return self::type($mode)->isBool();
     }
     
-    /**
-     * @param mixed $value
-     */
-    public static function notSame($value, ?int $mode = null): Filter
+    public static function isFloat(?int $mode = null): Filter
     {
-        return NotSame::create($mode, $value);
+        return self::type($mode)->isFloat();
+    }
+    
+    public static function isArray(?int $mode = null): Filter
+    {
+        return self::type($mode)->isArray();
+    }
+    
+    public static function contains(string $value, bool $ignoreCase = false): StringFilter
+    {
+        return self::string()->contains($value, $ignoreCase);
+    }
+    
+    public static function startsWith(string $value, bool $ignoreCase = false): StringFilter
+    {
+        return self::string()->startsWith($value, $ignoreCase);
+    }
+    
+    public static function endsWith(string $value, bool $ignoreCase = false): StringFilter
+    {
+        return self::string()->endsWith($value, $ignoreCase);
     }
     
     /**
@@ -209,43 +225,49 @@ final class Filters
         return self::number($mode)->le($value);
     }
     
-    public static function isInt(?int $mode = null): Filter
+    private static function simple(?int $mode = null): SimpleFilterPicker
     {
-        return IsInt::create($mode);
-    }
-    
-    public static function isNumeric(?int $mode = null): Filter
-    {
-        return IsNumeric::create($mode);
-    }
-    
-    public static function isString(?int $mode = null): Filter
-    {
-        return IsString::create($mode);
-    }
-    
-    public static function isBool(?int $mode = null): Filter
-    {
-        return IsBool::create($mode);
-    }
-    
-    public static function isFloat(?int $mode = null): Filter
-    {
-        return IsFloat::create($mode);
-    }
-    
-    public static function isArray(?int $mode = null): Filter
-    {
-        return IsArray::create($mode);
+        return SimpleFilterFactory::instance($mode);
     }
     
     /**
-     * @param string|int $field
-     * @param Filter|callable|mixed $filter
+     * @param mixed $value
      */
-    public static function filterBy($field, $filter): Filter
+    public static function equal($value, ?int $mode = null): Filter
     {
-        return FilterBy::create($field, $filter);
+        return self::simple($mode)->equal($value);
+    }
+    
+    /**
+     * @param mixed $value
+     */
+    public static function notEqual($value, ?int $mode = null): Filter
+    {
+        return self::simple($mode)->notEqual($value);
+    }
+    
+    /**
+     * @param mixed $value
+     */
+    public static function same($value, ?int $mode = null): Filter
+    {
+        return self::simple($mode)->same($value);
+    }
+    
+    /**
+     * @param mixed $value
+     */
+    public static function notSame($value, ?int $mode = null): Filter
+    {
+        return self::simple($mode)->notSame($value);
+    }
+    
+    /**
+     * @param array<string|int, mixed> $values
+     */
+    public static function onlyIn(array $values, ?int $mode = null): Filter
+    {
+        return OnlyIn::create($mode, $values);
     }
     
     /**
@@ -259,23 +281,17 @@ final class Filters
         return OnlyWith::create($fields, $allowNulls);
     }
     
-    public static function contains(string $value, bool $ignoreCase = false): Filter
+    /**
+     * @param string|int $field
+     * @param FilterReady|callable|mixed $filter
+     */
+    public static function filterBy($field, $filter): Filter
     {
-        return self::string()->contains($value, $ignoreCase);
-    }
-    
-    public static function startsWith(string $value, bool $ignoreCase = false): Filter
-    {
-        return self::string()->startsWith($value, $ignoreCase);
-    }
-    
-    public static function endsWith(string $value, bool $ignoreCase = false): Filter
-    {
-        return self::string()->endsWith($value, $ignoreCase);
+        return FilterBy::create($field, $filter);
     }
     
     /**
-     * @param Filter|callable|mixed ...$filters
+     * @param FilterReady|callable|mixed ...$filters
      */
     public static function AND(...$filters): Filter
     {
@@ -283,7 +299,7 @@ final class Filters
     }
     
     /**
-     * @param Filter|callable|mixed ...$filters
+     * @param FilterReady|callable|mixed ...$filters
      */
     public static function OR(...$filters): Filter
     {
@@ -291,8 +307,8 @@ final class Filters
     }
     
     /**
-     * @param Filter|callable|mixed $first
-     * @param Filter|callable|mixed $second
+     * @param FilterReady|callable|mixed $first
+     * @param FilterReady|callable|mixed $second
      */
     public static function XOR($first, $second): Filter
     {
@@ -300,8 +316,8 @@ final class Filters
     }
     
     /**
-     * @param Filter|callable|mixed $first
-     * @param Filter|callable|mixed $second
+     * @param FilterReady|callable|mixed $first
+     * @param FilterReady|callable|mixed $second
      */
     public static function XNOR($first, $second): Filter
     {
@@ -309,7 +325,7 @@ final class Filters
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function NOT($filter): Filter
     {
@@ -322,5 +338,23 @@ final class Filters
     public static function hasField($field): Filter
     {
         return self::getAdapter(static fn($row): bool => isset($row[$field]));
+    }
+    
+    /**
+     * @param array<mixed>|scalar|null $var REFERENCE
+     */
+    public static function readFrom(&$var): FilterPicker
+    {
+        return new ReferenceFilterPicker($var);
+    }
+    
+    public static function wrapIntValue(IntValue $value): NumberFilterPicker
+    {
+        return new IntValNumberFilterPicker($value);
+    }
+    
+    public static function wrapMemoReader(MemoReader $memo): FilterPicker
+    {
+        return new MemoFilterPicker($memo);
     }
 }

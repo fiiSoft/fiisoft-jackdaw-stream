@@ -1,8 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace FiiSoft\Jackdaw\Transformer;
 
-interface Transformer
+interface Transformer extends TransformerReady
 {
     /**
      * @param mixed $value

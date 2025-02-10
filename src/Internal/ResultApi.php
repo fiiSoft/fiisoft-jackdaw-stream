@@ -3,12 +3,10 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Consumer\Consumer;
-use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
-use FiiSoft\Jackdaw\Transformer\Transformer;
+use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
 /**
  * @extends \IteratorAggregate<string|int, mixed>
@@ -29,7 +27,7 @@ interface ResultApi extends HandlerReady, ResultCaster, Destroyable, \Countable,
     /**
      * Register single transformer to perform final opertations on result (when result is available).
      *
-     * @param Transformer|Mapper|Reducer|Filter|callable|null $transformer
+     * @param TransformerReady|callable|null $transformer
      */
     public function transform($transformer): ResultApi;
     

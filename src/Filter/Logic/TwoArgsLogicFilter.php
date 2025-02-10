@@ -3,21 +3,22 @@
 namespace FiiSoft\Jackdaw\Filter\Logic;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
 
-abstract class TwoArgsLogicFilter extends LogicFilter
+abstract class TwoArgsLogicFilter extends BaseLogicFilter
 {
     protected Filter $first, $second;
     
     /**
-     * @param Filter|callable|mixed $first
-     * @param Filter|callable|mixed $second
+     * @param FilterReady|callable|mixed $first
+     * @param FilterReady|callable|mixed $second
      */
     abstract protected static function create($first, $second, ?int $mode = null): Filter;
     
     /**
-     * @param Filter|callable|mixed $first
-     * @param Filter|callable|mixed $second
+     * @param FilterReady|callable|mixed $first
+     * @param FilterReady|callable|mixed $second
      */
     protected function __construct($first, $second, ?int $mode = null)
     {

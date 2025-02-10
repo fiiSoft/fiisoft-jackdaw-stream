@@ -8,7 +8,7 @@ use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Consumer\{ConsumerReady, Consumers};
 use FiiSoft\Jackdaw\Discriminator\{DiscriminatorReady, Discriminators};
 use FiiSoft\Jackdaw\Exception\{InvalidParamException, StreamExceptionFactory};
-use FiiSoft\Jackdaw\Filter\{Filter, Filters};
+use FiiSoft\Jackdaw\Filter\{FilterReady, Filters};
 use FiiSoft\Jackdaw\Handler\{ErrorHandler, OnError};
 use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyable, Executable, Helper, Item,
     Iterator\BaseFastIterator, Iterator\BaseStreamIterator, Iterator\Interruption, Mode, Pipe, Signal, SignalHandler,
@@ -125,14 +125,17 @@ final class Stream extends StreamSource
         return $this;
     }
     
-    public function skip(int $offset): Stream
+    /**
+     * @param IntProvider|callable|int $offset
+     */
+    public function skip($offset): Stream
     {
         $this->chainOperation(Operations::skip($offset));
         return $this;
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function skipWhile($filter, ?int $mode = null): Stream
     {
@@ -141,7 +144,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function skipUntil($filter, ?int $mode = null): Stream
     {
@@ -263,7 +266,7 @@ final class Stream extends StreamSource
      * Assert that element in stream satisfies given requirements.
      * If not, it throws non-catchable exception.
      *
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      * @throws AssertionFailed
      */
     public function assert($filter, ?int $mode = null): Stream
@@ -282,7 +285,7 @@ final class Stream extends StreamSource
     
     /**
      * @param string|int $field
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function filterBy($field, $filter): Stream
     {
@@ -291,7 +294,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function filter($filter, ?int $mode = null): Stream
     {
@@ -301,7 +304,7 @@ final class Stream extends StreamSource
     
     /**
      * @param ConditionReady|callable $condition
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function filterWhen($condition, $filter, ?int $mode = null): Stream
     {
@@ -311,7 +314,7 @@ final class Stream extends StreamSource
     
     /**
      * @param ConditionReady|callable $condition
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function filterWhile($condition, $filter, ?int $mode = null): Stream
     {
@@ -321,7 +324,7 @@ final class Stream extends StreamSource
     
     /**
      * @param ConditionReady|callable $condition
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function filterUntil($condition, $filter, ?int $mode = null): Stream
     {
@@ -331,7 +334,7 @@ final class Stream extends StreamSource
     
     /**
      * @param string|int $field
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function omitBy($field, $filter): Stream
     {
@@ -340,7 +343,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function omit($filter, ?int $mode = null): Stream
     {
@@ -350,7 +353,7 @@ final class Stream extends StreamSource
     
     /**
      * @param ConditionReady|callable $condition
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function omitWhen($condition, $filter, ?int $mode = null): Stream
     {
@@ -492,6 +495,16 @@ final class Stream extends StreamSource
     public function mapUntil($condition, $mapper): Stream
     {
         $this->chainOperation(Operations::mapUntil($condition, $mapper));
+        return $this;
+    }
+    
+    /**
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
+     * @param array<string|int, MapperReady|callable|iterable|mixed> $mappers
+     */
+    public function mapBy($discriminator, array $mappers): Stream
+    {
+        $this->chainOperation(Operations::mapBy($discriminator, $mappers));
         return $this;
     }
     
@@ -815,7 +828,10 @@ final class Stream extends StreamSource
         return $this;
     }
     
-    public function chunk(int $size, bool $reindex = false): Stream
+    /**
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $size
+     */
+    public function chunk($size, bool $reindex = false): Stream
     {
         $this->chainOperation(Operations::chunk($size, $reindex));
         return $this;
@@ -843,7 +859,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function accumulate($filter, bool $reindex = false, ?int $mode = null): Stream
     {
@@ -852,7 +868,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function separateBy($filter, bool $reindex = false, ?int $mode = null): Stream
     {
@@ -906,7 +922,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function extractWhen($filter, ?int $mode = null): Stream
     {
@@ -926,7 +942,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function removeWhen($filter, ?int $mode = null): Stream
     {
@@ -1015,7 +1031,7 @@ final class Stream extends StreamSource
     /**
      * It works like conditional limit().
      *
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function while($filter, ?int $mode = null): Stream
     {
@@ -1026,7 +1042,7 @@ final class Stream extends StreamSource
     /**
      * It works like conditional limit().
      *
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function until($filter, ?int $mode = null): Stream
     {
@@ -1060,7 +1076,7 @@ final class Stream extends StreamSource
      * With first element which does not meet condition, gathering values is aborted
      * and array of collected elements is passed to next step. No other items in the stream will be read.
      *
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function gatherWhile($filter, bool $reindex = false, ?int $mode = null): Stream
     {
@@ -1072,7 +1088,7 @@ final class Stream extends StreamSource
      * in which case gathering of values is aborted and array of collected elements is passed to next step.
      * No other items in the stream will be read.
      *
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function gatherUntil($filter, bool $reindex = false, ?int $mode = null): Stream
     {
@@ -1243,7 +1259,7 @@ final class Stream extends StreamSource
     /**
      * Create new stream from the current one and set provided Producer as source of data for it.
      *
-     * @param ProducerReady|resource|callable|iterable<string|int, mixed>|string $producer
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|string $producer
      */
     public function wrap($producer): Stream
     {
@@ -1254,8 +1270,8 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param IntProvider|iterable<int>|callable|int $howMany how many elements should be read from the stream
-     *                                                        before passing the last one down
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $howMany how many elements should be read from
+     *                                                                    the stream before passing the last one down
      */
     public function readNext($howMany = 1): Stream
     {
@@ -1264,8 +1280,8 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param IntProvider|iterable<int>|callable|int $howMany how many elements should be read from the stream;
-     *                                                        every read element will be passed down
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $howMany how many elements should be read
+     *                                                        from the stream; every read element will be passed down
      */
     public function readMany($howMany, bool $reindex = false): Stream
     {
@@ -1274,7 +1290,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
     public function readWhile($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Stream
@@ -1284,7 +1300,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
     public function readUntil($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Stream
@@ -1411,7 +1427,7 @@ final class Stream extends StreamSource
     /**
      * It collects data as long as the condition is true and then terminates processing when it is not.
      *
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function collectWhile($filter, ?int $mode = null): LastOperation
     {
@@ -1419,7 +1435,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function collectUntil($filter, ?int $mode = null): LastOperation
     {
@@ -1471,7 +1487,7 @@ final class Stream extends StreamSource
     /**
      * Tell if element occurs in stream.
      *
-     * @param Filter|callable|mixed $value
+     * @param FilterReady|callable|mixed $value
      */
     public function has($value, int $mode = Check::VALUE): LastOperation
     {
@@ -1505,7 +1521,7 @@ final class Stream extends StreamSource
     /**
      * Return first element in stream which satisfies given predicate or null when element was not found.
      *
-     * @param Filter|callable|mixed $predicate
+     * @param FilterReady|callable|mixed $predicate
      */
     public function find($predicate, int $mode = Check::VALUE): LastOperation
     {
@@ -1513,7 +1529,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Filter|callable|mixed $predicate
+     * @param FilterReady|callable|mixed $predicate
      */
     public function findMax(int $limit, $predicate, int $mode = Check::VALUE): LastOperation
     {
@@ -1636,6 +1652,27 @@ final class Stream extends StreamSource
         }
         
         $this->execute();
+    }
+    
+    /**
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|string $producer
+     */
+    protected function consume($producer): void
+    {
+        if (!$this->isInitialized) {
+            $this->prepareToRun();
+            $this->initialize();
+        }
+        
+        if ($this->signal->isWorking) {
+            $item = $this->signal->item;
+            
+            foreach (Producers::getAdapter($producer) as $item->key => $item->value) {
+                if ($this->pushTheItemThroughThePipe()) {
+                    break;
+                }
+            }
+        }
     }
     
     protected function resume(): void
@@ -1798,7 +1835,7 @@ final class Stream extends StreamSource
             ITERATION_LOOP:
             if ($this->signal->isWorking) {
                 
-                PROCESS_NEXT_ITEM:
+                TRY_AGAIN:
                 if ($this->source->hasNextItem()) {
                     $this->pipe->head->handle($this->signal);
                 } elseif (empty($this->pipe->stack)) {
@@ -1815,31 +1852,97 @@ final class Stream extends StreamSource
                 goto ITERATION_LOOP;
             }
             
-            $this->streamingFinished = true;
-            if ($this->pipe->head->streamingFinished($this->signal)) {
-                $this->streamingFinished = false;
-                goto PROCESS_NEXT_ITEM;
+            if ($this->shouldContinueAfterStreamingFinished()) {
+                goto TRY_AGAIN;
             }
             
         } catch (Interruption|AssertionFailed $e) {
             throw $e;
         } catch (\Throwable $e) {
-            foreach ($this->onErrorHandlers as $handler) {
-                $skip = $handler->handle($e, $this->signal->item->key, $this->signal->item->value);
-                if ($skip === true && !$this->streamingFinished) {
-                    goto ITERATION_LOOP;
-                }
-                
-                if ($skip === false) {
-                    $this->signal->abort();
-                    return false;
-                }
+            if ($this->shouldContinueAfterError($e)) {
+                goto ITERATION_LOOP;
             }
-            
-            throw $e;
         }
         
         return false;
+    }
+    
+    /**
+     * @return bool returns true when stops working
+     */
+    private function pushTheItemThroughThePipe(): bool
+    {
+        try {
+            goto PUSH_ITEM; //THIS IS MARVELOUS
+            
+            ITERATION_LOOP:
+            if ($this->signal->isWorking) {
+                
+                TRY_AGAIN:
+                if ($this->source->hasNextItem()) {
+                    PUSH_ITEM:
+                    $this->pipe->head->handle($this->signal);
+                } elseif (empty($this->pipe->stack)) {
+                    $this->signal->streamIsEmpty();
+                } else {
+                    $this->isFirstProducer = $this->source->restoreFromStack();
+                    $this->signal->resume();
+                }
+                
+                if ($this->isFirstProducer) {
+                    return false;
+                }
+                
+                goto ITERATION_LOOP;
+            }
+            
+            if ($this->shouldContinueAfterStreamingFinished()) {
+                goto TRY_AGAIN;
+            }
+            
+        } catch (Interruption|AssertionFailed $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            if ($this->shouldContinueAfterError($e)) {
+                if ($this->isFirstProducer) {
+                    return false;
+                }
+                
+                goto ITERATION_LOOP;
+            }
+        }
+        
+        return true;
+    }
+    
+    private function shouldContinueAfterStreamingFinished(): bool
+    {
+        $this->streamingFinished = true;
+        
+        if ($this->pipe->head->streamingFinished($this->signal)) {
+            $this->streamingFinished = false;
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private function shouldContinueAfterError(\Throwable $e): bool
+    {
+        foreach ($this->onErrorHandlers as $handler) {
+            $skip = $handler->handle($e, $this->signal->item->key, $this->signal->item->value);
+            
+            if ($skip === true && !$this->streamingFinished) {
+                return true;
+            }
+            
+            if ($skip === false) {
+                $this->signal->abort();
+                return false;
+            }
+        }
+        
+        throw $e;
     }
     
     protected function restartWith(Producer $producer, Operation $operation): void

@@ -2,13 +2,17 @@
 
 namespace FiiSoft\Jackdaw\Memo;
 
+use FiiSoft\Jackdaw\Internal\Destroyable;
+use FiiSoft\Jackdaw\Mapper\MapperReady;
+use FiiSoft\Jackdaw\Matcher\Matcher;
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
 /**
  * @extends \IteratorAggregate<string|int, mixed>
  */
-interface SequenceMemo extends MemoWriter, ProducerReady, \IteratorAggregate, \Countable
+interface SequenceMemo extends MemoWriter, ProducerReady, MapperReady, TransformerReady, Destroyable, \IteratorAggregate
 {
     public function get(int $index): Entry;
     
@@ -30,6 +34,8 @@ interface SequenceMemo extends MemoWriter, ProducerReady, \IteratorAggregate, \C
      */
     public function keyOf(int $index);
     
+    public function count(): int;
+    
     public function isFull(): bool;
     
     public function isEmpty(): bool;
@@ -46,7 +52,7 @@ interface SequenceMemo extends MemoWriter, ProducerReady, \IteratorAggregate, \C
     /**
      * @template T
      * @param T $initial
-     * @param callable $reducer Callable accepts three arguments: accumulator, value, key
+     * @param callable(T, mixed, string|int): T $reducer Callable accepts three arguments: accumulator, value, key
      * @return T
      */
     public function fold($initial, callable $reducer);
@@ -59,6 +65,28 @@ interface SequenceMemo extends MemoWriter, ProducerReady, \IteratorAggregate, \C
      * @return mixed
      */
     public function reduce(callable $reducer);
+    
+    /**
+     * @param SequenceInspector|callable(SequenceMemo): bool $inspector callable gets SequenceMemo as the argument
+     *                                                                  and must return bool
+     */
+    public function inspect($inspector): SequencePredicate;
+    
+    /**
+     * When callable $matcher returns int, it must work like spaceship operator, so 0 means compared values are equal.
+     *
+     * When callable $matcher accepts two arguments, the order of arguments passed to it is:
+     * (sequenceValue, patternValue), or (sequenceKey, patternKey) - depending on Matcher's operating mode.
+     *
+     * When callable $matcher accepts four arguments, the order of arguments passed to it is:
+     * (sequenceValue, patternValue, sequenceKey, patternKey).
+     *
+     * When $matcher is NULL then sequence and $pattern elements are compared by their values only.
+     *
+     * @param array<string|int, mixed> $pattern
+     * @param Matcher|callable|null $matcher callable must accept two or four arguments and return bool or int
+     */
+    public function matches(array $pattern, $matcher = null): SequencePredicate;
     
     public function stream(): Stream;
 }

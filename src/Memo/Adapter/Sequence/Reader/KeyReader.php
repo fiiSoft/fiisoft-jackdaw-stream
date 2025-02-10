@@ -9,6 +9,6 @@ final class KeyReader extends BaseSequenceReader
      */
     public function read()
     {
-        return $this->sequence->entries[$this->index]->key;
+        return $this->sequence->get($this->index)->key;
     }
 }

@@ -11,6 +11,10 @@ use FiiSoft\Jackdaw\Filter\Logic\OpOR\FilterOR;
 use FiiSoft\Jackdaw\Filter\Logic\OpOR\FilterORBoth;
 use FiiSoft\Jackdaw\Filter\Time\Day;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Memo\Inspector\SequenceIsEmpty;
+use FiiSoft\Jackdaw\Memo\Inspector\SequenceIsFull;
+use FiiSoft\Jackdaw\Memo\Memo;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -1327,5 +1331,481 @@ final class FiltersBTest extends TestCase
         self::assertFalse($filter->isAllowed(2, 1));
         self::assertFalse($filter->isAllowed(1, 1));
         self::assertTrue($filter->isAllowed(2, 2));
+    }
+    
+    public function test_adapter_of_SequenceInspector_is_insensitive_to_the_mode_change(): void
+    {
+        $filter = Filters::getAdapter(Memo::sequence()->inspect(static fn(): bool => true));
+        
+        self::assertSame($filter, $filter->checkAny());
+        self::assertSame($filter, $filter->checkBoth());
+        self::assertSame($filter, $filter->checkKey());
+        self::assertSame($filter, $filter->checkValue());
+    }
+    
+    public function test_negation_of_SequenceInspector_filter_adapter(): void
+    {
+        $sequence = Memo::sequence(1);
+        
+        $isEmpty = Filters::getAdapter($sequence->inspect(new SequenceIsEmpty()));
+        $isFull = Filters::getAdapter($sequence->inspect(new SequenceIsFull()));
+        
+        self::assertTrue($isEmpty->isAllowed('a', 'g'));
+        self::assertFalse($isFull->isAllowed('a', 'g'));
+        
+        self::assertFalse($isEmpty->negate()->isAllowed('a', 'g'));
+        self::assertTrue($isFull->negate()->isAllowed('a', 'g'));
+        
+        $sequence->write(1, 0);
+        
+        self::assertFalse($isEmpty->isAllowed('a', 'g'));
+        self::assertTrue($isFull->isAllowed('a', 'g'));
+        
+        self::assertTrue($isEmpty->negate()->isAllowed('a', 'g'));
+        self::assertFalse($isFull->negate()->isAllowed('a', 'g'));
+    }
+    
+    public function test_filter_variable_does_not_relay_on_mode(): void
+    {
+        $var = 3;
+        $filter = Filters::readFrom($var)->is()->same(1);
+        
+        self::assertSame($filter, $filter->checkValue());
+        self::assertSame($filter, $filter->checkKey());
+        self::assertSame($filter, $filter->checkAny());
+        self::assertSame($filter, $filter->checkBoth());
+    }
+    
+    public function test_filter_variable_reference_is(): void
+    {
+        $var = 3;
+        $filter = Filters::readFrom($var)->is();
+        
+        self::assertTrue($filter->same(3)->isAllowed('a'));
+        self::assertFalse($filter->same(2)->isAllowed('a'));
+        
+        self::assertTrue($filter->notSame(2)->isAllowed('a'));
+        self::assertFalse($filter->notSame(3)->isAllowed('a'));
+        
+        self::assertTrue($filter->equal('3')->isAllowed('a'));
+        self::assertFalse($filter->equal('2')->isAllowed('a'));
+        
+        self::assertTrue($filter->notEqual('2')->isAllowed('a'));
+        self::assertFalse($filter->notEqual('3')->isAllowed('a'));
+    }
+    
+    public function test_filter_variable_reference_length(): void
+    {
+        $var = 'foo';
+        $filter = Filters::readFrom($var)->length();
+        
+        self::assertTrue($filter->isString()->isAllowed('a'));
+        self::assertFalse($filter->isString()->negate()->isAllowed('a'));
+        
+        self::assertTrue($filter->eq(3)->isAllowed('a'));
+        self::assertFalse($filter->eq(2)->isAllowed('a'));
+        
+        self::assertFalse($filter->not()->eq(3)->isAllowed('a'));
+        self::assertTrue($filter->not()->eq(2)->isAllowed('a'));
+        
+        self::assertTrue($filter->ne(2)->isAllowed('a'));
+        self::assertFalse($filter->ne(3)->isAllowed('a'));
+        
+        self::assertTrue($filter->le(4)->isAllowed('a'));
+        self::assertFalse($filter->le(2)->isAllowed('a'));
+        
+        self::assertTrue($filter->ge(2)->isAllowed('a'));
+        self::assertFalse($filter->ge(4)->isAllowed('a'));
+        
+        self::assertTrue($filter->lt(4)->isAllowed('a'));
+        self::assertFalse($filter->lt(3)->isAllowed('a'));
+        
+        self::assertTrue($filter->gt(2)->isAllowed('a'));
+        self::assertFalse($filter->gt(3)->isAllowed('a'));
+        
+        self::assertTrue($filter->inside(2, 4)->isAllowed('a'));
+        self::assertFalse($filter->inside(3, 4)->isAllowed('a'));
+        
+        self::assertTrue($filter->outside(4, 8)->isAllowed('a'));
+        self::assertFalse($filter->outside(2, 4)->isAllowed('a'));
+        
+        self::assertTrue($filter->between(3, 4)->isAllowed('a'));
+        self::assertFalse($filter->between(4, 5)->isAllowed('a'));
+        
+        self::assertTrue($filter->notInside(3, 4)->isAllowed('a'));
+        self::assertFalse($filter->notInside(2, 4)->isAllowed('a'));
+    }
+    
+    public function test_filter_variable_reference_size(): void
+    {
+        $var = ['a', 'b', 'c'];
+        $filter = Filters::readFrom($var)->size();
+        
+        self::assertTrue($filter->isCountable()->isAllowed('a'));
+        self::assertFalse($filter->isCountable()->negate()->isAllowed('a'));
+        
+        self::assertTrue($filter->eq(3)->isAllowed('a'));
+        self::assertFalse($filter->eq(2)->isAllowed('a'));
+        
+        self::assertFalse($filter->not()->eq(3)->isAllowed('a'));
+        self::assertTrue($filter->not()->eq(2)->isAllowed('a'));
+        
+        self::assertTrue($filter->ne(2)->isAllowed('a'));
+        self::assertFalse($filter->ne(3)->isAllowed('a'));
+        
+        self::assertTrue($filter->le(4)->isAllowed('a'));
+        self::assertFalse($filter->le(2)->isAllowed('a'));
+        
+        self::assertTrue($filter->ge(2)->isAllowed('a'));
+        self::assertFalse($filter->ge(4)->isAllowed('a'));
+        
+        self::assertTrue($filter->lt(4)->isAllowed('a'));
+        self::assertFalse($filter->lt(3)->isAllowed('a'));
+        
+        self::assertTrue($filter->gt(2)->isAllowed('a'));
+        self::assertFalse($filter->gt(3)->isAllowed('a'));
+        
+        self::assertTrue($filter->inside(2, 4)->isAllowed('a'));
+        self::assertFalse($filter->inside(3, 4)->isAllowed('a'));
+        
+        self::assertTrue($filter->outside(4, 8)->isAllowed('a'));
+        self::assertFalse($filter->outside(2, 4)->isAllowed('a'));
+        
+        self::assertTrue($filter->between(3, 4)->isAllowed('a'));
+        self::assertFalse($filter->between(4, 5)->isAllowed('a'));
+        
+        self::assertTrue($filter->notInside(3, 4)->isAllowed('a'));
+        self::assertFalse($filter->notInside(2, 4)->isAllowed('a'));
+    }
+    
+    public function test_filter_variable_reference_number(): void
+    {
+        $var = 3;
+        $filter = Filters::readFrom($var)->number();
+        
+        self::assertTrue($filter->isNumeric()->isAllowed('a'));
+        self::assertTrue($filter->isInt()->isAllowed('a'));
+        self::assertFalse($filter->isFloat()->isAllowed('a'));
+        
+        self::assertTrue($filter->isOdd()->isAllowed('a'));
+        self::assertFalse($filter->isEven()->isAllowed('a'));
+        
+        self::assertFalse($filter->not()->isOdd()->isAllowed('a'));
+        self::assertTrue($filter->not()->isEven()->isAllowed('a'));
+        
+        self::assertFalse($filter->isOdd()->negate()->isAllowed('a'));
+        self::assertTrue($filter->isEven()->negate()->isAllowed('a'));
+        
+        self::assertTrue($filter->not()->isOdd()->negate()->isAllowed('a'));
+        self::assertFalse($filter->not()->isEven()->negate()->isAllowed('a'));
+        
+        self::assertTrue($filter->eq(3)->isAllowed('a'));
+        self::assertFalse($filter->eq(2)->isAllowed('a'));
+        
+        self::assertTrue($filter->ne(2)->isAllowed('a'));
+        self::assertFalse($filter->ne(3)->isAllowed('a'));
+        
+        self::assertTrue($filter->le(4)->isAllowed('a'));
+        self::assertFalse($filter->le(2)->isAllowed('a'));
+        
+        self::assertTrue($filter->ge(2)->isAllowed('a'));
+        self::assertFalse($filter->ge(4)->isAllowed('a'));
+        
+        self::assertTrue($filter->lt(4)->isAllowed('a'));
+        self::assertFalse($filter->lt(3)->isAllowed('a'));
+        
+        self::assertTrue($filter->gt(2)->isAllowed('a'));
+        self::assertFalse($filter->gt(3)->isAllowed('a'));
+        
+        self::assertTrue($filter->inside(2, 4)->isAllowed('a'));
+        self::assertFalse($filter->inside(3, 4)->isAllowed('a'));
+        
+        self::assertTrue($filter->outside(4, 8)->isAllowed('a'));
+        self::assertFalse($filter->outside(2, 4)->isAllowed('a'));
+        
+        self::assertTrue($filter->between(3, 4)->isAllowed('a'));
+        self::assertFalse($filter->between(4, 5)->isAllowed('a'));
+        
+        self::assertTrue($filter->notInside(3, 4)->isAllowed('a'));
+        self::assertFalse($filter->notInside(2, 4)->isAllowed('a'));
+    }
+    
+    public function test_filter_variable_reference_string(): void
+    {
+        $var = 'zoe';
+        $filter = Filters::readFrom($var)->string();
+        
+        self::assertTrue($filter->isString()->isAllowed('a'));
+        
+        self::assertTrue($filter->is('zoe')->isAllowed('a'));
+        self::assertFalse($filter->is('bar')->isAllowed('a'));
+        
+        self::assertTrue($filter->isNot('bar')->isAllowed('a'));
+        self::assertFalse($filter->isNot('zoe')->isAllowed('a'));
+        
+        self::assertTrue($filter->startsWith('zo')->isAllowed('a'));
+        self::assertFalse($filter->startsWith('oe')->isAllowed('a'));
+        
+        self::assertTrue($filter->notStartsWith('oe')->isAllowed('a'));
+        self::assertFalse($filter->notStartsWith('zo')->isAllowed('a'));
+        
+        self::assertTrue($filter->endsWith('oe')->isAllowed('a'));
+        self::assertFalse($filter->endsWith('zo')->isAllowed('a'));
+        
+        self::assertTrue($filter->notEndsWith('zo')->isAllowed('a'));
+        self::assertFalse($filter->notEndsWith('oe')->isAllowed('a'));
+        
+        self::assertTrue($filter->notEndsWith('zo')->isAllowed('a'));
+        self::assertFalse($filter->notEndsWith('oe')->isAllowed('a'));
+        
+        self::assertTrue($filter->contains('o')->isAllowed('a'));
+        self::assertFalse($filter->contains('x')->isAllowed('a'));
+        
+        self::assertTrue($filter->notContains('x')->isAllowed('a'));
+        self::assertFalse($filter->notContains('o')->isAllowed('a'));
+        
+        self::assertTrue($filter->inSet(['foo', 'zoe', 'bar'])->isAllowed('a'));
+        self::assertFalse($filter->inSet(['foo', 'lam', 'bar'])->isAllowed('a'));
+        
+        self::assertTrue($filter->notInSet(['foo', 'lam', 'bar'])->isAllowed('a'));
+        self::assertFalse($filter->notInSet(['foo', 'zoe', 'bar'])->isAllowed('a'));
+        
+        self::assertTrue($filter->length()->eq(3)->isAllowed('a'));
+        self::assertFalse($filter->not()->length()->eq(3)->isAllowed('a'));
+    }
+    
+    public function test_filter_variable_reference_time(): void
+    {
+        $var = '2025-02-10 11:30:00';
+        $filter = Filters::readFrom($var)->time();
+        
+        self::assertTrue($filter->isDateTime()->isAllowed('a'));
+        self::assertFalse($filter->not()->isDateTime()->isAllowed('a'));
+        self::assertFalse($filter->isDateTime()->negate()->isAllowed('a'));
+        self::assertTrue($filter->not()->isDateTime()->negate()->isAllowed('a'));
+        
+        self::assertTrue($filter->is($var)->isAllowed('a'));
+        self::assertFalse($filter->is('2010-01-01 15:52:35')->isAllowed('a'));
+        
+        self::assertFalse($filter->isNot($var)->isAllowed('a'));
+        self::assertTrue($filter->isNot('2010-01-01 15:52:35')->isAllowed('a'));
+        
+        self::assertTrue($filter->before('2025-02-10 11:30:01')->isAllowed('a'));
+        self::assertFalse($filter->before('2025-02-10 11:29:59')->isAllowed('a'));
+        
+        self::assertTrue($filter->after('2025-02-10 11:29:59')->isAllowed('a'));
+        self::assertFalse($filter->after('2025-02-10 11:30:01')->isAllowed('a'));
+        
+        self::assertTrue($filter->from('2025-02-10 11:30:00')->isAllowed('a'));
+        self::assertFalse($filter->from('2025-02-10 11:30:01')->isAllowed('a'));
+        
+        self::assertTrue($filter->until('2025-02-10 11:30:00')->isAllowed('a'));
+        self::assertFalse($filter->until('2025-02-10 11:29:59')->isAllowed('a'));
+        
+        self::assertTrue($filter->between('2025-02-10 11:30:00', '2025-02-10 11:30:01')->isAllowed('a'));
+        self::assertFalse($filter->between('2025-02-10 11:30:01', '2025-02-10 11:30:02')->isAllowed('a'));
+        
+        self::assertTrue($filter->outside('2025-02-10 11:30:01', '2025-02-10 11:30:02')->isAllowed('a'));
+        self::assertFalse($filter->outside('2025-02-10 11:30:00', '2025-02-10 11:30:02')->isAllowed('a'));
+        
+        self::assertTrue($filter->inside('2025-02-10 11:29:59', '2025-02-10 11:30:01')->isAllowed('a'));
+        self::assertFalse($filter->inside('2025-02-10 11:30:00', '2025-02-10 11:30:01')->isAllowed('a'));
+        
+        self::assertTrue($filter->notInside('2025-02-10 11:30:01', '2025-02-10 11:30:02')->isAllowed('a'));
+        self::assertFalse($filter->notInside('2025-02-10 11:29:59', '2025-02-10 11:30:01')->isAllowed('a'));
+        
+        self::assertTrue($filter->isDay(Day::MON)->isAllowed('a'));
+        self::assertFalse($filter->isDay(Day::TUE)->isAllowed('a'));
+        
+        self::assertTrue($filter->isNotDay(Day::TUE)->isAllowed('a'));
+        self::assertFalse($filter->isNotDay(Day::MON)->isAllowed('a'));
+        
+        self::assertTrue($filter->inSet(['2025-02-10 11:30:00', '2025-02-10 11:30:01'])->isAllowed('a'));
+        self::assertFalse($filter->inSet(['2025-02-10 11:29:59', '2025-02-10 11:30:01'])->isAllowed('a'));
+        
+        self::assertTrue($filter->notInSet(['2025-02-10 11:29:59', '2025-02-10 11:30:01'])->isAllowed('a'));
+        self::assertFalse($filter->notInSet(['2025-02-10 11:30:00', '2025-02-10 11:30:01'])->isAllowed('a'));
+    }
+    
+    public function test_filter_variable_reference_type(): void
+    {
+        $str = 'foo';
+        self::assertTrue(Filters::readFrom($str)->type()->isString()->isAllowed('a'));
+        self::assertFalse(Filters::readFrom($str)->type()->isInt()->isAllowed('a'));
+        
+        $int = 4;
+        self::assertTrue(Filters::readFrom($int)->type()->isInt()->isAllowed('a'));
+        self::assertFalse(Filters::readFrom($int)->type()->isFloat()->isAllowed('a'));
+        
+        $float = 2.0;
+        self::assertTrue(Filters::readFrom($float)->type()->isFloat()->isAllowed('a'));
+        self::assertFalse(Filters::readFrom($float)->type()->isBool()->isAllowed('a'));
+        
+        $bool = true;
+        self::assertTrue(Filters::readFrom($bool)->type()->isBool()->isAllowed('a'));
+        self::assertFalse(Filters::readFrom($bool)->type()->isArray()->isAllowed('a'));
+        
+        $arr = [];
+        self::assertTrue(Filters::readFrom($arr)->type()->isArray()->isAllowed('a'));
+        self::assertFalse(Filters::readFrom($arr)->type()->isDateTime()->isAllowed('a'));
+        self::assertTrue(Filters::readFrom($arr)->type()->isEmpty()->isAllowed('a'));
+        self::assertFalse(Filters::readFrom($arr)->type()->notEmpty()->isAllowed('a'));
+        
+        $date = new \DateTime();
+        self::assertTrue(Filters::readFrom($date)->type()->isDateTime()->isAllowed('a'));
+        self::assertFalse(Filters::readFrom($date)->type()->isCountable()->isAllowed('a'));
+        
+        $cnt = [5];
+        self::assertTrue(Filters::readFrom($cnt)->type()->isCountable()->isAllowed('a'));
+        self::assertFalse(Filters::readFrom($cnt)->type()->isEmpty()->isAllowed('a'));
+        self::assertTrue(Filters::readFrom($cnt)->type()->notEmpty()->isAllowed('a'));
+        
+        $num = '5.5';
+        self::assertTrue(Filters::readFrom($num)->type()->isNumeric()->isAllowed('a'));
+        self::assertFalse(Filters::readFrom($num)->type()->isNull()->isAllowed('a'));
+        self::assertTrue(Filters::readFrom($num)->type()->notNull()->isAllowed('a'));
+        
+        $nil = null;
+        self::assertTrue(Filters::readFrom($nil)->type()->isNull()->isAllowed('a'));
+        self::assertFalse(Filters::readFrom($nil)->type()->notNull()->isAllowed('a'));
+        
+        self::assertFalse(Filters::readFrom($nil)->type()->not()->isNull()->isAllowed('a'));
+        self::assertTrue(Filters::readFrom($nil)->type()->not()->notNull()->isAllowed('a'));
+    }
+    
+    public function test_filter_built_from_IntVal(): void
+    {
+        $filter = Filters::wrapIntValue(IntNum::constant(5));
+        
+        self::assertTrue($filter->isInt()->isAllowed('a'));
+        self::assertTrue($filter->isNumeric()->isAllowed('a'));
+        self::assertFalse($filter->isFloat()->isAllowed('a'));
+        
+        self::assertTrue($filter->isOdd()->isAllowed('a'));
+        self::assertFalse($filter->isEven()->isAllowed('a'));
+        
+        self::assertTrue($filter->eq(5)->isAllowed('a'));
+        self::assertFalse($filter->eq(4)->isAllowed('a'));
+        
+        self::assertFalse($filter->not()->eq(5)->isAllowed('a'));
+        self::assertTrue($filter->not()->eq(4)->isAllowed('a'));
+        
+        self::assertFalse($filter->eq(5)->negate()->isAllowed('a'));
+        self::assertTrue($filter->eq(4)->negate()->isAllowed('a'));
+        
+        self::assertTrue($filter->not()->eq(5)->negate()->isAllowed('a'));
+        self::assertFalse($filter->not()->eq(4)->negate()->isAllowed('a'));
+        
+        self::assertTrue($filter->ne(4)->isAllowed('a'));
+        self::assertFalse($filter->ne(5)->isAllowed('a'));
+        
+        self::assertTrue($filter->ge(5)->isAllowed('a'));
+        self::assertFalse($filter->ge(6)->isAllowed('a'));
+        
+        self::assertTrue($filter->gt(4)->isAllowed('a'));
+        self::assertFalse($filter->gt(5)->isAllowed('a'));
+        
+        self::assertTrue($filter->le(5)->isAllowed('a'));
+        self::assertFalse($filter->le(4)->isAllowed('a'));
+        
+        self::assertTrue($filter->lt(6)->isAllowed('a'));
+        self::assertFalse($filter->lt(5)->isAllowed('a'));
+        
+        self::assertTrue($filter->between(5, 6)->isAllowed('a'));
+        self::assertFalse($filter->between(6, 7)->isAllowed('a'));
+        
+        self::assertTrue($filter->outside(6, 7)->isAllowed('a'));
+        self::assertFalse($filter->outside(5, 6)->isAllowed('a'));
+        
+        self::assertTrue($filter->inside(4, 6)->isAllowed('a'));
+        self::assertFalse($filter->inside(5, 6)->isAllowed('a'));
+        
+        self::assertTrue($filter->notInside(5, 6)->isAllowed('a'));
+        self::assertFalse($filter->notInside(4, 6)->isAllowed('a'));
+    }
+    
+    public function test_filter_built_from_MemoReader_int(): void
+    {
+        $memoFilter = Filters::wrapMemoReader(Memo::value(5));
+        
+        $typeFilter = $memoFilter->type();
+        
+        self::assertTrue($typeFilter->isInt()->isAllowed('a'));
+        self::assertTrue($typeFilter->isNumeric()->isAllowed('a'));
+        self::assertFalse($typeFilter->isFloat()->isAllowed('a'));
+        self::assertFalse($typeFilter->isString()->isAllowed('a'));
+        
+        $numberFilter = $memoFilter->number();
+        
+        self::assertTrue($numberFilter->isOdd()->isAllowed('a'));
+        self::assertFalse($numberFilter->isEven()->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->eq(5)->isAllowed('a'));
+        self::assertFalse($numberFilter->eq(4)->isAllowed('a'));
+        
+        self::assertFalse($numberFilter->not()->eq(5)->isAllowed('a'));
+        self::assertTrue($numberFilter->not()->eq(4)->isAllowed('a'));
+        
+        self::assertFalse($numberFilter->eq(5)->negate()->isAllowed('a'));
+        self::assertTrue($numberFilter->eq(4)->negate()->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->not()->eq(5)->negate()->isAllowed('a'));
+        self::assertFalse($numberFilter->not()->eq(4)->negate()->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->ne(4)->isAllowed('a'));
+        self::assertFalse($numberFilter->ne(5)->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->ge(5)->isAllowed('a'));
+        self::assertFalse($numberFilter->ge(6)->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->gt(4)->isAllowed('a'));
+        self::assertFalse($numberFilter->gt(5)->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->le(5)->isAllowed('a'));
+        self::assertFalse($numberFilter->le(4)->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->lt(6)->isAllowed('a'));
+        self::assertFalse($numberFilter->lt(5)->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->between(5, 6)->isAllowed('a'));
+        self::assertFalse($numberFilter->between(6, 7)->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->outside(6, 7)->isAllowed('a'));
+        self::assertFalse($numberFilter->outside(5, 6)->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->inside(4, 6)->isAllowed('a'));
+        self::assertFalse($numberFilter->inside(5, 6)->isAllowed('a'));
+        
+        self::assertTrue($numberFilter->notInside(5, 6)->isAllowed('a'));
+        self::assertFalse($numberFilter->notInside(4, 6)->isAllowed('a'));
+    }
+    
+    public function test_multiple_consequtive_negations_of_FilterPicker(): void
+    {
+        $var = 'foo';
+        $filter = Filters::readFrom($var);
+        
+        self::assertTrue($filter->is()->same('foo')->isAllowed('a'));
+        
+        self::assertFalse($filter->is()->same('foo')->negate()->isAllowed('a'));
+        self::assertTrue($filter->is()->same('foo')->negate()->negate()->isAllowed('a'));
+        
+        self::assertFalse($filter->is()->not()->same('foo')->isAllowed('a'));
+        self::assertTrue($filter->is()->not()->same('foo')->negate()->isAllowed('a'));
+        
+        self::assertFalse($filter->is()->not()->not()->same('foo')->negate()->isAllowed('a'));
+        self::assertTrue($filter->is()->not()->not()->same('foo')->negate()->negate()->isAllowed('a'));
+        
+        self::assertFalse($filter->not()->is()->same('foo')->isAllowed('a'));
+        self::assertTrue($filter->not()->is()->not()->same('foo')->isAllowed('a'));
+        self::assertTrue($filter->not()->is()->same('foo')->negate()->isAllowed('a'));
+        self::assertFalse($filter->not()->is()->not()->same('foo')->negate()->isAllowed('a'));
+        self::assertFalse($filter->not()->is()->not()->same('foo')->negate()->isAllowed('a'));
+        self::assertTrue($filter->not()->not()->is()->not()->same('foo')->negate()->isAllowed('a'));
+        self::assertTrue($filter->not()->not()->is()->not()->same('foo')->negate()->isAllowed('a'));
+        self::assertFalse($filter->not()->not()->is()->not()->not()->same('foo')->negate()->isAllowed('a'));
+        self::assertFalse($filter->not()->not()->is()->not()->not()->same('foo')->negate()->isAllowed('a'));
+        self::assertTrue($filter->not()->not()->is()->not()->not()->same('foo')->negate()->negate()->isAllowed('a'));
+        self::assertTrue($filter->not()->not()->is()->not()->not()->same('foo')->negate()->negate()->isAllowed('a'));
     }
 }

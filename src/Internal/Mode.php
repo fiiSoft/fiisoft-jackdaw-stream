@@ -20,6 +20,17 @@ final class Mode
         throw self::invalidModeException($mode);
     }
     
+    public static function negate(?int $mode): ?int
+    {
+        if ($mode === Check::BOTH) {
+            $mode = Check::ANY;
+        } elseif ($mode === Check::ANY) {
+            $mode = Check::BOTH;
+        }
+        
+        return $mode;
+    }
+    
     public static function invalidModeException(?int $mode): JackdawException
     {
         return InvalidParamException::describe('mode', $mode);

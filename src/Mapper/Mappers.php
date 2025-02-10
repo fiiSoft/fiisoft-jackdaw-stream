@@ -11,6 +11,7 @@ use FiiSoft\Jackdaw\Mapper\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\GeneratorAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ProducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
+use FiiSoft\Jackdaw\Mapper\Adapter\SequenceMemoAdapter;
 use FiiSoft\Jackdaw\Mapper\Cast\ToArray;
 use FiiSoft\Jackdaw\Mapper\Cast\ToBool;
 use FiiSoft\Jackdaw\Mapper\Cast\ToFloat;
@@ -21,6 +22,7 @@ use FiiSoft\Jackdaw\Mapper\Internal\MultiMapper;
 use FiiSoft\Jackdaw\Mapper\ReindexKeys\ReindexKeysComplex;
 use FiiSoft\Jackdaw\Mapper\ReindexKeys\ReindexKeysSimple;
 use FiiSoft\Jackdaw\Memo\MemoReader;
+use FiiSoft\Jackdaw\Memo\SequenceMemo;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
@@ -94,6 +96,10 @@ final class Mappers
         
         if ($mapper instanceof MemoReader) {
             return new MemoReaderAdapter($mapper);
+        }
+        
+        if ($mapper instanceof SequenceMemo) {
+            return new SequenceMemoAdapter($mapper);
         }
         
         if ($mapper instanceof Discriminator) {

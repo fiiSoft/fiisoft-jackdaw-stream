@@ -9,6 +9,6 @@ final class PairReader extends BaseSequenceReader
      */
     public function read(): array
     {
-        return $this->sequence->entries[$this->index]->asPair();
+        return $this->sequence->get($this->index)->asPair();
     }
 }

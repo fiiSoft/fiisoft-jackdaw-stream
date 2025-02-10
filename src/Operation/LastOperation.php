@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation;
 
+use FiiSoft\Jackdaw\Exception\JackdawException;
 use FiiSoft\Jackdaw\Internal\ResultApi;
 use FiiSoft\Jackdaw\Internal\SignalHandler;
 use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
@@ -12,7 +13,13 @@ interface LastOperation extends ResultApi, SignalHandler, ForkReady
     /**
      * Create new stream from the current one and set provided Producer as source of data for it.
      *
-     * @param ProducerReady|resource|callable|iterable<string|int, mixed>|string $producer
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|string $producer
+     * @throws JackdawException this method throws an exception when consume() is called first
      */
     public function wrap($producer): LastOperation;
+    
+    /**
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|string $producer
+     */
+    public function consume($producer): void;
 }

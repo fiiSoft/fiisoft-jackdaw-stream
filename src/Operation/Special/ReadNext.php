@@ -13,7 +13,7 @@ final class ReadNext extends CountableRead
     private int $countReadings = -1;
     
     /**
-     * @param IntProvider|iterable<int>|callable|int $howMany
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $howMany
      */
     public function __construct($howMany)
     {

@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\FilterFactory;
 use FiiSoft\Jackdaw\Filter\Filters;
 
-final class CountFilterFactory extends FilterFactory
+final class CountFilterFactory extends FilterFactory implements CountFilterPicker
 {
     public static function instance(?int $mode = null): self
     {
@@ -16,6 +16,11 @@ final class CountFilterFactory extends FilterFactory
     public function isCountable(): Filter
     {
         return $this->get(Filters::isCountable($this->mode));
+    }
+    
+    public function not(): CountFilterPicker
+    {
+        return $this->negate();
     }
     
     /**

@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Filter\Logic\OpOR;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Logic\MultiArgsLogicFilter;
 use FiiSoft\Jackdaw\Filter\Logic\OpAND\BaseAND;
 use FiiSoft\Jackdaw\Internal\Check;
@@ -10,7 +11,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 abstract class BaseOR extends MultiArgsLogicFilter
 {
     /**
-     * @param array<Filter|callable|mixed> $filters
+     * @param array<FilterReady|callable|mixed> $filters
      */
     final public static function create(array $filters, ?int $mode = null): BaseOR
     {

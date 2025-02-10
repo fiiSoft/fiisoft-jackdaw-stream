@@ -7,8 +7,9 @@ use FiiSoft\Jackdaw\Internal\ResultProvider;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
+use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
-interface Reducer extends ResultProvider, ConsumerReady, MapperReady, HandlerReady, ForkReady
+interface Reducer extends ResultProvider, ConsumerReady, MapperReady, HandlerReady, ForkReady, TransformerReady
 {
     /**
      * @param mixed $value

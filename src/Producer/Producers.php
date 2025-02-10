@@ -13,7 +13,9 @@ use FiiSoft\Jackdaw\Producer\Adapter\TraversableAdapter;
 use FiiSoft\Jackdaw\Producer\Generator\CollatzGenerator;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedArrays;
 use FiiSoft\Jackdaw\Producer\Generator\CombinedGeneral;
+use FiiSoft\Jackdaw\Producer\Generator\CyclicIterator;
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;
+use FiiSoft\Jackdaw\Producer\Generator\Repeater;
 use FiiSoft\Jackdaw\Producer\Generator\RandomInt;
 use FiiSoft\Jackdaw\Producer\Generator\RandomString;
 use FiiSoft\Jackdaw\Producer\Generator\RandomUuid;
@@ -264,5 +266,21 @@ final class Producers
     ): Producer
     {
         return new TimeIterator($startDate, $interval, $endDate, $limit);
+    }
+    
+    /**
+     * @param mixed $value
+     */
+    public static function repeater($value, int $limit = \PHP_INT_MAX): Producer
+    {
+        return new Repeater($value, $limit);
+    }
+    
+    /**
+     * @param array<string|int, mixed> $elements
+     */
+    public static function cyclic(array $elements, bool $keepKeys = false, int $limit = \PHP_INT_MAX): Producer
+    {
+        return new CyclicIterator($elements, $keepKeys, $limit);
     }
 }

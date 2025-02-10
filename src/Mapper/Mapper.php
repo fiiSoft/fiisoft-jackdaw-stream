@@ -4,8 +4,9 @@ namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Internal\StreamBuilder;
+use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
-interface Mapper extends MapperReady, DiscriminatorReady, StreamBuilder
+interface Mapper extends MapperReady, DiscriminatorReady, TransformerReady, StreamBuilder
 {
     /**
      * @param mixed $value

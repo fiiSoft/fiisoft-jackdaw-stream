@@ -12,7 +12,7 @@ abstract class CountableRead extends SwapHead
     protected IntValue $howMany;
     
     /**
-     * @param IntProvider|iterable<int>|callable|int $howMany
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $howMany
      */
     protected function __construct($howMany)
     {

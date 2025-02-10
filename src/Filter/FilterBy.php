@@ -14,7 +14,7 @@ final class FilterBy extends BaseFilter
     
     /**
      * @param string|int $field valid key in array
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function create($field, $filter): self
     {

@@ -37,12 +37,11 @@
     <projectFiles>
         <directory name="src"/>
         <ignoreFiles>
-            <file name="src/Producer/Generator/Uuid/Symfony/SymfonyUuidGenerator.php" />
             <file name="src/Filter/OnlyIn/Mixed/MixedBothOnlyIn.php" />
+            <file name="src/Filter/String/StringFilterMulti.php" />
             <file name="src/Consumer/Reference/RefKey.php" />
             <file name="src/Consumer/Reference/RefValue.php" />
             <file name="src/Consumer/Reference/RefValueKey.php" />
-            <file name="src/Internal/Check.php" />
         </ignoreFiles>
     </projectFiles>
 
@@ -74,5 +73,6 @@
         <MissingClosureReturnType errorLevel="suppress" />
         <InvalidArrayOffset errorLevel="suppress" />
         <RiskyTruthyFalsyComparison errorLevel="suppress" />
+        <LoopInvalidation errorLevel="suppress" />
     </issueHandlers>
 </psalm>

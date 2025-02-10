@@ -13,7 +13,7 @@ use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Filter, FilterBy, FilterByMan
 use FiiSoft\Jackdaw\Operation\Internal\{Limitable, Operations as OP, Pipe\Initial, Reindexable, Shuffle};
 use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Mapping\{Accumulate, Aggregate, Chunk, ChunkBy, Classify, ConditionalMap, Flat, Flip, Map,
-    MapFieldWhen, MapKey, MapKeyValue, MapMany, MapWhen, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window};
+    MapBy, MapFieldWhen, MapKey, MapKeyValue, MapMany, MapWhen, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window};
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{Feed, FeedMany, SendTo, SendToMany};
 use FiiSoft\Jackdaw\Operation\Special\{CountableRead, Limit, ReadMany, ReadManyWhile, ReadNext, SwapHead, Until};
@@ -241,7 +241,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
             }
         } elseif ($next instanceof Skip) {
             if ($this->last instanceof Skip) {
-                $this->last->mergeWith($next);
+                $this->replaceLastOperation($this->last->mergeWith($next));
                 return false;
             }
         } elseif ($next instanceof Reverse) {
@@ -451,6 +451,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 || $this->last instanceof MapKeyValue
                 || $this->last instanceof MapMany
                 || $this->last instanceof MapWhen
+                || $this->last instanceof MapBy
                 || $this->last instanceof Gather
                 || $this->last instanceof Flip
                 || $this->last instanceof Flat

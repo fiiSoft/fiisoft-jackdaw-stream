@@ -8,7 +8,7 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 abstract class CircularItemBuffer implements ItemBuffer
 {
-    protected ItemBufferClient $client;
+    protected ?ItemBufferClient $client = null;
     
     /** @var \SplFixedArray<Item> */
     protected \SplFixedArray $buffer;
@@ -81,10 +81,17 @@ abstract class CircularItemBuffer implements ItemBuffer
         return new CircularBufferIterator($this->buffer, $this->count(), $this->index);
     }
     
+    final public function clear(): void
+    {
+        $this->client->setItemBuffer(self::initial($this->client, $this->size));
+        $this->destroy();
+    }
+    
     final public function destroy(): void
     {
         $this->size = 0;
         $this->index = 0;
+        $this->client = null;
         $this->buffer->setSize(0);
     }
 }

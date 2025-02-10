@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Filter\Logic;
 
 use FiiSoft\Jackdaw\Filter\AbstractFilter;
 
-abstract class LogicFilter extends AbstractFilter
+abstract class BaseLogicFilter extends AbstractFilter
 {
     //empty class for convenience to group all logic filters
 }

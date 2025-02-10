@@ -596,7 +596,7 @@ final class OperationsTest extends TestCase
         $dispatch = OP::dispatch('is_string', ['yes' => Consumers::counter()]);
         
         //Assert
-        $this->expectExceptionObject(OperationExceptionFactory::handlerIsNotDefined($signal->item->key));
+        $this->expectExceptionObject(OperationExceptionFactory::handlerIsNotDefined(true));
         
         //Act
         $dispatch->handle($signal);
@@ -822,6 +822,13 @@ final class OperationsTest extends TestCase
         $this->expectExceptionObject(WrongIntValueException::invalidNumber($provider));
         
         OP::readNext($provider);
+    }
+    
+    public function test_mapBy_throws_exception_when_param_mappers_is_empty(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::byName('mappers'));
+        
+        OP::mapBy(['a', 'b'], []);
     }
     
     private function signal(): Signal

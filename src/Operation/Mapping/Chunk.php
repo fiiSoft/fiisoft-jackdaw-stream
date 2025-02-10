@@ -2,7 +2,6 @@
 
 namespace FiiSoft\Jackdaw\Operation\Mapping;
 
-use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
@@ -10,6 +9,10 @@ use FiiSoft\Jackdaw\Operation\Mapping\Chunk\ManyKeepsKeys;
 use FiiSoft\Jackdaw\Operation\Mapping\Chunk\ManyReindexKeys;
 use FiiSoft\Jackdaw\Operation\Mapping\Chunk\OneKeepKeys;
 use FiiSoft\Jackdaw\Operation\Mapping\Chunk\OneReindexKeys;
+use FiiSoft\Jackdaw\Operation\Mapping\Chunk\VolatileKeepsKeys;
+use FiiSoft\Jackdaw\Operation\Mapping\Chunk\VolatileReindexKeys;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
+use FiiSoft\Jackdaw\ValueRef\IntProvider;
 
 abstract class Chunk extends BaseOperation implements Reindexable
 {
@@ -17,31 +20,36 @@ abstract class Chunk extends BaseOperation implements Reindexable
     protected array $chunked = [];
     
     protected int $index = 0;
-    protected int $size;
     protected int $count = 0;
     
     private bool $reindex;
     
-    final public static function create(int $size, bool $reindex = false): self
+    /**
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $size
+     */
+    final public static function create($size, bool $reindex = false): self
     {
-        if ($size === 1) {
+        $size = IntNum::getAdapter($size);
+        
+        if ($size->isConstant()) {
+            if ($size->int() === 1) {
+                return $reindex
+                    ? new OneReindexKeys($reindex)
+                    : new OneKeepKeys($reindex);
+            }
+            
             return $reindex
-                ? new OneReindexKeys($size, $reindex)
-                : new OneKeepKeys($size, $reindex);
+                ? new ManyReindexKeys($size->int(), $reindex)
+                : new ManyKeepsKeys($size->int(), $reindex);
         }
         
         return $reindex
-            ? new ManyReindexKeys($size, $reindex)
-            : new ManyKeepsKeys($size, $reindex);
+            ? new VolatileReindexKeys($size, $reindex)
+            : new VolatileKeepsKeys($size, $reindex);
     }
     
-    final protected function __construct(int $size, bool $reindex = false)
+    protected function __construct(bool $reindex = false)
     {
-        if ($size < 1) {
-            throw InvalidParamException::describe('size', $size);
-        }
-        
-        $this->size = $size;
         $this->reindex = $reindex;
     }
     

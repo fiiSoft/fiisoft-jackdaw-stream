@@ -5,11 +5,13 @@ namespace FiiSoft\Jackdaw\Transformer;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Mapper\Mapper;
+use FiiSoft\Jackdaw\Memo\SequenceMemo;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Transformer\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Transformer\Adapter\MapperAdapter;
 use FiiSoft\Jackdaw\Transformer\Adapter\PhpSortingFunctionAdapter;
 use FiiSoft\Jackdaw\Transformer\Adapter\ReducerAdapter;
+use FiiSoft\Jackdaw\Transformer\Adapter\SequenceMemoAdapter;
 
 final class Transformers
 {
@@ -20,7 +22,7 @@ final class Transformers
     ];
     
     /**
-     * @param Transformer|Mapper|Reducer|Filter|callable|null $transformer
+     * @param TransformerReady|callable|null $transformer
      */
     public static function getAdapter($transformer): ?Transformer
     {
@@ -42,6 +44,10 @@ final class Transformers
         
         if ($transformer instanceof Filter) {
             return new FilterAdapter($transformer);
+        }
+        
+        if ($transformer instanceof SequenceMemo) {
+            return new SequenceMemoAdapter($transformer);
         }
         
         if (\is_callable($transformer)) {

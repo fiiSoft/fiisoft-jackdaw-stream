@@ -99,12 +99,13 @@ final class ResultItem implements ResultApi
      */
     public function transform($transformer): self
     {
-        $transformer = Transformers::getAdapter($transformer);
-        
         if ($this->found) {
-            $this->finalValue = $transformer !== null
-                ? $transformer->transform($this->rawValue, $this->key)
-                : $this->rawValue;
+            if ($transformer !== null) {
+                $transformer = Transformers::getAdapter($transformer);
+                $this->finalValue = $transformer->transform($this->rawValue, $this->key);
+            } else {
+                $this->finalValue = $this->rawValue;
+            }
         }
         
         return $this;

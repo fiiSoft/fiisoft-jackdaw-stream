@@ -169,4 +169,15 @@ final class ConsumersTest extends TestCase
         //then
         self::assertSame(123, $reg->read('foo')->read());
     }
+    
+    public function test_change_value_of_int_variable(): void
+    {
+        $consumer = Consumers::changeIntBy($var, 1);
+        
+        $consumer->consume(123, 'zoo');
+        self::assertSame(1, $var);
+        
+        $consumer->consume(123, 'zoo');
+        self::assertSame(2, $var);
+    }
 }

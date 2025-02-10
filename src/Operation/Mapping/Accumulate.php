@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Operation\Mapping;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
@@ -23,7 +24,7 @@ abstract class Accumulate extends BaseOperation implements Reindexable
     private bool $reindex;
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     final public static function create(
         $filter,

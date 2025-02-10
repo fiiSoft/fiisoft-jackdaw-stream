@@ -2,60 +2,25 @@
 
 namespace FiiSoft\Jackdaw\Filter\String;
 
-use FiiSoft\Jackdaw\Filter\BaseFilter;
+use FiiSoft\Jackdaw\Filter\Filter;
 
-abstract class StringFilter extends BaseFilter
+interface StringFilter extends Filter
 {
-    protected bool $ignoreCase;
+    public function inMode(?int $mode): self;
+
+    public function checkValue(): self;
     
-    protected function __construct(int $mode, bool $ignoreCase)
-    {
-        parent::__construct($mode);
-        
-        $this->ignoreCase = $ignoreCase;
-    }
+    public function checkKey(): self;
     
-    /**
-     * @return self new instance
-     */
-    public function ignoreCase(): self
-    {
-        $copy = clone $this;
-        $copy->ignoreCase = true;
-        
-        return $copy;
-    }
+    public function checkBoth(): self;
     
-    /**
-     * @return self new instance
-     */
-    public function caseSensitive(): self
-    {
-        $copy = clone $this;
-        $copy->ignoreCase = false;
-        
-        return $copy;
-    }
+    public function checkAny(): self;
     
-    /**
-     * @inheritDoc
-     */
-    final public function buildStream(iterable $stream): iterable
-    {
-        return $this->ignoreCase ? $this->compareCaseInsensitive($stream) : $this->compareCaseSensitive($stream);
-    }
+    public function negate(): self;
     
-    /**
-     * @param iterable<mixed, mixed> $stream
-     * @return iterable<mixed, mixed>
-     */
-    abstract protected function compareCaseInsensitive(iterable $stream): iterable;
+    public function ignoreCase(): StringFilter;
     
-    /**
-     * @param iterable<mixed, mixed> $stream
-     * @return iterable<mixed, mixed>
-     */
-    abstract protected function compareCaseSensitive(iterable $stream): iterable;
+    public function caseSensitive(): StringFilter;
     
-    abstract public function negate(): StringFilter;
+    public function isCaseInsensitive(): bool;
 }

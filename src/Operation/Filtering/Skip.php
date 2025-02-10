@@ -2,52 +2,29 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
-use FiiSoft\Jackdaw\Exception\InvalidParamException;
-use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Filtering\Skip\ConstantSkip;
+use FiiSoft\Jackdaw\Operation\Filtering\Skip\VolatileSkip;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
+use FiiSoft\Jackdaw\ValueRef\IntValue;
 
-final class Skip extends BaseOperation
+abstract class Skip extends BaseOperation
 {
-    private int $offset;
-    private int $count = 0;
-    private bool $isActive = true;
-    
-    public function __construct(int $offset)
+    final public static function create(IntValue $offset): Skip
     {
-        if ($offset < 0) {
-            throw InvalidParamException::describe('offset', $offset);
-        }
-        
-        $this->offset = $offset;
+        return $offset->isConstant()
+            ? new ConstantSkip($offset->int())
+            : new VolatileSkip($offset);
+    }
+
+    protected function __construct()
+    {
     }
     
-    public function handle(Signal $signal): void
+    final public function mergeWith(Skip $other): Skip
     {
-        if ($this->count === $this->offset) {
-            $this->next->handle($signal);
-            $signal->forget($this);
-        } else {
-            ++$this->count;
-        }
+        return self::create(IntNum::addArgs($this->offset(), $other->offset()));
     }
     
-    public function buildStream(iterable $stream): iterable
-    {
-        foreach ($stream as $key => $value) {
-            if ($this->isActive) {
-                if ($this->count++ === $this->offset) {
-                    $this->isActive = false;
-                } else {
-                    continue;
-                }
-            }
-            
-            yield $key => $value;
-        }
-    }
-    
-    public function mergeWith(Skip $other): void
-    {
-        $this->offset += $other->offset;
-    }
+    abstract protected function offset(): IntValue;
 }

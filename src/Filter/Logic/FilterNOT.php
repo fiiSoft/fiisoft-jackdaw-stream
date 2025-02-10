@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Filter\Logic;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 
-final class FilterNOT extends LogicFilter
+final class FilterNOT extends BaseLogicFilter
 {
     private Filter $filter;
     

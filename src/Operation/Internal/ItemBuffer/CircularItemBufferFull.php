@@ -24,9 +24,4 @@ final class CircularItemBufferFull extends CircularItemBuffer
     {
         return $this->size;
     }
-    
-    public function clear(): void
-    {
-        $this->client->setItemBuffer(self::initial($this->client, $this->size));
-    }
 }

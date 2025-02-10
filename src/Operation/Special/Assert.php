@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Operation\Special;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
@@ -13,7 +14,7 @@ final class Assert extends BaseOperation
     private Filter $filter;
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function __construct($filter, ?int $mode = null)
     {

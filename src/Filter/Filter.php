@@ -7,8 +7,10 @@ use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Internal\StreamBuilder;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
+use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
-interface Filter extends MapperReady, ConditionReady, DiscriminatorReady, ComparatorReady, StreamBuilder
+interface Filter extends LogicFilter, StreamBuilder, FilterReady, MapperReady, ConditionReady, DiscriminatorReady,
+    ComparatorReady, TransformerReady
 {
     /**
      * @param mixed $value
@@ -16,47 +18,17 @@ interface Filter extends MapperReady, ConditionReady, DiscriminatorReady, Compar
      */
     public function isAllowed($value, $key = null): bool;
     
-    public function inMode(?int $mode): Filter;
-    
-    public function negate(): Filter;
-    
     public function getMode(): ?int;
     
-    public function checkValue(): Filter;
+    public function inMode(?int $mode): self;
     
-    public function checkKey(): Filter;
+    public function checkValue(): self;
     
-    public function checkBoth(): Filter;
+    public function checkKey(): self;
     
-    public function checkAny(): Filter;
+    public function checkBoth(): self;
     
-    /**
-     * @param Filter|callable|mixed $filter
-     */
-    public function and($filter): Filter;
-
-    /**
-     * @param Filter|callable|mixed $filter
-     */
-    public function andNot($filter): Filter;
-
-    /**
-     * @param Filter|callable|mixed $filter
-     */
-    public function or($filter): Filter;
-
-    /**
-     * @param Filter|callable|mixed $filter
-     */
-    public function orNot($filter): Filter;
-
-    /**
-     * @param Filter|callable|mixed $filter
-     */
-    public function xor($filter): Filter;
-
-    /**
-     * @param Filter|callable|mixed $filter
-     */
-    public function xnor($filter): Filter;
+    public function checkAny(): self;
+    
+    public function negate(): self;
 }

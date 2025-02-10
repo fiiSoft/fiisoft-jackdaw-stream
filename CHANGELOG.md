@@ -1,5 +1,26 @@
 # Changelog
 
+## 10.0.0
+
+- added Matcher
+- added Stream::mapBy()
+- added Filters::readFrom()
+- added Filters::wrapIntValue()
+- added Filters::wrapMemoReader()
+- added LastOperation::consume() 
+- added Consumers::changeIntBy()
+- added SequenceMemo::matches() 
+- added SequenceMemo::inspect()
+- added Producers::repeater() 
+- added Producers::cyclic()
+- SequencePredicate produced by matches() and inspect() can be used as Condition or Filter 
+- SequenceMemo can be used as Mapper and Transformer
+- Stream::chunk() and Stream::skip() are able to handle IntProvider 
+
+#### Incompatible change:
+
+- Filters::number()->isNumber() renamed to Filters::number()->isNumeric() 
+
 ## 9.0.0
 
 - added Memo which duplicates functionality of Registry but is simpler to use

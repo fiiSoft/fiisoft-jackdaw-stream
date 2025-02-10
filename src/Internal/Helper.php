@@ -7,6 +7,8 @@ use FiiSoft\Jackdaw\Exception\JackdawException;
 
 final class Helper
 {
+    private const BUILD_IN_COMPARATORS = ['strcasecmp', 'strcmp', 'strnatcasecmp', 'strnatcmp'];
+    
     public static function getNumOfArgs(callable $callable): int
     {
         return self::getFuncRefl($callable)->getNumberOfRequiredParameters();
@@ -14,13 +16,25 @@ final class Helper
     
     public static function isDeclaredReturnTypeArray(callable $callable): bool
     {
+        return self::isReturnType($callable, 'array');
+    }
+    
+    public static function isDeclaredReturnTypeInt(callable $callable): bool
+    {
+        return self::isReturnType($callable, 'int');
+    }
+    
+    private static function isReturnType(callable $callable, string $type): bool
+    {
         $refl = self::getFuncRefl($callable);
         
         if ($refl->hasReturnType()) {
             $returnType = $refl->getReturnType();
             if ($returnType instanceof \ReflectionNamedType) {
-                return $returnType->getName() === 'array';
+                return $returnType->getName() === $type;
             }
+        } elseif ($type === 'int' && \is_string($callable) && $refl->isInternal()) {
+            return \in_array(\ltrim($callable, '\\'), self::BUILD_IN_COMPARATORS, true);
         }
         
         return false;

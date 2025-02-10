@@ -7,7 +7,7 @@ use FiiSoft\Jackdaw\Comparator\{Comparable, ComparatorReady};
 use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
-use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Internal\{Check, SignalHandler};
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Memo\MemoWriter;
@@ -16,19 +16,20 @@ use FiiSoft\Jackdaw\Operation\{Collecting\Categorize, Collecting\Fork, Collectin
     Filtering\EveryNth, Filtering\Extrema, Filtering\Filter as OperationFilter, Filtering\FilterBy,
     Filtering\FilterWhen, Filtering\FilterWhile, Filtering\Increasing, Filtering\Maxima, Filtering\OmitReps,
     Filtering\Skip, Filtering\SkipWhile, Filtering\Unique, Filtering\Uptrends, Mapping\Accumulate, Mapping\Aggregate,
-    Mapping\Chunk, Mapping\ChunkBy, Mapping\Classify, Mapping\Flat, Mapping\Flip, Mapping\Map, Mapping\MapFieldWhen,
-    Mapping\MapKey, Mapping\MapKeyValue, Mapping\MapWhen, Mapping\MapWhile, Mapping\Reindex, Mapping\Scan,
-    Mapping\Tokenize, Mapping\Tuple, Mapping\UnpackTuple, Mapping\Window, Mapping\Zip, Operation, Sending\CollectIn,
-    Sending\CollectKeysIn, Sending\CountIn, Sending\Dispatch, Sending\Dispatcher\HandlerReady, Sending\Feed,
-    Sending\FeedMany, Sending\Remember, Sending\SendTo, Sending\SendToMany, Sending\SendToMax, Sending\SendWhen,
-    Sending\SendWhile, Sending\StoreIn, Sending\Unzip, Special\Assert, Special\Limit, Special\ReadMany,
-    Special\ReadManyWhile, Special\ReadNext, Special\Until, Terminating\Collect, Terminating\CollectKeys,
-    Terminating\Count, Terminating\FinalOperation, Terminating\Find, Terminating\First, Terminating\Fold,
-    Terminating\GroupBy, Terminating\Has, Terminating\HasEvery, Terminating\HasOnly, Terminating\IsEmpty,
-    Terminating\Last, Terminating\Reduce};
+    Mapping\Chunk, Mapping\ChunkBy, Mapping\Classify, Mapping\Flat, Mapping\Flip, Mapping\Map, Mapping\MapBy,
+    Mapping\MapFieldWhen, Mapping\MapKey, Mapping\MapKeyValue, Mapping\MapWhen, Mapping\MapWhile, Mapping\Reindex,
+    Mapping\Scan, Mapping\Tokenize, Mapping\Tuple, Mapping\UnpackTuple, Mapping\Window, Mapping\Zip, Operation,
+    Sending\CollectIn, Sending\CollectKeysIn, Sending\CountIn, Sending\Dispatch, Sending\Dispatcher\HandlerReady,
+    Sending\Feed, Sending\FeedMany, Sending\Remember, Sending\SendTo, Sending\SendToMany, Sending\SendToMax,
+    Sending\SendWhen, Sending\SendWhile, Sending\StoreIn, Sending\Unzip, Special\Assert, Special\Limit,
+    Special\ReadMany, Special\ReadManyWhile, Special\ReadNext, Special\Until, Terminating\Collect,
+    Terminating\CollectKeys, Terminating\Count, Terminating\FinalOperation, Terminating\Find, Terminating\First,
+    Terminating\Fold, Terminating\GroupBy, Terminating\Has, Terminating\HasEvery, Terminating\HasOnly,
+    Terminating\IsEmpty, Terminating\Last, Terminating\Reduce};
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
 use FiiSoft\Jackdaw\ValueRef\IntProvider;
 
 final class Operations
@@ -38,13 +39,16 @@ final class Operations
         return new Limit($limit);
     }
     
-    public static function skip(int $offset): Operation
+    /**
+     * @param IntProvider|callable|int $offset
+     */
+    public static function skip($offset): Operation
     {
-        return new Skip($offset);
+        return Skip::create(IntNum::getAdapter($offset));
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function skipWhile($filter, ?int $mode = null): SkipWhile
     {
@@ -52,7 +56,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function skipUntil($filter, ?int $mode = null): Operation
     {
@@ -60,7 +64,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function assert($filter, ?int $mode = null): Operation
     {
@@ -68,7 +72,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function filter($filter, ?int $mode = null): Operation
     {
@@ -77,7 +81,7 @@ final class Operations
     
     /**
      * @param string|int $field
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function filterBy($field, $filter): Operation
     {
@@ -86,7 +90,7 @@ final class Operations
     
     /**
      * @param ConditionReady|callable $condition
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function filterWhen($condition, $filter, ?int $mode = null): Operation
     {
@@ -95,7 +99,7 @@ final class Operations
     
     /**
      * @param ConditionReady|callable $condition
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function filterWhile($condition, $filter, ?int $mode = null): Operation
     {
@@ -104,7 +108,7 @@ final class Operations
     
     /**
      * @param ConditionReady|callable $condition
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function filterUntil($condition, $filter, ?int $mode = null): Operation
     {
@@ -112,7 +116,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function omit($filter, ?int $mode = null): Operation
     {
@@ -121,7 +125,7 @@ final class Operations
     
     /**
      * @param string|int $field
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function omitBy($field, $filter): Operation
     {
@@ -130,7 +134,7 @@ final class Operations
     
     /**
      * @param ConditionReady|callable $condition
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function omitWhen($condition, $filter, ?int $mode = null): Operation
     {
@@ -190,6 +194,15 @@ final class Operations
     public static function mapUntil($condition, $mapper): Operation
     {
         return new MapWhile($condition, $mapper, true);
+    }
+    
+    /**
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
+     * @param array<string|int, MapperReady|callable|iterable|mixed> $mappers
+     */
+    public static function mapBy($discriminator, array $mappers): Operation
+    {
+        return new MapBy($discriminator, $mappers);
     }
     
     /**
@@ -342,7 +355,10 @@ final class Operations
         return new Scan($initial, $reducer);
     }
     
-    public static function chunk(int $size, bool $reindex = false): Operation
+    /**
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $size
+     */
+    public static function chunk($size, bool $reindex = false): Operation
     {
         return Chunk::create($size, $reindex);
     }
@@ -366,7 +382,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function accumulate($filter, bool $reindex = false, ?int $mode = null): Operation
     {
@@ -374,7 +390,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function separateBy($filter, bool $reindex = false, ?int $mode = null): Operation
     {
@@ -414,7 +430,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function while($filter, ?int $mode = null): Operation
     {
@@ -422,7 +438,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public static function until($filter, ?int $mode = null): Until
     {
@@ -550,7 +566,7 @@ final class Operations
     }
     
     /**
-     * @param IntProvider|iterable<int>|callable|int $howMany
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $howMany
      */
     public static function readNext($howMany = 1): Operation
     {
@@ -558,7 +574,7 @@ final class Operations
     }
     
     /**
-     * @param IntProvider|iterable<int>|callable|int $howMany
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $howMany
      */
     public static function readMany($howMany, bool $reindex = false): Operation
     {
@@ -566,7 +582,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
     public static function readWhile($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Operation
@@ -575,7 +591,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
     public static function readUntil($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Operation
@@ -627,7 +643,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $value
+     * @param FilterReady|callable|mixed $value
      */
     public static function has(Stream $stream, $value, int $mode = Check::VALUE): FinalOperation
     {
@@ -651,7 +667,7 @@ final class Operations
     }
     
     /**
-     * @param Filter|callable|mixed $predicate
+     * @param FilterReady|callable|mixed $predicate
      */
     public static function find(Stream $stream, $predicate, int $mode = Check::VALUE): FinalOperation
     {

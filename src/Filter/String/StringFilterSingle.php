@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter\String;
 
-use FiiSoft\Jackdaw\Filter\Filter;
-
-abstract class StringFilterSingle extends StringFilter
+abstract class StringFilterSingle extends AbstractStringFilter
 {
     protected string $value;
     protected int $length;
@@ -19,7 +17,7 @@ abstract class StringFilterSingle extends StringFilter
         $this->length = \mb_strlen($value);
     }
     
-    final public function inMode(?int $mode): Filter
+    final public function inMode(?int $mode): StringFilter
     {
         return $mode !== null && $mode !== $this->mode
             ? static::create($mode, $this->value, $this->ignoreCase)

@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Mapper\Internal;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Filter\Logic\OpAND\FilterAND;
 use FiiSoft\Jackdaw\Filter\Logic\OpOR\FilterOR;
@@ -16,7 +17,7 @@ final class ConditionalExtract extends StateMapper
     private bool $negate;
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function __construct($filter, ?int $mode = null, bool $negate = false)
     {

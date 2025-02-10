@@ -4,9 +4,10 @@ namespace FiiSoft\Jackdaw\Filter\Logic;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
 
-abstract class MultiArgsLogicFilter extends LogicFilter
+abstract class MultiArgsLogicFilter extends BaseLogicFilter
 {
     /** @var Filter[] */
     protected array $filters = [];
@@ -14,12 +15,12 @@ abstract class MultiArgsLogicFilter extends LogicFilter
     protected ?int $mode = null;
     
     /**
-     * @param array<Filter|callable|mixed> $filters
+     * @param array<FilterReady|callable|mixed> $filters
      */
     abstract protected static function create(array $filters, ?int $mode = null): self;
     
     /**
-     * @param array<Filter|callable|mixed> $filters
+     * @param array<FilterReady|callable|mixed> $filters
      */
     protected function __construct(array $filters, ?int $mode = null)
     {

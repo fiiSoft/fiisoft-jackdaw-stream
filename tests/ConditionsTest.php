@@ -39,4 +39,12 @@ final class ConditionsTest extends TestCase
         self::assertTrue($condition->isTrueFor(15, 1));
         self::assertFalse($condition->isTrueFor('b', 2));
     }
+    
+    public function test_keyEquals(): void
+    {
+        $condition = Conditions::keyEquals('5');
+        
+        self::assertFalse($condition->isTrueFor(1, '2'));
+        self::assertTrue($condition->isTrueFor(1, '5'));
+    }
 }

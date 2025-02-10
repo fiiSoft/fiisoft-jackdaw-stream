@@ -14,7 +14,7 @@ use FiiSoft\Jackdaw\ValueRef\Adapter\SimpleIntValue;
 final class IntNum
 {
     /**
-     * @param IntProvider|iterable<int>|callable|int $value
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $value
      */
     public static function getAdapter($value): IntValue
     {
@@ -62,7 +62,7 @@ final class IntNum
     }
     
     /**
-     * @param iterable<int> $values
+     * @param \Traversable<int>|iterable<int> $values
      */
     public static function infinitely(iterable $values): IntValue
     {
@@ -70,7 +70,7 @@ final class IntNum
     }
     
     /**
-     * @param iterable<int> $values
+     * @param \Traversable<int>|iterable<int> $values
      */
     public static function consecutive(iterable $values, bool $infinite = false): IntValue
     {

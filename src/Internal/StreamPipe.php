@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
+use FiiSoft\Jackdaw\Producer\ProducerReady;
 
 abstract class StreamPipe extends ForkCollaborator
 {
@@ -32,6 +33,15 @@ abstract class StreamPipe extends ForkCollaborator
     
     //Result, Stream
     protected function execute(): void
+    {
+        throw ImpossibleSituationException::called(__METHOD__);
+    }
+    
+    //FinalOperation, Stream
+    /**
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|string $producer
+     */
+    protected function consume($producer): void
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }

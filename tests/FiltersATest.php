@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Filter\Simple\SimpleFilterFactory;
 use FiiSoft\Jackdaw\Filter\CheckType\{IsBool, IsFloat, IsInt, IsNull, IsNumeric, IsString};
 use FiiSoft\Jackdaw\Filter\Exception\FilterExceptionFactory;
 use FiiSoft\Jackdaw\Filter\Filter;
@@ -307,7 +308,7 @@ final class FiltersATest extends TestCase
     
     public function test_isNumeric_all_variations(): void
     {
-        $this->examineFilter(static fn(int $mode): Filter => Filters::number($mode)->isNumber(), '15.5', 'foo');
+        $this->examineFilter(static fn(int $mode): Filter => Filters::number($mode)->isNumeric(), '15.5', 'foo');
     }
     
     public function test_isString_all_variations(): void
@@ -1467,4 +1468,46 @@ final class FiltersATest extends TestCase
         self::assertFalse($value->isAllowed('15', 2));
         self::assertSame(Check::VALUE, $value->getMode());
     }
+    
+    public function test_time_filter_not(): void
+    {
+        $filter = Filters::time()->not()->after('2025-05-05');
+        
+        self::assertTrue($filter->isAllowed('2025-05-04'));
+        self::assertTrue($filter->isAllowed('2025-05-05'));
+        self::assertFalse($filter->isAllowed('2025-05-06'));
+    }
+    
+    public function test_length_filter_not(): void
+    {
+        $filter = Filters::length()->not()->eq(5);
+        
+        self::assertTrue($filter->isAllowed('123'));
+        self::assertFalse($filter->isAllowed('12345'));
+    }
+    
+    public function test_size_filter_not(): void
+    {
+        $filter = Filters::size()->not()->eq(2);
+        
+        self::assertTrue($filter->isAllowed([1, 2, 3,]));
+        self::assertFalse($filter->isAllowed([1, 2]));
+    }
+    
+    public function test_type_filter_not(): void
+    {
+        $filter = Filters::type()->not()->isInt();
+        
+        self::assertTrue($filter->isAllowed('foo'));
+        self::assertFalse($filter->isAllowed(5));
+    }
+    
+    public function test_simple_filter_not(): void
+    {
+        $filter = SimpleFilterFactory::instance()->not()->same('foo');
+        
+        self::assertTrue($filter->isAllowed(5));
+        self::assertFalse($filter->isAllowed('foo'));
+    }
+    
 }

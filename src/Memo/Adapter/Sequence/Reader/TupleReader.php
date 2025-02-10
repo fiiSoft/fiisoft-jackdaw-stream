@@ -9,6 +9,6 @@ final class TupleReader extends BaseSequenceReader
      */
     public function read(): array
     {
-        return $this->sequence->entries[$this->index]->asTuple();
+        return $this->sequence->get($this->index)->asTuple();
     }
 }

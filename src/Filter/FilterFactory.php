@@ -7,7 +7,6 @@ use FiiSoft\Jackdaw\Internal\Mode;
 abstract class FilterFactory
 {
     protected int $mode;
-    
     protected bool $isNot;
     
     final protected function __construct(?int $mode, bool $isNot = false)
@@ -16,9 +15,12 @@ abstract class FilterFactory
         $this->isNot = $isNot;
     }
     
-    final public function not(): self
+    /**
+     * @return static
+     */
+    final protected function negate()
     {
-        return new static($this->mode, true);
+        return new static($this->mode, !$this->isNot);
     }
     
     final protected function get(Filter $filter): Filter

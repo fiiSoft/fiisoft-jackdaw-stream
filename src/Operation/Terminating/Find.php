@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
@@ -16,7 +17,7 @@ final class Find extends SimpleFinal
     private ?Item $item = null;
     
     /**
-     * @param Filter|callable|mixed $predicate
+     * @param FilterReady|callable|mixed $predicate
      */
     public function __construct(Stream $stream, $predicate, int $mode = Check::VALUE)
     {

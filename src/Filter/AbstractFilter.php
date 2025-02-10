@@ -4,31 +4,10 @@ namespace FiiSoft\Jackdaw\Filter;
 
 use FiiSoft\Jackdaw\Filter\Logic\FilterNOT;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Internal\Mode;
 
-abstract class AbstractFilter implements Filter
+abstract class AbstractFilter extends AbstractLogicFilter implements Filter
 {
-    protected function __construct()
-    {
-    }
-    
-    final protected function createDefaultNOT(): Filter
-    {
-        return new FilterNOT($this->inMode($this->negatedMode()));
-    }
-    
-    final protected function negatedMode(): ?int
-    {
-        $mode = $this->getMode();
-        
-        if ($mode === Check::BOTH) {
-            $mode = Check::ANY;
-        } elseif ($mode === Check::ANY) {
-            $mode = Check::BOTH;
-        }
-        
-        return $mode;
-    }
-    
     final public function checkValue(): Filter
     {
         return $this->inMode(Check::VALUE);
@@ -49,51 +28,13 @@ abstract class AbstractFilter implements Filter
         return $this->inMode(Check::ANY);
     }
     
-    /**
-     * @inheritDoc
-     */
-    final public function and($filter): Filter
+    final protected function createDefaultNOT(): Filter
     {
-        return Filters::AND($this, $filter);
+        return new FilterNOT($this->inMode($this->negatedMode()));
     }
     
-    /**
-     * @inheritDoc
-     */
-    final public function andNot($filter): Filter
+    final protected function negatedMode(): ?int
     {
-        return Filters::AND($this, $filter->negate());
-    }
-    
-    /**
-     * @inheritDoc
-     */
-    final public function or($filter): Filter
-    {
-        return Filters::OR($this, $filter);
-    }
-    
-    /**
-     * @inheritDoc
-     */
-    final public function orNot($filter): Filter
-    {
-        return Filters::OR($this, $filter->negate());
-    }
-    
-    /**
-     * @inheritDoc
-     */
-    final public function xor($filter): Filter
-    {
-        return Filters::XOR($this, $filter);
-    }
-    
-    /**
-     * @inheritDoc
-     */
-    final public function xnor($filter): Filter
-    {
-        return Filters::XNOR($this, $filter);
+        return Mode::negate($this->getMode());
     }
 }

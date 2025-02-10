@@ -26,9 +26,6 @@ final class ReducerFork extends Fork
     public function handle(Signal $signal): void
     {
         $classifier = $this->discriminator->classify($signal->item->value, $signal->item->key);
-        if (\is_bool($classifier)) {
-            $classifier = (int) $classifier;
-        }
         
         if (isset($this->reducers[$classifier])) {
             $reducer = $this->reducers[$classifier];
@@ -44,9 +41,6 @@ final class ReducerFork extends Fork
     {
         foreach ($stream as $key => $value) {
             $classifier = $this->discriminator->classify($value, $key);
-            if (\is_bool($classifier)) {
-                $classifier = (int) $classifier;
-            }
             
             if (isset($this->reducers[$classifier])) {
                 $reducer = $this->reducers[$classifier];

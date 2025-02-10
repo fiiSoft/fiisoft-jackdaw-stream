@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\FilterFactory;
 use FiiSoft\Jackdaw\Filter\Filters;
 
-final class NumberFilterFactory extends FilterFactory
+final class NumberFilterFactory extends FilterFactory implements NumberFilterPicker
 {
     public static function instance(?int $mode = null): self
     {
@@ -23,9 +23,14 @@ final class NumberFilterFactory extends FilterFactory
         return $this->get(Filters::isFloat($this->mode));
     }
     
-    public function isNumber(): Filter
+    public function isNumeric(): Filter
     {
         return $this->get(Filters::isNumeric($this->mode));
+    }
+    
+    public function not(): NumberFilterPicker
+    {
+        return $this->negate();
     }
     
     /**

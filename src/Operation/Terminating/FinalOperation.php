@@ -189,6 +189,14 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
         return $this->stream->wrap($producer)->getFinalOperation();
     }
     
+    /**
+     * @inheritDoc
+     */
+    final public function consume($producer): void
+    {
+        $this->stream->consume($producer);
+    }
+    
     final public function streamingFinished(Signal $signal): bool
     {
         return $this->next->streamingFinished($signal);

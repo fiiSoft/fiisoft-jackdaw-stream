@@ -84,11 +84,11 @@ final class CollectionTest extends TestCase
         $data = $this->collection
             ->stream()
             ->mapWhen(
-                Conditions::keyEquals('numbers'),
+                Conditions::keyIs('numbers'),
                 static fn(array $numbers): int => \max($numbers)
             )
             ->mapWhen(
-                Conditions::keyEquals('words'),
+                Conditions::keyIs('words'),
                 static function (array $words): string {
                     return Stream::from($words)
                         ->reduce(static fn(string $longest, string $current) =>

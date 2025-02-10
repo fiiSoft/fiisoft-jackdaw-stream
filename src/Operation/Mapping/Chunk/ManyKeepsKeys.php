@@ -3,9 +3,8 @@
 namespace FiiSoft\Jackdaw\Operation\Mapping\Chunk;
 
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Mapping\Chunk;
 
-final class ManyKeepsKeys extends Chunk
+final class ManyKeepsKeys extends ConstantSizeChunk
 {
     public function handle(Signal $signal): void
     {

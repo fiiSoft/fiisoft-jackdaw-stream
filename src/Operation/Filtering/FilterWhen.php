@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Operation\Filtering;
 use FiiSoft\Jackdaw\Condition\Condition;
 use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Condition\Conditions;
-use FiiSoft\Jackdaw\Filter\Filter as FilterStrategy;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Internal\FilterData;
 use FiiSoft\Jackdaw\Internal\Signal;
 
@@ -15,7 +15,7 @@ final class FilterWhen extends FilterSingle
     
     /**
      * @param ConditionReady|callable $condition
-     * @param FilterStrategy|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      */
     public function __construct($condition, $filter, bool $negation = false, ?int $mode = null)
     {

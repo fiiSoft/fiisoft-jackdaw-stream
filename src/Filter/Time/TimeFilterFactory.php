@@ -19,7 +19,7 @@ use FiiSoft\Jackdaw\Filter\Time\Compare\Set\InSet;
 use FiiSoft\Jackdaw\Filter\Time\Compare\Set\NotInSet;
 use FiiSoft\Jackdaw\Filter\Time\Compare\WeekDay;
 
-final class TimeFilterFactory extends FilterFactory
+final class TimeFilterFactory extends FilterFactory implements TimeFilterPicker
 {
     public static function instance(?int $mode = null): self
     {
@@ -29,6 +29,11 @@ final class TimeFilterFactory extends FilterFactory
     public function isDateTime(): Filter
     {
         return $this->get(Filters::isDateTime($this->mode));
+    }
+    
+    public function not(): TimeFilterPicker
+    {
+        return $this->negate();
     }
     
     /**

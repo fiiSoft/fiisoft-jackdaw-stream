@@ -9,6 +9,6 @@ final class ValueReader extends BaseSequenceReader
      */
     public function read()
     {
-        return $this->sequence->entries[$this->index]->value;
+        return $this->sequence->get($this->index)->value;
     }
 }

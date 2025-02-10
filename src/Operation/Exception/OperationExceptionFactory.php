@@ -25,6 +25,16 @@ final class OperationExceptionFactory
         );
     }
     
+    /**
+     * @param mixed $classifier
+     */
+    public static function mapperIsNotDefined($classifier): JackdawException
+    {
+        return UnsupportedValueException::create(
+            'There is no mapper defined for classifier '.Helper::describe($classifier)
+        );
+    }
+    
     public static function invalidKeyValueMapper(int $numOfArgs): JackdawException
     {
         return Helper::wrongNumOfArgsException('KeyValue mapper', $numOfArgs, 0, 1, 2);

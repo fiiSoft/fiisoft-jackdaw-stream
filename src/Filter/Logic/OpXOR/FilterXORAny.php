@@ -2,14 +2,14 @@
 
 namespace FiiSoft\Jackdaw\Filter\Logic\OpXOR;
 
-use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Internal\Check;
 
 final class FilterXORAny extends BaseXOR
 {
     /**
-     * @param Filter|callable|mixed $first
-     * @param Filter|callable|mixed $second
+     * @param FilterReady|callable|mixed $first
+     * @param FilterReady|callable|mixed $second
      */
     protected function __construct($first, $second)
     {

@@ -29,9 +29,6 @@ final class CollectorFork extends Fork
     public function handle(Signal $signal): void
     {
         $classifier = $this->discriminator->classify($signal->item->value, $signal->item->key);
-        if (\is_bool($classifier)) {
-            $classifier = (int) $classifier;
-        }
         
         if (isset($this->collectors[$classifier])) {
             $collector = $this->collectors[$classifier];
@@ -54,9 +51,6 @@ final class CollectorFork extends Fork
     {
         foreach ($stream as $key => $value) {
             $classifier = $this->discriminator->classify($value, $key);
-            if (\is_bool($classifier)) {
-                $classifier = (int) $classifier;
-            }
             
             if (isset($this->collectors[$classifier])) {
                 $collector = $this->collectors[$classifier];

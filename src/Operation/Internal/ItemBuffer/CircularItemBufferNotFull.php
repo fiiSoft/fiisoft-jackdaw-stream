@@ -12,16 +12,12 @@ final class CircularItemBufferNotFull extends CircularItemBuffer
         
         if (++$this->index === $this->size) {
             $this->client->setItemBuffer(self::full($this->client, $this->buffer));
+            $this->client = null;
         }
     }
     
     public function count(): int
     {
         return $this->index;
-    }
-    
-    public function clear(): void
-    {
-        $this->client->setItemBuffer(self::initial($this->client, $this->size));
     }
 }

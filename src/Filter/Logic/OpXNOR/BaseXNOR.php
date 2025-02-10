@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Filter\Logic\OpXNOR;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Logic\OpXOR\BaseXOR;
 use FiiSoft\Jackdaw\Filter\Logic\TwoArgsLogicFilter;
 use FiiSoft\Jackdaw\Internal\Check;
@@ -10,8 +11,8 @@ use FiiSoft\Jackdaw\Internal\Check;
 abstract class BaseXNOR extends TwoArgsLogicFilter
 {
     /**
-     * @param Filter|callable|mixed $first
-     * @param Filter|callable|mixed $second
+     * @param FilterReady|callable|mixed $first
+     * @param FilterReady|callable|mixed $second
      */
     final public static function create($first, $second, ?int $mode = null): Filter
     {

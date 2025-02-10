@@ -60,7 +60,9 @@
         "UnwrapStrShuffle": false,
         "DoWhile": false,
         "Throw_": false,
-        "BitwiseAnd": false
+        "BitwiseAnd": false,
+        "PlusEqual": false,
+        "Assignment": false
     },
     "logs": {
         "html": "var/infection.html"

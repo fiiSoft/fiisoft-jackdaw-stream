@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\FilterFactory;
 use FiiSoft\Jackdaw\Filter\Filters;
 
-final class LengthFilterFactory extends FilterFactory
+final class LengthFilterFactory extends FilterFactory implements LengthFilterPicker
 {
     public static function instance(?int $mode = null): self
     {
@@ -16,6 +16,11 @@ final class LengthFilterFactory extends FilterFactory
     public function isString(): Filter
     {
         return $this->get(Filters::isString($this->mode));
+    }
+    
+    public function not(): LengthFilterPicker
+    {
+        return $this->negate();
     }
     
     /**

@@ -28,9 +28,6 @@ final class StreamFork extends Fork
     public function handle(Signal $signal): void
     {
         $classifier = $this->discriminator->classify($signal->item->value, $signal->item->key);
-        if (\is_bool($classifier)) {
-            $classifier = (int) $classifier;
-        }
         
         if (isset($this->streams[$classifier])) {
             $stream = $this->streams[$classifier];
@@ -49,9 +46,6 @@ final class StreamFork extends Fork
         
         foreach ($stream as $item->key => $item->value) {
             $classifier = $this->discriminator->classify($signal->item->value, $signal->item->key);
-            if (\is_bool($classifier)) {
-                $classifier = (int) $classifier;
-            }
             
             if (isset($this->streams[$classifier])) {
                 $fork = $this->streams[$classifier];

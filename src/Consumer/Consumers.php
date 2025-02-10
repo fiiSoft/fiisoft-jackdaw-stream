@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Consumer;
 
 use FiiSoft\Jackdaw\Consumer\Adapter\MemoWriterAdapter;
 use FiiSoft\Jackdaw\Consumer\Adapter\ReducerAdapter;
+use FiiSoft\Jackdaw\Consumer\Reference\ChangeIntRef;
 use FiiSoft\Jackdaw\Consumer\Reference\RefKey;
 use FiiSoft\Jackdaw\Consumer\Reference\RefValue;
 use FiiSoft\Jackdaw\Consumer\Reference\RefValueKey;
@@ -11,6 +12,7 @@ use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Reducer\Reducer;
+use FiiSoft\Jackdaw\ValueRef\IntProvider;
 
 final class Consumers
 {
@@ -98,5 +100,14 @@ final class Consumers
     public static function idle(): Consumer
     {
         return new Idle();
+    }
+    
+    /**
+     * @param int|null $variable REFERENCE
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $value
+     */
+    public static function changeIntBy(?int &$variable, $value): Consumer
+    {
+        return ChangeIntRef::create($variable, $value);
     }
 }

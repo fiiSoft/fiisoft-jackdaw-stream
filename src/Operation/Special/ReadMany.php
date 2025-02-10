@@ -9,7 +9,7 @@ use FiiSoft\Jackdaw\ValueRef\IntProvider;
 abstract class ReadMany extends CountableRead
 {
     /**
-     * @param IntProvider|iterable<int>|callable|int $howMany
+     * @param IntProvider|\Traversable<int>|iterable<int>|callable|int $howMany
      */
     final public static function create($howMany, bool $reindex = false): ReadMany
     {

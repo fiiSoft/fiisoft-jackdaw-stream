@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter\String;
 
-use FiiSoft\Jackdaw\Filter\Filter;
-
-abstract class StringFilterMulti extends StringFilter
+abstract class StringFilterMulti extends AbstractStringFilter
 {
     /** @var array<string, int|bool> */
     protected array $values = [];
@@ -29,31 +27,31 @@ abstract class StringFilterMulti extends StringFilter
         $this->prepare();
     }
     
-    final public function inMode(?int $mode): Filter
+    final public function inMode(?int $mode): StringFilter
     {
         return $mode !== null && $mode !== $this->mode
             ? static::create($mode, $this->oryginal, $this->ignoreCase)
             : $this;
     }
     
+    /**
+     * @return static
+     */
     final public function ignoreCase(): StringFilter
     {
         $copy = parent::ignoreCase();
-        
-        if ($copy instanceof self) {
-            $copy->prepare();
-        }
+        $copy->prepare();
         
         return $copy;
     }
     
+    /**
+     * @return static
+     */
     final public function caseSensitive(): StringFilter
     {
         $copy = parent::caseSensitive();
-        
-        if ($copy instanceof self) {
-            $copy->prepare();
-        }
+        $copy->prepare();
         
         return $copy;
     }

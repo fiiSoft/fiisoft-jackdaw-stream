@@ -2,13 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Filter\Logic\OpOR;
 
-use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Internal\Check;
 
 final class FilterORBoth extends BaseOR
 {
     /**
-     * @param array<Filter|callable|mixed> $filters
+     * @param array<FilterReady|callable|mixed> $filters
      */
     protected function __construct(array $filters)
     {

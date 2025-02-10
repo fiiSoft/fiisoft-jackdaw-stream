@@ -6,6 +6,7 @@ use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Signal;
 
@@ -21,7 +22,7 @@ final class ReadManyWhile extends SwapHead
     private bool $isFirstTime = true;
     
     /**
-     * @param Filter|callable|mixed $filter
+     * @param FilterReady|callable|mixed $filter
      * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
     public function __construct(

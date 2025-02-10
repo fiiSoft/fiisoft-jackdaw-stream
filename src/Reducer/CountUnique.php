@@ -33,9 +33,6 @@ final class CountUnique extends BaseReducer
     {
         if ($this->discriminator !== null) {
             $classifier = $this->discriminator->classify($value);
-            if (\is_bool($classifier)) {
-                $classifier = (int) $classifier;
-            }
         } elseif (\is_string($value) || \is_int($value)) {
             $classifier = $value;
         } elseif (\is_bool($value)) {
