@@ -36,7 +36,7 @@ final class Maxima extends BaseOperation
         $item = $signal->item;
         
         if ($this->previous === null) {
-            $this->previous = $item->copy();
+            $this->previous = clone $item;
         } else {
             $compare = $this->comparator->compare($this->previous, $item);
             if ($compare < 0) {
@@ -67,7 +67,7 @@ final class Maxima extends BaseOperation
         
         foreach ($stream as $item->key => $item->value) {
             if ($this->previous === null) {
-                $this->previous = $item->copy();
+                $this->previous = clone $item;
             } else {
                 $compare = $this->comparator->compare($this->previous, $item);
                 if ($compare < 0) {

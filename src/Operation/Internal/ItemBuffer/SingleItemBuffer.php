@@ -13,7 +13,7 @@ final class SingleItemBuffer implements ItemBuffer
     public function hold(Item $item): void
     {
         if ($this->item === null) {
-            $this->item = $item->copy();
+            $this->item = clone $item;
         } else {
             $this->item->key = $item->key;
             $this->item->value = $item->value;

@@ -41,7 +41,7 @@ final class Bucket implements Destroyable
     public function add(Item $item): void
     {
         if ($this->item === null) {
-            $this->item = $item->copy();
+            $this->item = clone $item;
         }
         
         if (\count($this->data) < $this->limit) {

@@ -26,7 +26,7 @@ final class SingleSortLimited extends SortLimited
     public function handle(Signal $signal): void
     {
         if ($this->best === null) {
-            $this->best = $signal->item->copy();
+            $this->best = clone $signal->item;
         } elseif ($this->comparator->compare($signal->item, $this->best) < 0) {
             $this->best->key = $signal->item->key;
             $this->best->value = $signal->item->value;
@@ -39,7 +39,7 @@ final class SingleSortLimited extends SortLimited
         
         foreach ($stream as $item->key => $item->value) {
             if ($this->best === null) {
-                $this->best = $item->copy();
+                $this->best = clone $item;
             } elseif ($this->comparator->compare($item, $this->best) < 0) {
                 $this->best->key = $item->key;
                 $this->best->value = $item->value;

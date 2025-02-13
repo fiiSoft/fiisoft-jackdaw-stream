@@ -11,7 +11,7 @@ final class First extends SimpleFinal
     
     public function handle(Signal $signal): void
     {
-        $this->item = $signal->item->copy();
+        $this->item = clone $signal->item;
         
         $signal->stop();
     }

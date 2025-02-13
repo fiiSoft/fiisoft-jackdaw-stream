@@ -45,7 +45,7 @@ final class PipeTest extends TestCase
     {
         //prepare
         $operations = $expected = [];
-        
+
         foreach ($testData as $item) {
             if (\is_object($item)) {
                 $operations[] = $item;
@@ -53,14 +53,14 @@ final class PipeTest extends TestCase
                 $expected[] = $item;
             }
         }
-        
+
         //given
         $stream = Stream::empty();
         $pipe = $this->getPipeFromStream($stream);
-        
+
         //when
         $this->chainOperations($pipe, $stream, ...$operations);
-        
+
         //then
         $this->assertPipeContainsOperations($pipe, ...$expected);
     }

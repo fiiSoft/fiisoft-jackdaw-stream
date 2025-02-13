@@ -14,7 +14,7 @@ final class Reverse extends BaseOperation
     
     public function handle(Signal $signal): void
     {
-        $this->items[] = $signal->item->copy();
+        $this->items[] = clone $signal->item;
     }
     
     public function buildStream(iterable $stream): iterable
@@ -22,7 +22,7 @@ final class Reverse extends BaseOperation
         $item = new Item();
         
         foreach ($stream as $item->key => $item->value) {
-            $this->items[] = $item->copy();
+            $this->items[] = clone $item;
         }
         
         if (empty($this->items)) {

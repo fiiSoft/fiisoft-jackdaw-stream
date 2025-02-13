@@ -10,7 +10,7 @@ final class ShuffleAll extends Shuffle
 {
     public function handle(Signal $signal): void
     {
-        $this->items[] = $signal->item->copy();
+        $this->items[] = clone $signal->item;
     }
     
     public function buildStream(iterable $stream): iterable
@@ -18,7 +18,7 @@ final class ShuffleAll extends Shuffle
         $item = new Item();
         
         foreach ($stream as $item->key => $item->value) {
-            $this->items[] = $item->copy();
+            $this->items[] = clone $item;
         }
         
         if (empty($this->items)) {

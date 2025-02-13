@@ -1044,4 +1044,60 @@ final class StreamGTest extends TestCase
         
         self::assertSame(3, $counter->get());
     }
+    
+    public function test_call_consume_directly_on_empty_stream(): void
+    {
+        $countAll = 0;
+        $countStrings = 0;
+        $strings = Collectors::values();
+        
+        $numbers = Stream::empty()
+            ->onlyIntegers()
+            ->fork(
+                Discriminators::yesNo(Filters::greaterOrEqual(0), 'positive', 'negative'),
+                Collectors::values()
+            );
+        
+        $stream = Stream::empty()
+            ->filter(Filters::isString()->or(Filters::isInt()))
+            ->mapWhen('\is_string', '\strtolower')
+            ->feed($numbers)
+            ->countIn($countAll)
+            ->onlyStrings()
+            ->collectIn($strings)
+            ->countIn($countStrings);
+        
+        $stream->consume([5, 'A', null, -3, 'B', false]);
+        $stream->consume(['c', -4, false, 'D', 2]);
+        $stream->consume(['d', -1, true, '3', 0]);
+        
+        self::assertSame(12, $countAll);
+        self::assertSame(6, $countStrings);
+        
+        self::assertSame([
+            'positive' => [5, 2, 0],
+            'negative' => [-3, -4, -1],
+        ], $numbers->toArrayAssoc());
+        
+        $stream->consume(['a', 1, 'b', 2]);
+        
+        self::assertSame(16, $countAll);
+        self::assertSame(8, $countStrings);
+        
+        self::assertSame('a,b,c,d,d,3,a,b', $strings->toString());
+        self::assertSame('', $stream->toString());
+    }
+    
+    public function test_insert_data_into_stream_using_consume(): void
+    {
+        $stream = Stream::from([1, 2, 3, 4, 5, 6, 7]);
+        $filter = Filters::number();
+        
+        $stream->callWhen($filter->isInt()->and($filter->isEven()), static function () use ($stream) {
+            static $data = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
+            $stream->consume(\array_splice($data, 0, 3));
+        });
+        
+        self::assertSame([1, 'a', 'b', 'c', 2, 3, 'd', 'e', 'f', 4, 5, 'g', 'h', 'i', 6, 7], $stream->toArray());
+    }
 }

@@ -27,7 +27,7 @@ final class OmitReps extends BaseOperation
     public function handle(Signal $signal): void
     {
         if ($this->previous === null) {
-            $this->previous = $signal->item->copy();
+            $this->previous = clone $signal->item;
             
             $this->next->handle($signal);
         } elseif ($this->comparer->areDifferent($this->previous, $signal->item)) {
@@ -44,7 +44,7 @@ final class OmitReps extends BaseOperation
         
         foreach ($stream as $item->key => $item->value) {
             if ($this->previous === null) {
-                $this->previous = $item->copy();
+                $this->previous = clone $item;
                 
                 yield $item->key => $item->value;
             }

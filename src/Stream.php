@@ -47,6 +47,7 @@ final class Stream extends StreamSource
     private bool $isStarted = false;
     private bool $isResuming = false;
     private bool $streamingFinished = false;
+    private bool $isConsumer = false;
     
     /** @var StreamPipe[] */
     private array $pushToStreams = [];
@@ -112,6 +113,7 @@ final class Stream extends StreamSource
         $this->isInitialized = false;
         $this->isExecuted = false;
         $this->isStarted = false;
+        $this->isConsumer = false;
         
         $this->pipe->prepare();
         $this->producer = MultiProducer::oneTime();
@@ -1637,31 +1639,33 @@ final class Stream extends StreamSource
      */
     public function run(): void
     {
-        if (!empty($this->parents)) {
-            foreach ($this->parents as $key => $parent) {
-                unset($this->parents[$key]);
-                
-                if ($parent->isNotStartedYet()) {
-                    $parent->run();
-                }
+        while (!empty($this->parents)) {
+            $parent = \array_shift($this->parents);
+            if ($parent->isNotStartedYet()) {
+                $parent->run();
             }
-            
-            if ($this->isExecuted) {
-                return;
-            }
+        }
+        
+        if ($this->isExecuted && isset($parent)) {
+            return;
         }
         
         $this->execute();
     }
     
     /**
+     *  Experimental. Causes stream to consume data provided by the passed producer. Can be called many times.
+     *  However, calling wrap() after calling consume() will result in an exception.
+     *
      * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|string $producer
      */
-    protected function consume($producer): void
+    public function consume($producer): void
     {
         if (!$this->isInitialized) {
             $this->prepareToRun();
             $this->initialize();
+         
+            $this->isConsumer = true;
         }
         
         if ($this->signal->isWorking) {
@@ -1745,7 +1749,11 @@ final class Stream extends StreamSource
     private function prepareToRun(): void
     {
         if ($this->isExecuted) {
-            throw StreamExceptionFactory::cannotExecuteStreamMoreThanOnce();
+            if ($this->isConsumer) {
+                $this->isConsumer = false;
+            } else {
+                throw StreamExceptionFactory::cannotExecuteStreamMoreThanOnce();
+            }
         }
         
         $this->pipe->prepare();

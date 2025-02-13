@@ -138,7 +138,7 @@ abstract class OnlyIn extends BaseFilter
     
     final public function negate(): Filter
     {
-        return $this->createDefaultNOT();
+        return $this->createDefaultNOT(true);
     }
     
     final public function inMode(?int $mode): Filter

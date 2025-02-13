@@ -15,7 +15,7 @@ use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Mapping\{Accumulate, Aggregate, Chunk, ChunkBy, Classify, ConditionalMap, Flat, Flip, Map,
     MapBy, MapFieldWhen, MapKey, MapKeyValue, MapMany, MapWhen, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window};
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Operation\Sending\{Feed, FeedMany, SendTo, SendToMany};
+use FiiSoft\Jackdaw\Operation\Sending\{Feed, FeedMany, SendTo, SendToMany, StoreIn};
 use FiiSoft\Jackdaw\Operation\Special\{CountableRead, Limit, ReadMany, ReadManyWhile, ReadNext, SwapHead, Until};
 use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, FinalOperation, Find, First, Has, HasEvery,
     HasOnly, IsEmpty, Last};
@@ -128,12 +128,11 @@ final class Pipe extends ProtectedCloning implements Destroyable
     
     private function cannotChain(Operation $operation): bool
     {
-        return $this->isPrepared && !$this->isFeedOperation($operation);
-    }
-    
-    private function isFeedOperation(Operation $operation): bool
-    {
-        return $operation instanceof Feed || $operation instanceof FeedMany;
+        return $this->isPrepared
+            && !$operation instanceof StoreIn
+            && !$operation instanceof LastOperation
+            && !$operation instanceof Feed
+            && !$operation instanceof FeedMany;
     }
     
     public function append(Operation $operation): void

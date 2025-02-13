@@ -28,9 +28,9 @@ abstract class AbstractFilter extends AbstractLogicFilter implements Filter
         return $this->inMode(Check::ANY);
     }
     
-    final protected function createDefaultNOT(): Filter
+    final protected function createDefaultNOT(bool $direct = false): Filter
     {
-        return new FilterNOT($this->inMode($this->negatedMode()));
+        return new FilterNOT($direct ? $this : $this->inMode($this->negatedMode()));
     }
     
     final protected function negatedMode(): ?int

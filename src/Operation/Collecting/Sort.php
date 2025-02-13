@@ -27,7 +27,7 @@ final class Sort extends BaseOperation
     
     public function handle(Signal $signal): void
     {
-        $this->items[] = $signal->item->copy();
+        $this->items[] = clone $signal->item;
     }
     
     public function buildStream(iterable $stream): iterable

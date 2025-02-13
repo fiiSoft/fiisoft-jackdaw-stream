@@ -1279,6 +1279,44 @@ final class StreamCTest extends TestCase
         yield [$data->stream()->until(Filters::isInt(Check::BOTH))];
         yield [$data->stream()->while(Filters::NOT(Filters::isInt(Check::ANY)))];
     }
+    
+    public function test_until_with_filter(): void
+    {
+        $producer = Producers::getAdapter(['c' => 1, 2 => 'd', 'a' => 'b', 3 => 4, 5 => 'e', 'f' => 6]);
+        $isString = Filters::isString();
+        
+        //stream until value is a string
+        self::assertSame([
+            'c' => 1,
+        ], $producer->stream()->until($isString)->toArrayAssoc());
+        
+        //stream until value is not a string
+        self::assertSame([], $producer->stream()->until($isString->negate())->toArrayAssoc());
+        
+        //stream until key is a string
+        self::assertSame([], $producer->stream()->until($isString->checkKey())->toArrayAssoc());
+        
+        //stream until key is not a string
+        self::assertSame([
+            'c' => 1,
+        ], $producer->stream()->until($isString->checkKey()->negate())->toArrayAssoc());
+        
+        //stream until both value and key are strings
+        self::assertSame([
+            'c' => 1, 2 => 'd',
+        ], $producer->stream()->until($isString->checkBoth())->toArrayAssoc());
+        
+        //stream until both value and key are not strings
+        self::assertSame([
+            'c' => 1, 2 => 'd', 'a' => 'b'
+        ], $producer->stream()->until($isString->checkBoth()->negate())->toArrayAssoc());
+        
+        //stream until any of value or key is a string
+        self::assertSame([], $producer->stream()->until($isString->checkAny())->toArrayAssoc());
+        
+        //stream until any of value or key is not a string
+        self::assertSame([], $producer->stream()->until($isString->checkAny()->negate())->toArrayAssoc());
+    }
 
     public function test_only_mode_value(): void
     {
@@ -1340,12 +1378,12 @@ final class StreamCTest extends TestCase
     
     public function test_filter_many_with_various_filters(): void
     {
-        $actual = Stream::from([-2 => 5, 2 => 7, 'a' => 3, 7 => 1, 3 => -1, 0 => 0, 1 => 3, 9 => 5])
+        $actual = Stream::from([-2 => 5, 2 => 7, 'a' => 3, 7 => 'b', 3 => -1, 0 => 0, 1 => 3, 9 => 5, 5 => 7])
             ->filter(Filters::NOT(Filters::isString(Check::KEY))->and(Filters::isInt(Check::VALUE)))
             ->filter(Filters::greaterThan(0))
             ->omit(Filters::lessThan(0), Check::KEY)
             ->filter(Filters::number()->isOdd(), Check::BOTH)
-            ->without([1, 3, 5, 7], Check::ANY);
+            ->without([1, 7], Check::ANY);
         
         self::assertSame([9 => 5], $actual->toArrayAssoc());
     }

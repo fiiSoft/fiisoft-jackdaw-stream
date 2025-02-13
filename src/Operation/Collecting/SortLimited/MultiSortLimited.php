@@ -46,7 +46,7 @@ final class MultiSortLimited extends SortLimited
             }
         } else {
             ++$this->count;
-            $this->buffer->insert($signal->item->copy());
+            $this->buffer->insert(clone $signal->item);
         }
     }
 
@@ -68,7 +68,7 @@ final class MultiSortLimited extends SortLimited
                 }
             } else {
                 ++$this->count;
-                $this->buffer->insert($item->copy());
+                $this->buffer->insert(clone $item);
             }
         }
 

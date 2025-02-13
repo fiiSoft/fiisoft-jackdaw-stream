@@ -25,7 +25,7 @@ final class ShuffleChunks extends Shuffle
     
     public function handle(Signal $signal): void
     {
-        $this->items[] = $signal->item->copy();
+        $this->items[] = clone $signal->item;
         
         if (++$this->count === $this->chunkSize) {
             \shuffle($this->items);
@@ -41,7 +41,7 @@ final class ShuffleChunks extends Shuffle
         $item = new Item();
         
         foreach ($stream as $item->key => $item->value) {
-            $this->items[] = $item->copy();
+            $this->items[] = clone $item;
             
             if (++$this->count === $this->chunkSize) {
                 \shuffle($this->items);

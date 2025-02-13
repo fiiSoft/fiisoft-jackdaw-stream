@@ -1,5 +1,9 @@
 # Changelog
 
+## 10.1.0
+
+Stream got consume() method.
+
 ## 10.0.0
 
 - added Matcher

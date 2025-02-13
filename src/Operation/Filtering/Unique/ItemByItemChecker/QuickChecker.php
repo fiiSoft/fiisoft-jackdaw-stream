@@ -40,9 +40,9 @@ abstract class QuickChecker implements UniquenessChecker
                 $this->unique[$i] = $this->unique[$i - 1];
             }
             
-            $this->unique[$last] = $item->copy();
+            $this->unique[$last] = clone $item;
         } else {
-            $this->unique[] = $item->copy();
+            $this->unique[] = clone $item;
         }
         
         ++$this->count;

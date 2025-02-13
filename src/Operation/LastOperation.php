@@ -19,6 +19,9 @@ interface LastOperation extends ResultApi, SignalHandler, ForkReady
     public function wrap($producer): LastOperation;
     
     /**
+     * Experimental. Causes stream to consume data provided by the passed producer. Can be called many times.
+     * However, calling wrap() after calling consume() will result in an exception.
+     *
      * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|string $producer
      */
     public function consume($producer): void;

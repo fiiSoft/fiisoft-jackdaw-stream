@@ -19,9 +19,4 @@ final class Item
         $this->key = $key;
         $this->value = $value;
     }
-    
-    public function copy(): Item
-    {
-        return new self($this->key, $this->value);
-    }
 }

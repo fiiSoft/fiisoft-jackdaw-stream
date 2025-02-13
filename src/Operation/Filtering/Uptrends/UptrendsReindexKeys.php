@@ -14,7 +14,7 @@ final class UptrendsReindexKeys extends Uptrends
         $item = $signal->item;
         
         if ($this->previous === null) {
-            $this->previous = $item->copy();
+            $this->previous = clone $item;
             $this->comparator = ItemComparatorFactory::getForComparison($this->comparison, $this->downtrend);
         } elseif ($this->comparator->compare($this->previous, $item) < 0) {
             $this->trend[] = $this->previous->value;
@@ -46,7 +46,7 @@ final class UptrendsReindexKeys extends Uptrends
         
         foreach ($stream as $item->key => $item->value) {
             if ($this->previous === null) {
-                $this->previous = $item->copy();
+                $this->previous = clone $item;
                 $this->comparator = ItemComparatorFactory::getForComparison($this->comparison, $this->downtrend);
             } elseif ($this->comparator->compare($this->previous, $item) < 0) {
                 $this->trend[] = $this->previous->value;

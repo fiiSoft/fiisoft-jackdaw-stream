@@ -74,5 +74,6 @@
         <InvalidArrayOffset errorLevel="suppress" />
         <RiskyTruthyFalsyComparison errorLevel="suppress" />
         <LoopInvalidation errorLevel="suppress" />
+        <MixedClone errorLevel="suppress" />
     </issueHandlers>
 </psalm>

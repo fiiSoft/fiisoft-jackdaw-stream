@@ -29,7 +29,7 @@ final class Find extends SimpleFinal
     public function handle(Signal $signal): void
     {
         if ($this->filter->isAllowed($signal->item->value, $signal->item->key)) {
-            $this->item = $signal->item->copy();
+            $this->item = clone $signal->item;
             $signal->stop();
         }
     }
