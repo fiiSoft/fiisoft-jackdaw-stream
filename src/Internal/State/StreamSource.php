@@ -7,7 +7,7 @@ use FiiSoft\Jackdaw\Internal\Collaborator;
 
 abstract class StreamSource extends Collaborator
 {
-    //Source, Stream
+    //Source->, SourceNotReady->, *Stream
     protected function setSource(Source $state): void
     {
         throw ImpossibleSituationException::called(__METHOD__);

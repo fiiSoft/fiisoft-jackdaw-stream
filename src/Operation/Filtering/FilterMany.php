@@ -11,7 +11,7 @@ final class FilterMany extends BaseOperation
     /** @var FilterData[] */
     private array $checks = [];
     
-    public function __construct(FilterSingle $first, ?FilterSingle $second = null)
+    public function __construct(StackableFilter $first, ?StackableFilter $second = null)
     {
         $this->add($first);
         
@@ -90,7 +90,7 @@ final class FilterMany extends BaseOperation
         return true;
     }
     
-    public function add(FilterSingle $filter): void
+    public function add(StackableFilter $filter): void
     {
         $this->checks[] = $filter->filterData();
     }

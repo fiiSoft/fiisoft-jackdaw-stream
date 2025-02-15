@@ -1334,9 +1334,4 @@ final class PipeBuildTest extends TestCase
             'custom_reindex' => [1, 2, true, $reindexed],
         ];
     }
-    
-    public function test_Filter_First(): void
-    {
-        self::assertSame('a', Stream::from([1, 'a', 2, 'b'])->onlyStrings()->first()->get());
-    }
 }

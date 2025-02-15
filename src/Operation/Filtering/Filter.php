@@ -3,52 +3,32 @@
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
 use FiiSoft\Jackdaw\Filter\Internal\FilterData;
-use FiiSoft\Jackdaw\Filter\Logic\FilterNOT;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Terminating\Find;
+use FiiSoft\Jackdaw\Operation\Internal\Operations;
+use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Stream;
 
-final class Filter extends FilterSingle
+final class Filter extends StackableFilter
 {
     public function handle(Signal $signal): void
     {
-        if ($this->negation XOR $this->filter->isAllowed($signal->item->value, $signal->item->key)) {
+        if ($this->filter->isAllowed($signal->item->value, $signal->item->key)) {
             $this->next->handle($signal);
         }
     }
     
     public function buildStream(iterable $stream): iterable
     {
-        if ($this->negation) {
-            if ($this->filter instanceof FilterNOT) {
-                return $this->filter->wrappedFilter()->buildStream($stream);
-            }
-
-            return (function (iterable $stream): iterable {
-                foreach ($stream as $key => $value) {
-                    if ($this->filter->isAllowed($value, $key)) {
-                        continue;
-                    }
-                    
-                    yield $key => $value;
-                }
-            })($stream);
-        }
-        
         return $this->filter->buildStream($stream);
     }
     
     public function filterData(): FilterData
     {
-        return new FilterData($this->filter, $this->negation);
+        return new FilterData($this->filter, false);
     }
     
-    public function createFind(Stream $stream): Find
+    public function createFind(Stream $stream): Operation
     {
-        return new Find(
-            $stream,
-            $this->negation ? $this->filter->negate() : $this->filter,
-            $this->filter->getMode()
-        );
+        return Operations::find($stream, $this->filter);
     }
 }

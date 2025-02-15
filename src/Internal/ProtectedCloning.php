@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
 
-abstract class ProtectedCloning extends StreamState
+abstract class ProtectedCloning
 {
     protected function __clone()
     {

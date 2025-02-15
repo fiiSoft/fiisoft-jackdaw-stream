@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Internal\Signal;
 
-final class ConsumerAdapter implements Handler
+final class ConsumerAdapter extends PrimitiveHandler
 {
     private Consumer $consumer;
     

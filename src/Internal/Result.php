@@ -174,14 +174,10 @@ final class Result extends StreamPipe implements ResultApi
         if ($this->resultItem === null) {
             
             foreach ($this->parents as $parent) {
-                if ($parent->isNotStartedYet()) {
-                    $parent->run();
-                }
+                $parent->run(true);
             }
             
-            if ($this->stream->isNotStartedYet()) {
-                $this->stream->execute();
-            }
+            $this->stream->run(true);
             
             if ($this->resultProvider->hasResult()) {
                 $this->resultItem = ResultItem::createFound($this->resultProvider->getResult(), $this->transformer);

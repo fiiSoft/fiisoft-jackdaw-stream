@@ -3,10 +3,9 @@
 namespace FiiSoft\Jackdaw\Consumer;
 
 use FiiSoft\Jackdaw\Internal\StreamAware;
-use FiiSoft\Jackdaw\Internal\StreamState;
 use FiiSoft\Jackdaw\Stream;
 
-final class StreamCounter extends StreamState implements Counter, StreamAware
+final class StreamCounter implements Counter, StreamAware
 {
     private int $count = 0;
     
@@ -26,12 +25,9 @@ final class StreamCounter extends StreamState implements Counter, StreamAware
      */
     public function count(): int
     {
-        foreach ($this->streams as $id => $stream) {
-            unset($this->streams[$id]);
-            
-            if ($stream->isNotStartedYet()) {
-                $stream->run();
-            }
+        while (!empty($this->streams)) {
+            $stream = \array_shift($this->streams);
+            $stream->run(true);
         }
         
         return $this->count;

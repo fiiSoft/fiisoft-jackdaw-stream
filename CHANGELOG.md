@@ -1,5 +1,10 @@
 # Changelog
 
+## 10.2.0
+
+Executable::run() got flag for safe run.   
+Some bugs fixed.
+
 ## 10.1.0
 
 Stream got consume() method.

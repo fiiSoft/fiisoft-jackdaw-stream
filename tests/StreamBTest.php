@@ -10,6 +10,7 @@ use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Exception\PipeExceptionFactory;
 use FiiSoft\Jackdaw\Mapper\Mappers;
@@ -48,6 +49,25 @@ final class StreamBTest extends TestCase
         ];
         
         $ids = Stream::from($rowset)
+            ->omitBy('age', Filters::lessThan(18))
+            ->extract('id')
+            ->toArray();
+        
+        self::assertSame([2, 5, 7], $ids);
+    }
+    
+    public function test_omitBy_with_onerror_handler(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+        ];
+        
+        $ids = Stream::from($rowset)
+            ->onError(OnError::abort())
             ->omitBy('age', Filters::lessThan(18))
             ->extract('id')
             ->toArray();

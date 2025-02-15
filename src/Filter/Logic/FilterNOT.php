@@ -57,7 +57,7 @@ final class FilterNOT extends BaseLogicFilter
     {
         $negation = $this->filter->negate();
         
-        return $negation instanceof self ? $this->filter->inMode($this->negatedMode()) : $negation;
+        return $negation instanceof self ? $negation->wrappedFilter() : $negation;
     }
     
     public function wrappedFilter(): Filter

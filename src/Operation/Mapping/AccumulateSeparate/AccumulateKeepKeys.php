@@ -1,18 +1,17 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Operation\Mapping\Accumulate;
+namespace FiiSoft\Jackdaw\Operation\Mapping\AccumulateSeparate;
 
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Mapping\Accumulate;
 
-final class AccumulateReindexKeys extends Accumulate
+final class AccumulateKeepKeys extends Accumulate
 {
     public function handle(Signal $signal): void
     {
         $item = $signal->item;
         
-        if ($this->reverse XOR $this->filter->isAllowed($item->value, $item->key)) {
-            $this->data[] = $item->value;
+        if ($this->filter->isAllowed($item->value, $item->key)) {
+            $this->data[$item->key] = $item->value;
         } elseif (!empty($this->data)) {
             $item->key = $this->index++;
             $item->value = $this->data;
@@ -25,8 +24,8 @@ final class AccumulateReindexKeys extends Accumulate
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            if ($this->reverse XOR $this->filter->isAllowed($value, $key)) {
-                $this->data[] = $value;
+            if ($this->filter->isAllowed($value, $key)) {
+                $this->data[$key] = $value;
             } elseif (!empty($this->data)) {
                 yield $this->index++ => $this->data;
                 

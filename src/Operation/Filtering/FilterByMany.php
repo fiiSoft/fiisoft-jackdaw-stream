@@ -11,7 +11,7 @@ final class FilterByMany extends BaseOperation
     /** @var FilterByData[] */
     private array $checks = [];
     
-    public function __construct(FilterBy $first, ?FilterBy $second = null)
+    public function __construct(FilterOmitBy $first, ?FilterOmitBy $second = null)
     {
         $this->add($first);
         
@@ -47,7 +47,7 @@ final class FilterByMany extends BaseOperation
         }
     }
     
-    public function add(FilterBy $filter): void
+    public function add(FilterOmitBy $filter): void
     {
         $this->checks[] = $filter->filterByData();
     }

@@ -1510,4 +1510,20 @@ final class FiltersATest extends TestCase
         self::assertFalse($filter->isAllowed('foo'));
     }
     
+    public function test_negate_both_are_strings_filter(): void
+    {
+        $filter = Filters::getAdapter('is_string', Check::BOTH);
+        
+        self::assertTrue($filter->isAllowed('a', 'b'));
+        self::assertFalse($filter->isAllowed(1, 'b'));
+        self::assertFalse($filter->isAllowed('a', 1));
+        self::assertFalse($filter->isAllowed(1, 1));
+        
+        $negation = $filter->negate();
+        
+        self::assertFalse($negation->isAllowed('a', 'b'));
+        self::assertTrue($negation->isAllowed(1, 'b'));
+        self::assertTrue($negation->isAllowed('a', 1));
+        self::assertTrue($negation->isAllowed(1, 1));
+    }
 }

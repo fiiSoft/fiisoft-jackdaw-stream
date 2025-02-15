@@ -8,19 +8,16 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Filter\Internal\FilterData;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
-abstract class FilterSingle extends BaseOperation
+abstract class StackableFilter extends BaseOperation
 {
     protected Filter $filter;
-    
-    protected bool $negation;
     
     /**
      * @param FilterReady|callable|mixed $filter
      */
-    public function __construct($filter, bool $negation = false, ?int $mode = null)
+    public function __construct($filter, ?int $mode = null)
     {
         $this->filter = Filters::getAdapter($filter, $mode);
-        $this->negation = $negation;
     }
     
     abstract public function filterData(): FilterData;

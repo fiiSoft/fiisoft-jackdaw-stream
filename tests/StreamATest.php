@@ -1585,7 +1585,7 @@ final class StreamATest extends TestCase
         ], $stream->toArray());
     }
     
-    public function test_first(): void
+    public function test_first_in_details(): void
     {
         $item = Stream::from([5, 2, 8])->first();
         
@@ -1603,7 +1603,7 @@ final class StreamATest extends TestCase
         self::assertSame([0, 5], $item->tuple());
     }
     
-    public function test_last(): void
+    public function test_last_in_details(): void
     {
         $item = Stream::from([5, 2, 8])->last();
         

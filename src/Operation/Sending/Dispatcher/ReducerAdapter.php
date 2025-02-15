@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
-final class ReducerAdapter implements Handler
+final class ReducerAdapter extends PrimitiveHandler
 {
     private Reducer $reducer;
     

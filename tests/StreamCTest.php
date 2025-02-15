@@ -1259,25 +1259,42 @@ final class StreamCTest extends TestCase
     {
         self::assertSame(['a' => 'b', 'c' => 1, 2 => 'd'], $stream->toArrayAssoc());
     }
-    
+
     public static function getDataForTestUntilWithFilterInVariousWays(): iterable
     {
         $data = Producers::getAdapter(['a' => 'b', 'c' => 1, 2 => 'd', 3 => 4, 5 => 'e', 'f' => 6]);
-        
+
         $bothNotStrings = static fn($v, $k): bool => !\is_string($v) && !\is_string($k);
         $anyIsString = static fn($v, $k): bool => \is_string($v) || \is_string($k);
-        
+
         yield [$data->stream()->until($bothNotStrings)];
         yield [$data->stream()->while(Filters::NOT($bothNotStrings))];
-        
+
         yield [$data->stream()->while($anyIsString)];
         yield [$data->stream()->until(Filters::NOT($anyIsString))];
-        
+
         yield [$data->stream()->while(Filters::isString(Check::ANY))];
-        yield [$data->stream()->until(Filters::NOT(Filters::isString(Check::BOTH)))];
-        
+
         yield [$data->stream()->until(Filters::isInt(Check::BOTH))];
-        yield [$data->stream()->while(Filters::NOT(Filters::isInt(Check::ANY)))];
+    }
+    
+    public function test_while_not_any_is_int(): void
+    {
+        $data = Producers::getAdapter(['a' => 'b', 'c' => 1, 2 => 'd', 3 => 4, 5 => 'e', 'f' => 6]);
+
+        $result = $data->stream()->while(Filters::NOT(Filters::isInt(Check::ANY)))->toArrayAssoc();
+        self::assertSame(['a' => 'b'], $result);
+    }
+    
+    public function test_until_not_both_are_strings(): void
+    {
+        $data = Producers::getAdapter(['a' => 'b', 'c' => 1, 2 => 'd', 3 => 4, 5 => 'e', 'f' => 6]);
+        
+        $result = $data->stream()->until(Filters::NOT(Filters::isString(Check::BOTH)))->toArrayAssoc();
+        self::assertSame(['a' => 'b'], $result);
+        
+        $result = $data->stream()->until(Filters::isInt(Check::ANY))->toArrayAssoc();
+        self::assertSame(['a' => 'b'], $result);
     }
     
     public function test_until_with_filter(): void
@@ -1306,16 +1323,20 @@ final class StreamCTest extends TestCase
             'c' => 1, 2 => 'd',
         ], $producer->stream()->until($isString->checkBoth())->toArrayAssoc());
         
-        //stream until both value and key are not strings
-        self::assertSame([
-            'c' => 1, 2 => 'd', 'a' => 'b'
-        ], $producer->stream()->until($isString->checkBoth()->negate())->toArrayAssoc());
+        //stream until not(value is string and key is string)
+        // = until (value is not string or key is not string)
+        // = while (value is string and key is string)
+        self::assertSame([], $producer->stream()->until($isString->checkBoth()->negate())->toArrayAssoc());
         
         //stream until any of value or key is a string
         self::assertSame([], $producer->stream()->until($isString->checkAny())->toArrayAssoc());
         
-        //stream until any of value or key is not a string
-        self::assertSame([], $producer->stream()->until($isString->checkAny()->negate())->toArrayAssoc());
+        //stream until not(value is string or key is string)
+        // = until (value is not string and key is not string)
+        // = while (value is string or key is string)
+        self::assertSame([
+            'c' => 1, 2 => 'd', 'a' => 'b'
+        ], $producer->stream()->until($isString->checkAny()->negate())->toArrayAssoc());
     }
 
     public function test_only_mode_value(): void

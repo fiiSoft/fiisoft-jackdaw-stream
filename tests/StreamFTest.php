@@ -322,6 +322,18 @@ final class StreamFTest extends TestCase
         self::assertSame(2, $numOfIntsAtTheBeginning->count());
     }
     
+    public function test_callUntil_with_onerror_handler(): void
+    {
+        $numOfIntsAtTheBeginning = Consumers::counter();
+        
+        Stream::from([3, 2, 'a', 1, 2, 'b'])
+            ->onError(OnError::skip())
+            ->callUntil('is_string', $numOfIntsAtTheBeginning)
+            ->run();
+        
+        self::assertSame(2, $numOfIntsAtTheBeginning->count());
+    }
+    
     public function test_skip(): void
     {
         self::assertSame([6, 5, 3], Stream::from([4, 1, 2, 6, 5, 3])->skip(3)->toArray());
@@ -337,6 +349,14 @@ final class StreamFTest extends TestCase
         self::assertSame(
             ['a', 1, 2, 'b'],
             Stream::from([3, 2, 'a', 1, 2, 'b'])->onError(OnError::skip())->skipWhile('is_int')->toArray()
+        );
+    }
+    
+    public function test_skipUntil_with_onerror_handler(): void
+    {
+        self::assertSame(
+            ['a', 1, 2, 'b'],
+            Stream::from([3, 2, 'a', 1, 2, 'b'])->onError(OnError::skip())->skipUntil('is_string')->toArray()
         );
     }
     
@@ -1141,6 +1161,16 @@ final class StreamFTest extends TestCase
         $actual = Stream::from([3, 2, 1, 0, 4, 5, 6])
             ->onError(OnError::skip())
             ->mapWhile(Filters::greaterThan(0), static fn(int $v): int => $v * 2)
+            ->toArray();
+        
+        self::assertSame([6, 4, 2, 0, 4, 5, 6], $actual);
+    }
+    
+    public function test_mapUntil_with_onerror_handler(): void
+    {
+        $actual = Stream::from([3, 2, 1, 0, 4, 5, 6])
+            ->onError(OnError::skip())
+            ->mapUntil(Filters::lessOrEqual(0), static fn(int $v): int => $v * 2)
             ->toArray();
         
         self::assertSame([6, 4, 2, 0, 4, 5, 6], $actual);

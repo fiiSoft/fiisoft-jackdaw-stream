@@ -16,9 +16,6 @@ abstract class DispatchOperation extends StreamPipe implements Operation
     /** @var Handler[] */
     protected array $handlers;
     
-    /** @var StreamPipe[] */
-    protected array $streams = [];
-    
     /**
      * @param HandlerReady[] $handlers
      */
@@ -30,16 +27,8 @@ abstract class DispatchOperation extends StreamPipe implements Operation
         
         $this->handlers = Handlers::prepare($handlers);
         
-        foreach ($handlers as $handler) {
-            if ($handler instanceof StreamPipe) {
-                
-                $id = \spl_object_id($handler);
-                
-                if (!isset($this->streams[$id])) {
-                    $this->streams[$id] = $handler;
-                    $handler->prepareSubstream(false);
-                }
-            }
+        foreach ($this->handlers as $handler) {
+            $handler->prepare();
         }
     }
     
@@ -50,12 +39,8 @@ abstract class DispatchOperation extends StreamPipe implements Operation
     
     final public function streamingFinished(Signal $signal): bool
     {
-        while (!empty($this->streams)) {
-            foreach ($this->streams as $key => $stream) {
-                if (!$stream->continueIteration()) {
-                    unset($this->streams[$key]);
-                }
-            }
+        foreach ($this->handlers as $handler) {
+            $handler->dispatchFinished();
         }
         
         return $this->next->streamingFinished($signal);
@@ -75,7 +60,6 @@ abstract class DispatchOperation extends StreamPipe implements Operation
             $this->isDestroying = true;
             
             $this->handlers = [];
-            $this->streams = [];
             
             if ($this->next !== null) {
                 $this->next->destroy();

@@ -8,7 +8,7 @@ use FiiSoft\Jackdaw\Stream;
 
 final class StreamPipeAdapter extends StreamPipe implements Handler
 {
-    private ?StreamPipe $stream;
+    private ?StreamPipe $stream, $toFinish = null;
     
     private Signal $signal;
     
@@ -21,6 +21,7 @@ final class StreamPipeAdapter extends StreamPipe implements Handler
     public function handle(Signal $signal): void
     {
         if ($this->stream !== null && !$this->stream->process($signal)) {
+            $this->toFinish = $this->stream;
             $this->stream = null;
         }
     }
@@ -35,8 +36,24 @@ final class StreamPipeAdapter extends StreamPipe implements Handler
             $this->signal->item->value = $value;
             
             if (!$this->stream->process($this->signal)) {
+                $this->toFinish = $this->stream;
                 $this->stream = null;
             }
+        }
+    }
+    
+    public function prepare(): void
+    {
+        $this->stream->prepareSubstream(false);
+    }
+    
+    public function dispatchFinished(): void
+    {
+        $stream = $this->stream ?? $this->toFinish;
+        $this->stream = $this->toFinish = null;
+        
+        if ($stream !== null) {
+            $stream->continueIteration();
         }
     }
 }

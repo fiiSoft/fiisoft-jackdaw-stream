@@ -13,4 +13,8 @@ interface Handler
      * @param mixed $key
      */
     public function handlePair($value, $key): void;
+    
+    public function prepare(): void;
+    
+    public function dispatchFinished(): void;
 }

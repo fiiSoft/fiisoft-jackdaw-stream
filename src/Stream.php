@@ -1491,7 +1491,7 @@ final class Stream extends StreamSource
      *
      * @param FilterReady|callable|mixed $value
      */
-    public function has($value, int $mode = Check::VALUE): LastOperation
+    public function has($value, ?int $mode = null): LastOperation
     {
         return $this->runLast(Operations::has($this, $value, $mode));
     }
@@ -1525,7 +1525,7 @@ final class Stream extends StreamSource
      *
      * @param FilterReady|callable|mixed $predicate
      */
-    public function find($predicate, int $mode = Check::VALUE): LastOperation
+    public function find($predicate, ?int $mode = null): LastOperation
     {
         return $this->runLast(Operations::find($this, $predicate, $mode));
     }
@@ -1533,7 +1533,7 @@ final class Stream extends StreamSource
     /**
      * @param FilterReady|callable|mixed $predicate
      */
-    public function findMax(int $limit, $predicate, int $mode = Check::VALUE): LastOperation
+    public function findMax(int $limit, $predicate, ?int $mode = null): LastOperation
     {
         return $this->filter($predicate, $mode)->limit($limit)->collect();
     }
@@ -1637,13 +1637,15 @@ final class Stream extends StreamSource
      * Run stream pipeline.
      * Stream can be executed only once!
      */
-    public function run(): void
+    public function run(bool $onlyIfNotRunYet = false): void
     {
+        if ($onlyIfNotRunYet && !$this->isNotStartedYet()) {
+            return;
+        }
+        
         while (!empty($this->parents)) {
             $parent = \array_shift($this->parents);
-            if ($parent->isNotStartedYet()) {
-                $parent->run();
-            }
+            $parent->run(true);
         }
         
         if ($this->isExecuted && isset($parent)) {
@@ -1692,7 +1694,7 @@ final class Stream extends StreamSource
         }
     }
     
-    protected function execute(): void
+    private function execute(): void
     {
         $this->isStarted = true;
         
@@ -1701,7 +1703,7 @@ final class Stream extends StreamSource
         $this->finish();
     }
     
-    protected function isNotStartedYet(): bool
+    private function isNotStartedYet(): bool
     {
         $notStarted = !$this->isStarted && !$this->isExecuted;
         

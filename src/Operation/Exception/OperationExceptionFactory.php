@@ -2,7 +2,6 @@
 
 namespace FiiSoft\Jackdaw\Operation\Exception;
 
-use FiiSoft\Jackdaw\Exception\InvalidOperationException;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Exception\JackdawException;
 use FiiSoft\Jackdaw\Exception\UnsupportedValueException;
@@ -10,11 +9,6 @@ use FiiSoft\Jackdaw\Internal\Helper;
 
 final class OperationExceptionFactory
 {
-    public static function cannotInverseOperation(): JackdawException
-    {
-        return InvalidOperationException::create('Cannot create inversed operation');
-    }
-    
     /**
      * @param mixed $classifier
      */

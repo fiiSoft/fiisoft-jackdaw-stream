@@ -74,7 +74,7 @@ final class Initial extends ProtectedCloning implements Operation
         return $this->next->streamingFinished($signal);
     }
     
-    protected function __clone()
+    public function __clone()
     {
         $this->next = clone $this->next;
         $this->next->setPrev($this);

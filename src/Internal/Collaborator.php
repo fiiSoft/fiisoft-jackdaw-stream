@@ -7,24 +7,24 @@ use FiiSoft\Jackdaw\Producer\Producer;
 
 abstract class Collaborator extends StreamPipe
 {
-    //Signal, Stream, various operations
+    //*Signal->, *Stream->, *Source
     abstract protected function restartWith(Producer $producer, Operation $operation): void;
     
-    //Signal, Stream, various operations
+    //*Signal->, *Stream->, *Source
     abstract protected function continueWith(Producer $producer, Operation $operation): void;
     
-    //Signal, Stream, various operations
+    //*Signal->, *Stream->, *Source
     abstract protected function limitReached(Operation $operation): void;
     
-    //Signal, Stream, various operations
+    //*Signal->, *Stream->, *Source
     abstract protected function forget(Operation $operation): void;
     
-    //Signal, Stream, Source
+    //*Signal->, *Stream->, *Source
     abstract protected function swapHead(Operation $operation): void;
     
-    //Signal, Stream, Source
+    //*Signal->, *Stream->, *Source
     abstract protected function restoreHead(): void;
     
-    //Signal, Stream, Source
+    //*Signal->, *Stream->, *Source
     abstract protected function setNextItem(Item $item): void;
 }

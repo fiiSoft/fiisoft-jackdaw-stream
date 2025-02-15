@@ -8,20 +8,22 @@ use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Mapper\Tokenize as TokenizeMapper;
 use FiiSoft\Jackdaw\Mapper\Value;
 use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Gather, Reverse, Segregate, ShuffleAll, Sort, SortLimited, Tail};
-use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Filter, FilterBy, FilterByMany, FilterMany, FilterSingle, OmitReps,
-    Skip, SkipWhile, Unique};
-use FiiSoft\Jackdaw\Operation\Internal\{Limitable, Operations as OP, Pipe\Initial, Reindexable, Shuffle};
+use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Filter, FilterByMany, FilterMany, FilterOmitBy, Omit, OmitReps, Skip,
+    StackableFilter, Unique};
+use FiiSoft\Jackdaw\Operation\Internal\{Limitable, Operations as OP, Pipe\Initial, PossiblyInversible, Reindexable,
+    Shuffle};
 use FiiSoft\Jackdaw\Operation\LastOperation;
-use FiiSoft\Jackdaw\Operation\Mapping\{Accumulate, Aggregate, Chunk, ChunkBy, Classify, ConditionalMap, Flat, Flip, Map,
-    MapBy, MapFieldWhen, MapKey, MapKeyValue, MapMany, MapWhen, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window};
+use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate, Aggregate, Chunk, ChunkBy, Classify, ConditionalMap, Flat,
+    Flip, Map, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapMany, MapWhen, Reindex, Scan, Tokenize, Tuple, UnpackTuple,
+    Window};
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{Feed, FeedMany, SendTo, SendToMany, StoreIn};
-use FiiSoft\Jackdaw\Operation\Special\{CountableRead, Limit, ReadMany, ReadManyWhile, ReadNext, SwapHead, Until};
+use FiiSoft\Jackdaw\Operation\Special\{CountableRead, Limit, ReadMany, ReadNext, ReadWhileUntil, SwapHead};
 use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, FinalOperation, Find, First, Has, HasEvery,
     HasOnly, IsEmpty, Last};
 use FiiSoft\Jackdaw\Stream;
 
-final class Pipe extends ProtectedCloning implements Destroyable
+final class Pipe implements Destroyable
 {
     public Operation $head;
     public Operation $last;
@@ -146,12 +148,12 @@ final class Pipe extends ProtectedCloning implements Destroyable
             throw PipeExceptionFactory::cannotAddOperationToFinalOne();
         }
         
-        if ($next instanceof FilterSingle) {
+        if ($next instanceof StackableFilter) {
             if ($this->last instanceof FilterMany) {
                 $this->last->add($next);
                 return false;
             }
-            if ($this->last instanceof FilterSingle) {
+            if ($this->last instanceof StackableFilter) {
                 $this->replaceLastOperation(new FilterMany($this->last, $next));
                 return false;
             }
@@ -159,7 +161,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 $node = $this->findPlaceForFilterMany($this->last);
                 if ($node instanceof FilterMany) {
                     $node->add($next);
-                } elseif ($node instanceof FilterSingle) {
+                } elseif ($node instanceof StackableFilter) {
                     $this->replaceNode($node, new FilterMany($node, $next));
                 } else {
                     $node->getNext()->prepend($next);
@@ -188,12 +190,12 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 }
                 return false;
             }
-        } elseif ($next instanceof FilterBy) {
+        } elseif ($next instanceof FilterOmitBy) {
             if ($this->last instanceof FilterByMany) {
                 $this->last->add($next);
                 return false;
             }
-            if ($this->last instanceof FilterBy) {
+            if ($this->last instanceof FilterOmitBy) {
                 $this->replaceLastOperation(new FilterByMany($this->last, $next));
                 return false;
             }
@@ -267,7 +269,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 $this->removeLast();
             } elseif ($next->isDefaultReindex()) {
                 if ($this->last instanceof Gather
-                    || $this->last instanceof Accumulate
+                    || $this->last instanceof AccumulateSeparate
                     || $this->last instanceof Aggregate
                     || $this->last instanceof Chunk
                     || $this->last instanceof Segregate
@@ -416,7 +418,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 $this->removeLast();
                 $this->replacement = $this->stream->last();
                 return false;
-            } elseif ($this->last instanceof Filter) {
+            } elseif ($this->last instanceof Filter || $this->last instanceof Omit) {
                 $this->replaceTerminatingOperation($this->last->createFind($this->stream));
                 return false;
             }
@@ -505,12 +507,12 @@ final class Pipe extends ProtectedCloning implements Destroyable
                 $this->removeLast();
                 return false;
             }
-        } elseif ($next instanceof Until && $next->shouldBeInversed()) {
-            $this->append($next->createInversed());
-            return false;
-        } elseif ($next instanceof SkipWhile && $next->shouldBeInversed()) {
-            $this->append($next->createInversed());
-            return false;
+        } elseif ($next instanceof PossiblyInversible) {
+            $inversed = $next->createInversed();
+            if ($inversed !== null) {
+                $this->append($inversed);
+                return false;
+            }
         } elseif ($next instanceof Window && $next->isLikeChunk()) {
             $this->stream->chunk($next->size(), $next->reindex());
             return false;
@@ -582,7 +584,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
     
     private function isFilterBy(Operation $operation): bool
     {
-        return $operation instanceof FilterBy || $operation instanceof FilterByMany;
+        return $operation instanceof FilterOmitBy || $operation instanceof FilterByMany;
     }
     
     private function findPlaceForFilterByMany(Operation $last): Operation
@@ -598,7 +600,7 @@ final class Pipe extends ProtectedCloning implements Destroyable
     
     private function isFilterRegular(Operation $operation): bool
     {
-        return $operation instanceof FilterSingle || $operation instanceof FilterMany;
+        return $operation instanceof StackableFilter || $operation instanceof FilterMany;
     }
     
     private function keepsQuantity(Operation $operation): bool
@@ -649,10 +651,10 @@ final class Pipe extends ProtectedCloning implements Destroyable
             );
         }
         
-        if ($first instanceof ReadManyWhile && $first->preserveKeys()) {
+        if ($first instanceof ReadWhileUntil && $first->preserveKeys()) {
             $this->replaceNode($first,
                 OP::skip(1),
-                $first->isWhile() ? OP::filter($first->filter()) : OP::omit($first->filter())
+                $first->createFilterOperation()
             );
         }
     }

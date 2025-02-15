@@ -9,7 +9,7 @@ use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Internal\FilterData;
 use FiiSoft\Jackdaw\Internal\Signal;
 
-final class FilterWhen extends FilterSingle
+final class FilterWhen extends StackableFilter
 {
     private Condition $condition;
     
@@ -17,9 +17,9 @@ final class FilterWhen extends FilterSingle
      * @param ConditionReady|callable $condition
      * @param FilterReady|callable|mixed $filter
      */
-    public function __construct($condition, $filter, bool $negation = false, ?int $mode = null)
+    public function __construct($condition, $filter, ?int $mode = null)
     {
-        parent::__construct($filter, $negation, $mode);
+        parent::__construct($filter, $mode);
         
         $this->condition = Conditions::getAdapter($condition, $mode);
     }
@@ -27,7 +27,7 @@ final class FilterWhen extends FilterSingle
     public function handle(Signal $signal): void
     {
         if (!$this->condition->isTrueFor($signal->item->value, $signal->item->key)
-            || ($this->negation XOR $this->filter->isAllowed($signal->item->value, $signal->item->key))
+            || $this->filter->isAllowed($signal->item->value, $signal->item->key)
         ) {
             $this->next->handle($signal);
         }
@@ -36,9 +36,7 @@ final class FilterWhen extends FilterSingle
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            if (!$this->condition->isTrueFor($value, $key)
-                || ($this->negation XOR $this->filter->isAllowed($value, $key))
-            ) {
+            if (!$this->condition->isTrueFor($value, $key) || $this->filter->isAllowed($value, $key)) {
                 yield $key => $value;
             }
         }
@@ -46,6 +44,6 @@ final class FilterWhen extends FilterSingle
     
     public function filterData(): FilterData
     {
-        return new FilterData($this->filter, $this->negation, $this->condition);
+        return new FilterData($this->filter, false, $this->condition);
     }
 }

@@ -14,18 +14,18 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Collecting\{Gather, Reverse, Segregate, ShuffleAll, Sort, SortLimited,
     SortLimited\SingleSortLimited, Tail};
-use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
-use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Filter, FilterByMany, FilterMany, OmitReps, Skip, SkipWhile, Unique,
-    Uptrends};
+use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Filter, FilterByMany, FilterMany, Omit, OmitReps, Skip, SkipUntil,
+    SkipWhile, Unique, Uptrends};
 use FiiSoft\Jackdaw\Operation\Internal\Operations as OP;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Initial;
 use FiiSoft\Jackdaw\Operation\Internal\Shuffle;
-use FiiSoft\Jackdaw\Operation\Mapping\{Accumulate, Aggregate, Chunk, ChunkBy, Flat, Map, MapFieldWhen, MapKey, MapMany,
-    MapWhen, Reindex, Tokenize, Tuple, UnpackTuple, Window};
+use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate\Accumulate, Aggregate, Chunk, ChunkBy, Flat, Map,
+    MapFieldWhen, MapKey, MapMany, MapWhen, Reindex, Tokenize, Tuple, UnpackTuple, Window};
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{FeedMany, SendToMany};
-use FiiSoft\Jackdaw\Operation\Special\{Limit, ReadManyWhile, ReadNext, ShuffleChunks, Until};
+use FiiSoft\Jackdaw\Operation\Special\{Limit, ReadNext, ReadWhileUntil\ReadUntil, ReadWhileUntil\ReadWhile,
+    ShuffleChunks, WhileUntil\WhileTrue};
 use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, Find, First, Has, HasEvery, HasOnly, IsEmpty,
     Last};
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;
@@ -189,16 +189,16 @@ final class PipeTest extends TestCase
         
         yield 'ReadMany_with_constant_zero' => [OP::filter('is_string'), OP::readMany(0), Filter::class];
         
+        yield 'ReadUntil_as_first_operation' => [OP::readUntil('is_string'), Skip::class, Omit::class];
+        
+        yield 'ReadUntil_as_first_operation_reindex_keys' => [
+            OP::readUntil('is_string', null, true), ReadUntil::class
+        ];
+        
         yield 'ReadWhile_as_first_operation' => [OP::readWhile('is_string'), Skip::class, Filter::class];
         
         yield 'ReadWhile_as_first_operation_reindex_keys' => [
-            OP::readWhile('is_string', null, true), ReadManyWhile::class
-        ];
-        
-        yield 'ReadUntil_as_first_operation' => [OP::readUntil('is_string'), Skip::class, Filter::class];
-        
-        yield 'ReadUntil_as_first_operation_reindex_keys' => [
-            OP::readUntil('is_string', null, true), ReadManyWhile::class
+            OP::readWhile('is_string', null, true), ReadWhile::class
         ];
         
         yield 'Reindex_Accumulate_1' => [
@@ -724,7 +724,6 @@ final class PipeTest extends TestCase
         [$stream, $pipe] = $this->prepare();
         
         $operation = OP::until(Filters::NOT('is_string'));
-        self::assertTrue($operation->shouldBeInversed());
         
         //when
         $this->chainOperations($pipe, $stream, $operation);
@@ -733,21 +732,12 @@ final class PipeTest extends TestCase
         $addedOperation = $pipe->head->getNext();
         
         self::assertNotSame($addedOperation, $operation);
-        self::assertInstanceOf(Until::class, $addedOperation);
-        self::assertFalse($addedOperation->shouldBeInversed());
+        self::assertInstanceOf(WhileTrue::class, $addedOperation);
     }
     
-    public function test_Until_throws_exception_when_cannot_be_inversed(): void
+    public function test_sometimes_until_cannot_be_inversed(): void
     {
-        //Assert
-        $this->expectExceptionObject(OperationExceptionFactory::cannotInverseOperation());
-        
-        //Arrange
-        $operation = OP::until('is_string');
-        self::assertFalse($operation->shouldBeInversed());
-        
-        //Act
-        $operation->createInversed();
+        self::assertNull(OP::until('is_string')->createInversed());
     }
     
     public function test_SkipWhile_with_FilterNOT(): void
@@ -756,7 +746,23 @@ final class PipeTest extends TestCase
         [$stream, $pipe] = $this->prepare();
         
         $operation = OP::skipWhile(Filters::NOT('is_string'));
-        self::assertTrue($operation->shouldBeInversed());
+        
+        //when
+        $this->chainOperations($pipe, $stream, $operation);
+        
+        //then
+        $addedOperation = $pipe->head->getNext();
+        
+        self::assertNotSame($addedOperation, $operation);
+        self::assertInstanceOf(SkipUntil::class, $addedOperation);
+    }
+    
+    public function test_SkipUntil_with_FilterNOT(): void
+    {
+        //given
+        [$stream, $pipe] = $this->prepare();
+        
+        $operation = OP::skipUntil(Filters::NOT('is_string'));
         
         //when
         $this->chainOperations($pipe, $stream, $operation);
@@ -766,20 +772,11 @@ final class PipeTest extends TestCase
         
         self::assertNotSame($addedOperation, $operation);
         self::assertInstanceOf(SkipWhile::class, $addedOperation);
-        self::assertFalse($addedOperation->shouldBeInversed());
     }
     
-    public function test_SkipWhile_throws_exception_when_cannot_be_inversed(): void
+    public function test_sometimes_skipWhile_cannot_be_inversed(): void
     {
-        //Assert
-        $this->expectExceptionObject(OperationExceptionFactory::cannotInverseOperation());
-        
-        //Arrange
-        $operation = OP::skipWhile('is_string');
-        self::assertFalse($operation->shouldBeInversed());
-        
-        //Act
-        $operation->createInversed();
+        self::assertNull(OP::skipWhile('is_string')->createInversed());
     }
     
     private function createOperation(string $name): Operation

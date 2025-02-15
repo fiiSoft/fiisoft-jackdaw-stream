@@ -1100,4 +1100,72 @@ final class StreamGTest extends TestCase
         
         self::assertSame([1, 'a', 'b', 'c', 2, 3, 'd', 'e', 'f', 4, 5, 'g', 'h', 'i', 6, 7], $stream->toArray());
     }
+    
+    public function test_clone_the_last_operation_is_prohibited(): void
+    {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Call to protected');
+        
+        clone Stream::from([1, 2, 3])->reduce(Reducers::sum());
+    }
+    
+    public function test_filter_value_first(): void
+    {
+        self::assertSame('a', Stream::from([1, 'a', 2, 'b'])->filter('is_string')->first()->get());
+    }
+    
+    public function test_filter_key_first(): void
+    {
+        self::assertSame('a', Stream::from([1, 'a', 2, 'b'])->flip()->filter('is_string', Check::KEY)->first()->key());
+    }
+    
+    public function test_filter_both_first(): void
+    {
+        $result = Stream::from([1 => 'a', 'a' => 1, 'b' => 'c', 'd' => 'd'])
+            ->filter('is_string', Check::BOTH)
+            ->first()
+            ->toArrayAssoc();
+        
+        self::assertSame(['b' => 'c'], $result);
+    }
+    
+    public function test_filter_any_first(): void
+    {
+        $result = Stream::from([1 => 2, 'a' => 1, 3 => 'c', 'd' => 'd'])
+            ->filter('is_string', Check::ANY)
+            ->first()
+            ->toArrayAssoc();
+        
+        self::assertSame(['a' => 1], $result);
+    }
+    
+    public function test_omit_value_first(): void
+    {
+        self::assertSame('a', Stream::from([1, 'a', 2, 'b'])->omit('is_int')->first()->get());
+    }
+    
+    public function test_omit_key_first(): void
+    {
+        self::assertSame('a', Stream::from([1, 'a', 2, 'b'])->flip()->omit('is_int', Check::KEY)->first()->key());
+    }
+    
+    public function test_omit_both_first(): void
+    {
+        $result = Stream::from(['b' => 'c', 1 => 'a', 'a' => 1, 'd' => 'd'])
+            ->omit('is_string', Check::BOTH)
+            ->first()
+            ->toArrayAssoc();
+        
+        self::assertSame([1 => 'a'], $result);
+    }
+    
+    public function test_omit_any_first(): void
+    {
+        $result = Stream::from(['a' => 1, 3 => 'c', 'd' => 'd', 1 => 2, 'e' => 'f'])
+            ->omit('is_string', Check::ANY)
+            ->first()
+            ->toArrayAssoc();
+        
+        self::assertSame([1 => 2], $result);
+    }
 }

@@ -18,6 +18,6 @@ abstract class CheckType extends BaseFilter
     
     public function negate(): Filter
     {
-        return $this->createDefaultNOT();
+        return $this->createDefaultNOT(true);
     }
 }

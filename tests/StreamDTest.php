@@ -954,7 +954,9 @@ final class StreamDTest extends TestCase
             ['id' => 9, 'name' => 'Chris', 'age' => 17],
             ['id' => 6, 'name' => 'Joanna', 'age' => 15],
             ['id' => 5, 'name' => 'Chris', 'age' => 24],
+            ['id' => 4, 'name' => 'Kael', 'age' => 32],
             ['id' => 7, 'name' => 'Sue', 'age' => 18],
+            ['id' => 1, 'name' => 'Ronald', 'age' => 67],
         ];
         
         $adults = Stream::from($rowset)
@@ -967,6 +969,104 @@ final class StreamDTest extends TestCase
                 2 => ['name' => 'Sue', 'age' => 22],
             ], [
                 5 => ['name' => 'Chris', 'age' => 24],
+                4 => ['name' => 'Kael', 'age' => 32],
+            ], [
+                1 => ['name' => 'Ronald', 'age' => 67]
+            ],
+        ];
+        
+        self::assertSame($expected, $adults);
+    }
+    
+    public function test_separate_preserve_keys_with_onerror_handler(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+            ['id' => 4, 'name' => 'Kael', 'age' => 32],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+            ['id' => 1, 'name' => 'Ronald', 'age' => 67],
+        ];
+        
+        $adults = Stream::from($rowset)
+            ->onError(OnError::skip())
+            ->reindexBy('id', true)
+            ->separateBy(Filters::filterBy('age', Filters::lessOrEqual(18)))
+            ->toArray();
+        
+        $expected = [
+            [
+                2 => ['name' => 'Sue', 'age' => 22],
+            ], [
+                5 => ['name' => 'Chris', 'age' => 24],
+                4 => ['name' => 'Kael', 'age' => 32],
+            ], [
+                1 => ['name' => 'Ronald', 'age' => 67]
+            ],
+        ];
+        
+        self::assertSame($expected, $adults);
+    }
+    
+    public function test_separate_reindex_keys(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+            ['id' => 4, 'name' => 'Kael', 'age' => 32],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+            ['id' => 1, 'name' => 'Ronald', 'age' => 67],
+        ];
+        
+        $adults = Stream::from($rowset)
+            ->reindexBy('id', true)
+            ->separateBy(Filters::filterBy('age', Filters::lessOrEqual(18)), true)
+            ->toArray();
+        
+        $expected = [
+            [
+                ['name' => 'Sue', 'age' => 22],
+            ], [
+                ['name' => 'Chris', 'age' => 24],
+                ['name' => 'Kael', 'age' => 32],
+            ], [
+                ['name' => 'Ronald', 'age' => 67]
+            ],
+        ];
+        
+        self::assertSame($expected, $adults);
+    }
+    
+    public function test_separate_reindex_keys_with_onerror_handler(): void
+    {
+        $rowset = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+            ['id' => 4, 'name' => 'Kael', 'age' => 32],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+            ['id' => 1, 'name' => 'Ronald', 'age' => 67],
+        ];
+        
+        $adults = Stream::from($rowset)
+            ->onError(OnError::abort())
+            ->reindexBy('id', true)
+            ->separateBy(Filters::filterBy('age', Filters::lessOrEqual(18)), true)
+            ->toArray();
+        
+        $expected = [
+            [
+                ['name' => 'Sue', 'age' => 22],
+            ], [
+                ['name' => 'Chris', 'age' => 24],
+                ['name' => 'Kael', 'age' => 32],
+            ], [
+                ['name' => 'Ronald', 'age' => 67]
             ],
         ];
         
@@ -1267,11 +1367,35 @@ final class StreamDTest extends TestCase
         ], $actual);
     }
     
+    public function test_omitWhen_with_onerror_handler(): void
+    {
+        $actual = Stream::from([4, 'a', 2, 5, 'v', 3])
+            ->onError(OnError::skip())
+            ->omitWhen('is_int', Filters::lessThan(5))
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            1 => 'a',
+            3 => 5,
+            4 => 'v',
+        ], $actual);
+    }
+    
     public function test_filterWhile_with_onerror_hander(): void
     {
         $actual = Stream::from([7, 3, 5, 'a', 1, 3, 'b'])
             ->onError(OnError::skip())
             ->filterWhile('is_int', Filters::greaterThan(5))
+            ->toArray();
+        
+        self::assertSame([7, 'a', 1, 3, 'b'], $actual);
+    }
+    
+    public function test_filterUntil_with_onerror_hander(): void
+    {
+        $actual = Stream::from([7, 3, 5, 'a', 1, 3, 'b'])
+            ->onError(OnError::skip())
+            ->filterUntil('is_string', Filters::greaterThan(5))
             ->toArray();
         
         self::assertSame([7, 'a', 1, 3, 'b'], $actual);

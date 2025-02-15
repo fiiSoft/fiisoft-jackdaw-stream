@@ -3,62 +3,42 @@
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
 use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Filter\FilterReady;
-use FiiSoft\Jackdaw\Filter\Filters;
-use FiiSoft\Jackdaw\Filter\Logic\FilterNOT;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
-use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Internal\Operations;
+use FiiSoft\Jackdaw\Operation\Internal\PossiblyInversible;
+use FiiSoft\Jackdaw\Operation\Operation;
 
-final class SkipWhile extends BaseOperation
+final class SkipWhile extends PossiblyInversible
 {
-    private Filter $filter;
-    
-    private bool $doWhile, $isActive = true;
-    
-    /**
-     * @param FilterReady|callable|mixed $filter
-     */
-    public function __construct($filter, ?int $mode = null, bool $until = false)
-    {
-        $this->filter = Filters::getAdapter($filter, $mode);
-        $this->doWhile = !$until;
-    }
+    private bool $isActive = true;
     
     public function handle(Signal $signal): void
     {
-        if ($this->doWhile XOR $this->filter->isAllowed($signal->item->value, $signal->item->key)) {
-            $this->next->handle($signal);
-            $signal->forget($this);
+        if ($this->filter->isAllowed($signal->item->value, $signal->item->key)) {
+            return;
         }
+        
+        $this->next->handle($signal);
+        $signal->forget($this);
     }
     
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
             if ($this->isActive) {
-                if ($this->doWhile XOR $this->filter->isAllowed($value, $key)) {
-                    $this->isActive = false;
-                } else {
+                if ($this->filter->isAllowed($value, $key)) {
                     continue;
                 }
+                
+                $this->isActive = false;
             }
             
             yield $key => $value;
         }
     }
     
-    public function shouldBeInversed(): bool
+    protected function inversedOperation(Filter $filter): Operation
     {
-        return $this->filter instanceof FilterNOT;
-    }
-    
-    public function createInversed(): self
-    {
-        if ($this->shouldBeInversed()) {
-            return new self($this->filter->negate(), $this->filter->getMode(), !$this->doWhile);
-        }
-        
-        throw OperationExceptionFactory::cannotInverseOperation();
+        return Operations::skipUntil($filter);
     }
 }

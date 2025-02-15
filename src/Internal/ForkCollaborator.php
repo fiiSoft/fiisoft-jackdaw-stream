@@ -8,31 +8,32 @@ use FiiSoft\Jackdaw\Stream;
 
 abstract class ForkCollaborator extends ProtectedCloning
 {
-    //Fork, FinalOperation
+    //StreamFork->, FinalOperation->, *Stream
     protected function getFinalOperation(): ?FinalOperation
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }
     
-    //Result, StreamPipeAdapter, FinalOperation, ProcessOperation [Feed, FeedMany, Fork]
-    protected function process(Signal $signal): bool
-    {
-        throw ImpossibleSituationException::called(__METHOD__);
-    }
-    
-    //Fork, FinalOperation
+    //StreamFork->, *FinalOperation->, *Stream
     protected function cloneStream(): Stream
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }
     
-    //Feed, FeedMany, Stream
+    //*Result->, StreamFork->, StreamPipeAdapter->, Feed->, FeedMany->, *FinalOperation->, *Stream
+    protected function process(Signal $signal): bool
+    {
+        throw ImpossibleSituationException::called(__METHOD__);
+    }
+    
+    //Feed->, FeedMany->, *Stream
     protected function assignParent(Stream $stream): void
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }
     
-    //Feed, FeedMany, Stream, Operation
+    //[P]*CommonOperationCode, *[P]Feed, *[P]FeedMany, *[P]FinalOperation, *[P]Signal, *Stream
+    //Feed->, FeedMany->, FinalOperation->
     protected function resume(): void
     {
         throw ImpossibleSituationException::called(__METHOD__);
