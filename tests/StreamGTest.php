@@ -81,6 +81,16 @@ final class StreamGTest extends TestCase
         2 => [[7 => 'e', 'f']],
         1 => [[5 => 'd'], [10 => 'g'], [17 => 'l']],
     ];
+
+    private const ROWSET = [
+        ['id' => 7, 'name' => 'Sue', 'age' => 17, 'sex' => 'female'],
+        ['id' => 9, 'name' => 'Chris', 'age' => 18, 'sex' => 'male'],
+        ['id' => 2, 'name' => 'Kate', 'age' => 35, 'sex' => 'female'],
+        ['id' => 5, 'name' => 'Chris', 'age' => 16, 'sex' => 'male'],
+        ['id' => 6, 'name' => 'Joanna', 'age' => 15, 'sex' => 'female'],
+        ['id' => 10, 'name' => 'Tom', 'age' => 35, 'sex' => 'male'],
+        ['id' => 1, 'name' => 'Kila', 'age' => 18, 'sex' => 'female'],
+    ];
     
     public function test_process_sequences_of_constant_length_using_chunks(): void
     {
@@ -1247,4 +1257,44 @@ final class StreamGTest extends TestCase
             4 => [3 => 'dddd'],
         ], $result);
     }
+    
+    public function test_filter_and_map_by_arguments_of_array_send_to_callable(): void
+    {
+        $collector = Collectors::default();
+        
+        $result = Stream::from(self::ROWSET)
+            ->reorder(['name', 'age', 'sex', 'id'])
+            ->callArgs(static function (string $name, int $age, $_, int $id) use ($collector) {
+                if ($age === 18) {
+                    $collector->set($id, $name);
+                }
+            })
+            ->filterArgs(static fn($_, int $age, string $sex): bool => $sex === 'female' && $age < 18)
+            ->mapArgs(static fn(string $name, int $age): string => $name.' ('.$age.')')
+            ->toArray();
+        
+        self::assertSame(['Sue (17)', 'Joanna (15)'], $result);
+        self::assertSame([9 => 'Chris', 1 => 'Kila'], $collector->toArray());
+    }
+    
+    public function test_filter_and_map_by_arguments_of_array_send_to_callable_with_onerror_handler(): void
+    {
+        $collector = Collectors::default();
+        
+        $result = Stream::from(self::ROWSET)
+            ->onError(OnError::abort())
+            ->reorder(['name', 'age', 'sex', 'id'])
+            ->callArgs(static function (string $name, int $age, $_, int $id) use ($collector) {
+                if ($age === 18) {
+                    $collector->set($id, $name);
+                }
+            })
+            ->filterArgs(static fn($_, int $age, string $sex): bool => $sex === 'female' && $age < 18)
+            ->mapArgs(static fn(string $name, int $age): string => $name.' ('.$age.')')
+            ->toArray();
+        
+        self::assertSame(['Sue (17)', 'Joanna (15)'], $result);
+        self::assertSame([9 => 'Chris', 1 => 'Kila'], $collector->toArray());
+    }
+    
 }

@@ -13,17 +13,17 @@ use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkReady, Gather, Reverse, Segregate, Sort, SortLimited,
     Tail};
-use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Extrema, Filter as OperationFilter, FilterBy, FilterUntil,
-    FilterWhen, FilterWhile, Increasing, Maxima, Omit, OmitBy, OmitReps, OmitWhen, Skip, SkipUntil, SkipWhile, Unique,
-    Uptrends};
+use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Extrema, Filter as OperationFilter, FilterArgs, FilterBy,
+    FilterUntil, FilterWhen, FilterWhile, Increasing, Maxima, Omit, OmitBy, OmitReps, OmitWhen, Skip, SkipUntil,
+    SkipWhile, Unique, Uptrends};
 use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate\Accumulate, AccumulateSeparate\Separate, Aggregate, Chunk,
-    ChunkBy, Classify, Flat, Flip, Map, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapWhen, MapWhileUntil\MapUntil,
-    MapWhileUntil\MapWhile, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window, Zip};
+    ChunkBy, Classify, Flat, Flip, Map, MapArgs, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapWhen,
+    MapWhileUntil\MapUntil, MapWhileUntil\MapWhile, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window, Zip};
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{CollectIn, CollectKeysIn, CountIn, Dispatch, Dispatcher\HandlerReady, Feed,
-    FeedMany, Remember, SendTo, SendToMany, SendToMax, SendWhen, SendWhileUntil\SendUntil, SendWhileUntil\SendWhile,
-    StoreIn, Unzip};
+    FeedMany, Remember, SendArgs, SendTo, SendToMany, SendToMax, SendWhen, SendWhileUntil\SendUntil,
+    SendWhileUntil\SendWhile, StoreIn, Unzip};
 use FiiSoft\Jackdaw\Operation\Special\{Assert, Limit, ReadMany, ReadNext, ReadWhileUntil\ReadUntil,
     ReadWhileUntil\ReadWhile, WhileUntil\UntilTrue, WhileUntil\WhileTrue};
 use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, FinalOperation, Find, First, Fold, GroupBy, Has,
@@ -117,6 +117,11 @@ final class Operations
         return new FilterUntil($condition, $filter, $mode);
     }
     
+    public static function filterArgs(callable $filter): Operation
+    {
+        return new FilterArgs($filter);
+    }
+    
     /**
      * @param FilterReady|callable|mixed $filter
      */
@@ -205,6 +210,11 @@ final class Operations
     public static function mapBy($discriminator, array $mappers): Operation
     {
         return new MapBy($discriminator, $mappers);
+    }
+    
+    public static function mapArgs(callable $mapper): Operation
+    {
+        return new MapArgs($mapper);
     }
     
     /**
@@ -302,6 +312,11 @@ final class Operations
     public static function callUntil($condition, $consumer): Operation
     {
         return new SendUntil($condition, $consumer);
+    }
+    
+    public static function callArgs(callable $consumer): Operation
+    {
+        return new SendArgs($consumer);
     }
     
     /**

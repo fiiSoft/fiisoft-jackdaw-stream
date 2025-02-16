@@ -333,6 +333,12 @@ final class Stream extends StreamSource
         return $this;
     }
     
+    public function filterArgs(callable $filter): Stream
+    {
+        $this->chainOperation(Operations::filterArgs($filter));
+        return $this;
+    }
+    
     /**
      * @param string|int $field
      * @param FilterReady|callable|mixed $filter
@@ -429,13 +435,23 @@ final class Stream extends StreamSource
     
     /**
      * Change names of keys in array-like values.
-     * It requires array (or \ArrayAccessAdapter) value to work with.
+     * New keys are added at the end of existing array, and old keys are deleted.
      *
      * @param array<string|int> $keys map names of keys to rename (before => after)
      */
     public function remap(array $keys): Stream
     {
         return $this->map(Mappers::remap($keys));
+    }
+    
+    /**
+     * Syntax sugar to reorder keys in array-like values by extracting them.
+     *
+     * @param array<string|int> $keys
+     */
+    public function reorder(array $keys): Stream
+    {
+        return $this->map(Mappers::reorderKeys($keys));
     }
     
     /**
@@ -506,6 +522,12 @@ final class Stream extends StreamSource
     public function mapBy($discriminator, array $mappers): Stream
     {
         $this->chainOperation(Operations::mapBy($discriminator, $mappers));
+        return $this;
+    }
+    
+    public function mapArgs(callable $mapper): Stream
+    {
+        $this->chainOperation(Operations::mapArgs($mapper));
         return $this;
     }
     
@@ -647,6 +669,12 @@ final class Stream extends StreamSource
     public function callUntil($condition, $consumer): Stream
     {
         $this->chainOperation(Operations::callUntil($condition, $consumer));
+        return $this;
+    }
+    
+    public function callArgs(callable $consumer): Stream
+    {
+        $this->chainOperation(Operations::callArgs($consumer));
         return $this;
     }
     

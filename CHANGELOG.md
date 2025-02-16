@@ -1,5 +1,10 @@
 # Changelog
 
+## 10.4.0
+
+- added Stream operations: callArgs(), filterArgs(), and mapArgs()
+- added syntactic sugar methods: Stream::reorder() and Mappers::reorderKeys()
+
 ## 10.3.0
 
 - SequenceMemo got two methods: getValues() and getKeys()  
@@ -208,7 +213,7 @@ The previous version has been abandoned.
 - method stream added to ResultApi
 - ResultApi extends \Countable
 
-## 2.11.0 - incompatible changes!
+## 2.11.0 
 
 - method StreamApi::feed can now accept many streams at once
 - added operations collectWhile and collectUntil
@@ -228,7 +233,7 @@ The previous version has been abandoned.
 - method StreamApi::join can accept many arguments at once
 - added method StreamApi::gather
 
-## 2.8.0 - incompatible changes!
+## 2.8.0 
 
 - removed param limit from StreamApi::sortBy
 - behaviour of feed streams considerably changed - looped streams are now able to feed themselves with first value from theirs starting producer 
@@ -243,7 +248,7 @@ The previous version has been abandoned.
 - added optional param key to method StreamApi::moveTo
 - added new mappers: tokenize, trim
 
-## 2.6.0 - incompatible changes!
+## 2.6.0 
 
 - changed first argument of Consumers::stdout
 - renamed method Filters::equal to Filters::same
@@ -283,7 +288,7 @@ Also:
 - some changes to improve performance
 - the version for PHP 7.0 has been dropped and will no longer be maintained
 
-## 2.3.0 - incompatible changes!
+## 2.3.0 
 
 - operation SortLimited rewritten
 - operation Unique rewritten 
@@ -291,7 +296,7 @@ Also:
 - Tail operation no longer accepts 0 as an argument
 - method stream() added to StreamCollection
 - 
-## 2.2.0 - incompatible changes!
+## 2.2.0 
 
 - method StreamApi::sortBy accepts last integer param as limit
 - method Reducer::consume changed, key is passed as second argument
@@ -300,7 +305,7 @@ Also:
 - added method StreamApi::worst
 - many other changes
 
-## 2.1.0 - incompatible changes!
+## 2.1.0 
 
 - removed method Result::__toString
 - removed method ResultItem::create

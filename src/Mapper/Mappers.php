@@ -6,9 +6,9 @@ use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Mapper\Adapter\DiscriminatorAdapter;
-use FiiSoft\Jackdaw\Mapper\Adapter\MemoReaderAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\GeneratorAdapter;
+use FiiSoft\Jackdaw\Mapper\Adapter\MemoReaderAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ProducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\SequenceMemoAdapter;
@@ -382,5 +382,15 @@ final class Mappers
         return $start === 0 && $step === 1
             ? new ReindexKeysSimple()
             : new ReindexKeysComplex($start, $step);
+    }
+    
+    /**
+     * Syntax sugar for extract() to reorders key in array-like values by extracting them.
+     *
+     * @param array<string|int> $keys
+     */
+    public static function reorderKeys(array $keys): Mapper
+    {
+        return self::extract(\array_keys(\array_flip($keys)));
     }
 }
