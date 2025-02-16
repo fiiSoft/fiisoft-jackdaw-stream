@@ -45,11 +45,6 @@ final class Has extends SimpleFinal
         yield;
     }
     
-    public function hasResult(): bool
-    {
-        return true;
-    }
-    
     public function getResult(): Item
     {
         return new Item(0, $this->has);

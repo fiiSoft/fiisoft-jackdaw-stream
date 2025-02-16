@@ -29,11 +29,6 @@ abstract class Collect extends SimpleFinal implements Reindexable
         $this->reindex = $reindex;
     }
     
-    final public function hasResult(): bool
-    {
-        return true;
-    }
-    
     final public function getResult(): Item
     {
         return new Item(0, $this->collected);

@@ -83,6 +83,22 @@ final class LimitedSequenceMemo extends BaseSequenceMemo
     /**
      * @inheritDoc
      */
+    public function getValues(): array
+    {
+        return $this->buffer->fetchValues();
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function getKeys(): array
+    {
+        return $this->buffer->fetchKeys();
+    }
+    
+    /**
+     * @inheritDoc
+     */
     public function count(): int
     {
         return $this->buffer->count();

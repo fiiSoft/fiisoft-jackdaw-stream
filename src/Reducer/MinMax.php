@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
-
-final class MinMax extends BaseReducer
+final class MinMax implements Reducer
 {
     private bool $isFirst = true;
     

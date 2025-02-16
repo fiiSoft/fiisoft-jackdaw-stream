@@ -1,5 +1,11 @@
 # Changelog
 
+## 10.3.0
+
+- SequenceMemo got two methods: getValues() and getKeys()  
+- SequenceMemo can be used as a client of fork() 
+- MemoWriter can be used as a client of dispatch() 
+
 ## 10.2.0
 
 Executable::run() got flag for safe run.   

@@ -3,7 +3,6 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Consumer\Consumer;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\TransformerReady;
@@ -11,7 +10,7 @@ use FiiSoft\Jackdaw\Transformer\TransformerReady;
 /**
  * @extends \IteratorAggregate<string|int, mixed>
  */
-interface ResultApi extends HandlerReady, ResultCaster, Destroyable, \Countable, \IteratorAggregate
+interface ResultApi extends ResultCaster, Destroyable, \Countable, \IteratorAggregate
 {
     public function found(): bool;
     
@@ -28,8 +27,9 @@ interface ResultApi extends HandlerReady, ResultCaster, Destroyable, \Countable,
      * Register single transformer to perform final opertations on result (when result is available).
      *
      * @param TransformerReady|callable|null $transformer
+     * @return $this fluent interface
      */
-    public function transform($transformer): ResultApi;
+    public function transform($transformer): self;
     
     /**
      * @param callable|mixed|null $orElse callable is lazy-evaluated result when nothing was found

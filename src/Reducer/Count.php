@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
-
-final class Count extends BaseReducer
+final class Count implements Reducer
 {
     private int $count = 0;
     

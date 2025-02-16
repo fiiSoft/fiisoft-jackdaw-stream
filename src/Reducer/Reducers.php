@@ -4,7 +4,6 @@ namespace FiiSoft\Jackdaw\Reducer;
 
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
-use FiiSoft\Jackdaw\Reducer\Internal\MultiReducer;
 
 final class Reducers
 {

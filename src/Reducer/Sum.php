@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
-
-final class Sum extends BaseReducer
+final class Sum implements Reducer
 {
     /** @var float|int */
     private $result = 0;

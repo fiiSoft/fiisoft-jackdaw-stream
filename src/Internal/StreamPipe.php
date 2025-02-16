@@ -23,10 +23,4 @@ abstract class StreamPipe extends ForkCollaborator
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }
-    
-    //FinalOperation->, *Result
-    protected function refreshResult(): void
-    {
-        throw ImpossibleSituationException::called(__METHOD__);
-    }
 }

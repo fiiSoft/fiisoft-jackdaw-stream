@@ -5,15 +5,19 @@ namespace FiiSoft\Jackdaw\Operation\Sending;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\ForkCollaborator;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Internal\SourceAware;
 use FiiSoft\Jackdaw\Operation\Internal\ProcessOperation;
+use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Stream;
 
 final class FeedMany extends ProcessOperation
 {
-    /** @var ForkCollaborator [] */
+    /** @var ForkCollaborator[] */
     private array $streams;
     
+    /**
+     * @template T of ForkCollaborator
+     * @param T ...$streams
+     */
     public function __construct(ForkCollaborator ...$streams)
     {
         if (empty($streams)) {
@@ -65,7 +69,7 @@ final class FeedMany extends ProcessOperation
         parent::assignStream($stream);
         
         foreach ($this->streams as $collaborator) {
-            if ($collaborator instanceof SourceAware) {
+            if ($collaborator instanceof FinalOperation) {
                 $collaborator->assignSource($stream);
             } elseif ($collaborator instanceof ForkCollaborator) {
                 $collaborator->assignParent($stream);

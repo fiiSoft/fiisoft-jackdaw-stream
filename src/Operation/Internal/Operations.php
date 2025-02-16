@@ -8,7 +8,7 @@ use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Filter\FilterReady;
-use FiiSoft\Jackdaw\Internal\{Check, SignalHandler};
+use FiiSoft\Jackdaw\Internal\{Check, ForkCollaborator, StreamPipe};
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkReady, Gather, Reverse, Segregate, Sort, SortLimited,
@@ -16,6 +16,7 @@ use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkReady, Gather, R
 use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Extrema, Filter as OperationFilter, FilterBy, FilterUntil,
     FilterWhen, FilterWhile, Increasing, Maxima, Omit, OmitBy, OmitReps, OmitWhen, Skip, SkipUntil, SkipWhile, Unique,
     Uptrends};
+use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate\Accumulate, AccumulateSeparate\Separate, Aggregate, Chunk,
     ChunkBy, Classify, Flat, Flip, Map, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapWhen, MapWhileUntil\MapUntil,
     MapWhileUntil\MapWhile, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window, Zip};
@@ -416,7 +417,10 @@ final class Operations
         return new Flat($level);
     }
     
-    public static function feed(SignalHandler ...$streams): Operation
+    /**
+     * @param Stream|LastOperation ...$streams
+     */
+    public static function feed(ForkCollaborator ...$streams): Operation
     {
         return \count($streams) === 1 ? new Feed(...$streams) : new FeedMany(...$streams);
     }

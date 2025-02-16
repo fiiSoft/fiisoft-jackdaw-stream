@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Collector;
+namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\Collector;
 
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\CollectorAdapter;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\CollectorAdapter;
 
 final class CollectorReindexKeys extends CollectorAdapter
 {

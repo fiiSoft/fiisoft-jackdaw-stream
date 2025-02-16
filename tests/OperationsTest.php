@@ -19,6 +19,7 @@ use FiiSoft\Jackdaw\Operation\Internal\Operations as OP;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Initial;
 use FiiSoft\Jackdaw\Operation\Operation;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Handlers;
 use FiiSoft\Jackdaw\Operation\Special\Iterate;
 use FiiSoft\Jackdaw\Reducer\Reducers;
@@ -404,7 +405,7 @@ final class OperationsTest extends TestCase
         $this->sendToPipe($dataSet, $pipe, $signal);
         
         //then
-        self::assertSame($expected !== null, $find->hasResult());
+        self::assertSame($expected !== null, $find->found());
         
         if ($expected !== null) {
             self::assertSame($expected[0], $find->key());
@@ -621,19 +622,22 @@ final class OperationsTest extends TestCase
         $dispatch->handle($signal);
     }
     
-    public function test_Dispatcher_handlers_factory_throws_exception_when_not_StreamPipe_is_provided(): void
+    public function test_Dispatcher_handlers_factory_throws_exception_on_unsupported_object(): void
     {
         $this->expectExceptionObject(InvalidParamException::byName('handler'));
-        
-        Handlers::getAdapter(ResultItem::createNotFound());
+
+        Handlers::getAdapter(new class implements HandlerReady {});
     }
     
     public function test_StoreIn_throws_exception_when_param_buffer_is_invalid(): void
     {
         $this->expectExceptionObject(InvalidParamException::byName('buffer'));
         
-        $object = new \stdClass();
-        
+        $this->createStoreInWith(new \stdClass());
+    }
+    
+    private function createStoreInWith($object): void
+    {
         OP::storeIn($object);
     }
     

@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Internal\ForkCollaborator;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork;
-use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
+use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Stream;
 
 final class StreamFork extends Fork
@@ -68,13 +68,13 @@ final class StreamFork extends Fork
     protected function extractData(): array
     {
         return \array_map(
-            static fn(FinalOperation $op) => $op->get(),
+            static fn(LastOperation $op) => $op->get(),
             \array_filter(
                 \array_map(
-                    static fn(Stream $stream): ?FinalOperation => $stream->getFinalOperation(),
+                    static fn(Stream $stream): ?LastOperation => $stream->getLastOperation(),
                     $this->streams
                 ),
-                static fn(?FinalOperation $op): bool => $op !== null
+                static fn(?LastOperation $op): bool => $op !== null
             )
         );
     }

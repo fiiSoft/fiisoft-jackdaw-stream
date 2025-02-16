@@ -2,12 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
 
-final class Result extends StreamPipe implements ResultApi
+final class Result implements ResultApi, HandlerReady
 {
     private Stream $stream;
     private FinalOperation $resultProvider;
@@ -179,27 +180,17 @@ final class Result extends StreamPipe implements ResultApi
             
             $this->stream->run(true);
             
-            if ($this->resultProvider->hasResult()) {
-                $this->resultItem = ResultItem::createFound($this->resultProvider->getResult(), $this->transformer);
-            } else {
-                $this->resultItem = ResultItem::createNotFound($this->orElse);
-            }
+            $result = $this->resultProvider->getResult();
+            
+            $this->resultItem = $result !== null
+                ? ResultItem::createFound($result, $this->transformer)
+                : ResultItem::createNotFound($this->orElse);
         }
         
         return $this->resultItem;
     }
     
-    protected function prepareSubstream(bool $isLoop): void
-    {
-        $this->stream->prepareSubstream($isLoop);
-    }
-    
-    protected function process(Signal $signal): bool
-    {
-        return $this->stream->process($signal);
-    }
-    
-    protected function refreshResult(): void
+    public function refreshResult(): void
     {
         $this->resultItem = null;
     }

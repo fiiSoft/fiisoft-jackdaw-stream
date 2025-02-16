@@ -45,12 +45,7 @@ final class Find extends SimpleFinal
         yield;
     }
     
-    public function hasResult(): bool
-    {
-        return $this->item !== null;
-    }
-    
-    public function getResult(): Item
+    public function getResult(): ?Item
     {
         return $this->item;
     }

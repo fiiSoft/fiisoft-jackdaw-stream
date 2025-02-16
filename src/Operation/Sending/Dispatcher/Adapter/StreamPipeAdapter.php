@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher;
+namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter;
 
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Handler;
 use FiiSoft\Jackdaw\Stream;
 
 final class StreamPipeAdapter extends StreamPipe implements Handler

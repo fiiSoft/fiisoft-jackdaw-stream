@@ -1106,7 +1106,16 @@ final class StreamGTest extends TestCase
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Call to protected');
         
-        clone Stream::from([1, 2, 3])->reduce(Reducers::sum());
+        $operation = Stream::from([1, 2, 3])->reduce(Reducers::sum());
+        
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        $this->cloneLastOperation($operation);
+    }
+    
+    private function cloneLastOperation($operation): void
+    {
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        clone $operation;
     }
     
     public function test_filter_value_first(): void
@@ -1167,5 +1176,75 @@ final class StreamGTest extends TestCase
             ->toArrayAssoc();
         
         self::assertSame([1 => 2], $result);
+    }
+    
+    public function test_last_operation_api(): void
+    {
+        $reducer = Stream::from([1, 2, 3, 4, 5])->reduce(Reducers::sum());
+        
+        self::assertSame(6, $reducer->wrap([1, 2, 3])->get());
+        
+        self::assertSame(0, $reducer->key());
+        self::assertSame(15, $reducer->get());
+        
+        self::assertSame([15], $reducer->toArray());
+        self::assertSame([15], $reducer->toArrayAssoc());
+        
+        self::assertSame('15', $reducer->toString());
+        
+        self::assertSame('15', $reducer->toJson());
+        self::assertSame('[15]', $reducer->toJsonAssoc());
+        
+        self::assertSame(1, $reducer->count());
+        
+        self::assertTrue($reducer->found());
+        self::assertFalse($reducer->notFound());
+        self::assertSame(15, $reducer->getOrElse(6));
+    }
+    
+    public function test_use_dispatch_to_send_data_to_sequence_memo_with_onerror_handler(): void
+    {
+        $sequence = Memo::sequence(3);
+        $sumator = Reducers::sum();
+        
+        Stream::from([1, 'a', 2, 'b', 3, 'c', 4, 'd', 5, 'e', 6, 'f'])
+            ->onError(OnError::skip())
+            ->dispatch('is_string', [
+                true => $sequence,
+                false => $sumator,
+            ])
+            ->run();
+        
+        self::assertSame(21, $sumator->result());
+        self::assertSame(['d', 'e', 'f'], $sequence->getValues());
+    }
+    
+    public function test_use_fork_to_send_data_sequence_memo(): void
+    {
+        $result = Stream::from(['aa', 'vvv', 'c', 'dddd', 'aa', 'c', 'vvv', 'aa'])
+            ->fork('strlen', Memo::sequence())
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            2 => ['aa', 4 => 'aa', 7 => 'aa'],
+            3 => [1 => 'vvv', 6 => 'vvv'],
+            1 => [2 => 'c', 5 => 'c'],
+            4 => [3 => 'dddd'],
+        ], $result);
+    }
+    
+    public function test_use_fork_to_send_data_sequence_memo_with_onerror_handler(): void
+    {
+        $result = Stream::from(['aa', 'vvv', 'c', 'dddd', 'aa', 'c', 'vvv', 'aa'])
+            ->onError(OnError::abort())
+            ->fork('strlen', Memo::sequence())
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            2 => ['aa', 4 => 'aa', 7 => 'aa'],
+            3 => [1 => 'vvv', 6 => 'vvv'],
+            1 => [2 => 'c', 5 => 'c'],
+            4 => [3 => 'dddd'],
+        ], $result);
     }
 }

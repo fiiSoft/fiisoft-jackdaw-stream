@@ -11,15 +11,14 @@ use FiiSoft\Jackdaw\Exception\{InvalidParamException, StreamExceptionFactory};
 use FiiSoft\Jackdaw\Filter\{FilterReady, Filters};
 use FiiSoft\Jackdaw\Handler\{ErrorHandler, OnError};
 use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyable, Executable, Helper, Item,
-    Iterator\BaseFastIterator, Iterator\BaseStreamIterator, Iterator\Interruption, Mode, Pipe, Signal, SignalHandler,
-    State\Source, State\SourceData, State\SourceNotReady, State\Sources, State\StreamSource, StreamPipe};
+    Iterator\BaseFastIterator, Iterator\BaseStreamIterator, Iterator\Interruption, Mode, Pipe, Signal, State\Source,
+    State\SourceData, State\SourceNotReady, State\Sources, State\StreamSource, StreamPipe};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, MapperReady, Mappers};
 use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Operation\{Internal\Operations, LastOperation, Operation};
 use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 use FiiSoft\Jackdaw\Operation\Special\{Assert\AssertionFailed, Iterate};
-use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Producer\{Internal\EmptyProducer, MultiProducer, Producer, ProducerReady, Producers};
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\ValueRef\IntProvider;
@@ -28,7 +27,7 @@ use FiiSoft\Jackdaw\ValueRef\IntProvider;
  * @implements \IteratorAggregate<string|int, mixed>
  */
 final class Stream extends StreamSource
-    implements ProducerReady, HandlerReady, SignalHandler, Executable, Destroyable, \IteratorAggregate
+    implements ProducerReady, HandlerReady, Executable, Destroyable, \IteratorAggregate
 {
     private Producer $producer;
     private Sources $sources;
@@ -982,29 +981,25 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param SignalHandler ...$streams
+     * @param Stream|LastOperation ...$streams
      */
-    public function feed(SignalHandler ...$streams): Stream
+    public function feed(StreamPipe ...$streams): Stream
     {
         if (empty($streams)) {
             throw InvalidParamException::byName('streams');
         }
         
         foreach ($streams as $stream) {
-            if ($stream instanceof StreamPipe) {
-                $id = \spl_object_id($stream);
+            $id = \spl_object_id($stream);
+            
+            if (!isset($this->pushToStreams[$id])) {
+                $this->pushToStreams[$id] = $stream;
                 
-                if (!isset($this->pushToStreams[$id])) {
-                    $this->pushToStreams[$id] = $stream;
-                    
-                    if ($stream === $this) {
-                        $this->isLoop = true;
-                    }
-                    
-                    $stream->prepareSubstream($this->isLoop);
+                if ($stream === $this) {
+                    $this->isLoop = true;
                 }
-            } else {
-                throw StreamExceptionFactory::feedOperationCanHandleStreamPipeOnly();
+                
+                $stream->prepareSubstream($this->isLoop);
             }
         }
         
@@ -1609,7 +1604,7 @@ final class Stream extends StreamSource
         $this->run();
     }
     
-    private function runLast(FinalOperation $operation): LastOperation
+    private function runLast(Operation $operation): LastOperation
     {
         $next = $this->chainOperation($operation);
         
@@ -2014,11 +2009,11 @@ final class Stream extends StreamSource
         return $this->isLoop || $this->continueIteration($this->isFirstProducer);
     }
     
-    protected function getFinalOperation(): ?FinalOperation
+    protected function getLastOperation(): ?LastOperation
     {
         $last = $this->pipe->last;
         
-        return $last instanceof FinalOperation ? $last : null;
+        return $last instanceof LastOperation ? $last : null;
     }
     
     protected function setSource(Source $state): void

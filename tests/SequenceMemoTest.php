@@ -718,6 +718,16 @@ final class SequenceMemoTest extends TestCase
         self::assertSame([1 => 'a'], $result);
     }
     
+    public function test_sequence_of_length_1_toArray(): void
+    {
+        $sequence = $this->sequence(1);
+        $sequence->write('a', 1);
+        
+        self::assertSame([1 => 'a'], $sequence->toArray());
+        self::assertSame(['a'], $sequence->getValues());
+        self::assertSame([1], $sequence->getKeys());
+    }
+    
     public function test_limited_sequence_can_be_destroyed(): void
     {
         //given

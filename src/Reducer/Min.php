@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
-
-final class Min extends BaseReducer
+final class Min implements Reducer
 {
     /** @var float|int|null */
     private $result;

@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
-
-final class Max extends BaseReducer
+final class Max implements Reducer
 {
     /** @var float|int|null */
     private $result;

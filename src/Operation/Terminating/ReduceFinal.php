@@ -42,14 +42,11 @@ abstract class ReduceFinal extends FinalOperation
         parent::__clone();
     }
     
-    final public function hasResult(): bool
+    final public function getResult(): ?Item
     {
-        return $this->reducer->hasResult();
-    }
-    
-    final public function getResult(): Item
-    {
-        return $this->reducer->getResult();
+        return $this->reducer->hasResult()
+            ? new Item(0, $this->reducer->result())
+            : null;
     }
     
     final public function destroy(): void

@@ -47,11 +47,6 @@ abstract class HasEvery extends SimpleFinal
         $this->values = $values;
     }
     
-    final public function hasResult(): bool
-    {
-        return true;
-    }
-    
     final public function getResult(): Item
     {
         return new Item(0, $this->hasEvery);

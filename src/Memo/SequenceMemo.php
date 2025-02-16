@@ -5,6 +5,7 @@ namespace FiiSoft\Jackdaw\Memo;
 use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Matcher\Matcher;
+use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\TransformerReady;
@@ -12,7 +13,8 @@ use FiiSoft\Jackdaw\Transformer\TransformerReady;
 /**
  * @extends \IteratorAggregate<string|int, mixed>
  */
-interface SequenceMemo extends MemoWriter, ProducerReady, MapperReady, TransformerReady, Destroyable, \IteratorAggregate
+interface SequenceMemo extends MemoWriter, ForkReady, ProducerReady, MapperReady, TransformerReady, Destroyable,
+    \IteratorAggregate
 {
     public function get(int $index): Entry;
     
@@ -48,6 +50,20 @@ interface SequenceMemo extends MemoWriter, ProducerReady, MapperReady, Transform
      * @return array<string|int, mixed>
      */
     public function toArray(): array;
+    
+    /**
+     * Fetch only values, indexed numerically.
+     *
+     * @return array<mixed>
+     */
+    public function getValues(): array;
+    
+    /**
+     * Fetch only keys, indexed numerically.
+     *
+     * @return array<string|int>
+     */
+    public function getKeys(): array;
     
     /**
      * @template T

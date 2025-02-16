@@ -23,11 +23,6 @@ final class Count extends SimpleFinal
         yield;
     }
     
-    public function hasResult(): bool
-    {
-        return true;
-    }
-    
     public function getResult(): Item
     {
         return new Item(0, $this->count);

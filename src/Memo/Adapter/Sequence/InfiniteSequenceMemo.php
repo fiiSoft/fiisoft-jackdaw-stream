@@ -113,6 +113,16 @@ final class InfiniteSequenceMemo extends BaseSequenceMemo
         return $result;
     }
     
+    public function getValues(): array
+    {
+        return \array_map(static fn(Entry $entry) => $entry->value, $this->entries);
+    }
+    
+    public function getKeys(): array
+    {
+        return \array_map(static fn(Entry $entry) => $entry->key, $this->entries);
+    }
+    
     public function getIterator(): \Traversable
     {
         return (function () {

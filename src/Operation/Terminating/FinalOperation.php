@@ -2,18 +2,15 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
+use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Result;
-use FiiSoft\Jackdaw\Internal\ResultApi;
-use FiiSoft\Jackdaw\Internal\ResultProvider;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Internal\SourceAware;
-use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Operation\Internal\CommonOperationCode;
 use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Stream;
 
-abstract class FinalOperation extends StreamPipe implements LastOperation, Operation, ResultProvider, SourceAware
+abstract class FinalOperation extends LastOperation implements Operation
 {
     use CommonOperationCode { destroy as commonDestroy; resume as commonResume; }
     
@@ -60,9 +57,11 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
     /**
      * @inheritDoc
      */
-    final public function transform($transformer): ResultApi
+    final public function transform($transformer): LastOperation
     {
-        return $this->result()->transform($transformer);
+        $this->result()->transform($transformer);
+        
+        return $this;
     }
     
     /**
@@ -186,7 +185,7 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
      */
     final public function wrap($producer): LastOperation
     {
-        return $this->stream->wrap($producer)->getFinalOperation();
+        return $this->stream->wrap($producer)->getLastOperation();
     }
     
     /**
@@ -219,6 +218,23 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
         return $this->stream->continueIteration($once);
     }
     
+    final public function resume(): void
+    {
+        if (!$this->isResuming) {
+            $this->isResuming = true;
+            try {
+                $this->stream->resume();
+            } finally {
+                $this->isResuming = false;
+            }
+        }
+    }
+    
+    final public function finish(): void
+    {
+        $this->stream->finish();
+    }
+    
     public function destroy(): void
     {
         if (!$this->isDestroying) {
@@ -234,20 +250,5 @@ abstract class FinalOperation extends StreamPipe implements LastOperation, Opera
         }
     }
     
-    final public function resume(): void
-    {
-        if (!$this->isResuming) {
-            $this->isResuming = true;
-            try {
-                $this->stream->resume();
-            } finally {
-                $this->isResuming = false;
-            }
-        }
-    }
-    
-    protected function finish(): void
-    {
-        $this->stream->finish();
-    }
+    abstract public function getResult(): ?Item;
 }

@@ -45,11 +45,6 @@ abstract class HasOnly extends SimpleFinal
         parent::__construct($stream);
     }
     
-    final public function hasResult(): bool
-    {
-        return true;
-    }
-    
     final public function getResult(): Item
     {
         return new Item(0, $this->hasOnly);

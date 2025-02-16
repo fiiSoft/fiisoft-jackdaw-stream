@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher;
+namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter;
 
 use FiiSoft\Jackdaw\Collector\Collector;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Collector\CollectorPreserveKeys;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Collector\CollectorReindexKeys;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\Collector\CollectorPreserveKeys;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\Collector\CollectorReindexKeys;
 
 abstract class CollectorAdapter extends PrimitiveHandler
 {

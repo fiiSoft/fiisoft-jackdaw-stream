@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
-
-final class Concat extends BaseReducer
+final class Concat implements Reducer
 {
     /** @var string[] */
     private array $pieces = [];

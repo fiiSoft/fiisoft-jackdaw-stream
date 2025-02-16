@@ -36,6 +36,16 @@ interface EntryBuffer extends Destroyable, \IteratorAggregate
     public function fetchData(): array;
     
     /**
+     * @return array<mixed>
+     */
+    public function fetchValues(): array;
+    
+    /**
+     * @return array<string|int>
+     */
+    public function fetchKeys(): array;
+    
+    /**
      * @return \Iterator<string|int, mixed>
      */
     public function getIterator(): \Iterator;

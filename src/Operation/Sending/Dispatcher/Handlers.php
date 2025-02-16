@@ -6,6 +6,12 @@ use FiiSoft\Jackdaw\Collector\Collector;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
+use FiiSoft\Jackdaw\Memo\MemoWriter;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\CollectorAdapter;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\ConsumerAdapter;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\MemoWriterAdapter;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\ReducerAdapter;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\StreamPipeAdapter;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class Handlers
@@ -33,8 +39,13 @@ final class Handlers
             return CollectorAdapter::create($handler);
         }
         
+        //it covers Result, LastOperation, and Stream
         if ($handler instanceof StreamPipe) {
             return new StreamPipeAdapter($handler);
+        }
+        
+        if ($handler instanceof MemoWriter) {
+            return new MemoWriterAdapter($handler);
         }
         
         throw InvalidParamException::describe('handler', $handler);

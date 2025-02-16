@@ -19,8 +19,8 @@ use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate, Aggregate, Chunk, Chu
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{Feed, FeedMany, SendTo, SendToMany, StoreIn};
 use FiiSoft\Jackdaw\Operation\Special\{CountableRead, Limit, ReadMany, ReadNext, ReadWhileUntil, SwapHead};
-use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, FinalOperation, Find, First, Has, HasEvery,
-    HasOnly, IsEmpty, Last};
+use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, Find, First, Has, HasEvery, HasOnly, IsEmpty,
+    Last};
 use FiiSoft\Jackdaw\Stream;
 
 final class Pipe implements Destroyable
@@ -144,7 +144,7 @@ final class Pipe implements Destroyable
     
     private function canAppend(Operation $next): bool
     {
-        if ($this->last instanceof FinalOperation) {
+        if ($this->last instanceof LastOperation) {
             throw PipeExceptionFactory::cannotAddOperationToFinalOne();
         }
         

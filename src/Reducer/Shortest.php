@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
-
-final class Shortest extends BaseReducer
+final class Shortest implements Reducer
 {
     private ?string $result = null;
     private int $length = 0;

@@ -1,12 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Reducer\Internal;
+namespace FiiSoft\Jackdaw\Reducer;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
-use FiiSoft\Jackdaw\Reducer\Reducer;
-use FiiSoft\Jackdaw\Reducer\Reducers;
 
-final class MultiReducer extends BaseReducer
+final class MultiReducer implements Reducer
 {
     /** @var Reducer[]  */
     private array $pattern = [];
@@ -15,7 +13,7 @@ final class MultiReducer extends BaseReducer
     private ?array $result = null;
     
     /**
-     * @param array<string|int, mixed> $pattern
+     * @param array<Reducer|callable> $pattern
      */
     public function __construct(array $pattern)
     {

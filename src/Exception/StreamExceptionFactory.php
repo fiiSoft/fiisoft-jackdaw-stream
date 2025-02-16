@@ -9,11 +9,6 @@ final class StreamExceptionFactory
         return InvalidParamException::create('Only simple VALUE or KEY mode is supported');
     }
     
-    public static function feedOperationCanHandleStreamPipeOnly(): JackdawException
-    {
-        return InvalidParamException::create('Only StreamPipe is supported');
-    }
-    
     public static function dispatchOperationCannotHandleLoops(): JackdawException
     {
         return InvalidParamException::create('Looped message sending is not supported in Dispatch operation');

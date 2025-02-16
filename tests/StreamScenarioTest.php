@@ -12,6 +12,7 @@ use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
@@ -1832,21 +1833,18 @@ final class StreamScenarioTest extends TestCase
         ];
         
         $data = [
-            [4, 'foo', true, $rows[0], 2.35, new \stdClass()],
+            [4, 'foo', true, $rows[0], 2.35, new \stdClass(), 'foo'],
             [8, 'bar', false, $rows[1], 4.16],
             [3, 'zoll', true, $rows[2], 5.22],
             [5, 'con', true, $rows[3], 3.94],
-            [7, 'ara', false, $rows[4], 14.33, new \stdClass(), 'this value will not be consumed'],
+            [7, 'ara', false, $rows[4], 14.33, new \stdClass(), 'bar', 'this value will not be consumed'],
         ];
         
         $collectFloats = Collectors::values();
         $countBools = Consumers::counter();
         $sumInts = Reducers::sum();
-        
-        $countLetters = Stream::empty()
-            ->flatMap('\str_split')
-            ->reduce(Reducers::countUnique())
-            ->transform('ksort');
+        $extraParams = Memo::sequence();
+        $lastThreeWords = Memo::sequence(3);
         
         $rowsHandler = Stream::empty()
             ->filterBy('sex', 'female')
@@ -1860,11 +1858,12 @@ final class StreamScenarioTest extends TestCase
         $count = Stream::from($data)
             ->unzip(
                 $sumInts,
-                $countLetters,
+                $lastThreeWords,
                 $countBools,
                 $rowsHandler,
                 $collectFloats,
                 $countObjects,
+                $extraParams,
             )
             ->count();
         
@@ -1876,9 +1875,11 @@ final class StreamScenarioTest extends TestCase
         self::assertSame([2.35, 4.16, 5.22, 3.94, 14.33], $collectFloats->toArray());
         self::assertSame([2, 6], $idsOfAdultWomen->toArray());
         
-        self::assertSame([
-            'a' => 3, 'b' => 1, 'c' => 1, 'f' => 1, 'l' => 2, 'n' => 1, 'o' => 4, 'r' => 2, 'z' => 1,
-        ], $countLetters->toArrayAssoc());
+        self::assertSame(['foo', 'bar'], $extraParams->getValues());
+        self::assertSame([6, 6], $extraParams->getKeys());
+        
+        self::assertSame(['zoll', 'con', 'ara'], $lastThreeWords->getValues());
+        self::assertSame([1, 1, 1], $lastThreeWords->getKeys());
     }
     
     public function test_scenario_93(): void

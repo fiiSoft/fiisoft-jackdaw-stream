@@ -42,8 +42,47 @@ abstract class CircularEntryBuffer implements EntryBuffer
             }
             
             $x = $this->buffer[$key++];
-            
             $result[$x->key] = $x->value;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    final public function fetchValues(): array
+    {
+        $result = [];
+        $key = $this->index;
+        $count = $this->count();
+        
+        for ($i = 0; $i < $count; ++$i) {
+            if ($key === $count) {
+                $key = 0;
+            }
+            
+            $result[] = $this->buffer[$key++]->value;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    final public function fetchKeys(): array
+    {
+        $result = [];
+        $key = $this->index;
+        $count = $this->count();
+        
+        for ($i = 0; $i < $count; ++$i) {
+            if ($key === $count) {
+                $key = 0;
+            }
+            
+            $result[] = $this->buffer[$key++]->key;
         }
         
         return $result;

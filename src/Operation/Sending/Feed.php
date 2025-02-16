@@ -4,14 +4,18 @@ namespace FiiSoft\Jackdaw\Operation\Sending;
 
 use FiiSoft\Jackdaw\Internal\ForkCollaborator;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Internal\SourceAware;
 use FiiSoft\Jackdaw\Operation\Internal\ProcessOperation;
+use FiiSoft\Jackdaw\Operation\LastOperation;
+use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Stream;
 
 final class Feed extends ProcessOperation
 {
     private ?ForkCollaborator $stream;
     
+    /**
+     * @param Stream|LastOperation $stream
+     */
     public function __construct(ForkCollaborator $stream)
     {
         $this->stream = $stream;
@@ -59,7 +63,7 @@ final class Feed extends ProcessOperation
     {
         parent::assignStream($stream);
         
-        if ($this->stream instanceof SourceAware) {
+        if ($this->stream instanceof FinalOperation) {
             $this->stream->assignSource($stream);
         } elseif ($this->stream instanceof ForkCollaborator) {
             $this->stream->assignParent($stream);

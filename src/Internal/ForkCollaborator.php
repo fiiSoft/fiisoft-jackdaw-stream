@@ -3,13 +3,13 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
-use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
+use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Stream;
 
 abstract class ForkCollaborator extends ProtectedCloning
 {
     //StreamFork->, FinalOperation->, *Stream
-    protected function getFinalOperation(): ?FinalOperation
+    protected function getLastOperation(): ?LastOperation
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }

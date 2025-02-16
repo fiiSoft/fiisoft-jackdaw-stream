@@ -68,6 +68,16 @@ final class SingleEntryBuffer implements EntryBuffer
         return $this->entry === null ? [] : [$this->entry->key => $this->entry->value];
     }
     
+    public function fetchValues(): array
+    {
+        return $this->entry === null ? [] : [$this->entry->value];
+    }
+    
+    public function fetchKeys(): array
+    {
+        return $this->entry === null ? [] : [$this->entry->key];
+    }
+    
     /**
      * @inheritDoc
      */

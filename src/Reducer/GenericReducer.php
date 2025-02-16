@@ -4,9 +4,8 @@ namespace FiiSoft\Jackdaw\Reducer;
 
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Reducer\Exception\ReducerExceptionFactory;
-use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
-final class GenericReducer extends BaseReducer
+final class GenericReducer implements Reducer
 {
     /** @var callable */
     private $reducer;

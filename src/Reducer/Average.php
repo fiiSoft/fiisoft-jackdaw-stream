@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Reducer;
 
-use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
-
-final class Average extends BaseReducer
+final class Average implements Reducer
 {
     private int $count = 0;
     

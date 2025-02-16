@@ -7,9 +7,8 @@ use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
 use FiiSoft\Jackdaw\Internal\Helper;
-use FiiSoft\Jackdaw\Reducer\Internal\BaseReducer;
 
-final class CountUnique extends BaseReducer
+final class CountUnique implements Reducer
 {
     private ?Discriminator $discriminator = null;
     

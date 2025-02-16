@@ -36,7 +36,7 @@ final class ReducersTest extends TestCase
         }
         
         if ($reducer->hasResult()) {
-            self::assertSame('4a25z', $reducer->getResult()->value);
+            self::assertSame('4a25z', $reducer->result());
         } else {
             self::fail('Reducer has no result!');
         }
@@ -52,7 +52,7 @@ final class ReducersTest extends TestCase
         }
     
         if ($reducer->hasResult()) {
-            self::assertSame('is', $reducer->getResult()->value);
+            self::assertSame('is', $reducer->result());
         } else {
             self::fail('Reducer has no result!');
         }
@@ -68,7 +68,7 @@ final class ReducersTest extends TestCase
         }
     
         if ($reducer->hasResult()) {
-            self::assertSame('sentence', $reducer->getResult()->value);
+            self::assertSame('sentence', $reducer->result());
         } else {
             self::fail('Reducer has no result!');
         }
@@ -84,7 +84,7 @@ final class ReducersTest extends TestCase
         }
     
         if ($reducer->hasResult()) {
-            self::assertSame(2, $reducer->getResult()->value);
+            self::assertSame(2, $reducer->result());
         } else {
             self::fail('Reducer has no result!');
         }
@@ -100,7 +100,7 @@ final class ReducersTest extends TestCase
         }
     
         if ($reducer->hasResult()) {
-            self::assertSame(8, $reducer->getResult()->value);
+            self::assertSame(8, $reducer->result());
         } else {
             self::fail('Reducer has no result!');
         }
@@ -116,7 +116,7 @@ final class ReducersTest extends TestCase
         }
     
         if ($reducer->hasResult()) {
-            self::assertSame(4.8, $reducer->getResult()->value);
+            self::assertSame(4.8, $reducer->result());
         } else {
             self::fail('Reducer has no result!');
         }
@@ -132,7 +132,7 @@ final class ReducersTest extends TestCase
         }
     
         if ($reducer->hasResult()) {
-            self::assertSame('4_a_2_5_z', $reducer->getResult()->value);
+            self::assertSame('4_a_2_5_z', $reducer->result());
         } else {
             self::fail('Reducer has no result!');
         }

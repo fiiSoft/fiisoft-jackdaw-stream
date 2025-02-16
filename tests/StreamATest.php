@@ -15,10 +15,9 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Exception\PipeExceptionFactory;
-use FiiSoft\Jackdaw\Internal\SignalHandler;
 use FiiSoft\Jackdaw\Mapper\Internal\StatelessMapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Operation\LastOperation;
+use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
 use FiiSoft\Jackdaw\Producer\Generator\Exception\GeneratorExceptionFactory;
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;
 use FiiSoft\Jackdaw\Producer\Producers;
@@ -420,9 +419,7 @@ final class StreamATest extends TestCase
     {
         $this->expectExceptionObject(StreamExceptionFactory::unsupportedTypeOfForkPrototype());
 
-        $prototype = $this->createMock(LastOperation::class);
-
-        Stream::empty()->fork('is_string', $prototype);
+        Stream::empty()->fork('is_string', new class implements ForkReady {});
     }
     
     public function test_join_can_accept_another_source_of_data_for_stream(): void
@@ -1352,13 +1349,6 @@ final class StreamATest extends TestCase
         $this->expectExceptionObject(InvalidParamException::byName('streams'));
         
         Stream::empty()->feed();
-    }
-    
-    public function test_feed_throws_exception_on_invalid_argument(): void
-    {
-        $this->expectExceptionObject(StreamExceptionFactory::feedOperationCanHandleStreamPipeOnly());
-        
-        Stream::empty()->feed(new class implements SignalHandler {});
     }
     
     public function test_stream_cannot_be_executed_more_than_once(): void

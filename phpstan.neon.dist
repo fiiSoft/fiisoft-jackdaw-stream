@@ -9,8 +9,6 @@ parameters:
             - src/Internal/Iterator/FastIterator81.php
     ignoreErrors:
         - '#Call to protected method*#'
-        - '#Parameter \#1 \$stream of class FiiSoft\\Jackdaw\\Operation\\Sending\\Feed constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
-        - '#Parameter \#1 ...\$streams of class FiiSoft\\Jackdaw\\Operation\\Sending\\FeedMany constructor expects FiiSoft\\Jackdaw\\Internal\\ForkCollaborator, FiiSoft\\Jackdaw\\Internal\\SignalHandler given.#'
         - '#Parameter \#4 \$length of function substr_compare expects int, null given.#'
         - '#Property FiiSoft\\Jackdaw\\Collector\\Adapter\\ArrayAccessAdapter::\$buffer is never read, only written.#'
         - '#.*::(toJsonAssoc|toJson)\(\) should return string but returns string\|false.#'

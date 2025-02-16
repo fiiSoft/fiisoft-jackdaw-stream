@@ -8,8 +8,10 @@ use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Exception\StreamExceptionFactory;
 use FiiSoft\Jackdaw\Internal\ForkCollaborator;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Memo\SequenceMemo;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\CollectorFork;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\ReducerFork;
+use FiiSoft\Jackdaw\Operation\Collecting\Fork\SequenceMemoFork;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\StreamFork;
 use FiiSoft\Jackdaw\Operation\Internal\ProcessOperation;
 use FiiSoft\Jackdaw\Producer\Producers;
@@ -34,6 +36,10 @@ abstract class Fork extends ProcessOperation
         
         if ($prototype instanceof IterableCollector) {
             return new CollectorFork($discriminator, $prototype);
+        }
+        
+        if ($prototype instanceof SequenceMemo) {
+            return new SequenceMemoFork($discriminator, $prototype);
         }
         
         throw StreamExceptionFactory::unsupportedTypeOfForkPrototype();
