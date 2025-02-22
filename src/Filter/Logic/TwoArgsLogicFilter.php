@@ -34,4 +34,11 @@ abstract class TwoArgsLogicFilter extends BaseLogicFilter
             ? static::create($this->first, $this->second, $mode)
             : $this;
     }
+    
+    final public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->first->equals($this->first)
+            && $other->second->equals($this->second);
+    }
 }

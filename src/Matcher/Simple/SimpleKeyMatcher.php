@@ -24,4 +24,9 @@ final class SimpleKeyMatcher implements Matcher
     {
         return $key1 === $key2;
     }
+    
+    public function equals(Matcher $other): bool
+    {
+        return $other instanceof self;
+    }
 }

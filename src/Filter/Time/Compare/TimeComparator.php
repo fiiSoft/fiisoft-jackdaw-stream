@@ -28,4 +28,6 @@ abstract class TimeComparator
     abstract public function isSatisfiedBy($time): bool;
     
     abstract public function negation(): self;
+    
+    abstract public function equals(TimeComparator $other): bool;
 }

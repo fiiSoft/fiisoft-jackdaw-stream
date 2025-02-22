@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Registry;
 
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Mode;
+use FiiSoft\Jackdaw\Memo\MemoReader;
 use FiiSoft\Jackdaw\Registry\Exception\RegistryExceptionFactory;
 use FiiSoft\Jackdaw\Registry\Reader\DefaultReader;
 use FiiSoft\Jackdaw\Registry\Reader\TupleReader;
@@ -86,6 +87,11 @@ final class RegEntry implements ValueKeyWriter, RegReader
         }
         
         return $this->keyReader;
+    }
+    
+    public function equals(MemoReader $other): bool
+    {
+        return $other === $this;
     }
     
     private function createReader(string $type): RegReader

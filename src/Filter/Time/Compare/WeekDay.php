@@ -25,6 +25,7 @@ final class WeekDay extends TimeComparator
         
         $this->isDay = $isDay;
         $this->days = \array_flip($days);
+        \ksort($this->days);
     }
     
     /**
@@ -46,6 +47,13 @@ final class WeekDay extends TimeComparator
     public function negation(): TimeComparator
     {
         return new self(!$this->isDay, \array_flip($this->days));
+    }
+    
+    public function equals(TimeComparator $other): bool
+    {
+        return $other instanceof static
+            && $other->isDay === $this->isDay
+            && $other->days === $this->days;
     }
     
     /**

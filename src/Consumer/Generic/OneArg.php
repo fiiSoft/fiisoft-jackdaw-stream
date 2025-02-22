@@ -13,4 +13,16 @@ final class OneArg extends GenericConsumer
     {
         ($this->callable)($value);
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            ($this->callable)($value);
+            
+            yield $key => $value;
+        }
+    }
 }

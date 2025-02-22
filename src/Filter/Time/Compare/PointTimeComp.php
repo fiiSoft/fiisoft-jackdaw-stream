@@ -13,4 +13,9 @@ abstract class PointTimeComp extends TimeComparator
     {
         $this->time = $this->prepare($time);
     }
+    
+    final public function equals(TimeComparator $other): bool
+    {
+        return $other instanceof static && $other->time == $this->time;
+    }
 }

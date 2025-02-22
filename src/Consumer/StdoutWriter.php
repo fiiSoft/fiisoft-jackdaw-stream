@@ -31,4 +31,32 @@ final class StdoutWriter implements Consumer
                 echo $key, ':', $value, $this->separator;
         }
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        switch ($this->mode) {
+            case Check::VALUE:
+                foreach ($stream as $key => $value) {
+                    echo $value, $this->separator;
+                    yield $key => $value;
+                }
+            break;
+            
+            case Check::KEY:
+                foreach ($stream as $key => $value) {
+                    echo $key, $this->separator;
+                    yield $key => $value;
+                }
+            break;
+            
+            default:
+                foreach ($stream as $key => $value) {
+                    echo $key, ':', $value, $this->separator;
+                    yield $key => $value;
+                }
+        }
+    }
 }

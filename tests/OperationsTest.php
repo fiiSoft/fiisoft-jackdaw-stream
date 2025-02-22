@@ -8,12 +8,19 @@ use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Filter\IdleFilter;
+use FiiSoft\Jackdaw\Filter\Logic\OpAND\Optim\TwoArgsAND;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Pipe;
-use FiiSoft\Jackdaw\Internal\ResultItem;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Memo\Inspector\SequenceIsFull;
+use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterByMany;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterMany;
+use FiiSoft\Jackdaw\Operation\Filtering\StackableFilter;
+use FiiSoft\Jackdaw\Operation\Filtering\StackableFilterBy;
 use FiiSoft\Jackdaw\Operation\Filtering\Unique\ItemByItemChecker\FullAssocChecker;
 use FiiSoft\Jackdaw\Operation\Internal\Operations as OP;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Ending;
@@ -833,6 +840,201 @@ final class OperationsTest extends TestCase
         $this->expectExceptionObject(InvalidParamException::byName('mappers'));
         
         OP::mapBy(['a', 'b'], []);
+    }
+    
+    public function test_FilterMany_merge_checks_1(): void
+    {
+        //given
+        $sequence = Memo::sequence();
+        $predicate1 = $sequence->matches(['a', 'b']);
+        $predicate2 = $sequence->matches(['d', 'c']);
+        
+        $op1 = OP::filter($predicate1);
+        \assert($op1 instanceof StackableFilter);
+        
+        $op2 = OP::filter($predicate2);
+        \assert($op2 instanceof StackableFilter);
+        
+        //when
+        $filter = new FilterMany($op1, $op2);
+        
+        //then
+        self::assertCount(1, $filter->getChecks());
+        
+        $check = $filter->getChecks()[0];
+        self::assertNull($check->condition);
+        self::assertFalse($check->negation);
+        self::assertTrue($check->filter->equals(Filters::AND($predicate1, $predicate2)));
+    }
+    
+    public function test_FilterMany_merge_checks_2(): void
+    {
+        //given
+        $sequence = Memo::sequence();
+        
+        $op1 = OP::filter($sequence->matches(['a', 'b']));
+        \assert($op1 instanceof StackableFilter);
+        
+        $op2 = OP::filter($sequence->matches(['a', 'b']));
+        \assert($op2 instanceof StackableFilter);
+        
+        $op3 = OP::filter($sequence->matches(['a', 'b', 'c']));
+        \assert($op3 instanceof StackableFilter);
+        
+        //when
+        $filter = new FilterMany($op1, $op2);
+        $filter->add($op3);
+        
+        //then
+        $checks = $filter->getChecks();
+        self::assertCount(1, $checks);
+        
+        $check = $checks[0];
+        self::assertNull($check->condition);
+        self::assertFalse($check->negation);
+        
+        \assert($check->filter instanceof TwoArgsAND);
+        [$first, $second] = $check->filter->getFilters();
+        
+        self::assertTrue($first->equals(Filters::getAdapter($sequence->matches(['a', 'b']))));
+        self::assertTrue($second->equals(Filters::getAdapter($sequence->matches(['a', 'b', 'c']))));
+    }
+    
+    public function test_FilterMany_merge_checks_3(): void
+    {
+        //given
+        $sequence = Memo::sequence();
+        
+        $op1 = OP::filter($sequence->inspect(new SequenceIsFull()));
+        \assert($op1 instanceof StackableFilter);
+        
+        $op2 = OP::omit($sequence->inspect(new SequenceIsFull()));
+        \assert($op2 instanceof StackableFilter);
+        
+        //when
+        $filter = new FilterMany($op1, $op2);
+        
+        //then
+        self::assertCount(1, $filter->getChecks());
+        
+        $check = $filter->getChecks()[0];
+        
+        self::assertNull($check->condition);
+        self::assertFalse($check->negation);
+        self::assertTrue($check->filter->equals(IdleFilter::false()));
+    }
+    
+    public function test_FilterMany_merge_checks_4(): void
+    {
+        //given
+        $sequence = Memo::sequence(2);
+        $predicate = $sequence->matches(['b', 'c']);
+        
+        $op1 = OP::filter($predicate);
+        \assert($op1 instanceof StackableFilter);
+        
+        $op2 = OP::filter(Filters::isInt());
+        \assert($op2 instanceof StackableFilter);
+        
+        $op3 = OP::filterWhen($predicate, Filters::greaterThan(1));
+        \assert($op3 instanceof StackableFilter);
+        
+        $op4 = OP::filterWhen($predicate, Filters::lessThan(5));
+        \assert($op4 instanceof StackableFilter);
+        
+        //when
+        $filter = new FilterMany($op1);
+        $filter->add($op2);
+        $filter->add($op3);
+        $filter->add($op4);
+        $checks = $filter->getChecks();
+        
+        //then
+        self::assertCount(2, $checks);
+        
+        [$check1, $check2] = $checks;
+        
+        self::assertNull($check1->condition);
+        self::assertFalse($check1->negation);
+        self::assertTrue($check1->filter->equals(Filters::getAdapter($predicate)->and(Filters::isInt())));
+        
+        self::assertTrue($check2->condition->equals(Filters::getAdapter($predicate)));
+        self::assertFalse($check2->negation);
+        self::assertTrue($check2->filter->equals(Filters::greaterThan(1)->and(Filters::lessThan(5))));
+    }
+    
+    public function test_FilterMany_merge_checks_5(): void
+    {
+        //given
+        $op1 = OP::filter(Filters::isInt());
+        \assert($op1 instanceof StackableFilter);
+        
+        //when
+        $filter = new FilterMany($op1, $op1);
+        $checks = $filter->getChecks();
+        
+        //then
+        self::assertCount(1, $checks);
+        
+        $check = $checks[0];
+        self::assertNull($check->condition);
+        self::assertFalse($check->negation);
+        self::assertTrue($check->filter->equals(Filters::isInt()));
+    }
+    
+    public function test_FilterMany_merge_checks_6(): void
+    {
+        //given
+        $op1 = OP::filter(Filters::isInt());
+        \assert($op1 instanceof StackableFilter);
+        
+        $op2 = OP::omit(Filters::isInt());
+        \assert($op2 instanceof StackableFilter);
+        
+        //when
+        $filter = new FilterMany($op1, $op2);
+        $checks = $filter->getChecks();
+        
+        //then
+        self::assertCount(1, $checks);
+        
+        $check = $checks[0];
+        self::assertNull($check->condition);
+        self::assertFalse($check->negation);
+        self::assertTrue($check->filter->equals(IdleFilter::false()));
+    }
+    
+    public function test_FilterByMany_merge_checks_1(): void
+    {
+        //given
+        $op1 = OP::filterBy('foo', Filters::isString());
+        \assert($op1 instanceof StackableFilterBy);
+        
+        $op2 = OP::filterBy('bar', Filters::isInt());
+        \assert($op2 instanceof StackableFilterBy);
+        
+        $op3 = OP::filterBy('foo', Filters::contains('zoo'));
+        \assert($op3 instanceof StackableFilterBy);
+        
+        //when
+        $filter = new FilterByMany($op1);
+        $filter->add($op2);
+        $filter->add($op3);
+        
+        $checks = $filter->getChecks();
+        
+        //then
+        self::assertCount(2, $checks);
+        
+        [$check1, $check2] = $checks;
+        
+        self::assertFalse($check1->negation);
+        self::assertSame('foo', $check1->field);
+        self::assertTrue($check1->filter->equals(Filters::isString()->and(Filters::contains('zoo'))));
+        
+        self::assertFalse($check2->negation);
+        self::assertSame('bar', $check2->field);
+        self::assertTrue($check2->filter->equals(Filters::isInt()));
     }
     
     private function signal(): Signal

@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Filter\String;
 
+use FiiSoft\Jackdaw\Filter\Filter;
+
 abstract class StringFilterMulti extends AbstractStringFilter
 {
     /** @var array<string, int|bool> */
@@ -54,6 +56,14 @@ abstract class StringFilterMulti extends AbstractStringFilter
         $copy->prepare();
         
         return $copy;
+    }
+    
+    final public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->values === $this->values
+            && $other->oryginal === $this->oryginal
+            && parent::equals($other);
     }
     
     private function prepare(): void

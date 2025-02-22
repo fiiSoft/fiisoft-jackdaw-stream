@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter\Logic\OpOR;
 
-use FiiSoft\Jackdaw\Filter\Filter;
-
-final class FilterOR extends BaseOR
+final class FilterOR extends BaseOR implements LogicOR
 {
     /**
      * @inheritDoc
@@ -30,11 +28,5 @@ final class FilterOR extends BaseOR
                 }
             }
         }
-    }
-    
-    public function add(Filter $filter): void
-    {
-        $this->filters[] = $filter;
-        $this->mode = null;
     }
 }

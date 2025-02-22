@@ -46,4 +46,11 @@ final class SequencePredicateAdapter extends BaseFilter
             }
         }
     }
+    
+    public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->predicate->equals($this->predicate)
+            && parent::equals($other);
+    }
 }

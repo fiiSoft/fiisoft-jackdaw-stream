@@ -64,4 +64,9 @@ final class FilterNOT extends BaseLogicFilter
     {
         return $this->filter;
     }
+    
+    public function equals(Filter $other): bool
+    {
+        return $other instanceof $this && $other->filter->equals($this->filter);
+    }
 }

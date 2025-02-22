@@ -46,7 +46,14 @@ final class IdleFilter extends BaseFilter
         if ($this->result) {
             yield from $stream;
         } else {
-            yield from [];
+            foreach ($stream as $_) {
+                //noop - just iterate, but not propagate
+            }
         }
+    }
+    
+    public function equals(Filter $other): bool
+    {
+        return $other instanceof $this && $other->result === $this->result;
     }
 }

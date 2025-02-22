@@ -1,11 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Operation\Sending;
+namespace FiiSoft\Jackdaw\Consumer;
 
-use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-
-final class SendArgs extends BaseOperation
+final class ByArgs implements Consumer
 {
     /** @var callable */
     private $consumer;
@@ -15,11 +12,12 @@ final class SendArgs extends BaseOperation
         $this->consumer = $consumer;
     }
     
-    public function handle(Signal $signal): void
+    /**
+     * @inheritDoc
+     */
+    public function consume($value, $key): void
     {
-        ($this->consumer)(...\array_values($signal->item->value));
-        
-        $this->next->handle($signal);
+        ($this->consumer)(...\array_values($value));
     }
     
     /**

@@ -24,4 +24,16 @@ final class RefKey implements Consumer
     {
         $this->key = $key;
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            $this->key = $key;
+            
+            yield $key => $value;
+        }
+    }
 }

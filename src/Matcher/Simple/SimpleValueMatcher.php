@@ -24,4 +24,9 @@ final class SimpleValueMatcher implements Matcher
     {
         return $value1 === $value2;
     }
+    
+    public function equals(Matcher $other): bool
+    {
+        return $other instanceof self;
+    }
 }

@@ -26,4 +26,16 @@ final class VolatileChangeInt extends ChangeIntRef
     {
         $this->variable += $this->value->int();
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            $this->variable += $this->value->int();
+            
+            yield $key => $value;
+        }
+    }
 }

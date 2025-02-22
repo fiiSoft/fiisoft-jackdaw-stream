@@ -381,6 +381,13 @@ final class StreamATest extends TestCase
             public function consume($value, $key): void {
                 $this->data[] = ['key' => $key, 'value' => $value];
             }
+            
+            public function buildStream(iterable $stream): iterable {
+                foreach ($stream as $key => $value) {
+                    $this->consume($value, $key);
+                    yield $key => $value;
+                }
+            }
         };
         
         $array = ['a' => 1, 'b' => 2];
@@ -1924,4 +1931,108 @@ final class StreamATest extends TestCase
         ], $result);
     }
     
+    public function test_readWhile_as_first_operation_in_stream_keep_keys(): void
+    {
+        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
+        
+        self::assertSame(
+            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
+            Stream::from($data)->readWhile('is_string')->toArray()
+        );
+    }
+    
+    public function test_readUntil_as_first_operation_in_stream_keep_keys(): void
+    {
+        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
+        
+        self::assertSame(
+            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
+            Stream::from($data)->readUntil('is_int')->toArray()
+        );
+    }
+    
+    public function test_readWhile_as_first_operation_in_stream_reindex_keys(): void
+    {
+        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
+        
+        self::assertSame(
+            ['g', 'h', 'i'],
+            Stream::from($data)->readWhile('is_string', null, true)->toArrayAssoc()
+        );
+    }
+    
+    public function test_readUntil_as_first_operation_in_stream_reindex_keys(): void
+    {
+        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
+        
+        self::assertSame(
+            ['g', 'h', 'i'],
+            Stream::from($data)->readUntil('is_int', null, true)->toArrayAssoc()
+        );
+    }
+    
+    public function test_readMany_on_empty_stream(): void
+    {
+        self::assertEmpty(Stream::empty()->readMany(2)->toArray());
+    }
+    
+    public function test_readNext_on_empty_stream(): void
+    {
+        self::assertEmpty(Stream::empty()->readNext()->toArray());
+    }
+    
+    public function test_readWhile_on_empty_stream(): void
+    {
+        self::assertEmpty(Stream::empty()->readWhile('is_string')->toArray());
+    }
+    
+    public function test_readUntil_on_empty_stream(): void
+    {
+        self::assertEmpty(Stream::empty()->readUntil('is_string')->toArray());
+    }
+    
+    public function test_tail_short(): void
+    {
+        self::assertSame([4, 5], Stream::from([1, 2, 3, 4, 5])->tail(2)->toArray());
+    }
+    
+    public function test_tail_long(): void
+    {
+        self::assertSame([1, 2, 3], Stream::from([1, 2, 3])->tail(6)->toArray());
+    }
+    
+    public function test_limit_after_limit(): void
+    {
+        self::assertSame([1, 2], Stream::from([1, 2, 3, 4, 5])->limit(4)->limit(2)->toArray());
+    }
+    
+    public function test_skip_after_skip(): void
+    {
+        self::assertSame([4, 5], Stream::from([1, 2, 3, 4, 5])->skip(1)->skip(2)->toArray());
+    }
+    
+    public function test_reverse_after_reverse(): void
+    {
+        self::assertSame([1, 2], Stream::from([1, 2])->reverse()->reverse()->toArray());
+    }
+    
+    public function test_reindex_after_reindex(): void
+    {
+        self::assertSame([1, 2], Stream::from(['a' => 1, 'b' => 2])->reindex()->reindex()->toArrayAssoc());
+    }
+    
+    public function test_flip_after_flip(): void
+    {
+        self::assertSame(['a' => 1, 'b' => 2], Stream::from(['a' => 1, 'b' => 2])->flip()->flip()->toArrayAssoc());
+    }
+    
+    public function test_shuffle_after_shuffle(): void
+    {
+        self::assertSame(3, Stream::from([1, 2, 3])->shuffle()->shuffle()->count()->get());
+    }
+    
+    public function test_tail_after_tail(): void
+    {
+        self::assertSame([4], Stream::from([1, 2, 3, 4])->tail(3)->tail(1)->toArray());
+    }
 }

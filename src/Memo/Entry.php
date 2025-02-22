@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Memo;
 
-final class Entry
+class Entry
 {
     /** @var mixed */
     public $key;
@@ -18,6 +18,11 @@ final class Entry
     {
         $this->key = $key;
         $this->value = $value;
+    }
+    
+    public function equals(Entry $other): bool
+    {
+        return $other->key === $this->key && $other->value === $this->value;
     }
     
     /**

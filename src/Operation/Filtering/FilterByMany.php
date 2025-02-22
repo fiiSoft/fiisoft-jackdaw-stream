@@ -2,16 +2,16 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
-use FiiSoft\Jackdaw\Filter\Internal\FilterByData;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterFieldData;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class FilterByMany extends BaseOperation
 {
-    /** @var FilterByData[] */
+    /** @var FilterFieldData[] */
     private array $checks = [];
     
-    public function __construct(FilterOmitBy $first, ?FilterOmitBy $second = null)
+    public function __construct(StackableFilterBy $first, ?StackableFilterBy $second = null)
     {
         $this->add($first);
         
@@ -34,11 +34,62 @@ final class FilterByMany extends BaseOperation
         $this->next->handle($signal);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function buildStream(iterable $stream): iterable
+    {
+        $allYes = $allNo = true;
+        
+        foreach ($this->checks as $check) {
+            if ($check->negation) {
+                if ($allYes) {
+                    $allYes = false;
+                }
+            } elseif ($allNo) {
+                $allNo = false;
+            }
+        }
+        
+        if ($allYes) {
+            return $this->buildFilterStream($stream);
+        }
+        
+        if ($allNo) {
+            return $this->buildOmitStream($stream);
+        }
+        
+        return $this->buildMixedStream($stream);
+    }
+    
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
+    private function buildFilterStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
             foreach ($this->checks as $check) {
-                if ($check->negation === $check->filter->isAllowed($value[$check->field], $key)) {
+                if ($check->filter->isAllowed($value[$check->field], $key)) {
+                    continue;
+                }
+                
+                continue 2;
+            }
+            
+            yield $key => $value;
+        }
+    }
+    
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
+    private function buildOmitStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            foreach ($this->checks as $check) {
+                if ($check->filter->isAllowed($value[$check->field], $key)) {
                     continue 2;
                 }
             }
@@ -47,9 +98,41 @@ final class FilterByMany extends BaseOperation
         }
     }
     
-    public function add(FilterOmitBy $filter): void
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
+    private function buildMixedStream(iterable $stream): iterable
     {
-        $this->checks[] = $filter->filterByData();
+        foreach ($this->checks as $check) {
+            if ($check->negation) {
+                $check->negation = false;
+                $check->filter = $check->filter->negate();
+            }
+        }
+
+        return $this->buildFilterStream($stream);
+    }
+    
+    public function add(StackableFilterBy $filter): void
+    {
+        $newOne = $filter->filterByData();
+        
+        foreach ($this->checks as $check) {
+            if ($check->mergeWith($newOne)) {
+                return;
+            }
+        }
+        
+        $this->checks[] = $newOne;
+    }
+    
+    /**
+     * @return FilterFieldData[]
+     */
+    public function getChecks(): array
+    {
+        return $this->checks;
     }
     
     public function destroy(): void

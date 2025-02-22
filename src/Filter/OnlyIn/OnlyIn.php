@@ -148,6 +148,15 @@ abstract class OnlyIn extends BaseFilter
             : $this;
     }
     
+    final public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->ints === $this->ints
+            && $other->strings === $this->strings
+            && $other->other === $this->other
+            && parent::equals($other);
+    }
+    
     /**
      * @param array<int, bool> $ints
      * @param array<string, bool> $strings

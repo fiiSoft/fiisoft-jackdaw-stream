@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter\ValRef\Adapter;
 
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\String\AbstractStringFilter;
 use FiiSoft\Jackdaw\Filter\String\StringFilter;
 use FiiSoft\Jackdaw\Internal\Check;
@@ -65,4 +66,11 @@ abstract class BaseStringFilterAdapter extends AbstractStringFilter
      * @return iterable<mixed, mixed>
      */
     abstract protected function iterateStream(StringFilter $filter, iterable $stream): iterable;
+    
+    public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->filter->equals($this->filter)
+            && parent::equals($other);
+    }
 }

@@ -2,6 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Filter\String;
 
+use FiiSoft\Jackdaw\Filter\Filter;
+
 abstract class StringFilterSingle extends AbstractStringFilter
 {
     protected string $value;
@@ -22,5 +24,13 @@ abstract class StringFilterSingle extends AbstractStringFilter
         return $mode !== null && $mode !== $this->mode
             ? static::create($mode, $this->value, $this->ignoreCase)
             : $this;
+    }
+    
+    final public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->value === $this->value
+            && $other->length === $this->length
+            && parent::equals($other);
     }
 }

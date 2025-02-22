@@ -13,4 +13,16 @@ final class TwoArgs extends GenericConsumer
     {
         ($this->callable)($value, $key);
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            ($this->callable)($value, $key);
+            
+            yield $key => $value;
+        }
+    }
 }

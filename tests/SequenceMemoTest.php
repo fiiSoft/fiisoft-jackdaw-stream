@@ -5,9 +5,13 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Matcher\MatchBy;
+use FiiSoft\Jackdaw\Memo\Inspector\SequenceIsEmpty;
+use FiiSoft\Jackdaw\Memo\Inspector\SequenceIsFull;
+use FiiSoft\Jackdaw\Memo\Inspector\SequenceLengthIs;
 use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Memo\SequenceMemo;
 use FiiSoft\Jackdaw\Reducer\Reducers;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
 use PHPUnit\Framework\TestCase;
 
 final class SequenceMemoTest extends TestCase
@@ -111,13 +115,13 @@ final class SequenceMemoTest extends TestCase
     {
         //given
         $sequence = $this->limitedSequence();
-        $sequence->write('d', 1);
+        $sequence->write('d', 1); //b, c, d
         
         self::assertSame([3 => 'b', 2 => 'c', 1 => 'd'], $sequence->toArray());
         self::assertSame(3, $sequence->count());
         
         //when
-        $removed = $sequence->remove(1);
+        $removed = $sequence->remove(1); //b, d
         
         //then
         self::assertTrue($removed->is(2, 'c'));
@@ -141,7 +145,7 @@ final class SequenceMemoTest extends TestCase
         self::assertSame([], $sequence->toArray());
         
         //when
-        $this->fillSequence($sequence);
+        $this->fillSequence($sequence, self::SEQ_DATA);
         
         //then
         self::assertSame(self::SEQ_DATA, $sequence->toArray());
@@ -331,14 +335,16 @@ final class SequenceMemoTest extends TestCase
     {
         $sequence = $this->sequence(2);
         
-        foreach ($sequence as $value) {
-            self::fail('Empty memo should not produce any values');
-        }
+        self::assertSame([], \iterator_to_array($sequence));
         
         $sequence->write('a', 1);
-        $sequence->write('b', 2);
+        self::assertSame([1 => 'a'], \iterator_to_array($sequence));
         
+        $sequence->write('b', 2);
         self::assertSame([1 => 'a', 2 => 'b'], \iterator_to_array($sequence));
+        
+        $sequence->write('c', 3);
+        self::assertSame([2 => 'b', 3 => 'c'], \iterator_to_array($sequence));
     }
     
     public function test_limited_sequence_provides_fold_operation(): void
@@ -742,6 +748,21 @@ final class SequenceMemoTest extends TestCase
         self::assertSame(0, $sequence->count());
     }
     
+    public function test_evaluate_of_predicate_matches_of_destroyed_limited_sequence(): void
+    {
+        //given
+        $sequence = $this->limitedSequence();
+        $predicate = $sequence->matches(['a', 'b', 'c']);
+        
+        self::assertTrue($predicate->evaluate());
+        
+        //when
+        $sequence->destroy();
+        
+        //then
+        self::assertFalse($predicate->evaluate());
+    }
+    
     public function test_infinite_sequence_can_be_destroyed(): void
     {
         //given
@@ -757,19 +778,174 @@ final class SequenceMemoTest extends TestCase
         self::assertSame(0, $sequence->count());
     }
     
+    public function test_SequenceCallableInspector_equals(): void
+    {
+        $callable = static fn(SequenceMemo $memo): bool => $memo->valueOf(0) === 1;
+        
+        $seq = $this->sequence();
+        $foo = $seq->inspect($callable);
+        $bar = $seq->inspect($callable);
+        
+        self::assertTrue($foo->equals($foo));
+        self::assertTrue($foo->equals($bar));
+        
+        self::assertFalse($foo->equals($seq->inspect(static fn(SequenceMemo $memo): bool => $memo->valueOf(0) === 1)));
+        
+        self::assertFalse($foo->equals($this->sequence()->inspect($callable)));
+    }
+    
+    public function test_SequenceLengthIs_equals(): void
+    {
+        $noooo = 5;
+        
+        $seq = $this->sequence();
+        $foo = $seq->inspect(new SequenceLengthIs(5));
+        
+        self::assertTrue($foo->equals($foo));
+        self::assertTrue($foo->equals($seq->inspect(new SequenceLengthIs(5))));
+        self::assertTrue($foo->equals($seq->inspect(new SequenceLengthIs(IntNum::constant(5)))));
+        
+        self::assertFalse($foo->equals($seq->inspect(new SequenceLengthIs(IntNum::readFrom($noooo)))));
+        self::assertFalse($foo->equals($this->sequence()->inspect(new SequenceLengthIs(5))));
+        self::assertFalse($foo->equals($seq->inspect(new SequenceIsEmpty())));
+    }
+    
+    public function test_SequenceIsEmpty_equals(): void
+    {
+        $seq = $this->sequence();
+        $foo = $seq->inspect(new SequenceIsEmpty());
+        
+        self::assertTrue($foo->equals($foo));
+        self::assertTrue($foo->equals($seq->inspect(new SequenceIsEmpty())));
+        
+        self::assertFalse($foo->equals($seq->inspect(new SequenceIsFull())));
+        self::assertFalse($foo->equals($this->sequence()->inspect(new SequenceIsEmpty())));
+    }
+    
+    public function test_sequence_value_equals(): void
+    {
+        $seq = $this->sequence();
+        
+        $first = $seq->value(0);
+        $second = $seq->value(1);
+        
+        self::assertTrue($first->equals($first));
+        self::assertFalse($first->equals($second));
+        
+        self::assertTrue($first->equals($seq->value(0)));
+        self::assertFalse($first->equals($this->sequence()->value(0)));
+    }
+    
+    public function test_sequence_key_equals(): void
+    {
+        $seq = $this->sequence();
+        
+        $first = $seq->key(0);
+        $second = $seq->key(1);
+        
+        self::assertTrue($first->equals($first));
+        self::assertFalse($first->equals($second));
+        
+        self::assertTrue($first->equals($seq->key(0)));
+        self::assertFalse($first->equals($this->sequence()->key(0)));
+    }
+    
+    public function test_sequence_pair_equals(): void
+    {
+        $seq = $this->sequence();
+        
+        $first = $seq->pair(0);
+        $second = $seq->pair(1);
+        
+        self::assertTrue($first->equals($first));
+        self::assertFalse($first->equals($second));
+        
+        self::assertTrue($first->equals($seq->pair(0)));
+        self::assertFalse($first->equals($this->sequence()->pair(0)));
+    }
+    
+    public function test_change_state_of_limited_sequence_in_runtime_is_reflected_by_predicate(): void
+    {
+        $seq = $this->sequence(4);
+        $predicate = $seq->matches(['a', 'b', 'c', 'd']);
+        
+        $this->fillSequence($seq, ['a', 'b', 'c']); //a, b, c
+        self::assertFalse($predicate->evaluate());
+        
+        $seq->remove(1); //a, c
+        $this->fillSequence($seq, ['a', 'b', 'c']); //a, c, a -> a, c, a, b -> c, a, b, c
+        
+        self::assertFalse($predicate->evaluate());
+        self::assertSame(['c', 'a', 'b', 'c'], $seq->getValues());
+        
+        $seq->remove(-1); //c, a, b
+        self::assertFalse($predicate->evaluate());
+        self::assertSame(['c', 'a', 'b'], $seq->getValues());
+        
+        $this->fillSequence($seq, ['c', 'd']); //c, a, b, c -> a, b, c, d
+        self::assertTrue($predicate->evaluate());
+        self::assertSame(['a', 'b', 'c', 'd'], $seq->getValues());
+        
+        $seq->clear();
+        self::assertFalse($predicate->evaluate());
+        
+        self::assertFalse($predicate->evaluate());
+        $this->fillSequence($seq, ['a', 'b', 'c', 'e']);
+        
+        $seq->remove(-1);
+        $seq->write('d', 0);
+        
+        self::assertTrue($predicate->evaluate());
+        self::assertSame(['a', 'b', 'c', 'd'], $seq->getValues());
+    }
+    
+    public function test_change_state_of_infinite_sequence_in_runtime_is_reflected_by_predicate(): void
+    {
+        $seq = $this->sequence();
+        $predicate = $seq->matches(['a', 'b', 'c', 'd']);
+        
+        $this->fillSequence($seq, ['a', 'b', 'c']);
+        self::assertFalse($predicate->evaluate());
+        
+        $seq->remove(1); //a, c
+        $this->fillSequence($seq, ['a', 'b', 'c']); //a, c, a -> a, c, a, b -> a, c, a, b, c
+        
+        self::assertFalse($predicate->evaluate());
+        self::assertSame(['a', 'c', 'a', 'b', 'c'], $seq->getValues());
+        
+        $seq->remove(-1);
+        self::assertFalse($predicate->evaluate());
+        self::assertSame(['a', 'c', 'a', 'b'], $seq->getValues());
+        
+        $this->fillSequence($seq, ['c', 'd']); //a, c, a, b, c, d
+        self::assertFalse($predicate->evaluate());
+        self::assertSame(['a', 'c', 'a', 'b', 'c', 'd'], $seq->getValues());
+        
+        $seq->remove(1);
+        $seq->remove(0); //a, b, c, d
+        
+        self::assertTrue($predicate->evaluate());
+        self::assertSame(['a', 'b', 'c', 'd'], $seq->getValues());
+        
+        $seq->clear();
+        
+        self::assertFalse($predicate->evaluate());
+        self::assertSame([], $seq->getValues());
+    }
+    
     private function limitedSequence(): SequenceMemo
     {
-        return $this->fillSequence($this->sequence(3));
+        return $this->fillSequence($this->sequence(3), self::SEQ_DATA);
     }
     
     private function infiniteSequence(): SequenceMemo
     {
-        return $this->fillSequence($this->sequence());
+        return $this->fillSequence($this->sequence(), self::SEQ_DATA);
     }
     
-    private function fillSequence(SequenceMemo $sequence): SequenceMemo
+    private function fillSequence(SequenceMemo $sequence, array $data): SequenceMemo
     {
-        foreach (self::SEQ_DATA as $key => $value) {
+        foreach ($data as $key => $value) {
             $sequence->write($value, $key);
         }
         

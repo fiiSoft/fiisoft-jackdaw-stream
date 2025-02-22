@@ -11,7 +11,7 @@ final class MapWhen extends ConditionalMap
     {
         $item = $signal->item;
     
-        if ($this->condition->isTrueFor($item->value, $item->key)) {
+        if ($this->condition->isAllowed($item->value, $item->key)) {
             $item->value = $this->mapper->map($item->value, $item->key);
         } elseif ($this->elseMapper !== null) {
             $item->value = $this->elseMapper->map($item->value, $item->key);
@@ -23,7 +23,7 @@ final class MapWhen extends ConditionalMap
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            if ($this->condition->isTrueFor($value, $key)) {
+            if ($this->condition->isAllowed($value, $key)) {
                 yield $key => $this->mapper->map($value, $key);
             } elseif ($this->elseMapper !== null) {
                 yield $key => $this->elseMapper->map($value, $key);

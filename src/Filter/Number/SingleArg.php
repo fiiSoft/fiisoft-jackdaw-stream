@@ -35,4 +35,11 @@ abstract class SingleArg extends NumberFilter
             ? static::create($mode, $this->number)
             : $this;
     }
+    
+    final public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->number === $this->number
+            && parent::equals($other);
+    }
 }

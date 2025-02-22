@@ -2,8 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
-use FiiSoft\Jackdaw\Consumer\Consumer;
-use FiiSoft\Jackdaw\Reducer\Reducer;
+use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
@@ -48,7 +47,7 @@ interface ResultApi extends ResultCaster, Destroyable, \Countable, \IteratorAggr
     public function tuple(): array;
     
     /**
-     * @param Consumer|Reducer|callable|resource $consumer
+     * @param ConsumerReady|callable|resource $consumer
      */
     public function call($consumer): void;
     

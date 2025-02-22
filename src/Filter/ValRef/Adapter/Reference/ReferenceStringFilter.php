@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter\ValRef\Adapter\Reference;
 
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\String\StringFilter;
 use FiiSoft\Jackdaw\Filter\ValRef\Adapter\BaseStringFilterAdapter;
 
@@ -43,5 +44,10 @@ final class ReferenceStringFilter extends BaseStringFilterAdapter
     public function negate(): self
     {
         return new self($this->variable, $this->filter->negate());
+    }
+    
+    public function equals(Filter $other): bool
+    {
+        return $other === $this;
     }
 }

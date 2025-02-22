@@ -19,4 +19,9 @@ final class TupleItem implements MemoReader
     {
         return [$this->key, $this->value];
     }
+    
+    public function equals(MemoReader $other): bool
+    {
+        return $other === $this;
+    }
 }

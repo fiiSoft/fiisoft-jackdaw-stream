@@ -44,4 +44,11 @@ final class IdleTimeComp extends TimeComparator
     {
         return new self(!$this->result, $this->isDateTime);
     }
+    
+    public function equals(TimeComparator $other): bool
+    {
+        return $other instanceof self
+            && $other->result === $this->result
+            && $other->isDateTime->equals($this->isDateTime);
+    }
 }

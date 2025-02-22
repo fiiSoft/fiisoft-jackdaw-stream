@@ -7,8 +7,10 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Filter\IdleFilter;
 use FiiSoft\Jackdaw\Filter\Logic\OpAND\FilterAND;
 use FiiSoft\Jackdaw\Filter\Logic\OpAND\FilterANDAny;
+use FiiSoft\Jackdaw\Filter\Logic\OpAND\Optim\TwoArgsAND;
 use FiiSoft\Jackdaw\Filter\Logic\OpOR\FilterOR;
 use FiiSoft\Jackdaw\Filter\Logic\OpOR\FilterORBoth;
+use FiiSoft\Jackdaw\Filter\Logic\OpOR\Optim\TwoArgsOR;
 use FiiSoft\Jackdaw\Filter\Time\Day;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Memo\Inspector\SequenceIsEmpty;
@@ -486,7 +488,7 @@ final class FiltersBTest extends TestCase
     public function test_AND_in_BOTH_mode_with_negation(): void
     {
         $and = $this->filterAND(Check::BOTH);
-        self::assertInstanceOf(FilterAND::class, $and);
+        self::assertInstanceOf(TwoArgsAND::class, $and);
         self::assertSame(Check::BOTH, $and->getMode());
         
         self::assertFalse($and->isAllowed(3, 2));
@@ -495,7 +497,7 @@ final class FiltersBTest extends TestCase
         self::assertSame($and, $and->inMode(Check::BOTH));
         
         $notAnd = $and->negate();
-        self::assertInstanceOf(FilterOR::class, $notAnd);
+        self::assertInstanceOf(TwoArgsOR::class, $notAnd);
         self::assertSame(Check::ANY, $notAnd->getMode());
         
         self::assertTrue($notAnd->isAllowed(3, 2));
@@ -563,7 +565,7 @@ final class FiltersBTest extends TestCase
     {
         $filter = $this->filterAND($mode);
         
-        self::assertEquals($filter, $filter->negate()->negate());
+        self::assertTrue($filter->equals($filter->negate()->negate()));
     }
     
     /**
@@ -574,7 +576,7 @@ final class FiltersBTest extends TestCase
     {
         $filter = $this->filterOR($mode);
         
-        self::assertEquals($filter, $filter->negate()->negate());
+        self::assertTrue($filter->equals($filter->negate()->negate()));
     }
     
     public static function allModes(): array

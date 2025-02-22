@@ -5,4 +5,6 @@ namespace FiiSoft\Jackdaw\Memo;
 interface SequenceInspector
 {
     public function inspect(SequenceMemo $sequence): bool;
+    
+    public function equals(SequenceInspector $other): bool;
 }

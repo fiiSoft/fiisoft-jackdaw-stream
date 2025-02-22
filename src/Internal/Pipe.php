@@ -8,8 +8,8 @@ use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Mapper\Tokenize as TokenizeMapper;
 use FiiSoft\Jackdaw\Mapper\Value;
 use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Gather, Reverse, Segregate, ShuffleAll, Sort, SortLimited, Tail};
-use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Filter, FilterByMany, FilterMany, FilterOmitBy, Omit, OmitReps, Skip,
-    StackableFilter, Unique};
+use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, FilterByMany, FilterMany, FilterOp, Omit, OmitReps, Skip,
+    StackableFilter, StackableFilterBy, Unique};
 use FiiSoft\Jackdaw\Operation\Internal\{Limitable, Operations as OP, Pipe\Initial, PossiblyInversible, Reindexable,
     Shuffle};
 use FiiSoft\Jackdaw\Operation\LastOperation;
@@ -190,12 +190,12 @@ final class Pipe implements Destroyable
                 }
                 return false;
             }
-        } elseif ($next instanceof FilterOmitBy) {
+        } elseif ($next instanceof StackableFilterBy) {
             if ($this->last instanceof FilterByMany) {
                 $this->last->add($next);
                 return false;
             }
-            if ($this->last instanceof FilterOmitBy) {
+            if ($this->last instanceof StackableFilterBy) {
                 $this->replaceLastOperation(new FilterByMany($this->last, $next));
                 return false;
             }
@@ -418,7 +418,7 @@ final class Pipe implements Destroyable
                 $this->removeLast();
                 $this->replacement = $this->stream->last();
                 return false;
-            } elseif ($this->last instanceof Filter || $this->last instanceof Omit) {
+            } elseif ($this->last instanceof FilterOp || $this->last instanceof Omit) {
                 $this->replaceTerminatingOperation($this->last->createFind($this->stream));
                 return false;
             }
@@ -584,7 +584,7 @@ final class Pipe implements Destroyable
     
     private function isFilterBy(Operation $operation): bool
     {
-        return $operation instanceof FilterOmitBy || $operation instanceof FilterByMany;
+        return $operation instanceof StackableFilterBy || $operation instanceof FilterByMany;
     }
     
     private function findPlaceForFilterByMany(Operation $last): Operation

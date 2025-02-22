@@ -22,4 +22,9 @@ final class SimpleIntValue implements IntValue
     {
         return true;
     }
+    
+    public function equals(IntValue $other): bool
+    {
+        return $other instanceof $this && $other->value === $this->value;
+    }
 }

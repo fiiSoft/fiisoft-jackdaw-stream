@@ -4,25 +4,27 @@ namespace FiiSoft\Jackdaw\Operation\Internal;
 
 use FiiSoft\Jackdaw\Collector\Collector;
 use FiiSoft\Jackdaw\Comparator\{Comparable, ComparatorReady};
-use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
+use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Filter\FilterReady;
-use FiiSoft\Jackdaw\Internal\{Check, ForkCollaborator, StreamPipe};
+use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Internal\{Check, ForkCollaborator};
 use FiiSoft\Jackdaw\Mapper\MapperReady;
+use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkReady, Gather, Reverse, Segregate, Sort, SortLimited,
     Tail};
-use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Extrema, Filter as OperationFilter, FilterArgs, FilterBy,
-    FilterUntil, FilterWhen, FilterWhile, Increasing, Maxima, Omit, OmitBy, OmitReps, OmitWhen, Skip, SkipUntil,
-    SkipWhile, Unique, Uptrends};
+use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Extrema, FilterBy, FilterOp, FilterUntil,
+    FilterWhen, FilterWhile, Increasing, Maxima, Omit, OmitBy, OmitReps, OmitWhen, Skip, SkipUntil, SkipWhile, Unique,
+    Uptrends};
 use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate\Accumulate, AccumulateSeparate\Separate, Aggregate, Chunk,
-    ChunkBy, Classify, Flat, Flip, Map, MapArgs, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapWhen,
-    MapWhileUntil\MapUntil, MapWhileUntil\MapWhile, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window, Zip};
+    ChunkBy, Classify, Flat, Flip, Map, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapWhen, MapWhileUntil\MapUntil,
+    MapWhileUntil\MapWhile, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window, Zip};
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{CollectIn, CollectKeysIn, CountIn, Dispatch, Dispatcher\HandlerReady, Feed,
-    FeedMany, Remember, SendArgs, SendTo, SendToMany, SendToMax, SendWhen, SendWhileUntil\SendUntil,
+    FeedMany, Remember, RouteOne, RouteMany, SendTo, SendToMany, SendToMax, SendWhen, SendWhileUntil\SendUntil,
     SendWhileUntil\SendWhile, StoreIn, Unzip};
 use FiiSoft\Jackdaw\Operation\Special\{Assert, Limit, ReadMany, ReadNext, ReadWhileUntil\ReadUntil,
     ReadWhileUntil\ReadWhile, WhileUntil\UntilTrue, WhileUntil\WhileTrue};
@@ -78,7 +80,7 @@ final class Operations
      */
     public static function filter($filter, ?int $mode = null): Operation
     {
-        return new OperationFilter($filter, $mode);
+        return new FilterOp($filter, $mode);
     }
     
     /**
@@ -91,7 +93,7 @@ final class Operations
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param FilterReady|callable|mixed $filter
      */
     public static function filterWhen($condition, $filter, ?int $mode = null): Operation
@@ -100,7 +102,7 @@ final class Operations
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param FilterReady|callable|mixed $filter
      */
     public static function filterWhile($condition, $filter, ?int $mode = null): Operation
@@ -109,7 +111,7 @@ final class Operations
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param FilterReady|callable|mixed $filter
      */
     public static function filterUntil($condition, $filter, ?int $mode = null): Operation
@@ -119,7 +121,7 @@ final class Operations
     
     public static function filterArgs(callable $filter): Operation
     {
-        return new FilterArgs($filter);
+        return self::filter(Filters::byArgs($filter));
     }
     
     /**
@@ -140,7 +142,7 @@ final class Operations
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param FilterReady|callable|mixed $filter
      */
     public static function omitWhen($condition, $filter, ?int $mode = null): Operation
@@ -165,7 +167,7 @@ final class Operations
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
@@ -176,7 +178,7 @@ final class Operations
     
     /**
      * @param string|int $field
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
@@ -186,7 +188,7 @@ final class Operations
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      */
     public static function mapWhile($condition, $mapper): Operation
@@ -195,7 +197,7 @@ final class Operations
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      */
     public static function mapUntil($condition, $mapper): Operation
@@ -214,7 +216,7 @@ final class Operations
     
     public static function mapArgs(callable $mapper): Operation
     {
-        return new MapArgs($mapper);
+        return self::map(Mappers::byArgs($mapper));
     }
     
     /**
@@ -287,7 +289,7 @@ final class Operations
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param ConsumerReady|callable|resource $consumer
      * @param ConsumerReady|callable|resource|null $elseConsumer
      */
@@ -297,7 +299,7 @@ final class Operations
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param ConsumerReady|callable|resource $consumer
      */
     public static function callWhile($condition, $consumer): Operation
@@ -306,7 +308,7 @@ final class Operations
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param ConsumerReady|callable|resource $consumer
      */
     public static function callUntil($condition, $consumer): Operation
@@ -316,7 +318,7 @@ final class Operations
     
     public static function callArgs(callable $consumer): Operation
     {
-        return new SendArgs($consumer);
+        return self::call(Consumers::byArgs($consumer));
     }
     
     /**
@@ -447,6 +449,23 @@ final class Operations
     public static function dispatch($discriminator, array $handlers): Operation
     {
         return new Dispatch($discriminator, $handlers);
+    }
+    
+    /**
+     * @param FilterReady|callable|mixed $condition
+     */
+    public static function route($condition, HandlerReady $handler): Operation
+    {
+        return new RouteOne($condition, $handler);
+    }
+    
+    /**
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
+     * @param HandlerReady[] $handlers
+     */
+    public static function switch($discriminator, array $handlers): Operation
+    {
+        return new RouteMany($discriminator, $handlers);
     }
     
     /**

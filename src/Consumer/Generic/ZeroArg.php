@@ -13,4 +13,16 @@ final class ZeroArg extends GenericConsumer
     {
         ($this->callable)();
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            ($this->callable)();
+            
+            yield $key => $value;
+        }
+    }
 }

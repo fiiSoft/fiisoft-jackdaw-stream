@@ -72,4 +72,9 @@ final class CompoundIntValue implements IntValue
         
         return true;
     }
+    
+    public function equals(IntValue $other): bool
+    {
+        return false;
+    }
 }

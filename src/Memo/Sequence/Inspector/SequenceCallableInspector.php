@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Memo\Sequence\Inspector;
 
 use FiiSoft\Jackdaw\Memo\Sequence\BaseSequencePredicate;
 use FiiSoft\Jackdaw\Memo\SequenceMemo;
+use FiiSoft\Jackdaw\Memo\SequencePredicate;
 
 final class SequenceCallableInspector extends BaseSequencePredicate
 {
@@ -20,5 +21,12 @@ final class SequenceCallableInspector extends BaseSequencePredicate
     public function evaluate(): bool
     {
         return ($this->inspector)($this->sequence);
+    }
+    
+    public function equals(SequencePredicate $other): bool
+    {
+        return $other instanceof self
+            && $other->inspector === $this->inspector
+            && parent::equals($other);
     }
 }

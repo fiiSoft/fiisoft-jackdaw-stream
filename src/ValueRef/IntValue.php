@@ -11,4 +11,6 @@ interface IntValue extends IntProvider
      * if it is known before the stream iteration starts and does not change during iteration.
      */
     public function isConstant(): bool;
+    
+    public function equals(IntValue $other): bool;
 }

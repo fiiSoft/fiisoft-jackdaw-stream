@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Filter\Generic;
 
 use FiiSoft\Jackdaw\Filter\BaseFilter;
 use FiiSoft\Jackdaw\Filter\Exception\FilterExceptionFactory;
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Generic\ModeDependent\AnyGeneric;
 use FiiSoft\Jackdaw\Filter\Generic\ModeDependent\BothGeneric;
 use FiiSoft\Jackdaw\Filter\Generic\ModeDependent\KeyGeneric;
@@ -55,5 +56,13 @@ abstract class GenericFilter extends BaseFilter
         
         $this->callable = $callable;
         $this->expected = $expected;
+    }
+    
+    final public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->callable === $this->callable
+            && $other->expected === $this->expected
+            && parent::equals($other);
     }
 }

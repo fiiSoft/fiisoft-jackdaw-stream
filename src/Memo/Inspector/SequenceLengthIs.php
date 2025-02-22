@@ -24,4 +24,9 @@ final class SequenceLengthIs implements SequenceInspector
     {
         return $sequence->count() === $this->length->int();
     }
+    
+    public function equals(SequenceInspector $other): bool
+    {
+        return $other instanceof self && $other->length->equals($this->length);
+    }
 }

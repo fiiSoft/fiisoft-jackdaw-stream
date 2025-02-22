@@ -149,7 +149,7 @@ final class Helper
             if (\mb_strlen($value) > 50) {
                 $value = \trim(\mb_substr($value, 0, 47)).'...';
             }
-            return \trim('string '.$value);
+            return 'string '.\trim($value);
         }
         
         if (\is_array($value)) {

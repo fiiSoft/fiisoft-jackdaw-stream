@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Mapping;
 
-use FiiSoft\Jackdaw\Condition\ConditionReady;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mapper;
@@ -16,7 +16,7 @@ final class MapFieldWhen extends ConditionalMap
     
     /**
      * @param string|int $field
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
@@ -31,7 +31,7 @@ final class MapFieldWhen extends ConditionalMap
     {
         $item = $signal->item;
         
-        if ($this->condition->isTrueFor($item->value[$this->field], $item->key)) {
+        if ($this->condition->isAllowed($item->value[$this->field], $item->key)) {
             $item->value[$this->field] = $this->mapper->map($item->value[$this->field], $item->key);
         } elseif ($this->elseMapper !== null) {
             $item->value[$this->field] = $this->elseMapper->map($item->value[$this->field], $item->key);
@@ -44,7 +44,7 @@ final class MapFieldWhen extends ConditionalMap
     {
         foreach ($stream as $key => $value) {
             
-            if ($this->condition->isTrueFor($value[$this->field], $key)) {
+            if ($this->condition->isAllowed($value[$this->field], $key)) {
                 $value[$this->field] = $this->mapper->map($value[$this->field], $key);
             } elseif ($this->elseMapper !== null) {
                 $value[$this->field] = $this->elseMapper->map($value[$this->field], $key);

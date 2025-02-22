@@ -31,4 +31,11 @@ abstract class SimpleFilter extends BaseFilter
             ? static::create($mode, $this->desired)
             : $this;
     }
+    
+    final public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->desired === $this->desired
+            && parent::equals($other);
+    }
 }

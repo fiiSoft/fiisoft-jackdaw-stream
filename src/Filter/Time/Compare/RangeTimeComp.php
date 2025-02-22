@@ -21,4 +21,11 @@ abstract class RangeTimeComp extends CompoundTimeComp
             throw FilterExceptionFactory::paramFromIsGreaterThanUntil();
         }
     }
+    
+    final public function equals(TimeComparator $other): bool
+    {
+        return $other instanceof static
+            && $other->earlier == $this->earlier
+            && $other->later == $this->later;
+    }
 }

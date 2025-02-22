@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Operation\Filtering;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
-use FiiSoft\Jackdaw\Filter\Internal\FilterData;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterConditionalData;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 abstract class StackableFilter extends BaseOperation
@@ -20,5 +20,5 @@ abstract class StackableFilter extends BaseOperation
         $this->filter = Filters::getAdapter($filter, $mode);
     }
     
-    abstract public function filterData(): FilterData;
+    abstract public function filterData(): FilterConditionalData;
 }

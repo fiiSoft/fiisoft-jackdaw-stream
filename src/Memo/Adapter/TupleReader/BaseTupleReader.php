@@ -13,4 +13,9 @@ abstract class BaseTupleReader implements MemoReader
     {
         $this->tuple = $tuple;
     }
+    
+    final public function equals(MemoReader $other): bool
+    {
+        return $other instanceof $this && $other->tuple->equals($this->tuple);
+    }
 }

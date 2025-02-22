@@ -2,10 +2,11 @@
 
 namespace FiiSoft\Jackdaw\Memo;
 
-use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Filter\FilterReady;
 
-interface SequencePredicate extends FilterReady, ConditionReady
+interface SequencePredicate extends FilterReady
 {
     public function evaluate(): bool;
+    
+    public function equals(SequencePredicate $other): bool;
 }

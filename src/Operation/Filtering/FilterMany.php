@@ -2,13 +2,14 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
-use FiiSoft\Jackdaw\Filter\Internal\FilterData;
+use FiiSoft\Jackdaw\Filter\Logic\ConditionalFilter;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterConditionalData;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class FilterMany extends BaseOperation
 {
-    /** @var FilterData[] */
+    /** @var FilterConditionalData[] */
     private array $checks = [];
     
     public function __construct(StackableFilter $first, ?StackableFilter $second = null)
@@ -23,13 +24,8 @@ final class FilterMany extends BaseOperation
     public function handle(Signal $signal): void
     {
         foreach ($this->checks as $check) {
-            if ($check->condition === null
-                || $check->condition->isTrueFor($signal->item->value, $signal->item->key)
-            ) {
-                if ($check->negation === $check->filter->isAllowed(
-                        $signal->item->value,
-                        $signal->item->key,
-                    )) {
+            if ($check->condition === null || $check->condition->isAllowed($signal->item->value, $signal->item->key)) {
+                if ($check->negation === $check->filter->isAllowed($signal->item->value, $signal->item->key)) {
                     return;
                 }
             }
@@ -40,59 +36,30 @@ final class FilterMany extends BaseOperation
     
     public function buildStream(iterable $stream): iterable
     {
-        return $this->areAllFiltersUnconditional()
-            ? $this->buildOptimisedStream($stream)
-            : $this->buildStandardStream($stream);
-    }
-    
-    /**
-     * @param iterable<mixed, mixed> $stream
-     * @return iterable<mixed, mixed>
-     */
-    private function buildOptimisedStream(iterable $stream): iterable
-    {
         foreach ($this->checks as $check) {
-            $stream = $check->negation
-                ? $check->filter->negate()->buildStream($stream)
-                : $check->filter->buildStream($stream);
-        }
-
-        return $stream;
-    }
-    
-    /**
-     * @param iterable<mixed, mixed> $stream
-     * @return iterable<mixed, mixed>
-     */
-    private function buildStandardStream(iterable $stream): iterable
-    {
-        foreach ($stream as $key => $value) {
-            foreach ($this->checks as $check) {
-                if (($check->condition === null || $check->condition->isTrueFor($value, $key))
-                    && $check->negation === $check->filter->isAllowed($value, $key)
-                ) {
-                    continue 2;
-                }
+            if ($check->condition === null) {
+                $filter = $check->negation ? $check->filter->negate() : $check->filter;
+            } else {
+                $filter = ConditionalFilter::create($check->condition, $check->filter, $check->negation);
             }
             
-            yield $key => $value;
-        }
-    }
-    
-    private function areAllFiltersUnconditional(): bool
-    {
-        foreach ($this->checks as $check) {
-            if ($check->condition !== null) {
-                return false;
-            }
+            $stream = $filter->buildStream($stream);
         }
         
-        return true;
+        return $stream;
     }
     
     public function add(StackableFilter $filter): void
     {
-        $this->checks[] = $filter->filterData();
+        $newOne = $filter->filterData();
+        
+        foreach ($this->checks as $check) {
+            if ($check->mergeWith($newOne)) {
+                return;
+            }
+        }
+        
+        $this->checks[] = $newOne;
     }
     
     public function destroy(): void
@@ -102,5 +69,13 @@ final class FilterMany extends BaseOperation
             
             parent::destroy();
         }
+    }
+    
+    /**
+     * @return FilterConditionalData[]
+     */
+    public function getChecks(): array
+    {
+        return $this->checks;
     }
 }

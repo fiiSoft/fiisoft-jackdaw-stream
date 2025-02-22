@@ -29,13 +29,12 @@ final class SendTo extends BaseOperation
         $this->next->handle($signal);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function buildStream(iterable $stream): iterable
     {
-        foreach ($stream as $key => $value) {
-            $this->consumer->consume($value, $key);
-            
-            yield $key => $value;
-        }
+        return $this->consumer->buildStream($stream);
     }
     
     public function consumer(): Consumer

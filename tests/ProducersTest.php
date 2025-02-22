@@ -538,6 +538,13 @@ final class ProducersTest extends TestCase
         yield 'randomInt' => [Producers::randomInt(1, 10, 3)];
     }
     
+    public function test_default_uuidV4_producer(): void
+    {
+        $this->checkIfRamseyOrSymfonyUuidIsInstalled();
+        
+        $this->examineUuidProducer(Producers::uuidV4(), $this->expectedDefaultUuidLength());
+    }
+    
     public function test_uuid_producers_are_reusable(): void
     {
         $this->checkIfRamseyOrSymfonyUuidIsInstalled();

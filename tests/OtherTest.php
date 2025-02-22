@@ -2,12 +2,19 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Comparator\Sorting\By;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Mode;
 use FiiSoft\Jackdaw\Mapper\Exception\MapperExceptionFactory;
+use FiiSoft\Jackdaw\Matcher\MatchBy;
+use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterConditionalData;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterFieldData;
+use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\ValueRef\Adapter\CompoundIntValue;
 use FiiSoft\Jackdaw\ValueRef\IntNum;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -510,5 +517,220 @@ final class OtherTest extends TestCase
         
         self::assertSame(3, $value->int());
         self::assertTrue($value->isConstant());
+    }
+    
+    public function test_volatile_IntValue_equals(): void
+    {
+        $intVal = IntNum::infinitely([1, 2]);
+        self::assertFalse($intVal->equals($intVal));
+        
+        $intVal = IntNum::addArgs($intVal, IntNum::constant(3));
+        self::assertFalse($intVal->equals($intVal));
+    }
+    
+    public function test_constant_IntValue_equals(): void
+    {
+        self::assertTrue(IntNum::constant(3)->equals(IntNum::constant(3)));
+        self::assertFalse(IntNum::constant(3)->equals(IntNum::constant(8)));
+    }
+    
+    public function test_memo_full_tuple_equals(): void
+    {
+        $memo = Memo::full();
+        $tuple = $memo->tuple();
+        
+        self::assertTrue($tuple->equals($tuple));
+        self::assertTrue($tuple->equals($memo->tuple()));
+        
+        self::assertFalse($tuple->equals($memo->value()));
+        self::assertFalse($tuple->equals(Memo::full()->tuple()));
+    }
+    
+    public function test_memo_full_value_equals(): void
+    {
+        $memo = Memo::full();
+        $value = $memo->value();
+        
+        self::assertTrue($value->equals($value));
+        self::assertTrue($value->equals($memo->value()));
+        
+        self::assertFalse($value->equals($memo->key()));
+        self::assertFalse($value->equals(Memo::full()->value()));
+    }
+    
+    public function test_memo_full_key_equals(): void
+    {
+        $memo = Memo::full();
+        $key = $memo->key();
+        
+        self::assertTrue($key->equals($key));
+        self::assertTrue($key->equals($memo->key()));
+        
+        self::assertFalse($key->equals($memo->value()));
+        self::assertFalse($key->equals(Memo::full()->key()));
+    }
+    
+    public function test_memo_value_equals(): void
+    {
+        $memo = Memo::value();
+
+        self::assertTrue($memo->equals($memo));
+        self::assertFalse($memo->equals(Memo::value()));
+    }
+    
+    public function test_memo_key_equals(): void
+    {
+        $memo = Memo::key();
+
+        self::assertTrue($memo->equals($memo));
+        self::assertFalse($memo->equals(Memo::key()));
+    }
+    
+    public function test_matcher_simple_keys_equals(): void
+    {
+        $matcher = MatchBy::keys();
+        
+        self::assertTrue($matcher->equals($matcher));
+        self::assertTrue($matcher->equals(MatchBy::keys()));
+        
+        self::assertFalse($matcher->equals(MatchBy::keys(static fn($a, $b): bool => true)));
+        self::assertFalse($matcher->equals(MatchBy::values()));
+    }
+    
+    public function test_matcher_callable_keys_equals(): void
+    {
+        $callable = static fn($a, $b): bool => true;
+        $matcher = MatchBy::keys($callable);
+        
+        self::assertTrue($matcher->equals($matcher));
+        self::assertTrue($matcher->equals(MatchBy::keys($callable)));
+        
+        self::assertFalse($matcher->equals(MatchBy::keys()));
+        self::assertFalse($matcher->equals(MatchBy::values()));
+        self::assertFalse($matcher->equals(MatchBy::keys(static fn($a, $b): bool => true)));
+    }
+    
+    public function test_matcher_simple_values_equals(): void
+    {
+        $matcher = MatchBy::values();
+        
+        self::assertTrue($matcher->equals($matcher));
+        self::assertTrue($matcher->equals(MatchBy::values()));
+        
+        self::assertFalse($matcher->equals(MatchBy::values(static fn($a, $b): bool => true)));
+        self::assertFalse($matcher->equals(MatchBy::keys()));
+    }
+    
+    public function test_matcher_callable_values_equals(): void
+    {
+        $callable = static fn($a, $b): bool => true;
+        $matcher = MatchBy::values($callable);
+        
+        self::assertTrue($matcher->equals($matcher));
+        self::assertTrue($matcher->equals(MatchBy::values($callable)));
+        
+        self::assertFalse($matcher->equals(MatchBy::values()));
+        self::assertFalse($matcher->equals(MatchBy::keys()));
+        self::assertFalse($matcher->equals(MatchBy::values(static fn($a, $b): bool => true)));
+    }
+    
+    public function test_matcher_simple_both_equals(): void
+    {
+        $matcher = MatchBy::both();
+        
+        self::assertTrue($matcher->equals($matcher));
+        self::assertTrue($matcher->equals(MatchBy::both()));
+        
+        self::assertFalse($matcher->equals(MatchBy::both(static fn($a, $b): bool => true)));
+        self::assertFalse($matcher->equals(MatchBy::keys()));
+    }
+    
+    public function test_matcher_callable_both_equals(): void
+    {
+        $callable = static fn($a, $b): bool => true;
+        $matcher = MatchBy::both($callable);
+        
+        self::assertTrue($matcher->equals($matcher));
+        self::assertTrue($matcher->equals(MatchBy::both($callable)));
+        
+        self::assertFalse($matcher->equals(MatchBy::both()));
+        self::assertFalse($matcher->equals(MatchBy::keys()));
+        self::assertFalse($matcher->equals(MatchBy::both(static fn($a, $b): bool => true)));
+    }
+    
+    public function test_matcher_callable_full_equals(): void
+    {
+        $callable = static fn($a, $b, $c, $d): bool => true;
+        $matcher = MatchBy::full($callable);
+        
+        self::assertTrue($matcher->equals($matcher));
+        self::assertTrue($matcher->equals(MatchBy::full($callable)));
+        
+        self::assertFalse($matcher->equals(MatchBy::keys()));
+        self::assertFalse($matcher->equals(MatchBy::full(static fn($a, $b, $c, $d): bool => true)));
+    }
+    
+    public function test_FilterConditionalData_equals(): void
+    {
+        $data = new FilterConditionalData(Filters::greaterThan(0), false, Filters::isInt());
+        
+        self::assertFalse($data->mergeWith(new FilterFieldData('foo', Filters::isInt(), true)));
+        
+        self::assertFalse($data->mergeWith(
+            new FilterConditionalData(Filters::lessThan(10), false, Filters::isInt(Check::KEY))
+        ));
+        
+        self::assertFalse($data->mergeWith(
+            new FilterConditionalData(Filters::contains('foo'), false, Filters::isString())
+        ));
+        
+        self::assertTrue($data->mergeWith(
+            new FilterConditionalData(Filters::lessThan(10), false, Filters::isInt())
+        ));
+        
+        self::assertFalse($data->negation);
+        self::assertTrue($data->condition->equals(Filters::isInt()));
+        self::assertTrue($data->filter->equals(Filters::greaterThan(0)->and(Filters::lessThan(10))));
+    }
+    
+    public function test_Helper_describe_string(): void
+    {
+        self::assertSame('string aaaa', Helper::describe(' aaaa   '));
+        
+        self::assertSame(
+            'string aaaa ffdfdg dsdsdsdsds dsdsdsd gfhgj jhjhjhjhj...',
+            Helper::describe('aaaa ffdfdg dsdsdsdsds dsdsdsd gfhgj jhjhjhjhj  hjhj sd')
+        );
+        
+        self::assertSame(
+            'string aaaa ffdfdg dsdsdsdsds dsdsdsd gfhgj...',
+            Helper::describe('aaaa ffdfdg dsdsdsdsds dsdsdsd gfhgj                   ')
+        );
+        
+        self::assertSame(
+            'string aaaa ffdfdg dsdsdsdsds dsdsdsd gfhgjs sdfgrtgf...',
+            Helper::describe('aaaa ffdfdg dsdsdsdsds dsdsdsd gfhgjs sdfgrtgf jfgfgd              ')
+        );
+    }
+    
+    public function test_sort_can_trim_indicators(): void
+    {
+        $rowset = [
+            [2, 'Kate', 35],
+            [9, 'Chris', 29],
+            [6, 'Joanna', 35],
+            [5, 'Chris', 26],
+            [7, 'Sue', 17],
+            [3, 'Kate', 22],
+        ];
+        
+        self::assertSame([
+            [7, 'Sue', 17],
+            [3, 'Kate', 22],
+            [2, 'Kate', 35],
+            [6, 'Joanna', 35],
+            [5, 'Chris', 26],
+            [9, 'Chris', 29],
+        ], Stream::from($rowset)->sort(By::fields([' 1   desc ', ' 2    asc ']))->toArray());
     }
 }

@@ -13,4 +13,6 @@ interface MemoReader extends IntProvider, MapperReady, DiscriminatorReady, Produ
      * @return mixed|null
      */
     public function read();
+    
+    public function equals(MemoReader $other): bool;
 }

@@ -2,9 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter\Logic\OpAND;
 
-use FiiSoft\Jackdaw\Filter\Filter;
-
-final class FilterAND extends BaseAND
+final class FilterAND extends BaseAND implements LogicAND
 {
     /**
      * @inheritDoc
@@ -29,11 +27,5 @@ final class FilterAND extends BaseAND
         }
      
         return $stream;
-    }
-    
-    public function add(Filter $filter): void
-    {
-        $this->filters[] = $filter;
-        $this->mode = null;
     }
 }

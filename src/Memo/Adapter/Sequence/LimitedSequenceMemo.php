@@ -6,12 +6,16 @@ use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Memo\Adapter\Sequence\Limited\EntryBuffer;
 use FiiSoft\Jackdaw\Memo\Adapter\Sequence\Limited\EntryBufferFactory;
 use FiiSoft\Jackdaw\Memo\Entry;
+use FiiSoft\Jackdaw\Memo\Sequence\Matcher\SequenceMatcherPredicate;
 
 final class LimitedSequenceMemo extends BaseSequenceMemo
 {
     private EntryBuffer $buffer;
     
     private int $length;
+    
+    /** @var SequenceMatcherPredicate[] */
+    private array $observers = [];
     
     public function __construct(int $length)
     {
@@ -29,6 +33,10 @@ final class LimitedSequenceMemo extends BaseSequenceMemo
     public function write($value, $key): void
     {
         $this->buffer->hold($key, $value);
+        
+        foreach ($this->observers as $observer) {
+            $observer->entryAdded($value, $key);
+        }
     }
     
     public function get(int $index): Entry
@@ -64,12 +72,26 @@ final class LimitedSequenceMemo extends BaseSequenceMemo
     
     public function remove(int $index): Entry
     {
-        return $this->buffer->remove($index);
+        $removed = $this->buffer->remove($index);
+        
+        if ($index < 0) {
+            $index += $this->buffer->count();
+        }
+        
+        foreach ($this->observers as $observer) {
+            $observer->entryRemoved($index);
+        }
+        
+        return $removed;
     }
     
     public function clear(): void
     {
         $this->buffer->clear();
+        
+        foreach ($this->observers as $observer) {
+            $observer->sequenceCleared();
+        }
     }
     
     /**
@@ -138,6 +160,11 @@ final class LimitedSequenceMemo extends BaseSequenceMemo
         return $acc;
     }
     
+    public function register(SequenceMatcherPredicate $observer): void
+    {
+        $this->observers[\spl_object_id($observer)] = $observer;
+    }
+    
     /**
      * @inheritDoc
      */
@@ -153,6 +180,7 @@ final class LimitedSequenceMemo extends BaseSequenceMemo
     
     public function destroy(): void
     {
+        $this->clear();
         $this->buffer->destroy();
         $this->length = 1;
     }

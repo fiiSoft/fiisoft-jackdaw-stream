@@ -4,9 +4,9 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Comparator\Sorting\By;
-use FiiSoft\Jackdaw\Condition\Conditions;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Exception\StreamExceptionFactory;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
@@ -24,6 +24,7 @@ use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\ValueRef\IntNum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class StreamGTest extends TestCase
@@ -362,7 +363,7 @@ final class StreamGTest extends TestCase
             ->callWhen('is_string', $operation, $sequence)
             ->omit(Filters::OR('is_int', $sequence->inspect(new SequenceIsEmpty())))
             ->classify($operation->value(0))
-            ->callWhen(Conditions::keyIs(':'), $reset)
+            ->callWhen(Filters::keyIs(':'), $reset)
             ->omit(':', Check::KEY)
             ->map($sequence)
             ->call($reset)
@@ -436,6 +437,7 @@ final class StreamGTest extends TestCase
         
         $result = Stream::from(['a' => 'z', 'b' => 'x', 'c' => 'c', 'd' => 'd', 'e' => 'e', 'f' => 'n', 'g' => 'm'])
             ->remember($sequence)
+            ->filter(static fn(string $v, string $k): bool => $v === $k)
             ->find($sequence->inspect(static function (SequenceMemo $sequence): bool {
                 foreach ($sequence as $key => $value) {
                     if ($key !== $value) {
@@ -762,6 +764,38 @@ final class StreamGTest extends TestCase
         
         $result = Producers::repeater('*')
             ->stream()
+            ->while(static function () use (&$size): bool {
+                return $size > 0;
+            })
+            ->chunk(IntNum::readFrom($size), true)
+            ->concat('')
+            ->call($changeSize)
+            ->toArray();
+        
+        self::assertSame(['*', '**', '***', '****', '*****', '****', '***', '**', '*'], $result);
+    }
+    
+    public function test_chunk_with_changing_size_with_onerror_handler(): void
+    {
+        $size = 1;
+        
+        $changeSize = Consumers::changeIntBy($size, static function () use (&$size): int {
+            static $up = true;
+            
+            if ($up) {
+                if ($size < 5) {
+                    return 1;
+                }
+                
+                $up = false;
+            }
+            
+            return -1;
+        });
+        
+        $result = Producers::repeater('*')
+            ->stream()
+            ->onError(OnError::abort())
             ->while(static function () use (&$size): bool {
                 return $size > 0;
             })
@@ -1258,7 +1292,7 @@ final class StreamGTest extends TestCase
         ], $result);
     }
     
-    public function test_filter_and_map_by_arguments_of_array_send_to_callable(): void
+    public function test_call_filter_map_by_arguments_from_array_send_to_callable_1(): void
     {
         $collector = Collectors::default();
         
@@ -1277,7 +1311,7 @@ final class StreamGTest extends TestCase
         self::assertSame([9 => 'Chris', 1 => 'Kila'], $collector->toArray());
     }
     
-    public function test_filter_and_map_by_arguments_of_array_send_to_callable_with_onerror_handler(): void
+    public function test_call_filter_map_by_arguments_from_array_send_to_callable_with_onerror_handler_1(): void
     {
         $collector = Collectors::default();
         
@@ -1297,4 +1331,655 @@ final class StreamGTest extends TestCase
         self::assertSame([9 => 'Chris', 1 => 'Kila'], $collector->toArray());
     }
     
+    public function test_call_filter_map_by_arguments_from_array_send_to_callable_2(): void
+    {
+        $collector = Collectors::default();
+        
+        $result = Stream::from(self::ROWSET)
+            ->reorder(['name', 'age', 'sex', 'id'])
+            ->call(Consumers::byArgs(static function (string $name, int $age, $_, int $id) use ($collector) {
+                if ($age === 18) {
+                    $collector->set($id, $name);
+                }
+            }))
+            ->filter(Filters::byArgs(static fn($_, int $age, string $sex): bool => $sex === 'female' && $age < 18))
+            ->map(Mappers::byArgs(static fn(string $name, int $age): string => $name.' ('.$age.')'))
+            ->toArray();
+        
+        self::assertSame(['Sue (17)', 'Joanna (15)'], $result);
+        self::assertSame([9 => 'Chris', 1 => 'Kila'], $collector->toArray());
+    }
+    
+    public function test_call_filter_map_by_arguments_from_array_send_to_callable_with_onerror_handler_2(): void
+    {
+        $collector = Collectors::default();
+        
+        $result = Stream::from(self::ROWSET)
+            ->onError(OnError::abort())
+            ->reorder(['name', 'age', 'sex', 'id'])
+            ->call(Consumers::byArgs(static function (string $name, int $age, $_, int $id) use ($collector) {
+                if ($age === 18) {
+                    $collector->set($id, $name);
+                }
+            }))
+            ->filter(Filters::byArgs(static fn($_, int $age, string $sex): bool => $sex === 'female' && $age < 18))
+            ->map(Mappers::byArgs(static fn(string $name, int $age): string => $name.' ('.$age.')'))
+            ->toArray();
+        
+        self::assertSame(['Sue (17)', 'Joanna (15)'], $result);
+        self::assertSame([9 => 'Chris', 1 => 'Kila'], $collector->toArray());
+    }
+    
+    public function test_filter_byArgs_negation(): void
+    {
+        $filter = static fn(int $age, string $sex): bool => $age < 18 || $sex === 'female';
+        
+        $result = Stream::from(self::ROWSET)
+            ->reorder(['age', 'sex', 'id'])
+            ->filter(Filters::byArgs($filter)->negate())
+            ->extract('id')
+            ->toArray();
+        
+        self::assertSame([9, 10], $result);
+    }
+    
+    public function test_filter_by_Memo_written_by_call(): void
+    {
+        $memo = Memo::value();
+        
+        $result = Stream::from(['aaba', 'boo', 'caba', 'doo'])
+            ->call($memo)
+            ->filter(Filters::wrapMemoReader($memo)->string()->endsWith('aba'))
+            ->toArray();
+        
+        self::assertSame(['aaba', 'caba'], $result);
+    }
+    
+    /**
+     * @dataProvider getDataForTestCallPrinterConsumerSendsOutputToStdout
+     */
+    #[DataProvider('getDataForTestCallPrinterConsumerSendsOutputToStdout')]
+    public function test_call_printer_consumer_sends_output_to_stdout(int $mode, string $expectedOutput): void
+    {
+        \ob_start();
+        Stream::from([1 => 'aaa'])->call(Consumers::printer($mode))->run();
+        $output = \ob_get_clean();
+        
+        self::assertSame($expectedOutput, $output);
+    }
+    
+    public static function getDataForTestCallPrinterConsumerSendsOutputToStdout(): array
+    {
+        return [
+            //mode, expected output
+            [Check::VALUE, 'value: aaa'."\n"],
+            [Check::KEY, 'key: 1'."\n"],
+            [Check::BOTH, 'key: 1, value: aaa'."\n"],
+            [Check::ANY, 'key: 1, value: aaa'."\n"],
+        ];
+    }
+    
+    /**
+     * @dataProvider getDataForTestCallResourceWriterConsumer
+     */
+    #[DataProvider('getDataForTestCallResourceWriterConsumer')]
+    public function test_call_resource_writer_consumer(int $mode, string $expectedOutput): void
+    {
+        $resource = \fopen('php://memory', 'rb+');
+        
+        Stream::from([1 => 'foo'])->call(Consumers::resource($resource, $mode))->run();
+        
+        \rewind($resource);
+        self::assertSame($expectedOutput, \fgets($resource));
+    }
+    
+    public function test_call_resource_writer_consumer_with_object_castable_to_string_as_value(): void
+    {
+        $object = new class {
+            public function __toString(): string {
+                return 'foo';
+            }
+        };
+        
+        $resource = \fopen('php://memory', 'rb+');
+        
+        Stream::from([1 => $object])->call(Consumers::resource($resource))->run();
+        
+        \rewind($resource);
+        self::assertSame('foo', \fgets($resource));
+    }
+    
+    public function test_call_resource_writer_consumer_with_object_castable_to_string_as_key(): void
+    {
+        $object = new class {
+            public function __toString(): string {
+                return 'foo';
+            }
+        };
+        
+        $resource = \fopen('php://memory', 'rb+');
+        
+        Stream::from([1 => $object])->flip()->call(Consumers::resource($resource, Check::KEY))->run();
+        
+        \rewind($resource);
+        self::assertSame('foo', \fgets($resource));
+    }
+    
+    /**
+     * @dataProvider getDataForTestCallResourceWriterConsumer
+     */
+    #[DataProvider('getDataForTestCallResourceWriterConsumer')]
+    public function test_call_stdout_writer_consumer(int $mode, string $expectedOutput): void
+    {
+        \ob_start();
+        Stream::from([1 => 'foo'])->call(Consumers::stdout('', $mode))->run();
+        $output = \ob_get_clean();
+        
+        self::assertSame($expectedOutput, $output);
+    }
+    
+    public static function getDataForTestCallResourceWriterConsumer(): array
+    {
+        return [
+            //mode, expectedOutput
+            [Check::VALUE, 'foo'],
+            [Check::KEY, '1'],
+            [Check::BOTH, '1:foo'],
+        ];
+    }
+    
+    public function test_use_sleeper_consumer_to_slown_down_stream(): void
+    {
+        //given
+        $waitMicroseconds = 50_000;
+        $faster = Stream::from(['a', 'b'])->map('strtolower');
+        $slower = Stream::from(['a', 'b'])->map('strtolower')->call(Consumers::usleep($waitMicroseconds));
+        
+        //when
+        $start = \microtime(true);
+        $faster->run();
+        $fasterTime = \microtime(true) - $start;
+        
+        $start = \microtime(true);
+        $slower->run();
+        $slowerTime = \microtime(true) - $start;
+        
+        //then
+        self::assertGreaterThanOrEqual($waitMicroseconds, ($slowerTime - $fasterTime) * 1_000_000);
+    }
+    
+    public function test_filterMany_conditional_and_uncodictional(): void
+    {
+        $name = Memo::value();
+        
+        $actual = Stream::from(['a', 1, false, 'b', 2, 6, 'c', true, 3, 2, 'd', 2, 4, false, 'e', 5])
+            ->omit(Filters::NOT('is_string')->andNot('is_int'))
+            ->filterWhen('is_int', Filters::greaterThan(1))
+            ->filterWhen('is_int', Filters::lessThan(5))
+            ->callWhen('is_string', $name)
+            ->omit('is_string')
+            ->map(static fn(int $v): string => $name->read().$v)
+            ->toArray();
+        
+        self::assertSame(['b2', 'c3', 'c2', 'd2', 'd4'], $actual);
+    }
+    
+    public function test_FilterMany_with_double_filter_as_condition(): void
+    {
+        $result = Stream::from(['a', 5, 'b', 2, 'c', 1, 'd', 3, 'e'])
+            ->filterWhen(Filters::isInt(), Filters::greaterThan(1))
+            ->filterWhen(Filters::getAdapter('is_int'), Filters::lessThan(5))
+            ->filterWhen('is_string', Filters::onlyIn(['b', 'd']))
+            ->toArray();
+        
+        self::assertSame(['b', 2, 'd', 3], $result);
+    }
+    
+    public function test_filterBy_with_or_filter(): void
+    {
+        $str = Filters::string();
+        
+        $result = Stream::from(self::ROWSET)
+            ->filterBy('age', Filters::isInt())
+            ->filterBy('age', Filters::greaterOrEqual(18))
+            ->filterBy('sex', 'female')
+            ->filterBy('name', $str->startsWith('k')->ignoreCase())
+            ->filterBy('name', $str->endsWith('a', true)->or($str->endsWith('o', true)))
+            ->extract('id')
+            ->toArray();
+        
+        self::assertSame([1], $result);
+    }
+    
+    public function test_omitBy_with_and_filter(): void
+    {
+        $str = Filters::string();
+        
+        $result = Stream::from(self::ROWSET)
+            ->omitBy('age', Filters::NOT('is_int'))
+            ->omitBy('age', Filters::lessThan(18))
+            ->omitBy('sex', 'male')
+            ->omitBy('name', $str->notStartsWith('k', true))
+            ->omitBy('name', $str->notEndsWith('a', true)->and($str->notEndsWith('o', true)))
+            ->extract('id')
+            ->toArray();
+        
+        self::assertSame([1], $result);
+    }
+    
+    public function test_omitBy_and_filterBy_with_simple_not_filter(): void
+    {
+        $str = Filters::string();
+        
+        $result = Stream::from(self::ROWSET)
+            ->omitBy('age', Filters::NOT('is_int'))
+            ->filterBy('age', Filters::greaterOrEqual(18))
+            ->omitBy('sex', 'male')
+            ->omitBy('name', $str->notStartsWith('k', true))
+            ->omitBy('name', $str->notEndsWith('a', true)->and($str->notEndsWith('o', true)))
+            ->extract('id')
+            ->toArray();
+        
+        self::assertSame([1], $result);
+    }
+    
+    public function test_filterBy_and_omitBy_with_simple_not_filter(): void
+    {
+        $str = Filters::string();
+        
+        $result = Stream::from(self::ROWSET)
+            ->filterBy('age', Filters::greaterOrEqual(18))
+            ->omitBy('age', Filters::NOT('is_int'))
+            ->omitBy('sex', 'male')
+            ->omitBy('name', $str->notStartsWith('k', true))
+            ->omitBy('name', $str->notEndsWith('a', true)->and($str->notEndsWith('o', true)))
+            ->extract('id')
+            ->toArray();
+        
+        self::assertSame([1], $result);
+    }
+    
+    public function test_filter_using_four_AND_filters_with_onerror_handler(): void
+    {
+        $filter = Filters::isString()
+            ->and(Filters::length()->eq(6))
+            ->and(Filters::contains('a'))
+            ->and(Filters::contains('b'));
+        
+        $data = ['tr', 'sgfuty', 'dcbafo', 'abYXdf', 'abcdef', 'gfhr', 'feUcba', 'qqq'];
+        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        
+        self::assertSame(['dcbafo', 'abYXdf', 'abcdef', 'feUcba'], $result);
+    }
+    
+    public function test_filter_using_five_AND_filters_with_onerror_handler(): void
+    {
+        $filter = Filters::isString()
+            ->and(Filters::length()->eq(6))
+            ->and(Filters::contains('a'))
+            ->and(Filters::contains('b'))
+            ->and(Filters::contains('c'));
+        
+        $data = ['tr', 'sgfuty', 'dcbafo', 'abYXdf', 'abcdef', 'gfhr', 'feUcba', 'qqq'];
+        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        
+        self::assertSame(['dcbafo', 'abcdef', 'feUcba'], $result);
+    }
+    
+    public function test_filter_using_six_AND_filters_with_onerror_handler(): void
+    {
+        $filter = Filters::isString()
+            ->and(Filters::length()->eq(6))
+            ->and(Filters::contains('a'))
+            ->and(Filters::contains('b'))
+            ->and(Filters::contains('c'))
+            ->and(Filters::contains('d'));
+        
+        $data = ['tr', 'sgfuty', 'dcbafo', 'abYXdf', 'abcdef', 'gfhr', 'feUcba', 'qqq'];
+        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        
+        self::assertSame(['dcbafo', 'abcdef'], $result);
+    }
+    
+    public function test_filter_using_seven_AND_filters_with_onerror_handler(): void
+    {
+        $filter = Filters::isString()
+            ->and(Filters::length()->eq(6))
+            ->and(Filters::contains('a'))
+            ->and(Filters::contains('b'))
+            ->and(Filters::contains('c'))
+            ->and(Filters::contains('d'))
+            ->and(Filters::contains('e'));
+        
+        $data = ['tr', 'sgfuty', 'dcbafo', 'abYXdf', 'abcdef', 'gfhr', 'feUcba', 'qqq'];
+        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        
+        self::assertSame(['abcdef'], $result);
+    }
+    
+    public function test_filter_using_eight_AND_filters_checkValue(): void
+    {
+        $filter = Filters::isString()
+            ->and(Filters::length()->eq(6))
+            ->and(Filters::contains('a'))
+            ->and(Filters::contains('b'))
+            ->and(Filters::contains('c'))
+            ->and(Filters::contains('d'))
+            ->and(Filters::contains('e'))
+            ->and(Filters::contains('f'));
+        
+        $data = ['tr', 'sgfuty', 'dcbafo', 'abYXdf', 'abcdef', 'gfhr', 'feUcba', 'qqq'];
+        self::assertSame(['abcdef'], Stream::from($data)->filter($filter)->toArray());
+    }
+    
+    public function test_filter_using_eight_AND_filters_checkKey(): void
+    {
+        $filter = Filters::isString()
+            ->and(Filters::length()->eq(6))
+            ->and(Filters::contains('a'))
+            ->and(Filters::contains('b'))
+            ->and(Filters::contains('c'))
+            ->and(Filters::contains('d'))
+            ->and(Filters::contains('e'))
+            ->and(Filters::contains('f'))
+            ->checkKey();
+        
+        $data = \array_flip(['tr', 'sgfuty', 'dcbafo', 'abYXdf', 'abcdef', 'gfhr', 'feUcba', 'qqq']);
+        self::assertSame(['abcdef' => 4], Stream::from($data)->filter($filter)->toArrayAssoc());
+    }
+    
+    public function test_filter_using_four_OR_filters(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4));
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
+        $result = Stream::from($data)->filter($filter)->toArray();
+        
+        self::assertSame(\array_slice($data, 0, 4), $result);
+    }
+    
+    public function test_filter_using_four_OR_filters_with_onerror_handler(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4));
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
+        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        
+        self::assertSame(\array_slice($data, 0, 4), $result);
+    }
+    
+    public function test_filter_using_five_OR_filters(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4))
+            ->or($len->eq(5));
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
+        $result = Stream::from($data)->filter($filter)->toArray();
+        
+        self::assertSame(\array_slice($data, 0, 5), $result);
+    }
+    
+    public function test_filter_using_five_OR_filters_with_onerror_handler(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4))
+            ->or($len->eq(5));
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
+        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        
+        self::assertSame(\array_slice($data, 0, 5), $result);
+    }
+    
+    public function test_filter_using_six_OR_filters(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4))
+            ->or($len->eq(5))
+            ->or($len->eq(6));
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
+        $result = Stream::from($data)->filter($filter)->toArray();
+        
+        self::assertSame(\array_slice($data, 0, 6), $result);
+    }
+    
+    public function test_filter_using_six_OR_filters_with_onerror_handler(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4))
+            ->or($len->eq(5))
+            ->or($len->eq(6));
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
+        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        
+        self::assertSame(\array_slice($data, 0, 6), $result);
+    }
+    
+    public function test_filter_using_seven_OR_filters(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4))
+            ->or($len->eq(5))
+            ->or($len->eq(6))
+            ->or($len->eq(7));
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
+        $result = Stream::from($data)->filter($filter)->toArray();
+        
+        self::assertSame(\array_slice($data, 0, 7), $result);
+    }
+    
+    public function test_filter_using_seven_OR_filters_with_onerror_handler(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4))
+            ->or($len->eq(5))
+            ->or($len->eq(6))
+            ->or($len->eq(7));
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
+        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        
+        self::assertSame(\array_slice($data, 0, 7), $result);
+    }
+    
+    public function test_filter_using_eight_OR_filters(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4))
+            ->or($len->eq(5))
+            ->or($len->eq(6))
+            ->or($len->eq(7))
+            ->or($len->eq(8));
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
+        $result = Stream::from($data)->filter($filter)->toArray();
+        
+        self::assertSame($data, $result);
+    }
+    
+    public function test_filter_using_eight_OR_filters_with_onerror_handler(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4))
+            ->or($len->eq(5))
+            ->or($len->eq(6))
+            ->or($len->eq(7))
+            ->or($len->eq(8));
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678', '123456789'];
+        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        
+        self::assertSame(\array_slice($data, 0, 8), $result);
+    }
+    
+    public function test_filter_using_eight_OR_filters_checkKey(): void
+    {
+        $len = Filters::length();
+        
+        $filter = $len->eq(1)
+            ->or($len->eq(2))
+            ->or($len->eq(3))
+            ->or($len->eq(4))
+            ->or($len->eq(5))
+            ->or($len->eq(6))
+            ->or($len->eq(7))
+            ->or($len->eq(8))
+            ->checkKey();
+        
+        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
+        $result = Stream::from($data)->flip()->filter($filter)->flip()->toArray();
+        
+        self::assertSame($data, $result);
+    }
+    
+    public function test_route_sends_value_to_handler_when_condition_is_satisfied(): void
+    {
+        $concatStrings = Reducers::concat('|');
+        $positiveInts = Collectors::values();
+        $negativeInts = Stream::empty()->map('abs')->reduce(Reducers::product());
+        
+        $floats = Stream::from(['a', 1, 'b', 15.25, -2, 'c', 3, 'd', 18.0, -4, 'e', 5, 'f', -6])
+            ->route('is_string', $concatStrings)
+            ->route(Filters::isInt()->and(Filters::greaterOrEqual(0.0)), $positiveInts)
+            ->route(Filters::isInt()->and(Filters::lessThan(0.0)), $negativeInts)
+            ->toArray();
+        
+        self::assertSame([15.25, 18.0], $floats);
+        self::assertSame('a|b|c|d|e|f', $concatStrings->result());
+        self::assertSame([1, 3, 5], $positiveInts->toArray());
+        self::assertSame(48, $negativeInts->get());
+    }
+    
+    public function test_route_sends_value_to_handler_when_condition_is_satisfied_with_onerror_handler(): void
+    {
+        $concatStrings = Reducers::concat('|');
+        $positiveInts = Collectors::values();
+        $negativeInts = Stream::empty()->map('abs')->reduce(Reducers::product());
+        
+        $floats = Stream::from(['a', 1, 'b', 15.25, -2, 'c', 3, 'd', 18.0, -4, 'e', 5, 'f', -6])
+            ->onError(OnError::abort())
+            ->route('is_string', $concatStrings)
+            ->route(Filters::isInt()->and(Filters::greaterOrEqual(0.0)), $positiveInts)
+            ->route(Filters::isInt()->and(Filters::lessThan(0.0)), $negativeInts)
+            ->toArray();
+        
+        self::assertSame([15.25, 18.0], $floats);
+        self::assertSame('a|b|c|d|e|f', $concatStrings->result());
+        self::assertSame([1, 3, 5], $positiveInts->toArray());
+        self::assertSame(48, $negativeInts->get());
+    }
+    
+    public function test_switch_sends_value_to_handler_according_to_discriminator(): void
+    {
+        $concatStrings = Reducers::concat('|');
+        $positiveInts = Collectors::values();
+        $negativeInts = Stream::empty()->map('abs')->reduce(Reducers::product());
+        
+        $discriminator = static function ($value): string {
+            if (\is_string($value)) {
+                return 'string';
+            } elseif (\is_int($value)) {
+                return $value >= 0.0 ? 'positiveInt' : 'negativeInt';
+            } else {
+                return 'unknown';
+            }
+        };
+        
+        $floats = Stream::from(['a', 1, 'b', 15.25, -2, 'c', 3, 'd', 18.0, -4, 'e', 5, 'f', -6])
+            ->switch($discriminator, [
+                'string' => $concatStrings,
+                'positiveInt' => $positiveInts,
+                'negativeInt' => $negativeInts,
+            ])
+            ->toArray();
+        
+        self::assertSame([15.25, 18.0], $floats);
+        self::assertSame('a|b|c|d|e|f', $concatStrings->result());
+        self::assertSame([1, 3, 5], $positiveInts->toArray());
+        self::assertSame(48, $negativeInts->get());
+    }
+    
+    public function test_switch_sends_value_to_handler_according_to_discriminator_with_onerror_handler(): void
+    {
+        $concatStrings = Reducers::concat('|');
+        $positiveInts = Collectors::values();
+        $negativeInts = Stream::empty()->map('abs')->reduce(Reducers::product());
+        
+        $discriminator = static function ($value): string {
+            if (\is_string($value)) {
+                return 'string';
+            } elseif (\is_int($value)) {
+                return $value >= 0.0 ? 'positiveInt' : 'negativeInt';
+            } else {
+                return 'unknown';
+            }
+        };
+        
+        $floats = Stream::from(['a', 1, 'b', 15.25, -2, 'c', 3, 'd', 18.0, -4, 'e', 5, 'f', -6])
+            ->onError(OnError::abort())
+            ->switch($discriminator, [
+                'string' => $concatStrings,
+                'positiveInt' => $positiveInts,
+                'negativeInt' => $negativeInts,
+            ])
+            ->toArray();
+        
+        self::assertSame([15.25, 18.0], $floats);
+        self::assertSame('a|b|c|d|e|f', $concatStrings->result());
+        self::assertSame([1, 3, 5], $positiveInts->toArray());
+        self::assertSame(48, $negativeInts->get());
+    }
+    
+    public function test_use_product_reducer_to_compute_product_of_array_values(): void
+    {
+        $result = Stream::from([[2, -1, 3], [-2, -1], [5, 3, 0, 1]])->map(Reducers::product())->toArray();
+        
+        self::assertSame([-6, 2, 0], $result);
+    }
 }

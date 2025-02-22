@@ -92,6 +92,19 @@ final class QueueProducer extends BaseProducer implements Consumer
         $this->buffer[] = new Item($key ?? $this->autoKey++, $value);
     }
     
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            $this->buffer[] = new Item($key ?? $this->autoKey++, $value);
+            
+            yield $key => $value;
+        }
+    }
+    
     public function destroy(): void
     {
         $this->buffer = [];

@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Filter\ValRef\Adapter\MemoReader;
 
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\String\StringFilter;
 use FiiSoft\Jackdaw\Filter\ValRef\Adapter\BaseStringFilterAdapter;
 use FiiSoft\Jackdaw\Memo\MemoReader;
@@ -40,5 +41,12 @@ final class MemoStringFilter extends BaseStringFilterAdapter
     public function negate(): self
     {
         return new self($this->reader, $this->filter->negate());
+    }
+    
+    public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->reader->equals($this->reader)
+            && parent::equals($other);
     }
 }

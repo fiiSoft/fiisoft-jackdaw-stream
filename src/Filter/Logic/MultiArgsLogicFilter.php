@@ -7,17 +7,15 @@ use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
 
-abstract class MultiArgsLogicFilter extends BaseLogicFilter
+abstract class MultiArgsLogicFilter extends BaseCompoundFilter
 {
     /** @var Filter[] */
     protected array $filters = [];
     
-    protected ?int $mode = null;
-    
     /**
      * @param array<FilterReady|callable|mixed> $filters
      */
-    abstract protected static function create(array $filters, ?int $mode = null): self;
+    abstract protected static function create(array $filters, ?int $mode = null): Filter;
     
     /**
      * @param array<FilterReady|callable|mixed> $filters
@@ -37,36 +35,15 @@ abstract class MultiArgsLogicFilter extends BaseLogicFilter
         $this->mode = $mode;
     }
     
-    final public function getMode(): ?int
-    {
-        if ($this->mode !== null) {
-            return $this->mode;
-        }
-        
-        foreach ($this->filters as $filter) {
-            if ($this->mode === null) {
-                $this->mode = $filter->getMode();
-            } elseif ($this->mode !== $filter->getMode()) {
-                $this->mode = null;
-                break;
-            }
-        }
-        
-        return $this->mode;
-    }
-    
-    /**
-     * @return Filter[]
-     */
-    final protected function negatedFilters(): array
-    {
-        return \array_map(static fn(Filter $filter): Filter => $filter->negate(), $this->filters);
-    }
-    
     final public function inMode(?int $mode): Filter
     {
         return $mode !== null && $mode !== $this->getMode()
             ? static::create($this->filters, $mode)
             : $this;
+    }
+    
+    final public function getFilters(): array
+    {
+        return $this->filters;
     }
 }

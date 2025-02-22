@@ -57,4 +57,11 @@ abstract class OnlyWith extends BaseFilter
         
         return $this;
     }
+    
+    final public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->fields === $this->fields
+            && parent::equals($other);
+    }
 }

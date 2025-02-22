@@ -1,5 +1,25 @@
 # Changelog
 
+## 11.0.0
+
+- added Filters::keyIs()
+- added Filters::byArgs()
+- added Mappers::byArgs()
+- added Consumers::byArgs()
+- added Producers::uuidV4()
+- added Reducers::product()
+- added Stream::route()
+- added Stream::switch()
+
+#### Incompatible changes:
+
+- the entire Condition package has been removed
+- added Consumer::buildStream()
+- added Filter::equals()
+- added IntValue::equals()
+- added Matcher::equals()
+- added SequenceInspector::equals()
+
 ## 10.4.0
 
 - added Stream operations: callArgs(), filterArgs(), and mapArgs()

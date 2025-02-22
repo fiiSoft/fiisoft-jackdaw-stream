@@ -11,4 +11,12 @@ final class Idle implements Consumer
     {
         //noop
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        return $stream;
+    }
 }

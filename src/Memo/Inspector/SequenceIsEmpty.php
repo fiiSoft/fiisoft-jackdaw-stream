@@ -11,4 +11,9 @@ final class SequenceIsEmpty implements SequenceInspector
     {
         return $sequence->isEmpty();
     }
+    
+    public function equals(SequenceInspector $other): bool
+    {
+        return $other instanceof self;
+    }
 }

@@ -14,7 +14,7 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Collecting\{Gather, Reverse, Segregate, ShuffleAll, Sort, SortLimited,
     SortLimited\SingleSortLimited, Tail};
-use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Filter, FilterByMany, FilterMany, Omit, OmitReps, Skip, SkipUntil,
+use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, FilterOp, FilterByMany, FilterMany, Omit, OmitReps, Skip, SkipUntil,
     SkipWhile, Unique, Uptrends};
 use FiiSoft\Jackdaw\Operation\Internal\Operations as OP;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Ending;
@@ -173,7 +173,7 @@ final class PipeTest extends TestCase
             Map::class, ReadNext::class
         ];
         
-        yield 'ReadNext_with_constant_zero' => [OP::filter('is_string'), OP::readNext(0), Filter::class];
+        yield 'ReadNext_with_constant_zero' => [OP::filter('is_string'), OP::readNext(0), FilterOp::class];
         
         yield 'ReadMany_as_ReadNext_first_operation' => [OP::readMany(1), Skip::class, EveryNth::class];
         
@@ -187,7 +187,7 @@ final class PipeTest extends TestCase
         
         yield 'ReadMany_as_first_operation' => [OP::readMany(2), Skip::class, Window::class, Flat::class];
         
-        yield 'ReadMany_with_constant_zero' => [OP::filter('is_string'), OP::readMany(0), Filter::class];
+        yield 'ReadMany_with_constant_zero' => [OP::filter('is_string'), OP::readMany(0), FilterOp::class];
         
         yield 'ReadUntil_as_first_operation' => [OP::readUntil('is_string'), Skip::class, Omit::class];
         
@@ -195,7 +195,7 @@ final class PipeTest extends TestCase
             OP::readUntil('is_string', null, true), ReadUntil::class
         ];
         
-        yield 'ReadWhile_as_first_operation' => [OP::readWhile('is_string'), Skip::class, Filter::class];
+        yield 'ReadWhile_as_first_operation' => [OP::readWhile('is_string'), Skip::class, FilterOp::class];
         
         yield 'ReadWhile_as_first_operation_reindex_keys' => [
             OP::readWhile('is_string', null, true), ReadWhile::class
@@ -340,7 +340,7 @@ final class PipeTest extends TestCase
         
         yield 'Reverse_Unique_Shuffle_Filter' => [
             OP::reverse(), OP::unique(), OP::shuffle(), OP::filter('is_string'),
-            Filter::class, Reverse::class, OmitReps::class, Unique::class, Shuffle::class
+            FilterOp::class, Reverse::class, OmitReps::class, Unique::class, Shuffle::class
         ];
         
         yield 'Reverse_Unique_Shuffle_Filter_Filter' => [
@@ -664,20 +664,20 @@ final class PipeTest extends TestCase
         $pipe->prepare();
         
         self::assertInstanceOf(Sort::class, $pipe->head);
-        $this->assertPipeContainsOperations($pipe, Sort::class, Accumulate::class, Filter::class);
+        $this->assertPipeContainsOperations($pipe, Sort::class, Accumulate::class, FilterOp::class);
         
         $signal->forget($accumulate);
         self::assertInstanceOf(Sort::class, $pipe->head);
-        $this->assertPipeContainsOperations($pipe, Sort::class, Filter::class);
+        $this->assertPipeContainsOperations($pipe, Sort::class, FilterOp::class);
         
         //repeat to check if nothing wrong happend
         $signal->forget($accumulate);
         self::assertInstanceOf(Sort::class, $pipe->head);
-        $this->assertPipeContainsOperations($pipe, Sort::class, Filter::class);
+        $this->assertPipeContainsOperations($pipe, Sort::class, FilterOp::class);
         
         $signal->forget($sort);
-        $this->assertPipeContainsOperations($pipe, Filter::class);
-        self::assertInstanceOf(Filter::class, $pipe->head);
+        $this->assertPipeContainsOperations($pipe, FilterOp::class);
+        self::assertInstanceOf(FilterOp::class, $pipe->head);
         
         $signal->forget($filter);
         self::assertInstanceOf(Ending::class, $pipe->head);

@@ -24,4 +24,16 @@ final class RefValue implements Consumer
     {
         $this->value = $value;
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            $this->value = $value;
+            
+            yield $key => $value;
+        }
+    }
 }

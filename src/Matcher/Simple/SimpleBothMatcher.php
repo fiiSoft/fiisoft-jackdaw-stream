@@ -24,4 +24,9 @@ final class SimpleBothMatcher implements Matcher
     {
         return $value1 === $value2 && $key1 === $key2;
     }
+    
+    public function equals(Matcher $other): bool
+    {
+        return $other instanceof self;
+    }
 }

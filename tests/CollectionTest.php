@@ -2,8 +2,8 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
-use FiiSoft\Jackdaw\Condition\Conditions;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Collection\BaseStreamCollection;
 use FiiSoft\Jackdaw\Operation\Terminating\GroupBy;
 use FiiSoft\Jackdaw\Stream;
@@ -84,11 +84,11 @@ final class CollectionTest extends TestCase
         $data = $this->collection
             ->stream()
             ->mapWhen(
-                Conditions::keyIs('numbers'),
+                Filters::keyIs('numbers'),
                 static fn(array $numbers): int => \max($numbers)
             )
             ->mapWhen(
-                Conditions::keyIs('words'),
+                Filters::keyIs('words'),
                 static function (array $words): string {
                     return Stream::from($words)
                         ->reduce(static fn(string $longest, string $current) =>

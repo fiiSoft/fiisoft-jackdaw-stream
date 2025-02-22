@@ -2,13 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
-use FiiSoft\Jackdaw\Filter\Internal\FilterData;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterConditionalData;
 use FiiSoft\Jackdaw\Operation\Internal\Operations;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Stream;
 
-final class Filter extends StackableFilter
+final class FilterOp extends StackableFilter
 {
     public function handle(Signal $signal): void
     {
@@ -22,9 +22,9 @@ final class Filter extends StackableFilter
         return $this->filter->buildStream($stream);
     }
     
-    public function filterData(): FilterData
+    public function filterData(): FilterConditionalData
     {
-        return new FilterData($this->filter, false);
+        return new FilterConditionalData($this->filter, false);
     }
     
     public function createFind(Stream $stream): Operation

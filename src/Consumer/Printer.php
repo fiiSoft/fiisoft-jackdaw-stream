@@ -29,4 +29,16 @@ final class Printer implements Consumer
             break;
         }
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            $this->consume($value, $key);
+            
+            yield $key => $value;
+        }
+    }
 }

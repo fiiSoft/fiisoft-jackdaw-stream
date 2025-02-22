@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
-use FiiSoft\Jackdaw\Filter\Internal\FilterData;
 use FiiSoft\Jackdaw\Filter\Logic\FilterNOT;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterConditionalData;
 use FiiSoft\Jackdaw\Operation\Internal\Operations;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Stream;
@@ -37,9 +37,9 @@ final class Omit extends StackableFilter
         })();
     }
     
-    public function filterData(): FilterData
+    public function filterData(): FilterConditionalData
     {
-        return new FilterData($this->filter, true);
+        return new FilterConditionalData($this->filter, true);
     }
     
     public function createFind(Stream $stream): Operation

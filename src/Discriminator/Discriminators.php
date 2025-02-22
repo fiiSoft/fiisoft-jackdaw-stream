@@ -2,11 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Discriminator;
 
-use FiiSoft\Jackdaw\Condition\Condition;
-use FiiSoft\Jackdaw\Discriminator\Adapter\ConditionAdapter;
-use FiiSoft\Jackdaw\Discriminator\Adapter\MemoReaderAdapter;
 use FiiSoft\Jackdaw\Discriminator\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Discriminator\Adapter\MapperAdapter;
+use FiiSoft\Jackdaw\Discriminator\Adapter\MemoReaderAdapter;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
@@ -40,10 +38,6 @@ final class Discriminators
             return new FilterAdapter($discriminator);
         }
     
-        if ($discriminator instanceof Condition) {
-            return new ConditionAdapter($discriminator);
-        }
-        
         if ($discriminator instanceof MemoReader) {
             return new MemoReaderAdapter($discriminator);
         }

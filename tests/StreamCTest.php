@@ -1493,22 +1493,22 @@ final class StreamCTest extends TestCase
     
     public function test_stream_file_Producers_resource_file(): void
     {
-        $this->examineTextFileReader(Producers::resource(__DIR__.'/ConditionsTest.php'));
+        $this->examineTextFileReader(Producers::resource(__DIR__.'/CollectionTest.php'));
     }
     
     public function test_stream_file_Producers_getAdapter_file(): void
     {
-        $this->examineTextFileReader(Producers::getAdapter(__DIR__.'/ConditionsTest.php'));
+        $this->examineTextFileReader(Producers::getAdapter(__DIR__.'/CollectionTest.php'));
     }
     
     public function test_stream_file_Producers_resource_with_long_readBytes(): void
     {
-        $this->examineTextFileReader(Producers::resource(\fopen(__DIR__.'/ConditionsTest.php', 'rb'), true, 4096));
+        $this->examineTextFileReader(Producers::resource(\fopen(__DIR__.'/CollectionTest.php', 'rb'), true, 4096));
     }
     
     public function test_stream_file_more_than_once(): void
     {
-        $producer = Producers::getAdapter(__DIR__.'/ConditionsTest.php');
+        $producer = Producers::getAdapter(__DIR__.'/CollectionTest.php');
         
         $this->examineTextFileReader($producer);
         $this->examineTextFileReader($producer);
@@ -1523,8 +1523,8 @@ final class StreamCTest extends TestCase
             ->countIn($countNonEmptyLines)
             ->run();
         
-        self::assertSame(50, $countAllLines);
-        self::assertSame(38, $countNonEmptyLines);
+        self::assertSame(103, $countAllLines);
+        self::assertSame(85, $countNonEmptyLines);
     }
     
     public function test_stream_few_times_over_datetime_sequence(): void

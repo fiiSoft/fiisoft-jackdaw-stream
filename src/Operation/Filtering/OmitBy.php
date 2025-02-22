@@ -2,10 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
-use FiiSoft\Jackdaw\Filter\Internal\FilterByData;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterFieldData;
 
-final class OmitBy extends FilterOmitBy
+final class OmitBy extends StackableFilterBy
 {
     public function handle(Signal $signal): void
     {
@@ -27,8 +27,8 @@ final class OmitBy extends FilterOmitBy
         }
     }
     
-    public function filterByData(): FilterByData
+    public function filterByData(): FilterFieldData
     {
-        return new FilterByData($this->field, $this->filter, true);
+        return new FilterFieldData($this->field, $this->filter, true);
     }
 }

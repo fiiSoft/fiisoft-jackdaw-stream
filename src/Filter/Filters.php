@@ -30,6 +30,7 @@ use FiiSoft\Jackdaw\Filter\ValRef\Adapter\MemoReader\MemoFilterPicker;
 use FiiSoft\Jackdaw\Filter\ValRef\Adapter\Reference\ReferenceFilterPicker;
 use FiiSoft\Jackdaw\Filter\ValRef\FilterPicker;
 use FiiSoft\Jackdaw\Filter\ValRef\Picker\Custom\IntValNumberFilterPicker;
+use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Memo\MemoReader;
 use FiiSoft\Jackdaw\Memo\SequencePredicate;
 use FiiSoft\Jackdaw\ValueRef\IntValue;
@@ -356,5 +357,21 @@ final class Filters
     public static function wrapMemoReader(MemoReader $memo): FilterPicker
     {
         return new MemoFilterPicker($memo);
+    }
+    
+    /**
+     * Currently, only values are filtered by this filter.
+     */
+    public static function byArgs(callable $filter): Filter
+    {
+        return new ByArgs($filter);
+    }
+    
+    /**
+     * @param mixed $desired
+     */
+    public static function keyIs($desired): Filter
+    {
+        return self::same($desired, Check::KEY);
     }
 }

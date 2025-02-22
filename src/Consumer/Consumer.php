@@ -2,9 +2,10 @@
 
 namespace FiiSoft\Jackdaw\Consumer;
 
+use FiiSoft\Jackdaw\Internal\StreamBuilder;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 
-interface Consumer extends ConsumerReady, HandlerReady
+interface Consumer extends StreamBuilder, ConsumerReady, HandlerReady
 {
     /**
      * @param mixed $value

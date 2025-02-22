@@ -115,12 +115,24 @@ final class InfiniteSequenceMemo extends BaseSequenceMemo
     
     public function getValues(): array
     {
-        return \array_map(static fn(Entry $entry) => $entry->value, $this->entries);
+        $result = [];
+        
+        foreach ($this->entries as $entry) {
+            $result[] = $entry->value;
+        }
+        
+        return $result;
     }
     
     public function getKeys(): array
     {
-        return \array_map(static fn(Entry $entry) => $entry->key, $this->entries);
+        $result = [];
+        
+        foreach ($this->entries as $entry) {
+            $result[] = $entry->key;
+        }
+        
+        return $result;
     }
     
     public function getIterator(): \Traversable

@@ -10,4 +10,9 @@ abstract class VolatileIntValue implements IntValue
     {
         return false;
     }
+    
+    final public function equals(IntValue $other): bool
+    {
+        return false;
+    }
 }

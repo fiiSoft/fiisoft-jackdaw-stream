@@ -23,6 +23,8 @@ use FiiSoft\Jackdaw\Producer\Generator\SequentialInt;
 use FiiSoft\Jackdaw\Producer\Generator\TimeIterator;
 use FiiSoft\Jackdaw\Producer\Generator\Tokenizer;
 use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidGenerator;
+use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidProvider;
+use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidVersion;
 use FiiSoft\Jackdaw\Producer\Internal\EmptyProducer;
 use FiiSoft\Jackdaw\Producer\Resource\PDOStatementAdapter;
 use FiiSoft\Jackdaw\Producer\Resource\TextFileReader;
@@ -205,6 +207,14 @@ final class Producers
     public static function randomUuid(int $limit = \PHP_INT_MAX): Producer
     {
         return new RandomUuid($limit);
+    }
+    
+    /**
+     * @return Producer<int, string>
+     */
+    public static function uuidV4(int $limit = \PHP_INT_MAX): Producer
+    {
+        return self::uuidFrom(UuidProvider::version(UuidVersion::v4()), $limit);
     }
     
     /**

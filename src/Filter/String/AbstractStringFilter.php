@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Filter\String;
 
 use FiiSoft\Jackdaw\Filter\AbstractLogicFilter;
+use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Mode;
 
@@ -94,5 +95,12 @@ abstract class AbstractStringFilter extends AbstractLogicFilter implements Strin
     final protected function negatedMode(): ?int
     {
         return Mode::negate($this->getMode());
+    }
+    
+    public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->mode === $this->mode
+            && $other->ignoreCase === $this->ignoreCase;
     }
 }

@@ -1934,4 +1934,24 @@ final class StreamETest extends TestCase
         
         self::assertSame(['b', 'c', 3, 'e', 4, 'g'], $result);
     }
+    
+    public function test_gather_on_empty_stream_keep_keys(): void
+    {
+        self::assertSame('', Stream::empty()->gather()->toString());
+    }
+    
+    public function test_gather_on_empty_stream_reindex_keys(): void
+    {
+        self::assertSame('', Stream::empty()->gather(true)->toString());
+    }
+    
+    public function test_reverse_on_empty_stream(): void
+    {
+        self::assertSame('', Stream::empty()->reverse()->toString());
+    }
+    
+    public function test_shuffle_on_empty_stream(): void
+    {
+        self::assertSame('', Stream::empty()->shuffle()->toString());
+    }
 }

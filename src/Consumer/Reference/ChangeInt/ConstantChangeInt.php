@@ -25,4 +25,16 @@ final class ConstantChangeInt extends ChangeIntRef
     {
         $this->variable += $this->value;
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            $this->variable += $this->value;
+            
+            yield $key => $value;
+        }
+    }
 }

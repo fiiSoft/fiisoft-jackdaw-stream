@@ -13,4 +13,9 @@ abstract class BaseGenericMatcher implements Matcher
     {
         $this->callable = $callable;
     }
+    
+    final public function equals(Matcher $other): bool
+    {
+        return $other instanceof $this && $other->callable === $this->callable;
+    }
 }

@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Operation\Mapping;
 
-use FiiSoft\Jackdaw\Condition\Condition;
-use FiiSoft\Jackdaw\Condition\ConditionReady;
-use FiiSoft\Jackdaw\Condition\Conditions;
+use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Mapper\Mappers;
@@ -13,19 +13,19 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 abstract class ConditionalMap extends BaseOperation
 {
-    protected Condition $condition;
+    protected Filter $condition;
     
     protected Mapper $mapper;
     protected ?Mapper $elseMapper = null;
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
     public function __construct($condition, $mapper, $elseMapper = null)
     {
-        $this->condition = Conditions::getAdapter($condition);
+        $this->condition = Filters::getAdapter($condition);
         $this->mapper = Mappers::getAdapter($mapper);
         
         if ($elseMapper !== null) {

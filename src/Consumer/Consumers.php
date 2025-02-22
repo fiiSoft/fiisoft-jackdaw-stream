@@ -110,4 +110,9 @@ final class Consumers
     {
         return ChangeIntRef::create($variable, $value);
     }
+    
+    public static function byArgs(callable $consumer): Consumer
+    {
+        return new ByArgs($consumer);
+    }
 }

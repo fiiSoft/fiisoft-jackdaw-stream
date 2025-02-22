@@ -21,4 +21,16 @@ final class ReducerAdapter implements Consumer
     {
         $this->reducer->consume($value);
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            $this->reducer->consume($value);
+            
+            yield $key => $value;
+        }
+    }
 }

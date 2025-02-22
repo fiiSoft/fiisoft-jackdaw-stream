@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Registry\Reader;
 
+use FiiSoft\Jackdaw\Memo\MemoReader;
 use FiiSoft\Jackdaw\Registry\RegReader;
 use FiiSoft\Jackdaw\Registry\Storage;
 
@@ -24,5 +25,13 @@ final class TupleReader implements RegReader
     public function read()
     {
         return $this->storage->registered[$this->name][$this->index];
+    }
+    
+    public function equals(MemoReader $other): bool
+    {
+        return $other instanceof $this
+            && $other->name === $this->name
+            && $other->index === $this->index
+            && $other->storage === $this->storage;
     }
 }

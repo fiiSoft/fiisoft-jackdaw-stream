@@ -51,4 +51,11 @@ abstract class TimeFilter extends BaseFilter
             ? static::create($mode, $this->comparator)
             : $this;
     }
+    
+    public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->comparator->equals($this->comparator)
+            && parent::equals($other);
+    }
 }

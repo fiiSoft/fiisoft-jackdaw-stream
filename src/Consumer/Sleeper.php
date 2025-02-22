@@ -21,4 +21,16 @@ final class Sleeper implements Consumer
     {
         \usleep($this->microseconds);
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            \usleep($this->microseconds);
+            
+            yield $key => $value;
+        }
+    }
 }

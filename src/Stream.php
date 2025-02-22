@@ -4,7 +4,6 @@ namespace FiiSoft\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collector;
 use FiiSoft\Jackdaw\Comparator\{Comparable, ComparatorReady, Sorting\By, Sorting\Sorting};
-use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Consumer\{ConsumerReady, Consumers};
 use FiiSoft\Jackdaw\Discriminator\{DiscriminatorReady, Discriminators};
 use FiiSoft\Jackdaw\Exception\{InvalidParamException, StreamExceptionFactory};
@@ -304,7 +303,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param FilterReady|callable|mixed $filter
      */
     public function filterWhen($condition, $filter, ?int $mode = null): Stream
@@ -314,7 +313,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param FilterReady|callable|mixed $filter
      */
     public function filterWhile($condition, $filter, ?int $mode = null): Stream
@@ -324,7 +323,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param FilterReady|callable|mixed $filter
      */
     public function filterUntil($condition, $filter, ?int $mode = null): Stream
@@ -359,7 +358,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param FilterReady|callable|mixed $filter
      */
     public function omitWhen($condition, $filter, ?int $mode = null): Stream
@@ -464,7 +463,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
@@ -485,7 +484,7 @@ final class Stream extends StreamSource
     
     /**
      * @param string|int $field
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
@@ -496,7 +495,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      */
     public function mapWhile($condition, $mapper): Stream
@@ -506,7 +505,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      */
     public function mapUntil($condition, $mapper): Stream
@@ -642,7 +641,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param ConsumerReady|callable|resource $consumer
      * @param ConsumerReady|callable|resource|null $elseConsumer
      */
@@ -653,7 +652,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param ConsumerReady|callable|resource $consumer
      */
     public function callWhile($condition, $consumer): Stream
@@ -663,7 +662,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param ConsumerReady|callable|resource $consumer
      */
     public function callUntil($condition, $consumer): Stream
@@ -1013,10 +1012,6 @@ final class Stream extends StreamSource
      */
     public function feed(StreamPipe ...$streams): Stream
     {
-        if (empty($streams)) {
-            throw InvalidParamException::byName('streams');
-        }
-        
         foreach ($streams as $stream) {
             $id = \spl_object_id($stream);
             
@@ -1050,6 +1045,25 @@ final class Stream extends StreamSource
         
         $this->chainOperation(Operations::dispatch($discriminator, $handlers));
         
+        return $this;
+    }
+    
+    /**
+     * @param FilterReady|callable|mixed $condition
+     */
+    public function route($condition, HandlerReady $handler): Stream
+    {
+        $this->chainOperation(Operations::route($condition, $handler));
+        return $this;
+    }
+    
+    /**
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
+     * @param HandlerReady[] $handlers
+     */
+    public function switch($discriminator, array $handlers): Stream
+    {
+        $this->chainOperation(Operations::switch($discriminator, $handlers));
         return $this;
     }
     

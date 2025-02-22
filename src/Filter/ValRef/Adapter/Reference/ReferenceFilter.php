@@ -44,4 +44,9 @@ final class ReferenceFilter extends BaseFilterAdapter
     {
         return new self($this->variable, $this->filter->negate());
     }
+    
+    public function equals(Filter $other): bool
+    {
+        return $other === $this;
+    }
 }

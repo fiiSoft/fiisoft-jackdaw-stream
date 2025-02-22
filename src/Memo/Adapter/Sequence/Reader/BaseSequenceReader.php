@@ -15,4 +15,11 @@ abstract class BaseSequenceReader implements MemoReader
         $this->sequence = $sequence;
         $this->index = $index;
     }
+    
+    final public function equals(MemoReader $other): bool
+    {
+        return $other instanceof $this
+            && $other->index === $this->index
+            && $other->sequence === $this->sequence;
+    }
 }

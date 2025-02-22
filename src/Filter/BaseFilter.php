@@ -19,4 +19,9 @@ abstract class BaseFilter extends AbstractFilter
     {
         return $this->mode;
     }
+    
+    public function equals(Filter $other): bool
+    {
+        return $other instanceof $this && $other->mode === $this->mode;
+    }
 }

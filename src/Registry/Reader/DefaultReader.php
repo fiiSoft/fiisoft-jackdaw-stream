@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Registry\Reader;
 
+use FiiSoft\Jackdaw\Memo\MemoReader;
 use FiiSoft\Jackdaw\Registry\RegReader;
 use FiiSoft\Jackdaw\Registry\Storage;
 
@@ -30,5 +31,13 @@ final class DefaultReader implements RegReader
     public function read()
     {
         return $this->storage->registered[$this->name] ?? $this->orElse;
+    }
+    
+    public function equals(MemoReader $other): bool
+    {
+        return $other instanceof $this
+            && $other->name === $this->name
+            && $other->orElse === $this->orElse
+            && $other->storage === $this->storage;
     }
 }

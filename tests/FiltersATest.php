@@ -3,7 +3,10 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
-use FiiSoft\Jackdaw\Filter\Simple\SimpleFilterFactory;
+use FiiSoft\Jackdaw\Filter\Logic\ConditionalFilter;
+use FiiSoft\Jackdaw\Filter\Logic\OpOR\BaseOR;
+use FiiSoft\Jackdaw\Memo\Memo;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
 use FiiSoft\Jackdaw\Filter\CheckType\{IsBool, IsFloat, IsInt, IsNull, IsNumeric, IsString};
 use FiiSoft\Jackdaw\Filter\Exception\FilterExceptionFactory;
 use FiiSoft\Jackdaw\Filter\Filter;
@@ -12,6 +15,7 @@ use FiiSoft\Jackdaw\Filter\IdleFilter;
 use FiiSoft\Jackdaw\Filter\Number\{Between, Equal, GreaterOrEqual, GreaterThan, Inside, IsEven, IsOdd, LessOrEqual,
     LessThan, NotEqual, NotInside, Outside};
 use FiiSoft\Jackdaw\Filter\OnlyIn\OnlyIn;
+use FiiSoft\Jackdaw\Filter\Simple\SimpleFilterFactory;
 use FiiSoft\Jackdaw\Filter\Size\Count\CountFilter;
 use FiiSoft\Jackdaw\Filter\Size\Length\LengthFilter;
 use FiiSoft\Jackdaw\Filter\String\{Contains, EndsWith, InSet, NotContains, NotEndsWith, NotInSet, NotStartsWith,
@@ -81,10 +85,9 @@ final class FiltersATest extends TestCase
     
     public function test_GenericFilter_throws_exception_when_callable_has_unsupported_number_of_arguments(): void
     {
-        $this->expectExceptionObject(FilterExceptionFactory::invalidParamFilter(4));
+        $this->expectExceptionObject(FilterExceptionFactory::invalidParamFilter(3));
         
-        $filter = Filters::getAdapter(static fn($a, $b, $c, $d): bool => true);
-        $filter->isAllowed(1, 1);
+        Filters::getAdapter(static fn($a, $b, $c): bool => true);
     }
     
     public function test_GenericFilter_can_compare_key(): void
@@ -1525,5 +1528,384 @@ final class FiltersATest extends TestCase
         self::assertTrue($negation->isAllowed(1, 'b'));
         self::assertTrue($negation->isAllowed('a', 1));
         self::assertTrue($negation->isAllowed(1, 1));
+    }
+    
+    public function test_IdleFilter_equals(): void
+    {
+        self::assertTrue(IdleFilter::true()->equals(IdleFilter::true()));
+        self::assertFalse(IdleFilter::true()->equals(IdleFilter::false()));
+        self::assertTrue(IdleFilter::false()->equals(IdleFilter::false()));
+    }
+    
+    public function test_GenericFilter_equals(): void
+    {
+        self::assertTrue(Filters::getAdapter('is_string')->equals(Filters::isString()));
+        self::assertFalse(Filters::getAdapter('is_string')->equals(Filters::isString(Check::KEY)));
+        self::assertTrue(Filters::getAdapter('is_string', Check::KEY)->equals(Filters::isString(Check::KEY)));
+        
+        self::assertFalse(
+            Filters::getAdapter(static fn(): bool => true)->equals(Filters::getAdapter(static fn(): bool => true))
+        );
+        
+        $filter = Filters::getAdapter(static fn(): bool => true);
+        self::assertTrue($filter->equals($filter));
+        
+        $closure = static fn(): bool => true;
+        self::assertTrue(Filters::getAdapter($closure)->equals(Filters::getAdapter($closure)));
+    }
+    
+    public function test_FilterNOT_equals(): void
+    {
+        $filter = Filters::isInt()->negate();
+        self::assertTrue($filter->equals($filter));
+        
+        self::assertTrue(Filters::NOT('is_string')->equals(Filters::isString()->negate()));
+        
+        self::assertFalse(Filters::NOT('is_string')->equals(Filters::isString()->negate()->checkKey()));
+        self::assertTrue(Filters::NOT('is_string')->checkKey()->equals(Filters::isString()->negate()->checkKey()));
+        
+        self::assertFalse(Filters::NOT('is_string')->equals(Filters::isString()));
+        self::assertFalse(Filters::NOT('is_string')->equals(Filters::NOT('is_int')));
+    }
+    
+    public function test_keyIs(): void
+    {
+        $filter = Filters::keyIs('5');
+        
+        self::assertFalse($filter->isAllowed(1, '2'));
+        self::assertTrue($filter->isAllowed(1, '5'));
+    }
+    
+    public function test_FilterAND_equals(): void
+    {
+        $filter = Filters::isFloat()->and(Filters::isString()->checkKey());
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::isFloat()->and(Filters::isString()->checkKey())));
+        
+        self::assertFalse($filter->equals(Filters::isFloat()->and(Filters::isString())));
+        self::assertFalse($filter->equals(Filters::isFloat()->and(Filters::isInt()->checkKey())));
+    }
+    
+    public function test_FilterXOR_equals(): void
+    {
+        $filter = Filters::isInt(Check::KEY)->xor(Filters::isString());
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::isInt(Check::KEY)->xor(Filters::isString())));
+        
+        self::assertFalse($filter->equals(Filters::isInt(Check::VALUE)->xor(Filters::isString())));
+        self::assertFalse($filter->equals(Filters::isInt(Check::KEY)->xor(Filters::isFloat())));
+    }
+    
+    public function test_FilterArgs_eqals(): void
+    {
+        $callable = static fn($a, $b, $c): bool => true;
+        $filter = Filters::byArgs($callable);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::byArgs($callable)));
+        
+        self::assertFalse($filter->equals(Filters::byArgs(static fn($a, $b, $c): bool => true)));
+        self::assertFalse($filter->equals(Filters::isString()));
+    }
+    
+    public function test_IntValueFilter_equals(): void
+    {
+        $intValue = IntNum::constant(5);
+        $filterPicker = Filters::wrapIntValue($intValue);
+        $filter = $filterPicker->eq(1);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals($filterPicker->eq(1)));
+        self::assertTrue($filter->equals(Filters::wrapIntValue($intValue)->eq(1)));
+        self::assertTrue($filter->equals(Filters::wrapIntValue(IntNum::constant(5))->eq(1)));
+        
+        self::assertFalse($filter->equals($filterPicker->eq(2)));
+        self::assertFalse($filter->equals($filterPicker->ne(1)));
+        self::assertFalse($filter->equals(Filters::wrapIntValue(IntNum::constant(1))->eq(1)));
+    }
+    
+    public function test_MemoStringFilter_equals(): void
+    {
+        $memo = Memo::value();
+        $wrapper = Filters::wrapMemoReader($memo);
+        $filterPicker = $wrapper->string();
+        $filter = $filterPicker->contains('a');
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals($filterPicker->contains('a')));
+        self::assertTrue($filter->equals($wrapper->string()->contains('a')));
+        self::assertTrue($filter->equals(Filters::wrapMemoReader($memo)->string()->contains('a')));
+        
+        self::assertFalse($filter->equals($filterPicker->contains('b')));
+        self::assertFalse($filter->equals($filterPicker->startsWith('a')));
+        self::assertFalse($filter->equals($wrapper->type()->isString()));
+        self::assertFalse($filter->equals(Filters::wrapMemoReader(Memo::value())->string()->contains('a')));
+    }
+    
+    public function test_ReferenceFilter_equals(): void
+    {
+        $picker = Filters::readFrom($var1);
+        $filter = $picker->number()->eq(1);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertFalse($filter->equals($picker->number()->eq(1)));
+    }
+    
+    public function test_TwoArgsFilter_equals(): void
+    {
+        $filter = Filters::length()->between(1, 2);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::length()->between(1, 2)));
+        
+        self::assertFalse($filter->equals(Filters::length(Check::KEY)->between(1, 2)));
+        self::assertFalse($filter->equals(Filters::length()->between(1, 3)));
+        self::assertFalse($filter->equals(Filters::length()->inside(1, 2)));
+    }
+    
+    public function test_OnlyIn_equals(): void
+    {
+        $filter = Filters::onlyIn(['a', 'b']);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::onlyIn(['a', 'b'])));
+        
+        self::assertFalse($filter->equals(Filters::onlyIn(['a', 'b'])->checkKey()));
+        self::assertFalse($filter->equals(Filters::onlyIn(['c', 'd'])));
+    }
+    
+    public function test_OnlyWith_equals(): void
+    {
+        $filter = Filters::onlyWith(['a', 'b']);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::onlyWith(['a', 'b'])));
+        
+        self::assertFalse($filter->equals(Filters::onlyWith(['a', 'b'], true)));
+        self::assertFalse($filter->equals(Filters::onlyWith(['c', 'd'])));
+    }
+    
+    public function test_SimpleFilter_equals(): void
+    {
+        $filter = Filters::same(1);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::same(1)));
+        
+        self::assertFalse($filter->equals(Filters::same(2)));
+        self::assertFalse($filter->equals(Filters::same(1, Check::KEY)));
+    }
+    
+    public function test_StringFilterMulti_equals(): void
+    {
+        $picker = Filters::string();
+        $filter = $picker->inSet(['a', 'b']);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals($picker->inSet(['a', 'b'])));
+        self::assertTrue($filter->equals(Filters::string()->inSet(['a', 'b'])));
+        
+        self::assertFalse($filter->equals($picker->inSet(['a', 'b'], true)));
+        self::assertFalse($filter->equals($picker->inSet(['c', 'd'])));
+        self::assertFalse($filter->equals($picker->inSet(['a', 'b'])->checkKey()));
+        self::assertFalse($filter->equals($picker->notInSet(['a', 'b'])));
+    }
+    
+    public function test_FilterBy_equals(): void
+    {
+        $filter = Filters::filterBy('foo', Filters::isString());
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::filterBy('foo', Filters::isString())));
+        
+        self::assertFalse($filter->equals(Filters::filterBy('foo', Filters::isInt())));
+        self::assertFalse($filter->equals(Filters::filterBy('bar', Filters::isString())));
+    }
+    
+    public function test_WeekDay_equals(): void
+    {
+        $picker = Filters::time();
+        $filter = $picker->isDay(Day::SAT);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals($picker->isDay(Day::SAT)));
+        self::assertTrue($filter->equals(Filters::time()->isDay(Day::SAT)));
+        
+        self::assertFalse($filter->equals($picker->isDay(Day::MON)));
+        self::assertFalse($filter->equals($picker->isDay(Day::SAT)->checkKey()));
+        self::assertFalse($filter->equals($picker->isNotDay(Day::SAT)));
+        
+        self::assertFalse($filter->equals(Filters::time()->isDay(Day::MON)));
+    }
+    
+    public function test_IdleTimeFilter_equals(): void
+    {
+        $picker = Filters::time();
+        $filter = $picker->inside('2020-01-01', '2020-01-01');
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals($picker->inside('2020-01-01', '2020-01-01')));
+        self::assertTrue($filter->equals(Filters::time()->inside('2020-01-01', '2020-01-01')));
+        
+        self::assertFalse($filter->equals($picker->inside('2020-01-01', '2020-01-01')->checkKey()));
+        self::assertFalse($filter->equals($picker->inside('2020-01-01', '2020-01-01 00:00:01')));
+    }
+    
+    public function test_PointTimeComp_equals(): void
+    {
+        $date = '2022-02-02 02:02:02';
+        
+        $filter = Filters::time()->is($date);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::time()->is($date)));
+        
+        self::assertFalse($filter->equals(Filters::time()->is($date)->checkKey()));
+        self::assertFalse($filter->equals(Filters::time()->is('2025-05-05 05:05:05')));
+        self::assertFalse($filter->equals(Filters::isInt()));
+    }
+    
+    public function test_RangeTimeComp_equals(): void
+    {
+        $earlier = '2022-02-02 02:02:02';
+        $later = '2022-02-03 02:02:02';
+        
+        $filter = Filters::time()->between($earlier, $later);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::time()->between($earlier, $later)));
+        
+        self::assertFalse($filter->equals(Filters::time()->between($earlier, '2023-05-12')));
+        self::assertFalse($filter->equals(Filters::time()->between('2020-08-12', $later)));
+        self::assertFalse($filter->equals(Filters::time()->inside($earlier, $later)));
+        self::assertFalse($filter->equals(Filters::isInt()));
+    }
+    
+    public function test_ConditionalYesFilter(): void
+    {
+        $filter = ConditionalFilter::create(Filters::isInt(Check::BOTH), Filters::greaterThan(0, Check::BOTH), false);
+        
+        //ConditionalYesFilter = !condition OR filter
+        self::assertTrue($filter->isAllowed('a', 'b'));
+        self::assertTrue($filter->isAllowed(1, 'b'));
+        self::assertTrue($filter->isAllowed('a', 1));
+        
+        self::assertTrue($filter->isAllowed(1, 1));
+        
+        self::assertFalse($filter->isAllowed(0, 1));
+        self::assertFalse($filter->isAllowed(1, 0));
+        self::assertFalse($filter->isAllowed(0, 0));
+        
+        self::assertSame(Check::BOTH, $filter->getMode());
+
+        //NOT ConditionalYesFilter = !condition OR !filter
+        $not = $filter->negate();
+        
+        self::assertTrue($not->isAllowed('a', 'b'));
+        self::assertTrue($not->isAllowed(1, 'b'));
+        self::assertTrue($not->isAllowed('a', 1));
+        
+        self::assertFalse($not->isAllowed(1, 1));
+        
+        self::assertTrue($not->isAllowed(0, 1));
+        self::assertTrue($not->isAllowed(1, 0));
+        self::assertTrue($not->isAllowed(0, 0));
+        
+        self::assertSame(Check::BOTH, $not->getMode());
+    }
+    
+    public function test_ConditionalNotFilter(): void
+    {
+        //ConditionalNotFilter = !condition OR !filter
+        $filter = ConditionalFilter::create(Filters::isInt(Check::BOTH), Filters::greaterThan(0, Check::BOTH), true);
+        
+        self::assertTrue($filter->isAllowed('a', 'b'));
+        self::assertTrue($filter->isAllowed(1, 'b'));
+        self::assertTrue($filter->isAllowed('a', 1));
+        
+        self::assertFalse($filter->isAllowed(1, 1));
+        
+        self::assertTrue($filter->isAllowed(0, 1));
+        self::assertTrue($filter->isAllowed(1, 0));
+        self::assertTrue($filter->isAllowed(0, 0));
+        
+        self::assertSame(Check::BOTH, $filter->getMode());
+        
+        //NOT ConditionalNotFilter = !condition OR filter
+        $not = $filter->negate();
+        
+        self::assertTrue($not->isAllowed('a', 'b'));
+        self::assertTrue($not->isAllowed(1, 'b'));
+        self::assertTrue($not->isAllowed('a', 1));
+        
+        self::assertTrue($not->isAllowed(1, 1));
+        
+        self::assertFalse($not->isAllowed(0, 1));
+        self::assertFalse($not->isAllowed(1, 0));
+        self::assertFalse($not->isAllowed(0, 0));
+        
+        self::assertSame(Check::BOTH, $not->getMode());
+    }
+    
+    public function test_ConditionalFilter_change_mode(): void
+    {
+        $filter = ConditionalFilter::create(Filters::isInt(), Filters::greaterThan(0), false);
+        
+        self::assertSame($filter, $filter->checkValue());
+        self::assertSame($filter, $filter->checkKey());
+        self::assertSame($filter, $filter->checkBoth());
+        self::assertSame($filter, $filter->checkAny());
+    }
+    
+    public function test_ConditionalFilter_equals(): void
+    {
+        $filter = ConditionalFilter::create(Filters::isInt(), Filters::greaterThan(0), false);
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(ConditionalFilter::create(Filters::isInt(), Filters::greaterThan(0), false)));
+        
+        self::assertFalse($filter->equals(ConditionalFilter::create(Filters::isInt(), Filters::greaterThan(0), true)));
+        self::assertFalse($filter->equals(ConditionalFilter::create(Filters::isInt(), Filters::greaterThan(1), false)));
+        self::assertFalse($filter->equals(
+            ConditionalFilter::create(Filters::isBool(), Filters::greaterThan(0), false))
+        );
+    }
+    
+    public function test_TwoArgsOR_equals(): void
+    {
+        $filter = Filters::OR(Filters::isBool(), Filters::isInt());
+        
+        self::assertTrue($filter->equals($filter));
+        self::assertTrue($filter->equals(Filters::OR(Filters::isBool(), Filters::isInt())));
+        
+        self::assertFalse($filter->equals(Filters::OR(Filters::isBool(), Filters::isInt(), Filters::isFloat())));
+        self::assertFalse($filter->equals(Filters::OR(Filters::isBool(), Filters::isFloat())));
+        self::assertFalse($filter->equals(Filters::OR(Filters::isBool(), Filters::isInt(Check::KEY))));
+    }
+    
+    public function test_change_mode_of_large_logic_multifilter(): void
+    {
+        $filter = Filters::AND(
+            //there must beat least 8 filters
+            Filters::isString(),
+            Filters::contains('a'),
+            Filters::contains('b'),
+            Filters::contains('c'),
+            Filters::contains('d'),
+            Filters::contains('e'),
+            Filters::contains('f'),
+            Filters::contains('g'),
+        );
+        
+        self::assertTrue($filter->isAllowed('abcdefg'));
+        self::assertFalse($filter->isAllowed('abcXefg'));
+        
+        $checkKey = $filter->checkKey();
+        
+        self::assertTrue($checkKey->isAllowed('a', 'abcdefg'));
+        self::assertFalse($checkKey->isAllowed('a', 'abcXefg'));
+        self::assertFalse($checkKey->isAllowed('abcdefg', 'a'));
     }
 }

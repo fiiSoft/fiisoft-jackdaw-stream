@@ -41,4 +41,11 @@ final class MemoFilter extends BaseFilterAdapter
     {
         return new self($this->reader, $this->filter->negate());
     }
+    
+    public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->reader->equals($this->reader)
+            && parent::equals($other);
+    }
 }

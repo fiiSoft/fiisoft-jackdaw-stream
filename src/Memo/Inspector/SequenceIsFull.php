@@ -11,4 +11,9 @@ final class SequenceIsFull implements SequenceInspector
     {
         return $sequence->isFull();
     }
+    
+    public function equals(SequenceInspector $other): bool
+    {
+        return $other instanceof self;
+    }
 }

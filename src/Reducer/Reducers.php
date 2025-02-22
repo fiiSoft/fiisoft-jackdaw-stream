@@ -64,6 +64,11 @@ final class Reducers
         return new Sum();
     }
     
+    public static function product(): Reducer
+    {
+        return new Product();
+    }
+    
     public static function min(): Reducer
     {
         return new Min();

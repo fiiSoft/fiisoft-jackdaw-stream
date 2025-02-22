@@ -219,4 +219,28 @@ final class RegistryTest extends TestCase
         //then
         self::assertSame('foo', $reg->key()->read());
     }
+    
+    public function test_RegEntry_equals(): void
+    {
+        $regEntry = Registry::shared()->entry(Check::VALUE);
+        
+        self::assertTrue($regEntry->equals($regEntry));
+        self::assertFalse($regEntry->equals(Registry::shared()->entry(Check::VALUE)));
+    }
+    
+    public function test_TupleReader_equals(): void
+    {
+        $reg = Registry::new()->entry(Check::BOTH);
+        
+        self::assertTrue($reg->value()->equals($reg->value()));
+        self::assertFalse($reg->value()->equals(Registry::new()->entry(Check::BOTH)->value()));
+    }
+    
+    public function test_DefaultReader_equals(): void
+    {
+        $reg = Registry::new()->entry(Check::KEY);
+        
+        self::assertTrue($reg->key()->equals($reg->key()));
+        self::assertFalse($reg->key()->equals(Registry::new()->entry(Check::KEY)->key()));
+    }
 }

@@ -84,6 +84,26 @@ final class ConsumersTest extends TestCase
         self::assertSame('foo', \fgets($resource));
     }
     
+    public function test_ResourceWriter_can_write_value_object_castable_to_string(): void
+    {
+        //given
+        $resource = \fopen('php://memory', 'rb+');
+        $consumer = Consumers::getAdapter($resource);
+        
+        $object = new class {
+            public function __toString(): string {
+                return 'foo';
+            }
+        };
+        
+        //when
+        $consumer->consume($object, 1);
+        
+        //then
+        \rewind($resource);
+        self::assertSame('foo', \fgets($resource));
+    }
+    
     public function test_ResourceWriter_can_write_key(): void
     {
         //given
@@ -96,6 +116,26 @@ final class ConsumersTest extends TestCase
         //then
         \rewind($resource);
         self::assertSame('1', \fgets($resource));
+    }
+    
+    public function test_ResourceWriter_can_write_key_object_castable_to_string(): void
+    {
+        //given
+        $resource = \fopen('php://memory', 'rb+');
+        $consumer = Consumers::resource($resource, Check::KEY);
+        
+        $object = new class {
+            public function __toString(): string {
+                return 'foo';
+            }
+        };
+        
+        //when
+        $consumer->consume(1, $object);
+        
+        //then
+        \rewind($resource);
+        self::assertSame('foo', \fgets($resource));
     }
     
     public function test_ResourceWriter_can_write_both_key_and_value_in_predefined_way(): void

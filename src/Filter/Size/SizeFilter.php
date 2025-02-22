@@ -29,4 +29,11 @@ abstract class SizeFilter extends BaseFilter
             ? static::create($mode, $this->filter)
             : $this;
     }
+    
+    final public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->filter->equals($this->filter)
+            && parent::equals($other);
+    }
 }

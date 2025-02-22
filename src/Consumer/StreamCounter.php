@@ -45,4 +45,16 @@ final class StreamCounter implements Counter, StreamAware
     {
         $this->streams[\spl_object_id($stream)] = $stream;
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            ++$this->count;
+            
+            yield $key => $value;
+        }
+    }
 }

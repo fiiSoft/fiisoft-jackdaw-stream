@@ -2,12 +2,12 @@
 
 namespace FiiSoft\Jackdaw\Operation\Sending;
 
-use FiiSoft\Jackdaw\Condition\Condition;
-use FiiSoft\Jackdaw\Condition\ConditionReady;
-use FiiSoft\Jackdaw\Condition\Conditions;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamAware;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
@@ -15,19 +15,19 @@ use FiiSoft\Jackdaw\Stream;
 
 final class SendWhen extends BaseOperation
 {
-    private Condition $condition;
+    private Filter $condition;
     
     private Consumer $consumer;
     private ?Consumer $elseConsumer = null;
     
     /**
-     * @param ConditionReady|callable $condition
+     * @param FilterReady|callable|mixed $condition
      * @param ConsumerReady|callable|resource $consumer
      * @param ConsumerReady|callable|resource|null $elseConsumer
      */
     public function __construct($condition, $consumer, $elseConsumer = null)
     {
-        $this->condition = Conditions::getAdapter($condition);
+        $this->condition = Filters::getAdapter($condition);
         $this->consumer = Consumers::getAdapter($consumer);
     
         if ($elseConsumer !== null) {
@@ -37,7 +37,7 @@ final class SendWhen extends BaseOperation
     
     public function handle(Signal $signal): void
     {
-        if ($this->condition->isTrueFor($signal->item->value, $signal->item->key)) {
+        if ($this->condition->isAllowed($signal->item->value, $signal->item->key)) {
             $this->consumer->consume($signal->item->value, $signal->item->key);
         } elseif ($this->elseConsumer !== null) {
             $this->elseConsumer->consume($signal->item->value, $signal->item->key);
@@ -49,7 +49,7 @@ final class SendWhen extends BaseOperation
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            if ($this->condition->isTrueFor($value, $key)) {
+            if ($this->condition->isAllowed($value, $key)) {
                 $this->consumer->consume($value, $key);
             } elseif ($this->elseConsumer !== null) {
                 $this->elseConsumer->consume($value, $key);

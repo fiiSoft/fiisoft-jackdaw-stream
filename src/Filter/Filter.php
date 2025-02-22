@@ -3,13 +3,12 @@
 namespace FiiSoft\Jackdaw\Filter;
 
 use FiiSoft\Jackdaw\Comparator\ComparatorReady;
-use FiiSoft\Jackdaw\Condition\ConditionReady;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Internal\StreamBuilder;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
-interface Filter extends LogicFilter, StreamBuilder, FilterReady, MapperReady, ConditionReady, DiscriminatorReady,
+interface Filter extends LogicFilter, StreamBuilder, FilterReady, MapperReady, DiscriminatorReady,
     ComparatorReady, TransformerReady
 {
     /**
@@ -31,4 +30,6 @@ interface Filter extends LogicFilter, StreamBuilder, FilterReady, MapperReady, C
     public function checkAny(): self;
     
     public function negate(): self;
+    
+    public function equals(Filter $other): bool;
 }

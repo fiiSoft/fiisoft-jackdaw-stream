@@ -51,4 +51,12 @@ abstract class TwoArgs extends NumberFilter
             ? static::create($mode, $this->lower, $this->higher)
             : $this;
     }
+    
+    final public function equals(Filter $other): bool
+    {
+        return $other instanceof $this
+            && $other->lower === $this->lower
+            && $other->higher === $this->higher
+            && parent::equals($other);
+    }
 }

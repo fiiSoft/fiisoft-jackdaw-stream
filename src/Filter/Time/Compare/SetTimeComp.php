@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Filter\Time\Compare;
 
 abstract class SetTimeComp extends CompoundTimeComp
 {
-    /** @var \DateTimeInterface[] */
+    /** @var array<string, true> */
     protected array $dates = [];
     
     /**
@@ -15,7 +15,13 @@ abstract class SetTimeComp extends CompoundTimeComp
         foreach ($dates as $date) {
             $date = $this->prepare($date);
             
-            $this->dates[$date->format('c')] = $date;
+            $this->dates[$date->format('c')] = true;
+            \ksort($this->dates);
         }
+    }
+    
+    final public function equals(TimeComparator $other): bool
+    {
+        return $other instanceof static && $other->dates === $this->dates;
     }
 }

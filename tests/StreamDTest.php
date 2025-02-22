@@ -62,51 +62,6 @@ final class StreamDTest extends TestCase
         ], Stream::from(['a' => 1, 'b' => 2])->moveTo('num', 'chr')->toArrayAssoc());
     }
     
-    public function test_tail_short(): void
-    {
-        self::assertSame([4, 5], Stream::from([1, 2, 3, 4, 5])->tail(2)->toArray());
-    }
-    
-    public function test_tail_long(): void
-    {
-        self::assertSame([1, 2, 3], Stream::from([1, 2, 3])->tail(6)->toArray());
-    }
-    
-    public function test_limit_after_limit(): void
-    {
-        self::assertSame([1, 2], Stream::from([1, 2, 3, 4, 5])->limit(4)->limit(2)->toArray());
-    }
-    
-    public function test_skip_after_skip(): void
-    {
-        self::assertSame([4, 5], Stream::from([1, 2, 3, 4, 5])->skip(1)->skip(2)->toArray());
-    }
-    
-    public function test_reverse_after_reverse(): void
-    {
-        self::assertSame([1, 2], Stream::from([1, 2])->reverse()->reverse()->toArray());
-    }
-    
-    public function test_reindex_after_reindex(): void
-    {
-        self::assertSame([1, 2], Stream::from(['a' => 1, 'b' => 2])->reindex()->reindex()->toArrayAssoc());
-    }
-    
-    public function test_flip_after_flip(): void
-    {
-        self::assertSame(['a' => 1, 'b' => 2], Stream::from(['a' => 1, 'b' => 2])->flip()->flip()->toArrayAssoc());
-    }
-    
-    public function test_shuffle_after_shuffle(): void
-    {
-        self::assertSame(3, Stream::from([1, 2, 3])->shuffle()->shuffle()->count()->get());
-    }
-    
-    public function test_tail_after_tail(): void
-    {
-        self::assertSame([4], Stream::from([1, 2, 3, 4])->tail(3)->tail(1)->toArray());
-    }
-    
     public function test_flat_after_flat(): void
     {
         $expected = [
@@ -240,18 +195,14 @@ final class StreamDTest extends TestCase
     
     public function test_SortLimited_with_default_comparator_to_sort_by_key(): void
     {
-        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
-            ->best(3, By::key())
-            ->toArray();
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])->best(3, By::key())->toArray();
         
         self::assertSame(['d', 'a', 'b'], $result);
     }
     
     public function test_SortLimited_reversed_with_default_comparator_to_sort_by_key(): void
     {
-        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])
-            ->worst(3, By::key())
-            ->toArray();
+        $result = Stream::from(['d', 'a', 'b', 'c', 'e'])->worst(3, By::key())->toArray();
         
         self::assertSame(['e', 'c', 'b'], $result);
     }
@@ -505,18 +456,24 @@ final class StreamDTest extends TestCase
             [3, 5, null, -1, 5, 4, 3],
         ];
         
-        $averages = Stream::from($readings)
+        $expected = [
+            (2 + 5 + 7 + 3 + 1) / 5,
+            (4 + 5 + 1) / 3,
+            (3 + 5 + 5 + 4 + 3) / 5,
+        ];
+        
+        self::assertSame($expected, Stream::from($readings)
             ->extractWhen(Filters::isInt())
             ->extractWhen(Filters::greaterThan(-1))
             ->extractWhen(Filters::lessThan(10))
             ->map(Reducers::average())
-            ->toArray();
+            ->toArray());
         
-        self::assertSame([
-            (2 + 5 + 7 + 3 + 1) / 5,
-            (4 + 5 + 1) / 3,
-            (3 + 5 + 5 + 4 + 3) / 5,
-        ], $averages);
+        self::assertSame($expected, Stream::from($readings)
+            ->extractWhen(Filters::isInt()->and(Filters::greaterThan(-1))->and(Filters::lessThan(10)))
+            ->map(Reducers::average())
+            ->toArray()
+        );
     }
     
     public function test_removeWhen(): void
@@ -534,15 +491,15 @@ final class StreamDTest extends TestCase
         ];
         
         self::assertSame($expected, Stream::from($readings)
-            ->removeWhen(Filters::OR(Filters::NOT('is_int'), Filters::lessThan(0), Filters::greaterThan(9)))
+            ->removeWhen(Filters::NOT('is_int'))
+            ->removeWhen(Filters::lessThan(0))
+            ->removeWhen(Filters::greaterThan(9))
             ->map(Reducers::average())
             ->toArray()
         );
         
         self::assertSame($expected, Stream::from($readings)
-            ->removeWhen(Filters::NOT('is_int'))
-            ->removeWhen(Filters::lessThan(0))
-            ->removeWhen(Filters::greaterThan(9))
+            ->removeWhen(Filters::OR(Filters::NOT('is_int'), Filters::lessThan(0), Filters::greaterThan(9)))
             ->map(Reducers::average())
             ->toArray()
         );
@@ -767,31 +724,11 @@ final class StreamDTest extends TestCase
         );
     }
     
-    public function test_gather_on_empty_stream_keep_keys(): void
-    {
-        self::assertSame('', Stream::empty()->gather()->toString());
-    }
-    
-    public function test_gather_on_empty_stream_reindex_keys(): void
-    {
-        self::assertSame('', Stream::empty()->gather(true)->toString());
-    }
-    
     public function test_reindex_throws_exception_when_step_is_zero(): void
     {
         $this->expectExceptionObject(InvalidParamException::byName('step'));
         
         Stream::from([1, 2])->reindex(0, 0)->run();
-    }
-    
-    public function test_reverse_on_empty_stream(): void
-    {
-        self::assertSame('', Stream::empty()->reverse()->toString());
-    }
-    
-    public function test_shuffle_on_empty_stream(): void
-    {
-        self::assertSame('', Stream::empty()->shuffle()->toString());
     }
     
     public function test_shuffle_chunked_values(): void
@@ -2081,26 +2018,6 @@ final class StreamDTest extends TestCase
         self::assertFalse($result->found());
     }
     
-    public function test_readMany_on_empty_stream(): void
-    {
-        self::assertEmpty(Stream::empty()->readMany(2)->toArray());
-    }
-    
-    public function test_readNext_on_empty_stream(): void
-    {
-        self::assertEmpty(Stream::empty()->readNext()->toArray());
-    }
-    
-    public function test_readWhile_on_empty_stream(): void
-    {
-        self::assertEmpty(Stream::empty()->readWhile('is_string')->toArray());
-    }
-    
-    public function test_readUntil_on_empty_stream(): void
-    {
-        self::assertEmpty(Stream::empty()->readUntil('is_string')->toArray());
-    }
-    
     public function test_readNext_as_first_operation_in_stream(): void
     {
         $data = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -2125,46 +2042,6 @@ final class StreamDTest extends TestCase
         self::assertSame(['b', 'c', 'd', 'e', 'f', 'g'], Stream::from($data)->readMany(6)->toArray());
         self::assertSame(['b', 'c', 'd', 'e', 'f', 'g', 'h'], Stream::from($data)->readMany(7)->toArray());
         self::assertSame(['b', 'c', 'd', 'e', 'f', 'g', 'h'], Stream::from($data)->readMany(8)->toArray());
-    }
-    
-    public function test_readWhile_as_first_operation_in_stream_keep_keys(): void
-    {
-        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
-        
-        self::assertSame(
-            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
-            Stream::from($data)->readWhile('is_string')->toArray()
-        );
-    }
-    
-    public function test_readUntil_as_first_operation_in_stream_keep_keys(): void
-    {
-        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
-        
-        self::assertSame(
-            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
-            Stream::from($data)->readUntil('is_int')->toArray()
-        );
-    }
-    
-    public function test_readWhile_as_first_operation_in_stream_reindex_keys(): void
-    {
-        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
-        
-        self::assertSame(
-            ['g', 'h', 'i'],
-            Stream::from($data)->readWhile('is_string', null, true)->toArrayAssoc()
-        );
-    }
-    
-    public function test_readUntil_as_first_operation_in_stream_reindex_keys(): void
-    {
-        $data = ['z', 1, 'a', 2, 'b', 'c', 1, 'd', 2, 'e', 'f', 3, 'g', 'h', 'i'];
-        
-        self::assertSame(
-            ['g', 'h', 'i'],
-            Stream::from($data)->readUntil('is_int', null, true)->toArrayAssoc()
-        );
     }
     
     /**

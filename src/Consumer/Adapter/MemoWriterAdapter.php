@@ -21,4 +21,16 @@ final class MemoWriterAdapter implements Consumer
     {
         $this->writer->write($value, $key);
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function buildStream(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            $this->writer->write($value, $key);
+            
+            yield $key => $value;
+        }
+    }
 }

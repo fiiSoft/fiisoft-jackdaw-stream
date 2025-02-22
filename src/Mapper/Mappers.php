@@ -393,4 +393,9 @@ final class Mappers
     {
         return self::extract(\array_keys(\array_flip($keys)));
     }
+    
+    public static function byArgs(callable $mapper): Mapper
+    {
+        return new ByArgs($mapper);
+    }
 }

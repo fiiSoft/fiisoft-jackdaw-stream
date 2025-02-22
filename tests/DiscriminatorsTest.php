@@ -2,12 +2,12 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
-use FiiSoft\Jackdaw\Condition\Conditions;
 use FiiSoft\Jackdaw\Discriminator\Alternately;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Discriminator\Exception\DiscriminatorExceptionFactory;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Exception\UnsupportedValueException;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -72,7 +72,7 @@ final class DiscriminatorsTest extends TestCase
     
     public function test_Condition_can_be_used_as_Discriminator(): void
     {
-        $discriminator = Discriminators::getAdapter(Conditions::getAdapter(static fn(int $v): bool => $v === 1));
+        $discriminator = Discriminators::getAdapter(Filters::getAdapter(static fn(int $v): bool => $v === 1));
         
         self::assertTrue($discriminator->classify(1, 1));
         self::assertFalse($discriminator->classify(2, 1));

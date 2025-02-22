@@ -34,15 +34,16 @@ final class SendToMany extends BaseOperation
         $this->next->handle($signal);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function buildStream(iterable $stream): iterable
     {
-        foreach ($stream as $key => $value) {
-            foreach ($this->consumers as $consumer) {
-                $consumer->consume($value, $key);
-            }
-            
-            yield $key => $value;
+        foreach ($this->consumers as $consumer) {
+            $stream = $consumer->buildStream($stream);
         }
+        
+        return $stream;
     }
     
     /**

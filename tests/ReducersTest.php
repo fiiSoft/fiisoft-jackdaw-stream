@@ -280,4 +280,64 @@ final class ReducersTest extends TestCase
         
         self::assertSame([1 => 2, 0 => 1], $reducer->result());
     }
+    
+    public function test_reducer_Shortest_can_handle_objects_castable_to_string(): void
+    {
+        $object = new class {
+            public string $value = '';
+            public function __toString(): string {
+                return $this->value;
+            }
+        };
+        
+        $reducer = Reducers::shortest();
+        
+        $object->value = 'noooo';
+        $reducer->consume($object);
+        
+        $object->value = 'yes';
+        $reducer->consume($object);
+        
+        self::assertSame('yes', $reducer->result());
+    }
+    
+    public function test_reducer_Longest_can_handle_objects_castable_to_string(): void
+    {
+        $object = new class {
+            public string $value = '';
+            public function __toString(): string {
+                return $this->value;
+            }
+        };
+        
+        $reducer = Reducers::longest();
+        
+        $object->value = 'yes';
+        $reducer->consume($object);
+        
+        $object->value = 'noooo';
+        $reducer->consume($object);
+        
+        self::assertSame('noooo', $reducer->result());
+    }
+    
+    public function test_reducer_Concat_can_handle_objects_castable_to_string(): void
+    {
+        $object = new class {
+            public string $value = '';
+            public function __toString(): string {
+                return $this->value;
+            }
+        };
+        
+        $reducer = Reducers::concat('|');
+        
+        $object->value = 'foo';
+        $reducer->consume($object);
+        
+        $object->value = 'bar';
+        $reducer->consume($object);
+        
+        self::assertSame('foo|bar', $reducer->result());
+    }
 }
