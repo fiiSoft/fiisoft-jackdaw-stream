@@ -7,7 +7,7 @@
     ],
     "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
     "license": "MIT",
-    "version": "11.0.0",
+    "version": "11.0.1",
     "authors": [
         {
             "name": "fiiSoft",
@@ -70,9 +70,15 @@
         ],
         "test": "vendor/bin/phpunit --no-coverage",
         "report" : "XDEBUG_MODE=coverage php vendor/bin/phpunit",
-        "mutate": "vendor/bin/infection --test-framework=phpunit --only-covered --coverage=var/phpunit/xml/ --skip-initial-tests --threads=4 --min-covered-msi=100 --min-msi=100"
+        "mutate": "vendor/bin/infection --test-framework=phpunit --only-covered --coverage=var/phpunit/xml/ --skip-initial-tests --threads=4 --min-covered-msi=100 --min-msi=100",
+        "all": [
+            "@report",
+            "@mutate",
+            "@check"
+        ]
     },
     "scripts-descriptions": {
+        "all": "Run: composer report && composer mutate && composer check",
         "check": "Run code analysis tools",
         "test": "Run tests without code-coverage report",
         "report": "Run tests with code-coverage report",

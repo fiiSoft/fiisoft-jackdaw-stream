@@ -6,7 +6,6 @@ use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Comparator\Sorting\By;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
-use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Exception\StreamExceptionFactory;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
@@ -684,6 +683,20 @@ final class StreamGTest extends TestCase
         self::assertSame(self::VOLATILE_CHUNK_KEEP_KEYS_RESULT, $result);
     }
     
+    public function test_route_and_chunk_with_volatile_int_keep_keys(): void
+    {
+        $size = Memo::value();
+        
+        $result = Stream::from(self::VOLATILE_CHUNK_DATA)
+            ->route('is_int', $size)
+            ->chunk($size)
+            ->sort(By::sizeDesc())
+            ->categorize('\count', true)
+            ->toArrayAssoc();
+        
+        self::assertSame(self::VOLATILE_CHUNK_KEEP_KEYS_RESULT, $result);
+    }
+    
     public function test_chunk_with_volatile_int_reindex_keys(): void
     {
         $size = Memo::value();
@@ -962,6 +975,22 @@ final class StreamGTest extends TestCase
         self::assertSame([
             'boo' => [3, 4],
             'doo' => [7, 8],
+        ], $result);
+    }
+    
+    public function test_filter_by_Memo_string_4(): void
+    {
+        $memo = Memo::value();
+        
+        $result = Stream::from(['aaba', 1, 2, 'boo', 3, 4, 'caba', 5, 6, 'doo', 7, 8])
+            ->route('\is_string', $memo)
+            ->filter(Filters::wrapMemoReader($memo)->string()->endsWith('aba'))
+            ->categorize($memo, true)
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'aaba' => [1, 2],
+            'caba' => [5, 6],
         ], $result);
     }
     

@@ -1212,8 +1212,8 @@ final class StreamCTest extends TestCase
             ->castToFloat()
             ->categorize(Discriminators::byKey())
             ->map(Reducers::basicStats(2))
-            ->map(Mappers::extract(['min', 'avg', 'max']))
-            ->map(Mappers::concat(';'))
+            ->extract(['min', 'avg', 'max'])
+            ->concat(';')
             ->sort(By::key())
             ->toArrayAssoc();
             
@@ -1236,10 +1236,34 @@ final class StreamCTest extends TestCase
             ->split(';')
             ->unpackTuple()
             ->fork(Discriminators::byKey(), Stream::empty()->castToFloat()->reduce(Reducers::basicStats(2)))
-            ->map(Mappers::extract(['min', 'avg', 'max']))
-            ->map(Mappers::concat(';'))
+            ->extract(['min', 'avg', 'max'])
+            ->concat(';')
             ->segregate(null, false, By::key())
             ->flat(1)
+            ->toArrayAssoc();
+            
+        self::assertSame([
+            'A' => '13.2;15.67;18.2',
+            'B' => '13.8;14.65;15.5',
+            'C' => '9.6;11.9;14.2',
+            'D' => '12.9;15.43;19.3',
+            'E' => '15.5;15.5;15.5',
+        ], $actual);
+    }
+    
+    public function test_use_BasicStats_Fork_Sort_to_reduce_data(): void
+    {
+        $data = [
+            'C;14.2', 'B;13.8', 'A;15.6', 'D;12.9', 'B;15.5', 'A;18.2', 'D;19.3', 'C;9.6', 'A;13.2', 'D;14.1', 'E;15.5',
+        ];
+        
+        $actual = Stream::from($data)
+            ->split(';')
+            ->unpackTuple()
+            ->fork(Discriminators::byKey(), Stream::empty()->castToFloat()->reduce(Reducers::basicStats(2)))
+            ->extract(['min', 'avg', 'max'])
+            ->concat(';')
+            ->sort(By::key())
             ->toArrayAssoc();
             
         self::assertSame([
@@ -1529,13 +1553,17 @@ final class StreamCTest extends TestCase
     
     public function test_stream_few_times_over_datetime_sequence(): void
     {
-        $dates = Stream::from(Producers::dateTimeSeq('2001-01-01'))->limit(3)->toArray();
+        $dates = Producers::dateTimeSeq('2001-01-01')
+            ->stream()
+            ->limit(3)
+            ->map(static fn(\DateTimeImmutable $dt): string => $dt->format('Y-m-d H:i:s'))
+            ->toArray();
         
         self::assertSame([
             '2001-01-01 00:00:00',
             '2001-01-02 00:00:00',
             '2001-01-03 00:00:00',
-        ], \array_map(static fn(\DateTimeImmutable $dt): string => $dt->format('Y-m-d H:i:s'), $dates));
+        ], $dates);
     }
     
     public function test_count_number_of_working_days_in_date_range_using_dateTimeSeq_producer(): void

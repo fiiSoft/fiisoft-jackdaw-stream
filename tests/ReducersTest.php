@@ -340,4 +340,20 @@ final class ReducersTest extends TestCase
         
         self::assertSame('foo|bar', $reducer->result());
     }
+    
+    public function test_BasicStats(): void
+    {
+        $reducer = Reducers::basicStats(2);
+        
+        $reducer->consume(0.34);
+        $reducer->consume(0.36);
+        
+        self::assertSame([
+            'count' => 2,
+            'min' => 0.34,
+            'max' => 0.36,
+            'sum' => 0.7,
+            'avg' => 0.35,
+        ], $reducer->result());
+    }
 }

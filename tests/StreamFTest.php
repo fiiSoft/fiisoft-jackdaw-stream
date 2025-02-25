@@ -515,7 +515,7 @@ final class StreamFTest extends TestCase
         self::assertSame('e', Stream::from(['a', 2, 'b', 1, 'e'])->last()->get());
     }
     
-    public function test_unzip(): void
+    public function test_unzip_with_fork_in_consumer(): void
     {
         $rowset = [
             ['id' => 2, 'age' => 22, 'sex' => 'm'],

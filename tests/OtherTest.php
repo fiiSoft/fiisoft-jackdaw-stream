@@ -733,4 +733,43 @@ final class OtherTest extends TestCase
             [9, 'Chris', 29],
         ], Stream::from($rowset)->sort(By::fields([' 1   desc ', ' 2    asc ']))->toArray());
     }
+    
+    public function test_compare_cast_floor_ceil_round(): void
+    {
+        self::assertSame(1, (int) ((1 + 1) / 2));
+        self::assertSame(1, (int) ((1 + 2) / 2));
+        self::assertSame(2, (int) ((1 + 3) / 2));
+        self::assertSame(2, (int) ((1 + 4) / 2));
+        self::assertSame(3, (int) ((1 + 5) / 2));
+        self::assertSame(3, (int) ((1 + 6) / 2));
+        self::assertSame(4, (int) ((1 + 7) / 2));
+        self::assertSame(4, (int) ((1 + 8) / 2));
+        
+        self::assertSame(1, (int) \floor((1 + 1) / 2));
+        self::assertSame(1, (int) \floor((1 + 2) / 2));
+        self::assertSame(2, (int) \floor((1 + 3) / 2));
+        self::assertSame(2, (int) \floor((1 + 4) / 2));
+        self::assertSame(3, (int) \floor((1 + 5) / 2));
+        self::assertSame(3, (int) \floor((1 + 6) / 2));
+        self::assertSame(4, (int) \floor((1 + 7) / 2));
+        self::assertSame(4, (int) \floor((1 + 8) / 2));
+        
+        self::assertSame(1, (int) \ceil((1 + 1) / 2));
+        self::assertSame(2, (int) \ceil((1 + 2) / 2));
+        self::assertSame(2, (int) \ceil((1 + 3) / 2));
+        self::assertSame(3, (int) \ceil((1 + 4) / 2));
+        self::assertSame(3, (int) \ceil((1 + 5) / 2));
+        self::assertSame(4, (int) \ceil((1 + 6) / 2));
+        self::assertSame(4, (int) \ceil((1 + 7) / 2));
+        self::assertSame(5, (int) \ceil((1 + 8) / 2));
+        
+        self::assertSame(1, (int) \round((1 + 1) / 2));
+        self::assertSame(2, (int) \round((1 + 2) / 2));
+        self::assertSame(2, (int) \round((1 + 3) / 2));
+        self::assertSame(3, (int) \round((1 + 4) / 2));
+        self::assertSame(3, (int) \round((1 + 5) / 2));
+        self::assertSame(4, (int) \round((1 + 6) / 2));
+        self::assertSame(4, (int) \round((1 + 7) / 2));
+        self::assertSame(5, (int) \round((1 + 8) / 2));
+    }
 }

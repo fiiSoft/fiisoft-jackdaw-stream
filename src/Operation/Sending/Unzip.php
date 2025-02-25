@@ -20,9 +20,7 @@ final class Unzip extends DispatchOperation
     {
         parent::__construct($consumers);
         
-        $this->handlers = \array_values($this->handlers);
         $this->count = \count($this->handlers);
-        
         $this->item = new Item();
     }
     

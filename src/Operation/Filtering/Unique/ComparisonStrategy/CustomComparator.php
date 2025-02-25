@@ -25,7 +25,7 @@ final class CustomComparator extends ComparisonStrategy
         $right = $this->count - 1;
         
         while ($left <= $right) {
-            $index = (int) \floor(($left + $right) / 2);
+            $index = (int) (($left + $right) / 2);
             
             $compare = $this->comparator->compare($value, $this->values[$index]);
             if ($compare > 0) {
