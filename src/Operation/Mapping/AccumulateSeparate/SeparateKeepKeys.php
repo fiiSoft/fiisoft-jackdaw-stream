@@ -12,7 +12,7 @@ final class SeparateKeepKeys extends Separate
         
         if ($this->filter->isAllowed($item->value, $item->key)) {
             if (!empty($this->data)) {
-                $item->key = $this->index++;
+                $item->key = ++$this->index;
                 $item->value = $this->data;
                 $this->data = [];
                 
@@ -30,7 +30,7 @@ final class SeparateKeepKeys extends Separate
         foreach ($stream as $key => $value) {
             if ($this->filter->isAllowed($value, $key)) {
                 if (!empty($this->data)) {
-                    yield $this->index++ => $this->data;
+                    yield ++$this->index => $this->data;
                     
                     $this->data = [];
                 }
@@ -42,7 +42,7 @@ final class SeparateKeepKeys extends Separate
         }
         
         if (!empty($this->data)) {
-            yield $this->index++ => $this->data;
+            yield ++$this->index => $this->data;
             
             $this->data = [];
         }

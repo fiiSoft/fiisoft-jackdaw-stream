@@ -37,7 +37,7 @@ abstract class SortLimited extends BaseOperation implements Limitable
         return self::create($limit, $this->sorting);
     }
     
-    final public function streamingFinished(Signal $signal): bool
+    public function streamingFinished(Signal $signal): bool
     {
         if ($this->isEmpty()) {
             return parent::streamingFinished($signal);

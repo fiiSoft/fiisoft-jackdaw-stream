@@ -7,12 +7,12 @@ use FiiSoft\Jackdaw\Operation\Mapping\Tuple;
 
 final class AssocTuple extends Tuple
 {
-    private int $index = 0;
+    private int $index = -1;
     
     public function handle(Signal $signal): void
     {
         $signal->item->value = ['key' => $signal->item->key, 'value' => $signal->item->value];
-        $signal->item->key = $this->index++;
+        $signal->item->key = ++$this->index;
         
         $this->next->handle($signal);
     }
@@ -20,7 +20,7 @@ final class AssocTuple extends Tuple
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            yield $this->index++ => ['key' => $key, 'value' => $value];
+            yield ++$this->index => ['key' => $key, 'value' => $value];
         }
     }
 }

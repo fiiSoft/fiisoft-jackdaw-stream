@@ -30,7 +30,7 @@ final class UptrendsKeepKeys extends Uptrends
             $this->previous->value = $item->value;
             
             if (!empty($this->trend)) {
-                $item->key = $this->index++;
+                $item->key = ++$this->index;
                 $item->value = $this->trend;
                 
                 $this->next->handle($signal);
@@ -62,7 +62,7 @@ final class UptrendsKeepKeys extends Uptrends
                 $this->previous->value = $item->value;
                 
                 if (!empty($this->trend)) {
-                    yield $this->index++ => $this->trend;
+                    yield ++$this->index => $this->trend;
                     
                     $this->trend = [];
                 }
@@ -72,7 +72,7 @@ final class UptrendsKeepKeys extends Uptrends
         if (!empty($this->trend)) {
             $this->trend[$this->previous->key] = $this->previous->value;
             
-            yield $this->index++ => $this->trend;
+            yield ++$this->index => $this->trend;
             
             $this->trend = [];
         }

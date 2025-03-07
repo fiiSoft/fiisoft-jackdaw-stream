@@ -11,7 +11,7 @@ final class ManyReindexKeys extends ConstantSizeChunk
         $this->chunked[] = $signal->item->value;
         
         if (++$this->count === $this->size) {
-            $signal->item->key = $this->index++;
+            $signal->item->key = ++$this->index;
             $signal->item->value = $this->chunked;
             
             $this->count = 0;
@@ -27,7 +27,7 @@ final class ManyReindexKeys extends ConstantSizeChunk
             $this->chunked[] = $value;
             
             if (++$this->count === $this->size) {
-                yield $this->index++ => $this->chunked;
+                yield ++$this->index => $this->chunked;
                 
                 $this->count = 0;
                 $this->chunked = [];
@@ -35,7 +35,7 @@ final class ManyReindexKeys extends ConstantSizeChunk
         }
         
         if (!empty($this->chunked)) {
-            yield $this->index++ => $this->chunked;
+            yield ++$this->index => $this->chunked;
             
             $this->count = 0;
             $this->chunked = [];

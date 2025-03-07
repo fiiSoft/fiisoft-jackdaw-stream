@@ -37,7 +37,7 @@ final class Sort extends BaseOperation
         }
         
         if (\count($this->items) > 1) {
-            $this->sortItems($this->items);
+            $this->sortItems();
         }
         
         foreach ($this->items as $item) {
@@ -50,7 +50,7 @@ final class Sort extends BaseOperation
     public function streamingFinished(Signal $signal): bool
     {
         if (\count($this->items) > 1) {
-            $this->sortItems($this->items);
+            $this->sortItems();
         }
         
         $signal->restartWith(new ForwardItemsIterator($this->items), $this->next);
@@ -69,14 +69,11 @@ final class Sort extends BaseOperation
         return SortLimited::create($limit, $this->sorting);
     }
     
-    /**
-     * @param Item[] $items REFERENCE
-     */
-    private function sortItems(array &$items): void
+    private function sortItems(): void
     {
         $comparator = ItemComparatorFactory::getForSorting($this->sorting);
         
-        \usort($items, [$comparator, 'compare']);
+        \usort($this->items, [$comparator, 'compare']);
     }
     
     public function destroy(): void

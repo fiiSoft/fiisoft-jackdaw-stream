@@ -35,9 +35,10 @@ final class RandomString extends LimitedProducer
     
     public function getIterator(): \Generator
     {
-        $count = 0;
+        $count = -1;
+        $limit = $this->limit - 1;
         
-        while ($count !== $this->limit) {
+        while ($count !== $limit) {
     
             $length = $this->minLength === $this->maxLength
                 ? $this->minLength
@@ -45,7 +46,7 @@ final class RandomString extends LimitedProducer
             
             \shuffle($this->chars);
             
-            yield $count++ => \implode('', \array_slice($this->chars, 0, $length));
+            yield ++$count => \implode('', \array_slice($this->chars, 0, $length));
         }
     }
 }

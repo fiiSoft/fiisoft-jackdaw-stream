@@ -9,7 +9,7 @@ final class ReferenceAdapter extends BaseProducer
     /** @var mixed REFERENCE */
     private $variable;
     
-    private int $index = 0;
+    private int $index = -1;
     
     /**
      * @param mixed $variable REFERENCE
@@ -22,7 +22,7 @@ final class ReferenceAdapter extends BaseProducer
     public function getIterator(): \Generator
     {
         while ($this->variable !== null) {
-            yield $this->index++ => $this->variable;
+            yield ++$this->index => $this->variable;
         }
     }
 }

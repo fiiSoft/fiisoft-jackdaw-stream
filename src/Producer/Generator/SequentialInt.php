@@ -24,11 +24,12 @@ final class SequentialInt extends LimitedProducer
     
     public function getIterator(): \Generator
     {
-        $count = 0;
+        $count = -1;
+        $limit = $this->limit - 1;
         $current = $this->start;
         
-        while ($count !== $this->limit) {
-            yield $count++ => $current;
+        while ($count !== $limit) {
+            yield ++$count => $current;
             
             $current += $this->step;
         }

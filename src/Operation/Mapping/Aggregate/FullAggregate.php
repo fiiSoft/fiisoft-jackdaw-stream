@@ -31,7 +31,7 @@ final class FullAggregate extends Aggregate
             
             if (\count($this->aggregated) === $this->size) {
                 $signal->item->value = $this->aggregated;
-                $signal->item->key = $this->index++;
+                $signal->item->key = ++$this->index;
                 $this->aggregated = [];
                 
                 $this->next->handle($signal);
@@ -46,7 +46,7 @@ final class FullAggregate extends Aggregate
                 $this->aggregated[$key] = $value;
                 
                 if (\count($this->aggregated) === $this->size) {
-                    yield $this->index++ => $this->aggregated;
+                    yield ++$this->index => $this->aggregated;
                     
                     $this->aggregated = [];
                 }

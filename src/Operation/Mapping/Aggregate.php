@@ -12,7 +12,7 @@ abstract class Aggregate extends BaseOperation
     /** @var array<string|int> */
     protected array $keys;
     
-    protected int $index = 0;
+    protected int $index = -1;
     
     /**
      * @param array<string|int> $keys

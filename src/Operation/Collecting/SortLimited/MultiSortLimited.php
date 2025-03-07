@@ -2,11 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
 
+use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
+use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use FiiSoft\Jackdaw\Producer\Producer;
 
@@ -17,6 +19,9 @@ final class MultiSortLimited extends SortLimited
     /** @var \SplHeap<Item> */
     private \SplHeap $buffer;
 
+    /** @var Item[] */
+    private array $items = [];
+    
     private int $limit, $count = 0;
 
     protected function __construct(int $limit, Sorting $sorting)
@@ -28,55 +33,101 @@ final class MultiSortLimited extends SortLimited
         }
 
         $this->limit = $limit;
-        $this->buffer = HeapFactory::createHeapForSorting($sorting);
+        $this->buffer = new class extends \SplHeap { public function compare($value1, $value2): int { return 0; }};
     }
 
     public function handle(Signal $signal): void
     {
-        if ($this->count === $this->limit) {
-            $this->top = $this->buffer->top();
-
-            if ($this->buffer->compare($signal->item, $this->top) < 0) {
-                $this->buffer->extract();
-
-                $this->top->key = $signal->item->key;
-                $this->top->value = $signal->item->value;
-
-                $this->buffer->insert($this->top);
+        if ($this->count < $this->limit) {
+            $this->items[] = clone $signal->item;
+            
+            if (++$this->count === $this->limit) {
+                $this->fillBuffer();
             }
-        } else {
-            ++$this->count;
-            $this->buffer->insert(clone $signal->item);
+        } elseif ($this->buffer->compare($signal->item, $this->top) < 0) {
+            $this->buffer->extract();
+
+            $this->top->key = $signal->item->key;
+            $this->top->value = $signal->item->value;
+
+            $this->buffer->insert($this->top);
+            $this->top = $this->buffer->top();
         }
     }
-
+    
+    /**
+     * @inheritDoc
+     */
+    public function streamingFinished(Signal $signal): bool
+    {
+        if (empty($this->items)) {
+            return parent::streamingFinished($signal);
+        }
+        
+        $this->sortItems();
+        
+        $signal->restartWith(new ForwardItemsIterator($this->items), $this->next);
+        $this->items = [];
+        
+        return true;
+    }
+    
     public function buildStream(iterable $stream): iterable
     {
         $item = new Item();
 
         foreach ($stream as $item->key => $item->value) {
-            if ($this->count === $this->limit) {
-                $this->top = $this->buffer->top();
+            if ($this->count < $this->limit) {
+                $this->items[] = clone $item;
 
-                if ($this->buffer->compare($item, $this->top) < 0) {
-                    $this->buffer->extract();
-
-                    $this->top->key = $item->key;
-                    $this->top->value = $item->value;
-
-                    $this->buffer->insert($this->top);
+                if (++$this->count === $this->limit) {
+                    $this->fillBuffer();
                 }
-            } else {
-                ++$this->count;
-                $this->buffer->insert(clone $item);
+            } elseif ($this->buffer->compare($item, $this->top) < 0) {
+                $this->buffer->extract();
+
+                $this->top->key = $item->key;
+                $this->top->value = $item->value;
+
+                $this->buffer->insert($this->top);
+                $this->top = $this->buffer->top();
             }
         }
 
-        if ($this->isEmpty()) {
-            return [];
-        }
+        if (empty($this->items)) {
+            if ($this->isEmpty()) {
+                return [];
+            }
 
-        yield from $this->createProducer();
+            yield from $this->createProducer();
+        } else {
+            $this->sortItems();
+
+            foreach ($this->items as $x) {
+                yield $x->key => $x->value;
+            }
+
+            $this->items = [];
+        }
+    }
+    
+    private function sortItems(): void
+    {
+        $comparator = ItemComparatorFactory::getForSorting($this->sorting);
+        
+        \usort($this->items, [$comparator, 'compare']);
+    }
+    
+    private function fillBuffer(): void
+    {
+        $this->buffer = HeapFactory::createHeapForSorting($this->sorting);
+        
+        foreach ($this->items as $item) {
+            $this->buffer->insert($item);
+        }
+        
+        $this->top = $this->buffer->top();
+        $this->items = [];
     }
 
     public function applyLimit(int $limit): bool

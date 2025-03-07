@@ -18,9 +18,7 @@ use FiiSoft\Jackdaw\Producer\Generator\Uuid\UuidVersion;
 use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
-use FiiSoft\Jackdaw\Producer\Internal\ReverseArrayIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
-use FiiSoft\Jackdaw\Producer\Internal\ReverseNumericalArrayIterator;
 use FiiSoft\Jackdaw\Producer\MultiProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
@@ -701,33 +699,6 @@ final class ProducersTest extends TestCase
         self::assertSame(2, \iterator_count($producer));
     }
     
-    public function test_ReverseArrayIterator_empty(): void
-    {
-        self::assertSame(0, \iterator_count(new ReverseArrayIterator([])));
-    }
-    
-    public function test_ReverseArrayIterator_notEmpty_preserveKeys(): void
-    {
-        $producer = new ReverseArrayIterator([3 => 'a', 'b', 'c']);
-        
-        self::assertSame([
-            5 => 'c',
-            4 => 'b',
-            3 => 'a',
-        ], $producer->stream()->toArrayAssoc());
-    }
-    
-    public function test_ReverseArrayIterator_notEmpty_reindex(): void
-    {
-        $producer = new ReverseArrayIterator([3 => 'a', 'b', 'c'], true);
-        
-        self::assertSame([
-            0 => 'c',
-            1 => 'b',
-            2 => 'a',
-        ], $producer->stream()->toArrayAssoc());
-    }
-    
     public function test_ReverseItemsIterator_can_reindex_keys(): void
     {
         //given
@@ -744,20 +715,6 @@ final class ProducersTest extends TestCase
         
         //then
         self::assertSame(['a', 'b', 'c', 'b', 'a'], $producer->stream()->toArrayAssoc());
-    }
-    
-    public function test_ReverseNumericalArrayIterator_no_reindex(): void
-    {
-        $producer = new ReverseNumericalArrayIterator(['a', 'b', 'c', 'd']);
-        
-        self::assertSame([3 => 'd', 2 => 'c', 1 => 'b', 0 => 'a'], $producer->stream()->toArrayAssoc());
-    }
-    
-    public function test_ReverseNumericalArrayIterator_with_reindex(): void
-    {
-        $producer = new ReverseNumericalArrayIterator(['a', 'b', 'c', 'd'], true);
-        
-        self::assertSame(['d', 'c', 'b', 'a'], $producer->stream()->toArrayAssoc());
     }
     
     public function test_BucketListIterator_empty(): void
@@ -979,15 +936,13 @@ final class ProducersTest extends TestCase
 
         yield 'QueueProducer' => [Producers::queue()->append('a', 1)->append('b', 3)->append('c', 5)];
 
-        yield 'ReverseArrayIterator' => [new ReverseArrayIterator(\array_reverse($data, true))];
-
         yield 'ReverseItemsIterator' => [new ReverseItemsIterator(\array_reverse(self::items($data)))];
         
         yield 'MultiProducer' => [
             Producers::multiSourced(
                 Producers::queue()->append('a', 1),
                 Producers::combinedFrom([3], ['b']),
-                new ReverseArrayIterator([5 => 'c']),
+                [5 => 'c']
             )
         ];
         
@@ -1067,14 +1022,6 @@ final class ProducersTest extends TestCase
     public function test_iterate_SequentialInt_producer(): void
     {
         self::assertSame([3, 5, 7], \iterator_to_array(Producers::sequentialInt(3, 2, 3)));
-    }
-    
-    public function test_iterate_ReverseNumericalArrayIterator_producer(): void
-    {
-        self::assertSame(
-            [2 => 'c', 1 => 'b', 0 => 'a'],
-            \iterator_to_array(new ReverseNumericalArrayIterator(['a', 'b', 'c']))
-        );
     }
     
     public function test_iterate_IteratorAdapter_producer(): void

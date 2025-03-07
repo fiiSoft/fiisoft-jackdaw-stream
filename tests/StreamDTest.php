@@ -15,9 +15,7 @@ use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Operation\Special\Assert\AssertionFailed;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
-use FiiSoft\Jackdaw\Producer\Internal\ReverseArrayIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
-use FiiSoft\Jackdaw\Producer\Internal\ReverseNumericalArrayIterator;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Registry\Registry;
@@ -1070,13 +1068,6 @@ final class StreamDTest extends TestCase
         self::assertSame(['a', 'b', 'c', 'b', 'a'], $producer->stream()->onError(OnError::skip())->toArrayAssoc());
     }
     
-    public function test_ReverseNumericalArrayIterator_with_reindex_and_onerror_handler(): void
-    {
-        $producer = new ReverseNumericalArrayIterator(['a', 'b', 'c', 'd'], true);
-        
-        self::assertSame(['d', 'c', 'b', 'a'], $producer->stream()->onError(OnError::skip())->toArrayAssoc());
-    }
-    
     /**
      * @dataProvider getDataForTestIterateProducerWithOnErrorHandler
      */
@@ -1113,15 +1104,13 @@ final class StreamDTest extends TestCase
         
         yield 'QueueProducer' => [Producers::queue()->append('a', 1)->append('b', 3)->append('c', 5)];
         
-        yield 'ReverseArrayIterator' => [new ReverseArrayIterator(\array_reverse($data, true))];
-        
         yield 'ReverseItemsIterator' => [new ReverseItemsIterator(\array_reverse(self::items($data)))];
         
         yield 'MultiProducer' => [
             Producers::multiSourced(
                 Producers::queue()->append('a', 1),
                 Producers::combinedFrom([3], ['b']),
-                new ReverseArrayIterator([5 => 'c']),
+                [5 => 'c']
             )
         ];
         

@@ -16,9 +16,7 @@ use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\SingleItemBuffer;
 use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
 use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
-use FiiSoft\Jackdaw\Producer\Internal\ReverseArrayIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
-use FiiSoft\Jackdaw\Producer\Internal\ReverseNumericalArrayIterator;
 use FiiSoft\Jackdaw\Producer\MultiProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
@@ -166,9 +164,7 @@ final class DestroyTest extends TestCase
             'BucketListIterator' => [new BucketListIterator([new Bucket(), new Bucket(), new Bucket()])],
             'CircularBufferIterator' => [new CircularBufferIterator(self::convertToItems(['a', 'b', 'c']), 3, 1)],
             'ForwardItemsIterator' => [new ForwardItemsIterator(self::convertToItems([1, 2, 3]))],
-            'ReverseArrayIterator' => [new ReverseArrayIterator(['a', 'b', 'c'])],
             'ReverseItemsIterator' => [new ReverseItemsIterator(self::convertToItems(['a', 'b', 'c']))],
-            'ReverseNumericalArrayIterator' => [new ReverseNumericalArrayIterator(['a', 'b', 'c'])],
             'ArrayIteratorAdapter' => [Producers::getAdapter(new \ArrayIterator(['a', 'b', 'c']))],
             'TraversableAdapter' => [Producers::getAdapter(new \ArrayObject(['a', 'b', 'c']))],
         ];

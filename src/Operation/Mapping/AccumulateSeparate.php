@@ -14,7 +14,7 @@ abstract class AccumulateSeparate extends BaseOperation implements Reindexable
     /** @var array<string|int, mixed> */
     protected array $data = [];
     
-    protected int $index = 0;
+    protected int $index = -1;
     
     private bool $reindex;
     
@@ -29,7 +29,7 @@ abstract class AccumulateSeparate extends BaseOperation implements Reindexable
         if ($signal->isEmpty && !empty($this->data)) {
             $signal->resume();
             
-            $signal->item->key = $this->index++;
+            $signal->item->key = ++$this->index;
             $signal->item->value = $this->data;
             $this->data = [];
             

@@ -19,10 +19,11 @@ final class RandomUuid extends LimitedProducer
     
     public function getIterator(): \Generator
     {
-        $count = 0;
+        $count = -1;
+        $limit = $this->limit - 1;
         
-        while ($count !== $this->limit) {
-            yield $count++ => $this->provider->create();
+        while ($count !== $limit) {
+            yield ++$count => $this->provider->create();
         }
     }
 }

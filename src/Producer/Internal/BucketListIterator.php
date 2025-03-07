@@ -20,10 +20,10 @@ final class BucketListIterator extends BaseProducer
     
     public function getIterator(): \Generator
     {
-        $index = 0;
+        $index = -1;
         
         foreach ($this->buckets as $bucket) {
-            yield $index++ => $bucket->data;
+            yield ++$index => $bucket->data;
         }
     }
     

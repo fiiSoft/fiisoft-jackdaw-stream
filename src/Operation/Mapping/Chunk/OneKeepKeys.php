@@ -10,7 +10,7 @@ final class OneKeepKeys extends Chunk
     public function handle(Signal $signal): void
     {
         $signal->item->value = [$signal->item->key => $signal->item->value];
-        $signal->item->key = $this->index++;
+        $signal->item->key = ++$this->index;
         
         $this->next->handle($signal);
     }
@@ -18,7 +18,7 @@ final class OneKeepKeys extends Chunk
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            yield $this->index++ => [$key => $value];
+            yield ++$this->index => [$key => $value];
         }
     }
 }

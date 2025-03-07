@@ -24,10 +24,11 @@ final class RandomInt extends LimitedProducer
     
     public function getIterator(): \Generator
     {
-        $count = 0;
+        $count = -1;
+        $limit = $this->limit - 1;
         
-        while ($count !== $this->limit) {
-            yield $count++ => \random_int($this->min, $this->max);
+        while ($count !== $limit) {
+            yield ++$count => \random_int($this->min, $this->max);
         }
     }
 }

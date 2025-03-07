@@ -9,7 +9,7 @@ final class MemoReaderAdapter extends BaseProducer
 {
     private MemoReader $reader;
     
-    private int $index = 0;
+    private int $index = -1;
     
     public function __construct(MemoReader $reader)
     {
@@ -21,7 +21,7 @@ final class MemoReaderAdapter extends BaseProducer
         $value = $this->reader->read();
         
         while ($value !== null) {
-            yield $this->index++ => $value;
+            yield ++$this->index => $value;
             
             $value = $this->reader->read();
         }

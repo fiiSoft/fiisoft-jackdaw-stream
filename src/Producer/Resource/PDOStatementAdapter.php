@@ -17,13 +17,13 @@ final class PDOStatementAdapter extends BaseProducer
     
     public function getIterator(): \Generator
     {
-        $count = 0;
+        $count = -1;
         
         while (true) {
             $row = $this->statement->fetch($this->fetchMode);
             
             if ($row !== false) {
-                yield $count++ => $row;
+                yield ++$count => $row;
             } else {
                 break;
             }

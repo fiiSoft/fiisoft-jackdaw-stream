@@ -15,7 +15,6 @@ use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Operation\Special\Assert\AssertionFailed;
-use FiiSoft\Jackdaw\Producer\Internal\ReverseArrayIterator;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Registry\Registry;
@@ -1941,17 +1940,6 @@ final class StreamFTest extends TestCase
             ->last();
         
         self::assertSame([0 => 3], $last->get());
-    }
-    
-    public function test_ReverseArrayIterator_notEmpty_reindex_with_onerror_handler(): void
-    {
-        $producer = new ReverseArrayIterator([3 => 'a', 'b', 'c'], true);
-        
-        self::assertSame([
-            0 => 'c',
-            1 => 'b',
-            2 => 'a',
-        ], $producer->stream()->onError(OnError::skip())->toArrayAssoc());
     }
     
     public function test_ReadMany_between_filters(): void

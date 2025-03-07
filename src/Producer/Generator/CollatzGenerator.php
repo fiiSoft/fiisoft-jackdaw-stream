@@ -11,7 +11,7 @@ use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 final class CollatzGenerator extends BaseProducer
 {
     private ?int $startNumber = null;
-    private int $count = 0;
+    private int $count = -1;
     
     public function __construct(?int $startNumber = null)
     {
@@ -26,7 +26,7 @@ final class CollatzGenerator extends BaseProducer
     {
         $number = $this->startNumber ?? $this->findStartNumber();
     
-        yield $this->count++ => $number;
+        yield ++$this->count => $number;
     
         while ($number > 1) {
             if (($number & 1) === 0) {
@@ -35,7 +35,7 @@ final class CollatzGenerator extends BaseProducer
                 $number = (3 * $number + 1);
             }
     
-            yield $this->count++ => $number;
+            yield ++$this->count => $number;
         }
     }
     

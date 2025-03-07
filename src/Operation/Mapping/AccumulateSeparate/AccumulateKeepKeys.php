@@ -13,7 +13,7 @@ final class AccumulateKeepKeys extends Accumulate
         if ($this->filter->isAllowed($item->value, $item->key)) {
             $this->data[$item->key] = $item->value;
         } elseif (!empty($this->data)) {
-            $item->key = $this->index++;
+            $item->key = ++$this->index;
             $item->value = $this->data;
             $this->data = [];
             
@@ -27,14 +27,14 @@ final class AccumulateKeepKeys extends Accumulate
             if ($this->filter->isAllowed($value, $key)) {
                 $this->data[$key] = $value;
             } elseif (!empty($this->data)) {
-                yield $this->index++ => $this->data;
+                yield ++$this->index => $this->data;
                 
                 $this->data = [];
             }
         }
         
         if (!empty($this->data)) {
-            yield $this->index++ => $this->data;
+            yield ++$this->index => $this->data;
             
             $this->data = [];
         }

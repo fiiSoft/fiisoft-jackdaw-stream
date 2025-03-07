@@ -19,7 +19,7 @@ abstract class Chunk extends BaseOperation implements Reindexable
     /** @var array<string|int, mixed> */
     protected array $chunked = [];
     
-    protected int $index = 0;
+    protected int $index = -1;
     protected int $count = 0;
     
     private bool $reindex;
@@ -58,7 +58,7 @@ abstract class Chunk extends BaseOperation implements Reindexable
         if ($signal->isEmpty && !empty($this->chunked)) {
             $signal->resume();
             
-            $signal->item->key = $this->index++;
+            $signal->item->key = ++$this->index;
             $signal->item->value = $this->chunked;
             
             $this->count = 0;

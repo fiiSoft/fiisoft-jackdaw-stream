@@ -13,7 +13,7 @@ final class SingleAggregate extends Aggregate
         
         if (isset($this->keys[$item->key])) {
             $item->value = [$item->key => $item->value];
-            $item->key = $this->index++;
+            $item->key = ++$this->index;
             
             $this->next->handle($signal);
         }
@@ -23,7 +23,7 @@ final class SingleAggregate extends Aggregate
     {
         foreach ($stream as $key => $value) {
             if (isset($this->keys[$key])) {
-                yield $this->index++ => [$key => $value];
+                yield ++$this->index => [$key => $value];
             }
         }
     }

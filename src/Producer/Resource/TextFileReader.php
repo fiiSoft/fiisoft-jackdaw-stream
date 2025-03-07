@@ -47,20 +47,20 @@ final class TextFileReader extends BaseProducer
             return;
         }
         
-        $lineNumber = 0;
+        $lineNumber = -1;
         
         if ($this->readBytes !== null) {
             LOOP_1:
             $value = \fgets($this->resource, $this->readBytes);
             if ($value !== false) {
-                yield $lineNumber++ => $value;
+                yield ++$lineNumber => $value;
                 goto LOOP_1;
             }
         } else {
             LOOP_2:
             $value = \fgets($this->resource);
             if ($value !== false) {
-                yield $lineNumber++ => $value;
+                yield ++$lineNumber => $value;
                 goto LOOP_2;
             }
         }

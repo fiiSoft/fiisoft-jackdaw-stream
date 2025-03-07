@@ -21,7 +21,7 @@ abstract class Uptrends extends BaseOperation implements Reindexable
     /** @var array<string|int, mixed> */
     protected array $trend = [];
     
-    protected int $index = 0;
+    protected int $index = -1;
     protected bool $downtrend;
     
     private bool $reindex;
@@ -56,7 +56,7 @@ abstract class Uptrends extends BaseOperation implements Reindexable
             }
             
             $signal->resume();
-            $signal->item->key = $this->index++;
+            $signal->item->key = ++$this->index;
             $signal->item->value = $this->trend;
             
             $this->next->handle($signal);

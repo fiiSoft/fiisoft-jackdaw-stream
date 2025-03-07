@@ -24,8 +24,8 @@ final class ReverseItemsIterator extends BaseProducer
     public function getIterator(): \Generator
     {
         if ($this->reindex) {
-            for ($index = 0, $i = \count($this->items) - 1; $i >= 0; --$i) {
-                yield $index++ => $this->items[$i]->value;
+            for ($index = -1, $i = \count($this->items) - 1; $i >= 0; --$i) {
+                yield ++$index => $this->items[$i]->value;
             }
         } else {
             for ($i = \count($this->items) - 1; $i >= 0; --$i) {

@@ -10,7 +10,7 @@ final class Tokenizer extends BaseProducer
     private string $string;
     
     private bool $keepIndex = false;
-    private int $index = 0;
+    private int $index = -1;
     
     public function __construct(string $tokens, string $string = '')
     {
@@ -21,13 +21,13 @@ final class Tokenizer extends BaseProducer
     public function getIterator(): \Generator
     {
         if (!$this->keepIndex) {
-            $this->index = 0;
+            $this->index = -1;
         }
         
         $value = \strtok($this->string, $this->tokens);
         
         while ($value !== false) {
-            yield $this->index++ => $value;
+            yield ++$this->index => $value;
         
             $value = \strtok($this->tokens);
         }

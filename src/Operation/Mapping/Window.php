@@ -17,7 +17,7 @@ final class Window extends BaseOperation implements ItemBufferClient
     private int $size;
     private int $step;
     
-    private int $index = 0;
+    private int $index = -1;
     private int $count = 0;
     
     private bool $notFullYet = true;
@@ -63,7 +63,7 @@ final class Window extends BaseOperation implements ItemBufferClient
                 $this->notFullYet = false;
             }
             
-            $signal->item->key = $this->index++;
+            $signal->item->key = ++$this->index;
             $signal->item->value = $this->buffer->fetchData($this->reindex);
             
             $this->next->handle($signal);
@@ -84,7 +84,7 @@ final class Window extends BaseOperation implements ItemBufferClient
                     $this->notFullYet = false;
                 }
                 
-                yield $this->index++ => $this->buffer->fetchData($this->reindex);
+                yield ++$this->index => $this->buffer->fetchData($this->reindex);
             }
         }
         
@@ -97,7 +97,7 @@ final class Window extends BaseOperation implements ItemBufferClient
             $this->count = 0;
             $this->buffer->clear();
             
-            yield $this->index++ => $value;
+            yield ++$this->index => $value;
         }
     }
     
@@ -109,7 +109,7 @@ final class Window extends BaseOperation implements ItemBufferClient
         ) {
             $signal->resume();
             
-            $signal->item->key = $this->index++;
+            $signal->item->key = ++$this->index;
             $signal->item->value = $this->buffer->fetchData(
                 $this->reindex,
                 $this->notFullYet ? 0 : $this->size - $this->count

@@ -46,54 +46,55 @@ final class TimeIterator extends LimitedProducer
      */
     public function getIterator(): \Generator
     {
-        $count = 0;
+        $count = -1;
+        $limit = $this->limit - 1;
         $current = $this->startDate;
         
         if ($this->endDate !== null) {
             if ($this->decrement) {
-                if ($count < $this->limit && $current >= $this->endDate) {
-                    yield $count++ => $current;
+                if ($count < $limit && $current >= $this->endDate) {
+                    yield ++$count => $current;
                     
-                    while ($count < $this->limit) {
+                    while ($count < $limit) {
                         $current = $current->sub($this->interval);
                         
                         if ($current < $this->endDate) {
                             break;
                         }
                         
-                        yield $count++ => $current;
+                        yield ++$count => $current;
                     }
                 }
-            } elseif ($count < $this->limit && $current <= $this->endDate) {
-                yield $count++ => $current;
+            } elseif ($count < $limit && $current <= $this->endDate) {
+                yield ++$count => $current;
                 
-                while ($count < $this->limit) {
+                while ($count < $limit) {
                     $current = $current->add($this->interval);
                     
                     if ($current > $this->endDate) {
                         break;
                     }
                     
-                    yield $count++ => $current;
+                    yield ++$count => $current;
                 }
             }
         } elseif ($this->decrement) {
-            if ($count < $this->limit) {
-                yield $count++ => $current;
+            if ($count < $limit) {
+                yield ++$count => $current;
                 
-                while ($count < $this->limit) {
+                while ($count < $limit) {
                     $current = $current->sub($this->interval);
                     
-                    yield $count++ => $current;
+                    yield ++$count => $current;
                 }
             }
-        } elseif ($count < $this->limit) {
-            yield $count++ => $current;
+        } elseif ($count < $limit) {
+            yield ++$count => $current;
             
-            while ($count < $this->limit) {
+            while ($count < $limit) {
                 $current = $current->add($this->interval);
                 
-                yield $count++ => $current;
+                yield ++$count => $current;
             }
         }
     }
