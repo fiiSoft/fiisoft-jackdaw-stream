@@ -1952,4 +1952,9 @@ final class StreamFTest extends TestCase
         self::assertSame('BDFHJLN', Stream::from($data)->onlyStrings()->readMany(3)->only($big)->toString(''));
         self::assertSame('BDHJLN', Stream::from($data)->onlyStrings()->readMany(4)->only($big)->toString(''));
     }
+    
+    public function test_sortLimited_with_one_item(): void
+    {
+        self::assertSame([3 => 'a'], Stream::from([3 => 'a'])->best(100)->toArrayAssoc());
+    }
 }

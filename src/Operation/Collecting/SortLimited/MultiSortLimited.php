@@ -113,6 +113,10 @@ final class MultiSortLimited extends SortLimited
     
     private function sortItems(): void
     {
+        if (\count($this->items) < 2) {
+            return;
+        }
+        
         $comparator = ItemComparatorFactory::getForSorting($this->sorting);
         
         \usort($this->items, [$comparator, 'compare']);
