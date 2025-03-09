@@ -6,6 +6,8 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mapper;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Mapper\ReindexKeys\ReindexKeysSimple;
+use FiiSoft\Jackdaw\Mapper\Slice;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 
 final class Map extends BaseOperation
@@ -39,6 +41,11 @@ final class Map extends BaseOperation
     
     public function mergeWith(Map $other): bool
     {
+        if ($this->mapper instanceof Slice && $other->mapper instanceof ReindexKeysSimple) {
+            $this->mapper->reindex();
+            return true;
+        }
+        
         return $this->mapper->mergeWith($other->mapper);
     }
 }

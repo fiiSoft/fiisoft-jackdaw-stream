@@ -23,4 +23,11 @@ final class SequenceMemoAdapter extends StateMapper
     {
         return $this->memo->toArray();
     }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            yield $key => $this->memo->toArray();
+        }
+    }
 }

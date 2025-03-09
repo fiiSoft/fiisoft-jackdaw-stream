@@ -14,6 +14,13 @@ final class Key extends StatelessMapper
         return $key;
     }
     
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $_) {
+            yield $key => $key;
+        }
+    }
+    
     public function mergeWith(Mapper $other): bool
     {
         return $other instanceof self;

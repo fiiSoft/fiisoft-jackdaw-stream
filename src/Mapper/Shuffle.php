@@ -22,4 +22,22 @@ final class Shuffle extends StatelessMapper
         
         return $value;
     }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            if (\is_array($value)) {
+                \shuffle($value);
+                yield $key => $value;
+            } elseif (\is_string($value)) {
+                yield $key => \str_shuffle($value);
+            } elseif ($value instanceof \Traversable) {
+                $value = \iterator_to_array($value);
+                \shuffle($value);
+                yield $key => $value;
+            } else {
+                yield $key => $value;
+            }
+        }
+    }
 }

@@ -125,6 +125,15 @@ final class PipeTest extends TestCase
 
         yield 'MakeTuple_UnpackTuple' => [OP::makeTuple(), OP::unpackTuple()];
 
+        yield 'Map_Slice' => [OP::map(Mappers::skip(2)), OP::map(Mappers::limit(3)), Map::class];
+        
+        yield 'Map_Slice_Map_ReindexKeys_1' => [
+            OP::map(Mappers::skip(2)), OP::map(Mappers::reindexKeys()), Map::class
+        ];
+        yield 'Map_Slice_Map_ReindexKeys_2' => [
+            OP::map(Mappers::skip(2)), OP::map(Mappers::reindexKeys(1)), MapMany::class
+        ];
+        
         yield 'MapFieldWhen_normal' => [OP::mapFieldWhen('foo', 'is_string', $mapper), MapFieldWhen::class];
         yield 'MapFieldWhen_barren' => [OP::mapFieldWhen('foo', 'is_string', $mapper, $mapper), Map::class];
 
@@ -285,6 +294,9 @@ final class PipeTest extends TestCase
         yield 'Shuffle_Shuffle' => [OP::shuffle(), OP::shuffle(), Shuffle::class];
         yield 'Shuffle_Sort' => [OP::shuffle(), OP::sort(), Sort::class];
         yield 'Shuffle_SortLimited' => [OP::shuffle(), OP::sortLimited(3), SortLimited::class];
+        
+        yield 'SkipNth_2' => [OP::skipNth(2), EveryNth::class];
+        yield 'SkipNth_3_SkipNth_2' => [OP::skipNth(3), OP::skipNth(2), EveryNth::class];
         
         yield 'Sort_Count' => [OP::sort(), OP::count($stream), Count::class];
         yield 'Sort_Find' => [OP::sort(), OP::find($stream, 'foo'), Find::class];

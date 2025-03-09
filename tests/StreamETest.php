@@ -16,6 +16,8 @@ use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
+use FiiSoft\Jackdaw\Mapper\Exception\MapperExceptionFactory;
+use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
@@ -1953,5 +1955,49 @@ final class StreamETest extends TestCase
     public function test_shuffle_on_empty_stream(): void
     {
         self::assertSame('', Stream::empty()->shuffle()->toString());
+    }
+    
+    public function test_map_reverse_strings(): void
+    {
+        $result = Stream::from(['qwerty', 'uiop', 'asdfghjkl'])
+            ->map(Mappers::reverse())
+            ->toArray();
+        
+        self::assertSame(['ytrewq', 'poiu', 'lkjhgfdsa'], $result);
+    }
+    
+    public function test_map_reverse_throws_exception_on_invalid_value(): void
+    {
+        $this->expectExceptionObject(MapperExceptionFactory::unableToReverse(15));
+        
+        Stream::from(['aaaa', ['a', 'b', 'c'], 15])->map(Mappers::reverse())->run();
+    }
+    
+    public function test_map_shuffle_array_values(): void
+    {
+        $item = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'];
+        
+        self::assertNotSame($item, Stream::from([$item])->map(Mappers::shuffle())->first()->get());
+    }
+    
+    public function test_map_shuffle_string_values(): void
+    {
+        $item = 'abcdefghijklmnop';
+        
+        self::assertNotSame($item, Stream::from([$item])->map(Mappers::shuffle())->first()->get());
+    }
+    
+    public function test_map_shuffle_Iterator_values(): void
+    {
+        $item = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'];
+        
+        self::assertNotSame($item, Stream::from([new \ArrayIterator($item)])->map(Mappers::shuffle())->first()->get());
+    }
+    
+    public function test_map_shuffle_with_element_which_cannot_be_shuffled_returns_such_element(): void
+    {
+        $data = [6, 2, 8, 4, 6];
+        
+        self::assertSame($data, Stream::from($data)->map(Mappers::shuffle())->toArrayAssoc());
     }
 }

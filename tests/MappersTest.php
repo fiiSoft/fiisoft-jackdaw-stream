@@ -256,6 +256,11 @@ final class MappersTest extends TestCase
         }
     }
     
+    public function test_Reverse_can_handle_array(): void
+    {
+        self::assertSame([3 => 'd', 2 => 'c', 1 => 'b', 0 => 'a'], Mappers::reverse()->map(['a', 'b', 'c', 'd']));
+    }
+    
     public function test_Reverse_can_handle_string(): void
     {
         self::assertSame('dcba', Mappers::reverse()->map('abcd'));
@@ -875,5 +880,66 @@ final class MappersTest extends TestCase
         $this->expectExceptionObject(InvalidParamException::byName('step'));
         
         Mappers::increment(0);
+    }
+    
+    public function test_mapper_skip_throws_exception_when_param_length_is_less_than_1(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::describe('length', 0));
+        
+        Mappers::skip(0);
+    }
+    
+    public function test_mapper_slice_throws_exception_when_param_offset_is_less_than_0(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::describe('offset', -1));
+        
+        Mappers::slice(-1);
+    }
+    
+    public function test_mapper_slice_throws_exception_when_param_length_is_less_than_1(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::describe('length', 0));
+        
+        Mappers::slice(0, 0);
+    }
+    
+    public function test_when_skip_limit_slice_mappers_are_equal(): void
+    {
+        self::assertTrue(Mappers::skip(1)->equals(Mappers::skip(1)));
+        self::assertTrue(Mappers::skip(1)->equals(Mappers::slice(1)));
+        
+        self::assertTrue(Mappers::limit(3)->equals(Mappers::limit(3)));
+        self::assertTrue(Mappers::limit(3)->equals(Mappers::slice(0, 3)));
+        
+        self::assertTrue(Mappers::slice(0)->equals(Mappers::slice(0)));
+        self::assertTrue(Mappers::slice(2, 5)->equals(Mappers::slice(2, 5)));
+    }
+    
+    public function test_when_skip_limit_slice_mappers_are_not_equal(): void
+    {
+        self::assertFalse(Mappers::skip(1)->equals(Mappers::skip(2)));
+        self::assertFalse(Mappers::skip(1)->equals(Mappers::skip(1, true)));
+        self::assertFalse(Mappers::skip(1)->equals(Mappers::slice(2)));
+        self::assertFalse(Mappers::skip(1)->equals(Mappers::slice(1, null, true)));
+        
+        self::assertFalse(Mappers::limit(3)->equals(Mappers::limit(2)));
+        self::assertFalse(Mappers::limit(3)->equals(Mappers::limit(3, true)));
+        self::assertFalse(Mappers::limit(3)->equals(Mappers::slice(0, 2)));
+        self::assertFalse(Mappers::limit(3)->equals(Mappers::slice(0, 3, true)));
+        
+        self::assertFalse(Mappers::slice(0)->equals(Mappers::slice(0, 1)));
+        self::assertFalse(Mappers::slice(0)->equals(Mappers::slice(0, null, true)));
+        self::assertFalse(Mappers::slice(2, 5)->equals(Mappers::slice(2, 5, true)));
+    }
+    
+    public function test_ApplyForEach_equals(): void
+    {
+        $mapper = Mappers::forEach(Mappers::toInt());
+        
+        self::assertTrue($mapper->equals($mapper));
+        self::assertTrue($mapper->equals(Mappers::forEach(Mappers::toInt())));
+        
+        self::assertFalse($mapper->equals(Mappers::forEach('strtoupper')));
+        self::assertFalse($mapper->equals(Mappers::concat()));
     }
 }

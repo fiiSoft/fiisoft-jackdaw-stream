@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Mapper;
 
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Mapper\Adapter\DiscriminatorAdapter;
@@ -397,5 +398,43 @@ final class Mappers
     public static function byArgs(callable $mapper): Mapper
     {
         return new ByArgs($mapper);
+    }
+    
+    /**
+     * Get rid of $length first elements of an array value.
+     * Optionally, it can reindex remaining elements numerically.
+     */
+    public static function skip(int $length, bool $reindex = false): Mapper
+    {
+        if ($length < 1) {
+            throw InvalidParamException::describe('length', $length);
+        }
+        
+        return self::slice($length, null, $reindex);
+    }
+    
+    /**
+     * Cut off all elements after first $limit.
+     * Optionally, it can reindex remaining elements numerically.
+     */
+    public static function limit(int $limit, bool $reindex = false): Mapper
+    {
+        return self::slice(0, $limit, $reindex);
+    }
+    
+    /**
+     * A convinient way to extract a slice of an array value.
+     */
+    public static function slice(int $offset, ?int $length = null, bool $reindex = false): Mapper
+    {
+        return new Slice($offset, $length, $reindex);
+    }
+    
+    /**
+     * @param MapperReady|callable|iterable|mixed $mapper
+     */
+    public static function forEach($mapper): Mapper
+    {
+        return new ApplyForEach($mapper);
     }
 }

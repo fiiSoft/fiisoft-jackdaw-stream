@@ -714,6 +714,13 @@ final class OperationsTest extends TestCase
         OP::everyNth(0);
     }
     
+    public function test_SkipNth_throws_exception_when_param_num_is_invalid(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::byName('num'));
+        
+        OP::skipNth(1);
+    }
+    
     public function test_FilterBy_throws_exception_when_param_field_is_invalid(): void
     {
         $field = ['a'];

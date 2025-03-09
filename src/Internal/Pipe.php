@@ -8,7 +8,7 @@ use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Mapper\Tokenize as TokenizeMapper;
 use FiiSoft\Jackdaw\Mapper\Value;
 use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Gather, Reverse, Segregate, ShuffleAll, Sort, SortLimited, Tail};
-use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, FilterByMany, FilterMany, FilterOp, Omit, OmitReps, Skip,
+use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, FilterByMany, FilterMany, FilterOp, Omit, OmitReps, Skip, SkipNth,
     StackableFilter, StackableFilterBy, Unique};
 use FiiSoft\Jackdaw\Operation\Internal\{Limitable, Operations as OP, Pipe\Initial, PossiblyInversible, Reindexable,
     Shuffle};
@@ -522,6 +522,16 @@ final class Pipe implements Destroyable
             }
             if ($this->last instanceof EveryNth) {
                 $this->last->applyNum($next->num());
+                return false;
+            }
+        } elseif ($next instanceof SkipNth) {
+            if ($next->num() === 2) {
+                if ($this->last instanceof SkipNth && $this->last->num() === 3) {
+                    $this->removeLast();
+                    $this->stream->everyNth(3);
+                } else {
+                    $this->stream->everyNth(2);
+                }
                 return false;
             }
         } elseif ($next instanceof CountableRead) {

@@ -886,6 +886,12 @@ final class Stream extends StreamSource
         return $this;
     }
     
+    public function skipNth(int $num): Stream
+    {
+        $this->chainOperation(Operations::skipNth($num));
+        return $this;
+    }
+    
     /**
      * @param FilterReady|callable|mixed $filter
      */

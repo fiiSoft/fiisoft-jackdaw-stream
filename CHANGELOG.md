@@ -1,5 +1,13 @@
 # Changelog
 
+## 11.1.0
+
+- added Mappers::skip()
+- added Mappers::limit()
+- added Mappers::slice()
+- added Mappers::forEach()
+- added Stream::skipNth()
+
 ## 11.0.0
 
 - added Filters::keyIs()

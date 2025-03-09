@@ -22,4 +22,17 @@ final class Reverse extends StatelessMapper
         
         throw MapperExceptionFactory::unableToReverse($value);
     }
+    
+    protected function buildValueMapper(iterable $stream): iterable
+    {
+        foreach ($stream as $key => $value) {
+            if (\is_array($value)) {
+                yield $key => \array_reverse($value, true);
+            } elseif (\is_string($value)) {
+                yield $key => \strrev($value);
+            } else {
+                throw MapperExceptionFactory::unableToReverse($value);
+            }
+        }
+    }
 }

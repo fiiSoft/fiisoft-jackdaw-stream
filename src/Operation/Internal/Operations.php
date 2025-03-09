@@ -15,9 +15,8 @@ use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkReady, Gather, Reverse, Segregate, Sort, SortLimited,
     Tail};
-use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Extrema, FilterBy, FilterOp, FilterUntil,
-    FilterWhen, FilterWhile, Increasing, Maxima, Omit, OmitBy, OmitReps, OmitWhen, Skip, SkipUntil, SkipWhile, Unique,
-    Uptrends};
+use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Extrema, FilterBy, FilterOp, FilterUntil, FilterWhen, FilterWhile,
+    Increasing, Maxima, Omit, OmitBy, OmitReps, OmitWhen, Skip, SkipNth, SkipUntil, SkipWhile, Unique, Uptrends};
 use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate\Accumulate, AccumulateSeparate\Separate, Aggregate, Chunk,
     ChunkBy, Classify, Flat, Flip, Map, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapWhen, MapWhileUntil\MapUntil,
@@ -398,6 +397,11 @@ final class Operations
     public static function everyNth(int $num): EveryNth
     {
         return new EveryNth($num);
+    }
+    
+    public static function skipNth(int $num): Operation
+    {
+        return new SkipNth($num);
     }
     
     /**
