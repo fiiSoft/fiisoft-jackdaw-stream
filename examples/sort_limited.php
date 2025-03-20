@@ -23,34 +23,22 @@ $memoryStart = memory_get_usage();
 //---------------------------------------------------------------------------------------
 
 //------ aimeos
-//$data = [];
-//
-//foreach ($reader($file) as $line) {
-//    $row = \Aimeos\Map::from([$line])
-//        ->map(static fn(string $line): array => json_decode($line, true, 512, JSON_THROW_ON_ERROR))
-//        ->filter(static fn(array $row): bool => $row['isVerified'])
-//        ->filter(static fn(array $row): bool => $row['credits'] >= 500000)
-//        ->toArray();
-//
-//    if (!empty($row)) {
-//        $data[] = $row[0];
-//    }
-//}
-//
-//$best = \Aimeos\Map::from($data)
-//    ->usort(static fn(array $a, array $b): int => $b['credits'] <=> $a['credits'] ?: $a['id'] <=> $b['id'])
-//    ->slice(0, 10_000)
-//    ->toArray();
-
-//------ bertptrs
-//$rows = (new \phpstreams\Stream($reader($file)))
+//$best = \Aimeos\Map::from($reader($file))
 //    ->map(static fn(string $line): array => json_decode($line, true, 512, JSON_THROW_ON_ERROR))
 //    ->filter(static fn(array $row): bool => $row['isVerified'])
 //    ->filter(static fn(array $row): bool => $row['credits'] >= 500000)
+//    ->usort(static fn(array $a, array $b): int => $b['credits'] <=> $a['credits'] ?: $a['id'] <=> $b['id'])
+//    ->take(10_000)
 //    ->toArray();
-//
-//usort($rows, static fn(array $a, array $b): int => $b['credits'] <=> $a['credits'] ?: $a['id'] <=> $b['id']);
-//$best = array_slice($rows, 0, 10_000);
+
+//------ bertptrs
+//$best = (new \phpstreams\Stream($reader($file)))
+//    ->map(static fn(string $line): array => json_decode($line, true, 512, JSON_THROW_ON_ERROR))
+//    ->filter(static fn(array $row): bool => $row['isVerified'])
+//    ->filter(static fn(array $row): bool => $row['credits'] >= 500000)
+//    ->sorted(static fn(array $a, array $b): int => $b['credits'] <=> $a['credits'] ?: $a['id'] <=> $b['id'])
+//    ->limit(10_000)
+//    ->toArray();
 
 //------ ebanx
 //$rows = \EBANX\Stream\Stream::of($reader($file))

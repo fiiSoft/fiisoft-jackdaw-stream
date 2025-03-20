@@ -7,7 +7,7 @@
     ],
     "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
     "license": "MIT",
-    "version": "11.1.0",
+    "version": "11.2.0",
     "authors": [
         {
             "name": "fiiSoft",
@@ -21,6 +21,7 @@
         "ext-mbstring": "*"
     },
     "suggest": {
+        "ext-ctype": "Used by some tests",
         "ext-pdo": "To use PDOStatementAdapter as Producer for Stream",
         "ramsey/uuid": "To use RandomUuid generator (backed by ramsey/uuid) as Producer for Stream",
         "symfony/uid": "To use RandomUuid generator (backed by symfony/uid) as Producer for Stream",

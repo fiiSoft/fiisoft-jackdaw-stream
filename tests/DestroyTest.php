@@ -13,8 +13,8 @@ use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
 use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\SingleItemBuffer;
-use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
-use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
+use FiiSoft\Jackdaw\Operation\Collecting\Segregate\BucketListIterator;
+use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use FiiSoft\Jackdaw\Producer\MultiProducer;
@@ -423,6 +423,20 @@ final class DestroyTest extends TestCase
         $stream->destroy();
     }
     
+    public function test_Fork_destroy_with_onerror_handler(): void
+    {
+        $stream = Stream::from(['a', 'b', 'c', 'd', 'e'])
+            ->onError(OnError::abort())
+            ->fork(
+                Discriminators::alternately(['odd', 'even']),
+                Reducers::concat()
+            );
+        
+        self::assertSame(['odd' => 'ace', 'even' => 'bd'], $stream->toArrayAssoc());
+        
+        $stream->destroy();
+    }
+    
     public function test_GroupBy_destroy(): void
     {
         $stream = Stream::from(['a', 'b', 'a', 'b', 'c'])->flip()->group();
@@ -700,6 +714,49 @@ final class DestroyTest extends TestCase
         self::assertSame([3, 4, 5, 6, 7, 6, 5, 4], $stream4->toArray());
         
         $stream4->destroy();
+    }
+    
+    public function test_ForkMatch_destroy(): void
+    {
+        $data = [5, 'Z', 2, 3, 'a', 1, 'B', 4, 'd'];
+        $expected = ['even' => 4, 'odd' => 1, 'upper' => 'Z-B', 'lower' => 'a-d'];
+        
+        $discriminator = static function ($value): string {
+            if (\is_int($value)) {
+                return ($value & 1) === 0 ? 'even' : 'odd';
+            } elseif (\is_string($value)) {
+                return \ctype_upper($value) ? 'upper' : 'lower';
+            } else {
+                return 'other';
+            }
+        };
+        
+        $handlers = [
+            'even' => Reducers::max(),
+            'odd' => Reducers::min(),
+            'other' => Collectors::values(),
+        ];
+        
+        $default = Reducers::concat('-');
+        
+        //stream1
+        $stream1 = Stream::from($data)
+            ->forkMatch($discriminator, $handlers, $default)
+            ->collect();
+        
+        self::assertSame($expected, $stream1->toArrayAssoc());
+        
+        $stream1->destroy();
+        
+        //stream2
+        $stream2 = Stream::from($data)
+            ->onError(OnError::abort())
+            ->forkMatch($discriminator, $handlers, $default)
+            ->collect();
+        
+        self::assertSame($expected, $stream2->toArrayAssoc());
+        
+        $stream2->destroy();
     }
     
     /**

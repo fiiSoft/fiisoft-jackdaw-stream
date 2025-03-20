@@ -18,8 +18,6 @@ $reader = static function ($fp): \Generator {
     }
 };
 
-$count = 0;
-
 $rows = (new Collection($reader(fopen(__DIR__.'/../var/testfile.txt', 'rb'))))
     ->map(static fn(string $line): array => json_decode($line, true, 512, JSON_THROW_ON_ERROR))
     ->filter(static fn(array $row): bool => $row['isVerified'])
@@ -28,19 +26,15 @@ $rows = (new Collection($reader(fopen(__DIR__.'/../var/testfile.txt', 'rb'))))
     ->filter(static fn(array $row): bool => $row['scoring'] >= 95.0)
     ->filter(static fn(array $row): bool => mb_strlen($row['name']) >= 10)
     ->map(static fn(array $row): array => ['id' => $row['id'], 'credits' => $row['credits']])
-    ->each(function () use (&$count) {
-        ++$count;
-    })
-    ->sortBy([['credits', 'desc'], ['id', 'asc']])
-    ->take(20);
+    ->sortBy([['credits', 'desc'], ['id', 'asc']]);
     
 echo 'best 20 rows: ', PHP_EOL;
 
-foreach ($rows as $row) {
+foreach ($rows->take(20) as $row) {
     echo 'id: ', $row['id'],' credits: ', $row['credits'], PHP_EOL;
 }
 
-echo PHP_EOL, 'total found rows: ', $count, PHP_EOL;
+echo PHP_EOL, 'total found rows: ', $rows->count(), PHP_EOL;
 
 $memoryStop = memory_get_usage();
 $timeStop = microtime(true);

@@ -43,4 +43,9 @@ final class OperationExceptionFactory
     {
         return InvalidParamException::create('FullAssocChecker can work only with four-argument callable');
     }
+    
+    public static function forkMatchHandlersCannotBeEmpty(): JackdawException
+    {
+        return InvalidParamException::create('Param handlers of forkMatch cannot be empty');
+    }
 }

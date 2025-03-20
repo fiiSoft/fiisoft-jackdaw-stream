@@ -2,8 +2,14 @@
 
 namespace FiiSoft\Test\Jackdaw;
 
+use FiiSoft\Jackdaw\Collector\Collectors;
+use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Memo\Memo;
+use FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter\IdleForkHandler;
+use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
+use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -321,5 +327,161 @@ final class StreamHTest extends TestCase
         
         $data = Stream::from($data)->skipNth(2)->toArray();
         self::assertSame([1, 37], $data);
+    }
+    
+    public function test_forkMatch_simple(): void
+    {
+        $result = Stream::from([6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9])
+            ->forkMatch(
+                Discriminators::evenOdd(),
+                [
+                    'even' => Reducers::min(),
+                    'odd' => Reducers::max(),
+                ]
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => 2,
+            'odd' => 9,
+        ], $result);
+    }
+    
+    public function test_forkMatch_simple_with_onerror_handler(): void
+    {
+        $result = Stream::from([6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9])
+            ->onError(OnError::abort())
+            ->forkMatch(
+                Discriminators::evenOdd(),
+                [
+                    'even' => Reducers::min(),
+                    'odd' => Reducers::max(),
+                ]
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => 2,
+            'odd' => 9,
+        ], $result);
+    }
+    
+    public function test_forkMatch_sophisticated(): void
+    {
+        $discriminator = static function ($value): string {
+            if (\is_string($value)) {
+                return 'string';
+            } elseif (\is_float($value)) {
+                return 'float';
+            } elseif (\is_int($value)) {
+                return ($value & 1) === 0 ? 'even' : 'odd';
+            } elseif (\is_bool($value)) {
+                return 'bool';
+            } else {
+                return 'uknown';
+            }
+        };
+        
+        $result = Stream::from([4, 'a', 3, null, 15.6, 'b', 'c', 9.24, false, 7, 'd', 6, true, 2.5, 'e', 5])
+            ->forkMatch(
+                $discriminator,
+                [
+                    'even' => Reducers::min(),
+                    'odd' => Reducers::max(),
+                    'string' => Stream::empty()->map('strtoupper')->reduce(Reducers::concat('|')),
+                    'float' => Collectors::values(),
+                    'bool' => Memo::sequence(),
+                ],
+                new IdleForkHandler()
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => 4,
+            'odd' => 7,
+            'string' => 'A|B|C|D|E',
+            'float' => [15.6, 9.24, 2.5],
+            'bool' => [8 => false, 12 => true],
+        ], $result);
+    }
+    
+    public function test_forkMatch_sophisticated_with_onerror_handler(): void
+    {
+        $discriminator = static function ($value): string {
+            if (\is_string($value)) {
+                return 'string';
+            } elseif (\is_float($value)) {
+                return 'float';
+            } elseif (\is_int($value)) {
+                return ($value & 1) === 0 ? 'even' : 'odd';
+            } elseif (\is_bool($value)) {
+                return 'bool';
+            } else {
+                return 'uknown';
+            }
+        };
+        
+        $result = Stream::from([4, 'a', 3, null, 15.6, 'b', 'c', 9.24, false, 7, 'd', 6, true, 2.5, 'e', 5])
+            ->onError(OnError::abort())
+            ->forkMatch(
+                $discriminator,
+                [
+                    'even' => Reducers::min(),
+                    'odd' => Reducers::max(),
+                    'string' => Stream::empty()->map('strtoupper')->reduce(Reducers::concat('|')),
+                    'float' => Collectors::values(),
+                    'bool' => Memo::sequence(),
+                ],
+                new IdleForkHandler()
+            )
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => 4,
+            'odd' => 7,
+            'string' => 'A|B|C|D|E',
+            'float' => [15.6, 9.24, 2.5],
+            'bool' => [8 => false, 12 => true],
+        ], $result);
+    }
+    
+    public function test_forkMatch_throws_exception_when_handler_is_missing(): void
+    {
+        $this->expectExceptionObject(OperationExceptionFactory::handlerIsNotDefined('other'));
+        
+        Stream::from([5, 2, 3, 'a', 1, 4])
+            ->forkMatch(static function ($value): string {
+                if (\is_int($value)) {
+                    return ($value & 1) === 0 ? 'even' : 'odd';
+                } else {
+                    return 'other';
+                }
+            }, [
+                'even' => Collectors::values(),
+                'odd' => Collectors::values(),
+            ])
+            ->run();
+    }
+    
+    public function test_forkMatch_throws_exception_when_handler_is_missing_with_onerror_handler(): void
+    {
+        $result = Stream::from([5, 2, 3, 'a', 1, 4])
+            ->onError(OnError::skip())
+            ->forkMatch(static function ($value): string {
+                if (\is_int($value)) {
+                    return ($value & 1) === 0 ? 'even' : 'odd';
+                } else {
+                    return 'other';
+                }
+            }, [
+                'even' => Collectors::values(),
+                'odd' => Collectors::values(),
+            ])
+            ->toArrayAssoc();
+        
+        self::assertSame([
+            'even' => [2, 4],
+            'odd' => [5, 3, 1],
+        ], $result);
     }
 }

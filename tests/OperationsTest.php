@@ -1044,6 +1044,13 @@ final class OperationsTest extends TestCase
         self::assertTrue($check2->filter->equals(Filters::isInt()));
     }
     
+    public function test_forkMatch_throws_exception_when_list_of_handlers_is_empty(): void
+    {
+        $this->expectExceptionObject(OperationExceptionFactory::forkMatchHandlersCannotBeEmpty());
+        
+        OP::forkMatch('is_string', []);
+    }
+    
     private function signal(): Signal
     {
         return new Signal(Stream::empty());

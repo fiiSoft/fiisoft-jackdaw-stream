@@ -18,28 +18,24 @@ $reader = static function ($fp): \Generator {
     }
 };
 
-$stream = (new Stream($reader(fopen(__DIR__.'/../var/testfile.txt', 'rb'))))
+$rows = (new Stream($reader(fopen(__DIR__.'/../var/testfile.txt', 'rb'))))
     ->map(static fn(string $line): array => json_decode($line, true, 512, JSON_THROW_ON_ERROR))
     ->filter(static fn(array $row): bool => $row['isVerified'])
     ->filter(static fn(array $row): bool => isset($row['facebookId']))
     ->filter(static fn(array $row): bool => $row['credits'] >= 500000)
     ->filter(static fn(array $row): bool => $row['scoring'] >= 95.0)
     ->filter(static fn(array $row): bool => mb_strlen($row['name']) >= 10)
-    ->map(static fn(array $row): array => ['id' => $row['id'], 'credits' => $row['credits']]);
-
-$rows = $stream->toArray();
-$count = \count($rows);
-
-usort($rows, static fn(array $a, array $b): int => $b['credits'] <=> $a['credits'] ?: $a['id'] <=> $b['id']);
-$rows = array_slice($rows, 0, 20);
+    ->map(static fn(array $row): array => ['id' => $row['id'], 'credits' => $row['credits']])
+    ->sorted(static fn(array $a, array $b): int => $b['credits'] <=> $a['credits'] ?: $a['id'] <=> $b['id'])
+    ->toArray();
 
 echo 'best 20 rows: ', PHP_EOL;
 
-foreach ($rows as $row) {
+foreach (array_slice($rows, 0, 20) as $row) {
     echo 'id: ', $row['id'],' credits: ', $row['credits'], PHP_EOL;
 }
 
-echo PHP_EOL, 'total found rows: ', $count, PHP_EOL;
+echo PHP_EOL, 'total found rows: ', count($rows), PHP_EOL;
 
 $memoryStop = memory_get_usage();
 $timeStop = microtime(true);

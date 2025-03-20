@@ -1227,6 +1227,16 @@ final class Stream extends StreamSource
     }
     
     /**
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
+     * @param array<string|int, ForkReady> $handlers
+     */
+    public function forkMatch($discriminator, array $handlers, ?ForkReady $prototype = null): Stream
+    {
+        $this->chainOperation(Operations::forkMatch($discriminator, $handlers, $prototype));
+        return $this;
+    }
+    
+    /**
      * Remember key and/or value of current element in passed writer.
      */
     public function remember(MemoWriter $memo): Stream

@@ -11,6 +11,7 @@ use FiiSoft\Jackdaw\Internal\Mode;
 use FiiSoft\Jackdaw\Mapper\Exception\MapperExceptionFactory;
 use FiiSoft\Jackdaw\Matcher\MatchBy;
 use FiiSoft\Jackdaw\Memo\Memo;
+use FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter\IdleForkHandler;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
 use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterConditionalData;
 use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterFieldData;
@@ -771,5 +772,25 @@ final class OtherTest extends TestCase
         self::assertSame(4, (int) \round((1 + 6) / 2));
         self::assertSame(4, (int) \round((1 + 7) / 2));
         self::assertSame(5, (int) \round((1 + 8) / 2));
+    }
+    
+    public function test_IdleForkHandler_never_returns_any_result(): void
+    {
+        //given
+        $handler = new IdleForkHandler();
+        
+        //when
+        $handler->accept('a', 1);
+        
+        //then
+        self::assertTrue($handler->isEmpty());
+        self::assertNull($handler->result());
+    }
+    
+    public function test_IdleForkHandler_create_always_returns_itself(): void
+    {
+        $handler = new IdleForkHandler();
+        
+        self::assertSame($handler, $handler->create());
     }
 }

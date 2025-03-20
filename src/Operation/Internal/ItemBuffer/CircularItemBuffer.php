@@ -3,7 +3,6 @@
 namespace FiiSoft\Jackdaw\Operation\Internal\ItemBuffer;
 
 use FiiSoft\Jackdaw\Internal\Item;
-use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Producer;
 
 abstract class CircularItemBuffer implements ItemBuffer

@@ -1,8 +1,7 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Producer\Internal;
+namespace FiiSoft\Jackdaw\Operation\Collecting\Segregate;
 
-use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
 use FiiSoft\Jackdaw\Producer\Tech\BaseProducer;
 
 final class BucketListIterator extends BaseProducer

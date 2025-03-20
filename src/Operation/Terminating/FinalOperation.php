@@ -218,6 +218,11 @@ abstract class FinalOperation extends LastOperation implements Operation
         return $this->stream->continueIteration($once);
     }
     
+    final protected function getStream(): Stream
+    {
+        return $this->stream;
+    }
+    
     final public function resume(): void
     {
         if (!$this->isResuming) {

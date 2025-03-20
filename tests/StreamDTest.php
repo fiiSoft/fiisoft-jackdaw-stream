@@ -13,7 +13,7 @@ use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Operation\Special\Assert\AssertionFailed;
-use FiiSoft\Jackdaw\Producer\Internal\CircularBufferIterator;
+use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\CircularBufferIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use FiiSoft\Jackdaw\Producer\Producers;

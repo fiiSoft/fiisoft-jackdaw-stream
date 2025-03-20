@@ -13,7 +13,7 @@ use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Limitable;
 use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
-use FiiSoft\Jackdaw\Producer\Internal\BucketListIterator;
+use FiiSoft\Jackdaw\Operation\Collecting\Segregate\BucketListIterator;
 
 final class Segregate extends BaseOperation implements Limitable, Reindexable
 {

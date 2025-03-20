@@ -1,5 +1,9 @@
 # Changelog
 
+## 11.2.0
+
+- added Stream::forkMatch()
+
 ## 11.1.0
 
 - added Mappers::skip()

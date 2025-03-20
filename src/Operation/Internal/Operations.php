@@ -13,8 +13,8 @@ use FiiSoft\Jackdaw\Internal\{Check, ForkCollaborator};
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Memo\MemoWriter;
-use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkReady, Gather, Reverse, Segregate, Sort, SortLimited,
-    Tail};
+use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkMatch, ForkReady, Gather, Reverse, Segregate, Sort,
+    SortLimited, Tail};
 use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Extrema, FilterBy, FilterOp, FilterUntil, FilterWhen, FilterWhile,
     Increasing, Maxima, Omit, OmitBy, OmitReps, OmitWhen, Skip, SkipNth, SkipUntil, SkipWhile, Unique, Uptrends};
 use FiiSoft\Jackdaw\Operation\LastOperation;
@@ -23,7 +23,7 @@ use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate\Accumulate, Accumulate
     MapWhileUntil\MapWhile, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window, Zip};
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{CollectIn, CollectKeysIn, CountIn, Dispatch, Dispatcher\HandlerReady, Feed,
-    FeedMany, Remember, RouteOne, RouteMany, SendTo, SendToMany, SendToMax, SendWhen, SendWhileUntil\SendUntil,
+    FeedMany, Remember, RouteMany, RouteOne, SendTo, SendToMany, SendToMax, SendWhen, SendWhileUntil\SendUntil,
     SendWhileUntil\SendWhile, StoreIn, Unzip};
 use FiiSoft\Jackdaw\Operation\Special\{Assert, Limit, ReadMany, ReadNext, ReadWhileUntil\ReadUntil,
     ReadWhileUntil\ReadWhile, WhileUntil\UntilTrue, WhileUntil\WhileTrue};
@@ -544,7 +544,16 @@ final class Operations
      */
     public static function fork($discriminator, ForkReady $prototype): Operation
     {
-        return Fork::create($discriminator, $prototype);
+        return new Fork($discriminator, $prototype);
+    }
+    
+    /**
+     * @param DiscriminatorReady|callable|array<string|int> $discriminator
+     * @param array<string|int, ForkReady> $handlers
+     */
+    public static function forkMatch($discriminator, array $handlers, ?ForkReady $prototype = null): Operation
+    {
+        return new ForkMatch($discriminator, $handlers, $prototype);
     }
     
     public static function remember(MemoWriter $memo): Operation

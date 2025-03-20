@@ -3,11 +3,18 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Exception\ImpossibleSituationException;
+use FiiSoft\Jackdaw\Stream;
 
 abstract class StreamPipe extends ForkCollaborator
 {
-    //StreamPipeAdapter->, *Result->, *FinalOperation->, *Stream->, *Source
+    //StreamPipeAdapter->, StreamFork->, *Result->, *FinalOperation->, *Stream->, *Source
     protected function prepareSubstream(bool $isLoop): void
+    {
+        throw ImpossibleSituationException::called(__METHOD__);
+    }
+    
+    //StreamFork->, *FinalOperation
+    protected function getStream(): Stream
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }

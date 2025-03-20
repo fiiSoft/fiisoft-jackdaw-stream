@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Producer\Internal;
+namespace FiiSoft\Jackdaw\Operation\Internal\ItemBuffer;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Item;
