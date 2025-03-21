@@ -17,7 +17,6 @@ Typically it starts with Stream::from(...). For example:
 Stream::from(Producers::sequentialInt())
     ->mapKey(static fn(int $n): int => ($n % 3 === 0 ? 2 : 0) | ($n % 5 === 0 ? 1 : 0))
     ->map(static fn(int $n, int $k): string => [$n, 'Buzz', 'Fizz', 'Fizz Buzz'][$k].', ')
-    ->call(Consumers::usleep(100_000)) //slow down a bit
     ->forEach(STDOUT);
 ```
 
