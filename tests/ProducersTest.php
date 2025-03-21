@@ -4,6 +4,7 @@ namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
@@ -1259,6 +1260,90 @@ final class ProducersTest extends TestCase
             ['-1 day'],
             [self::decrementInterval('P1D')],
         ];
+    }
+    
+    public function test_ReverseItemsIterator_can_reindex_keys_with_onerror_handler(): void
+    {
+        //given
+        $items = self::items([
+            3 => 'a',
+            2 => 'b',
+            4 => 'c',
+            1 => 'b',
+            0 => 'a',
+        ]);
+        
+        //when
+        $producer = new ReverseItemsIterator($items, true);
+        
+        //then
+        self::assertSame(['a', 'b', 'c', 'b', 'a'], $producer->stream()->onError(OnError::skip())->toArrayAssoc());
+    }
+    
+    /**
+     * @dataProvider getDataForTestIterateProducerWithOnErrorHandler
+     */
+    #[DataProvider('getDataForTestIterateProducerWithOnErrorHandler')]
+    public function test_iterate_producer_with_onerror_handler($producer): void
+    {
+        self::assertSame(
+            [1 => 'a', 3 => 'b', 5 => 'c'],
+            Producers::getAdapter($producer)->stream()->onError(OnError::skip())->toArrayAssoc()
+        );
+    }
+    
+    public static function getDataForTestIterateProducerWithOnErrorHandler(): \Generator
+    {
+        $data = [1 => 'a', 3 => 'b', 5 => 'c'];
+        
+        yield 'ArrayAdapter' => [$data];
+        yield 'ArrayIteratorAdapter' => [new \ArrayIterator($data)];
+        
+        yield 'CircularBufferIterator' => [
+            new CircularBufferIterator(self::items([5 => 'c', 1 => 'a', 3 => 'b']), 3, 1)
+        ];
+        
+        yield 'CombinedArrays' => [Producers::combinedFrom([1, 3, 5], ['a', 'b', 'c'])];
+        
+        yield 'CombinedGeneral' => [
+            Producers::combinedFrom(
+                Producers::sequentialInt(1, 2),
+                Producers::tokenizer(' ', 'a b c')
+            )
+        ];
+        
+        yield 'ForwardItemsIterator' => [new ForwardItemsIterator(self::items($data))];
+        
+        yield 'QueueProducer' => [Producers::queue()->append('a', 1)->append('b', 3)->append('c', 5)];
+        
+        yield 'ReverseItemsIterator' => [new ReverseItemsIterator(\array_reverse(self::items($data)))];
+        
+        yield 'MultiProducer' => [
+            Producers::multiSourced(
+                Producers::queue()->append('a', 1),
+                Producers::combinedFrom([3], ['b']),
+                [5 => 'c']
+            )
+        ];
+        
+        yield 'CallableAdapter' => [
+            Producers::getAdapter(static function () use ($data) {
+                yield from $data;
+            })
+        ];
+        
+        yield 'Flattener' => [Producers::flattener([1 => 'a', [3 => 'b', [5 => 'c']]])];
+        
+        yield 'ResultCasterAdapter' => [Producers::getAdapter(Stream::from($data)->collect())];
+    }
+    
+    public function test_iterate_second_time_on_closed_resource_producer_do_nothing(): void
+    {
+        $producer = Producers::resource(\fopen(__FILE__, 'rb'), true);
+        
+        self::assertGreaterThanOrEqual(__LINE__, $producer->stream()->count()->get());
+        
+        self::assertSame(0, Stream::from($producer)->onError(OnError::skip())->count()->get());
     }
     
     private static function decrementInterval(string $format): \DateInterval

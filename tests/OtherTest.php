@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Comparator\Sorting\By;
+use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
@@ -792,5 +793,25 @@ final class OtherTest extends TestCase
         $handler = new IdleForkHandler();
         
         self::assertSame($handler, $handler->create());
+    }
+    
+    public function test_clone_object_with_array_field(): void
+    {
+        $a = new class {
+            public array $arr = ['a'];
+        };
+        
+        $b = clone $a;
+        $b->arr[] = 'b';
+        
+        self::assertSame(['a'], $a->arr);
+        self::assertSame(['a', 'b'], $b->arr);
+    }
+    
+    public function test_IntNum_throws_exception_when_param_for_getAdapter_is_invalid(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::byName('value'));
+        
+        IntNum::getAdapter(15.0);
     }
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 11.3.0
+
+- added Stream::categorizeByKey()
+- added Stream::filterKey()
+- added Stream::omitKey()
+
 ## 11.2.0
 
 - added Stream::forkMatch()

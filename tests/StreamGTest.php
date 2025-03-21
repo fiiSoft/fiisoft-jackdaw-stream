@@ -106,7 +106,7 @@ final class StreamGTest extends TestCase
                 }
             })
             ->omit(null)
-            ->categorize(Discriminators::byKey())
+            ->categorizeByKey()
             ->toArrayAssoc();
         
         self::assertSame(self::CONSTANT_LENGTH_RESULT, $result);
@@ -132,7 +132,7 @@ final class StreamGTest extends TestCase
                 $seq->clear();
             })
             ->omit(null)
-            ->categorize(Discriminators::byKey())
+            ->categorizeByKey()
             ->toArrayAssoc();
         
         self::assertSame(self::CONSTANT_LENGTH_RESULT, $result);
@@ -176,7 +176,7 @@ final class StreamGTest extends TestCase
             ->classify($sequence->value(0))
             ->map($handler)
             ->omit(null)
-            ->categorize(Discriminators::byKey())
+            ->categorizeByKey()
             ->toArrayAssoc();
         
         self::assertSame(self::VARIABLE_LENGTH_RESULT, $result);
@@ -224,7 +224,7 @@ final class StreamGTest extends TestCase
                 $sequence->write($nextOperation->value()->read(), $nextOperation->key()->read());
             })
             ->omit(null)
-            ->categorize(Discriminators::byKey())
+            ->categorizeByKey()
             ->toArrayAssoc();
         
         self::assertSame(self::VARIABLE_LENGTH_RESULT, $result);
@@ -371,7 +371,7 @@ final class StreamGTest extends TestCase
                 '*' => '\array_product',
                 '-' => Reducers::generic(static fn(int $acc, int $value): int => $acc - $value),
             ])
-            ->categorize(Discriminators::byKey())
+            ->categorizeByKey()
             ->toArrayAssoc();
         
         self::assertSame(self::VARIABLE_LENGTH_RESULT, $result);
@@ -1179,16 +1179,12 @@ final class StreamGTest extends TestCase
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Call to protected');
         
-        $operation = Stream::from([1, 2, 3])->reduce(Reducers::sum());
-        
-        /** @noinspection PhpExpressionResultUnusedInspection */
-        $this->cloneLastOperation($operation);
+        $this->cloneLastOperation(Stream::from([1, 2, 3])->reduce(Reducers::sum()));
     }
     
-    private function cloneLastOperation($operation): void
+    private function cloneLastOperation(object $operation): void
     {
-        /** @noinspection PhpExpressionResultUnusedInspection */
-        clone $operation;
+        $a = clone $operation;
     }
     
     public function test_filter_value_first(): void
@@ -2007,8 +2003,9 @@ final class StreamGTest extends TestCase
     
     public function test_use_product_reducer_to_compute_product_of_array_values(): void
     {
-        $result = Stream::from([[2, -1, 3], [-2, -1], [5, 3, 0, 1]])->map(Reducers::product())->toArray();
-        
-        self::assertSame([-6, 2, 0], $result);
+        self::assertSame(
+            [-6, 2, 0],
+            Stream::from([[2, -1, 3], [-2, -1], [5, 3, 0, 1]])->map(Reducers::product())->toArray()
+        );
     }
 }

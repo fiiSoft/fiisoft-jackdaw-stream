@@ -339,6 +339,14 @@ final class Stream extends StreamSource
     }
     
     /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function filterKey($filter): Stream
+    {
+        return $this->filter($filter, Check::KEY);
+    }
+    
+    /**
      * @param string|int $field
      * @param FilterReady|callable|mixed $filter
      */
@@ -377,6 +385,14 @@ final class Stream extends StreamSource
     {
         $this->chainOperation(Operations::omitReps($comparison));
         return $this;
+    }
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function omitKey($filter): Stream
+    {
+        return $this->omit($filter, Check::KEY);
     }
     
     /**
@@ -1168,6 +1184,14 @@ final class Stream extends StreamSource
     public function categorizeBy($field, ?bool $reindex = null): Stream
     {
         return $this->categorize(Discriminators::byField($field), $reindex);
+    }
+    
+    /**
+     * Syntactic sugar for $stream->categorize(Disriminators::byKey()).
+     */
+    public function categorizeByKey(?bool $reindex = null): Stream
+    {
+        return $this->categorize(Discriminators::byKey(), $reindex);
     }
     
     /**

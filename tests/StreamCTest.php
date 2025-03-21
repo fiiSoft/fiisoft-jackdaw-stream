@@ -130,20 +130,17 @@ final class StreamCTest extends TestCase
     
     public function test_use_Traversable_as_source_of_values_for_mapper(): void
     {
-        $result = Stream::from(['a', 'b', 'c', 'd', 'e'])
-            ->map(new \ArrayIterator([5, 4, 3, 2]))
-            ->toArray();
-        
-        self::assertSame([5, 4, 3, 2, 'e'], $result);
+        self::assertSame(
+            [5, 4, 3, 2, 'e'],
+            Stream::from(['a', 'b', 'c', 'd', 'e'])->map(new \ArrayIterator([5, 4, 3, 2]))->toArray()
+        );
     }
     
     public function test_use_Result_as_source_of_values_for_mapper(): void
     {
-        $numbers = Stream::from([5, 4, 3, 2])->collect();
-        
         $result = Stream::from(['a', 'b', 'c', 'd', 'e'])
             ->moveTo('char')
-            ->append('number', $numbers)
+            ->append('number', Stream::from([5, 4, 3, 2])->collect())
             ->mapFieldWhen('number', 'is_array', Mappers::extract('char'))
             ->toArray();
         
@@ -158,10 +155,6 @@ final class StreamCTest extends TestCase
     
     public function test_use_Producer_as_source_of_values_for_mapper(): void
     {
-        $result = Stream::from(self::ROWSET)
-            ->mapField('age', Producers::collatz(8))
-            ->toArray();
-        
         $expected = [
             ['id' => 2, 'name' => 'Sue', 'age' => 8],
             ['id' => 9, 'name' => 'Chris', 'age' => 4],
@@ -170,7 +163,7 @@ final class StreamCTest extends TestCase
             ['id' => 7, 'name' => 'Sue', 'age' => 18],
         ];
         
-        self::assertSame($expected, $result);
+        self::assertSame($expected, Stream::from(self::ROWSET)->mapField('age', Producers::collatz(8))->toArray());
     }
     
     public function test_use_Generator_as_source_of_values_for_mapper(): void
@@ -179,11 +172,10 @@ final class StreamCTest extends TestCase
             yield from ['this', 'is', 'it'];
         };
         
-        $result = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4])
-            ->mapKey($words())
-            ->toArrayAssoc();
-        
-        self::assertSame(['this' => 1, 'is' => 2, 'it' => 3, 'd' => 4], $result);
+        self::assertSame(
+            ['this' => 1, 'is' => 2, 'it' => 3, 'd' => 4],
+            Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4])->mapKey($words())->toArrayAssoc()
+        );
     }
     
     public function test_use_the_same_Generator_as_Mapper_for_values_and_keys(): void
@@ -192,12 +184,10 @@ final class StreamCTest extends TestCase
             yield from ['this', 'is', 'it'];
         };
         
-        $result = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4])
-            ->mapKey($words())
-            ->map($words())
-            ->toArrayAssoc();
-        
-        self::assertSame(['this' => 'this', 'is' => 'is', 'it' => 'it', 'd' => 4], $result);
+        self::assertSame(
+            ['this' => 'this', 'is' => 'is', 'it' => 'it', 'd' => 4],
+            Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4])->mapKey($words())->map($words())->toArrayAssoc()
+        );
     }
     
     public function test_use_Stream_as_Mapper_for_values_and_keys(): void
@@ -216,12 +206,12 @@ final class StreamCTest extends TestCase
     {
         $numbers = Producers::sequentialInt(1, 1, 3);
         
-        $result = Stream::from(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4])
+        $result = Stream::from(['a' => 'a', 'b' => 'b', 'c' => 'c', 'd' => 'd'])
             ->mapKey($numbers)
             ->map($numbers)
             ->toArrayAssoc();
         
-        self::assertSame([1 => 1, 2 => 2, 3 => 3, 'd' => 4], $result);
+        self::assertSame([1 => 1, 2 => 2, 3 => 3, 'd' => 'd'], $result);
     }
     
     /**
@@ -230,35 +220,12 @@ final class StreamCTest extends TestCase
     #[DataProvider('getDataForTestUniqueThoroughly')]
     public function test_Unique_compare_values_by_default_comparator_in_various_ways(array $data, array $expected): void
     {
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique()->toArray()
-        );
-
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique(Compare::values())->toArray()
-        );
-        
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique(Comparators::default())->toArray()
-        );
-        
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique(Compare::values(Comparators::default()))->toArray()
-        );
-        
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique(By::value())->toArray()
-        );
-        
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique(By::value(Comparators::default()))->toArray()
-        );
+        self::assertSame($expected, Stream::from($data)->unique()->toArray());
+        self::assertSame($expected, Stream::from($data)->unique(Compare::values())->toArray());
+        self::assertSame($expected, Stream::from($data)->unique(Comparators::default())->toArray());
+        self::assertSame($expected, Stream::from($data)->unique(Compare::values(Comparators::default()))->toArray());
+        self::assertSame($expected, Stream::from($data)->unique(By::value())->toArray());
+        self::assertSame($expected, Stream::from($data)->unique(By::value(Comparators::default()))->toArray());
     }
     
     /**
@@ -269,35 +236,18 @@ final class StreamCTest extends TestCase
     {
         $comparator = static fn($a, $b): int => \gettype($a) <=> \gettype($b) ?: $a <=> $b;
         
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique($comparator)->toArray()
-        );
+        $comparisons = [
+            $comparator,
+            Compare::values($comparator),
+            Comparators::getAdapter($comparator),
+            By::value($comparator),
+            Compare::values(Comparators::getAdapter($comparator)),
+            By::value(Comparators::getAdapter($comparator)),
+        ];
         
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique(Compare::values($comparator))->toArray()
-        );
-        
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique(Comparators::getAdapter($comparator))->toArray()
-        );
-        
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique(Compare::values(Comparators::getAdapter($comparator)))->toArray()
-        );
-        
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique(By::value($comparator))->toArray()
-        );
-        
-        self::assertSame(
-            $expected,
-            Stream::from($data)->unique(By::value(Comparators::getAdapter($comparator)))->toArray()
-        );
+        foreach ($comparisons as $comparison) {
+            self::assertSame($expected, Stream::from($data)->unique($comparison)->toArray());
+        }
     }
     
     public static function getDataForTestUniqueThoroughly(): array
@@ -322,16 +272,9 @@ final class StreamCTest extends TestCase
     
     public function test_Sort_by_both_asc(): void
     {
-        //given
         $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   2,    'c'];
         $values = ['a', 3,  2, 'a', 'b', 'b', true, true, 'a'];
         
-        $producer = Producers::combinedFrom($keys, $values);
-        
-        //when
-        $result = $producer->stream()->sort(By::bothAsc())->makeTuple()->toArray();
-        
-        //then
         self::assertSame([
             [2, true],
             ['b', true],
@@ -342,21 +285,14 @@ final class StreamCTest extends TestCase
             ['c', 'a'],
             [1, 'b'],
             ['a', 'b'],
-        ], $result);
+        ], Producers::combinedFrom($keys, $values)->stream()->sort(By::bothAsc())->makeTuple()->toArray());
     }
     
     public function test_Sort_by_both_desc(): void
     {
-        //given
         $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   2,    'c'];
         $values = ['a', 3,  2, 'a', 'b', 'b', true, true, 'a'];
         
-        $producer = Producers::combinedFrom($keys, $values);
-        
-        //when
-        $result = $producer->stream()->sort(By::bothDesc())->makeTuple()->toArray();
-        
-        //then
         self::assertSame([
             ['a', 'b'],
             [1, 'b'],
@@ -367,14 +303,14 @@ final class StreamCTest extends TestCase
             [2, 2],
             ['b', true],
             [2, true],
-        ], $result);
+        ], Producers::combinedFrom($keys, $values)->stream()->sort(By::bothDesc())->makeTuple()->toArray());
     }
     
     public function test_collatz_with_variable_as_source_of_stream(): void
     {
         $collector = Reducers::concat(', ');
-        
         $current = 304;
+        
         Stream::from(Producers::readFrom($current))
             ->callOnce($collector)
             ->mapWhen(
@@ -520,10 +456,21 @@ final class StreamCTest extends TestCase
         $result = Stream::from([6, 5, 8, 5, 2, 3, 5, 2, 7, 1, 3, 5, 1, 2, 2, 5, 3, 5])
             ->callOnce($threshold)
             ->filter(static fn(int $v): bool => $v <= $threshold->get())
-            ->remember($threshold)
-            ->toArray();
+            ->remember($threshold);
         
-        self::assertSame([6, 5, 5, 2, 2, 1, 1], $result);
+        self::assertSame([6, 5, 5, 2, 2, 1, 1], $result->toArray());
+    }
+    
+    public function test_generate_decreasing_trend_with_help_of_Memo(): void
+    {
+        $threshold = Memo::value();
+        
+        $result = Stream::from([6, 5, 8, 5, 2, 3, 5, 2, 7, 1, 3, 5, 1, 2, 2, 5, 3, 5])
+            ->callOnce($threshold)
+            ->filter(static fn(int $v): bool => $v <= $threshold->read())
+            ->remember($threshold);
+        
+        self::assertSame([6, 5, 5, 2, 2, 1, 1], $result->toArray());
     }
     
     public function test_filter_while(): void
@@ -648,15 +595,13 @@ final class StreamCTest extends TestCase
 
     public function test_window_with_preserve_keys(): void
     {
-        $result = Stream::from(['a', 'b', 'c', 'd', 'e', 'f'])->window(3, 2)->toArrayAssoc();
-
         $expected = [
             [0 => 'a', 'b', 'c'],
             [2 => 'c', 'd', 'e'],
             [4 => 'e', 'f'],
         ];
 
-        self::assertSame($expected, $result);
+        self::assertSame($expected, Stream::from(['a', 'b', 'c', 'd', 'e', 'f'])->window(3, 2)->toArrayAssoc());
     }
     
     public function test_fork_window(): void
@@ -762,9 +707,7 @@ final class StreamCTest extends TestCase
     {
         $buffer = new \ArrayObject();
         
-        $stream = Stream::from([6, 2, 4, 1])->storeIn($buffer)->find(2, Check::KEY);
-        
-        self::assertTrue($stream->found());
+        self::assertTrue(Stream::from([6, 2, 4, 1])->storeIn($buffer)->find(2, Check::KEY)->found());
         self::assertSame([6, 2, 4], $buffer->getArrayCopy());
     }
     
@@ -888,17 +831,14 @@ final class StreamCTest extends TestCase
         $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   'c', 3];
         $values = ['a', 3,  2, 'a', 'b', 'b', true, 'a', 1];
         
-        $producer = Producers::combinedFrom($keys, $values);
-        
         //when
         $keyIsIntAndValIsStr = Filters::isInt()->checkKey()->and(Filters::isString()->checkValue());
         $keyIsStrAndValIsInt = Filters::isString(Check::KEY)->and(Filters::isInt(Check::VALUE));
         $keyAndValAreEqualInts = Filters::isInt(Check::BOTH)->and(fn(int $v, int $k): bool => $v === $k);
         
-        $actual = Stream::from($producer)
+        $actual = Stream::from(Producers::combinedFrom($keys, $values))
             ->filter($keyIsIntAndValIsStr->or($keyIsStrAndValIsInt)->or($keyAndValAreEqualInts))
-            ->makeTuple()
-            ->toArray();
+            ->makeTuple();
         
         //then
         self::assertSame([
@@ -907,7 +847,7 @@ final class StreamCTest extends TestCase
             [2, 2],
             [1, 'a'],
             [1, 'b'],
-        ], $actual);
+        ], $actual->toArray());
     }
     
     public function test_filter_stream_with_xor_filter(): void
@@ -916,14 +856,11 @@ final class StreamCTest extends TestCase
         $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   'c', 3];
         $values = ['a', 3,  2, 'a', 'b', 'b', true, 'a', 1];
         
-        $producer = Producers::combinedFrom($keys, $values);
-        
         //when
-        $actual = Stream::from($producer)
+        $actual = Stream::from(Producers::combinedFrom($keys, $values))
             ->filter(Filters::OR('is_int', 'is_string'), Check::BOTH)
             ->filter(Filters::isInt(Check::VALUE)->xor(Filters::isInt(Check::KEY)))
-            ->makeTuple()
-            ->toArray();
+            ->makeTuple();
         
         //then
         self::assertSame([
@@ -931,7 +868,7 @@ final class StreamCTest extends TestCase
             ['b', 3],
             [1, 'a'],
             [1, 'b'],
-        ], $actual);
+        ], $actual->toArray());
     }
     
     public function test_filter_stream_with_xnor_filter(): void
@@ -940,14 +877,11 @@ final class StreamCTest extends TestCase
         $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   'c', 3];
         $values = ['a', 3,  2, 'a', 'b', 'b', true, 'a', 1];
         
-        $producer = Producers::combinedFrom($keys, $values);
-        
         //when
-        $actual = Stream::from($producer)
+        $actual = Stream::from(Producers::combinedFrom($keys, $values))
             ->filter(Filters::OR('is_int', 'is_string'), Check::BOTH)
             ->filter(Filters::isInt(Check::VALUE)->xnor(Filters::isInt(Check::KEY)))
-            ->makeTuple()
-            ->toArray();
+            ->makeTuple();
         
         //then
         self::assertSame([
@@ -955,7 +889,7 @@ final class StreamCTest extends TestCase
             ['a', 'b'],
             ['c', 'a'],
             [3, 1],
-        ], $actual);
+        ], $actual->toArray());
     }
     
     public function test_filter_stream_with_andNot_filter(): void
@@ -964,20 +898,17 @@ final class StreamCTest extends TestCase
         $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   'c', 3];
         $values = ['a', 3,  2, 'a', 'b', 'b', true, 'a', 1];
         
-        $producer = Producers::combinedFrom($keys, $values);
-        
         //when
-        $actual = Stream::from($producer)
+        $actual = Stream::from(Producers::combinedFrom($keys, $values))
             ->filter(Filters::isString(Check::KEY)->andNot(Filters::isBool(Check::VALUE)))
-            ->makeTuple()
-            ->toArray();
+            ->makeTuple();
         
         //then
         self::assertSame([
             ['b', 3],
             ['a', 'b'],
             ['c', 'a'],
-        ], $actual);
+        ], $actual->toArray());
     }
     
     public function test_filter_stream_with_orNot_filter(): void
@@ -986,13 +917,10 @@ final class StreamCTest extends TestCase
         $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   'c', 3];
         $values = ['a', 3,  2, 'a', 'b', 'b', true, 'a', 1];
         
-        $producer = Producers::combinedFrom($keys, $values);
-        
         //when
-        $actual = Stream::from($producer)
+        $actual = Stream::from(Producers::combinedFrom($keys, $values))
             ->filter(Filters::isString(Check::KEY)->orNot(Filters::isString(Check::VALUE)))
-            ->makeTuple()
-            ->toArray();
+            ->makeTuple();
         
         //then
         self::assertSame([
@@ -1002,65 +930,61 @@ final class StreamCTest extends TestCase
             ['b', true],
             ['c', 'a'],
             [3, 1],
-        ], $actual);
+        ], $actual->toArray());
     }
     
     public function test_filter_both_with_xor(): void
     {
         //(v < 0 XOR isEven(v)) && (k < 0 XOR isEven(k))
         $actual = Stream::from([-5 => 3, 0 => 3, -1 => 4, 2 => 6, 1 => 2, -2 => 2, 4 => -3])
-            ->filter(Filters::lessThan(0)->xor(Filters::number()->isEven()), Check::BOTH)
-            ->toArrayAssoc();
+            ->filter(Filters::lessThan(0)->xor(Filters::number()->isEven()), Check::BOTH);
         
         self::assertSame([
             -1 => 4,
             2 => 6,
             4 => -3,
-        ], $actual);
+        ], $actual->toArrayAssoc());
     }
     
     public function test_filter_any_with_xor(): void
     {
         //(v < 1 XOR isOdd(v)) || (k < 1 XOR isOdd(k))
         $actual = Stream::from([-5 => 3, 0 => 3, -1 => 4, 2 => 6, 1 => 2, -2 => 2, 4 => -3])
-            ->filter(Filters::lessThan(1)->xor(Filters::number()->isOdd()), Check::ANY)
-            ->toArrayAssoc();
+            ->filter(Filters::lessThan(1)->xor(Filters::number()->isOdd()), Check::ANY);
         
         self::assertSame([
             -5 => 3,
             0 => 3,
             1 => 2,
             -2 => 2,
-        ], $actual);
+        ], $actual->toArrayAssoc());
     }
     
     public function test_filter_both_with_xnor(): void
     {
         //(v < 0 XNOR isEven(v)) && (k < 0 XNOR isEven(k))
         $actual = Stream::from([-4 => 3, -2 => 3, -1 => 4, 2 => 6, 1 => 3, 4 => -3])
-            ->filter(Filters::lessThan(0)->xnor(Filters::number()->isEven()), Check::BOTH)
-            ->toArrayAssoc();
+            ->filter(Filters::lessThan(0)->xnor(Filters::number()->isEven()), Check::BOTH);
         
         self::assertSame([
             -4 => 3,
             -2 => 3,
             1 => 3,
-        ], $actual);
+        ], $actual->toArrayAssoc());
     }
     
     public function test_filter_any_with_xnor(): void
     {
         //(v < 1 XNOR isOdd(v)) || (k < 1 XNOR isOdd(k))
         $actual = Stream::from([-4 => 3, -2 => 2, -1 => 4, 2 => 6, 1 => 3, 4 => -3])
-            ->filter(Filters::lessThan(1)->xnor(Filters::number()->isOdd()), Check::ANY)
-            ->toArrayAssoc();
+            ->filter(Filters::lessThan(1)->xnor(Filters::number()->isOdd()), Check::ANY);
         
         self::assertSame([
             -2 => 2,
             -1 => 4,
             2 => 6,
             4 => -3,
-        ], $actual);
+        ], $actual->toArrayAssoc());
     }
     
     public function test_filterByMany(): void
@@ -1189,15 +1113,13 @@ final class StreamCTest extends TestCase
     {
         $degrees = [16.6, 18.2, 15.9, 22.3, 17.8, 14.0, 19.3];
         
-        $stats = Stream::from($degrees)->reduce(Reducers::basicStats());
-        
         self::assertSame([
             'count' => \count($degrees),
             'min' => \min($degrees),
             'max' => \max($degrees),
             'sum' => \array_sum($degrees),
             'avg' => \array_sum($degrees) / \count($degrees),
-        ], $stats->get());
+        ], Stream::from($degrees)->reduce(Reducers::basicStats())->get());
     }
     
     public function test_use_BasicStats_Categorize_Sort_to_reduce_data(): void
@@ -1210,12 +1132,11 @@ final class StreamCTest extends TestCase
             ->split(';')
             ->unpackTuple()
             ->castToFloat()
-            ->categorize(Discriminators::byKey())
+            ->categorizeByKey()
             ->map(Reducers::basicStats(2))
             ->extract(['min', 'avg', 'max'])
             ->concat(';')
-            ->sort(By::key())
-            ->toArrayAssoc();
+            ->sort(By::key());
             
         self::assertSame([
             'A' => '13.2;15.67;18.2',
@@ -1223,7 +1144,7 @@ final class StreamCTest extends TestCase
             'C' => '9.6;11.9;14.2',
             'D' => '12.9;15.43;19.3',
             'E' => '15.5;15.5;15.5',
-        ], $actual);
+        ], $actual->toArrayAssoc());
     }
     
     public function test_use_BasicStats_Fork_Segregate_to_reduce_data(): void
@@ -1239,8 +1160,7 @@ final class StreamCTest extends TestCase
             ->extract(['min', 'avg', 'max'])
             ->concat(';')
             ->segregate(null, false, By::key())
-            ->flat(1)
-            ->toArrayAssoc();
+            ->flat(1);
             
         self::assertSame([
             'A' => '13.2;15.67;18.2',
@@ -1248,7 +1168,7 @@ final class StreamCTest extends TestCase
             'C' => '9.6;11.9;14.2',
             'D' => '12.9;15.43;19.3',
             'E' => '15.5;15.5;15.5',
-        ], $actual);
+        ], $actual->toArrayAssoc());
     }
     
     public function test_use_BasicStats_Fork_Sort_to_reduce_data(): void
@@ -1263,8 +1183,7 @@ final class StreamCTest extends TestCase
             ->fork(Discriminators::byKey(), Stream::empty()->castToFloat()->reduce(Reducers::basicStats(2)))
             ->extract(['min', 'avg', 'max'])
             ->concat(';')
-            ->sort(By::key())
-            ->toArrayAssoc();
+            ->sort(By::key());
             
         self::assertSame([
             'A' => '13.2;15.67;18.2',
@@ -1272,7 +1191,7 @@ final class StreamCTest extends TestCase
             'C' => '9.6;11.9;14.2',
             'D' => '12.9;15.43;19.3',
             'E' => '15.5;15.5;15.5',
-        ], $actual);
+        ], $actual->toArrayAssoc());
     }
     
     /**
@@ -1305,8 +1224,8 @@ final class StreamCTest extends TestCase
     public function test_while_not_any_is_int(): void
     {
         $data = Producers::getAdapter(['a' => 'b', 'c' => 1, 2 => 'd', 3 => 4, 5 => 'e', 'f' => 6]);
-
         $result = $data->stream()->while(Filters::NOT(Filters::isInt(Check::ANY)))->toArrayAssoc();
+
         self::assertSame(['a' => 'b'], $result);
     }
     
@@ -1506,13 +1425,11 @@ final class StreamCTest extends TestCase
     {
         $data = [1, 5, 2, 3, 2, 7, 4, 1, 6, 3, 5, 2, 4, 1, 7, 2, 3, 2, 6, 3, 2, 5, 8, 4];
         
-        $result = Stream::from($data)->segregate(3, false, null, 4)->toArray();
-        
         self::assertSame([
             [0 => 1, 7 => 1, 13 => 1],
             [2 => 2, 4 => 2, 11 => 2, 15 => 2],
             [3 => 3, 9 => 3, 16 => 3, 19 => 3],
-        ], $result);
+        ], Stream::from($data)->segregate(3, false, null, 4)->toArray());
     }
     
     public function test_stream_file_Producers_resource_file(): void
@@ -1983,7 +1900,7 @@ final class StreamCTest extends TestCase
         
         $result = Stream::from($data)
             ->flip()
-            ->categorize(Discriminators::byKey())
+            ->categorizeByKey()
             ->toArrayAssoc();
         
         self::assertSame($expected, $result);
@@ -1997,11 +1914,7 @@ final class StreamCTest extends TestCase
         
         //when
         $item = Memo::full();
-        
-        $result = Stream::from($data)
-            ->remember($item)
-            ->map($item->tuple())
-            ->toJson();
+        $result = Stream::from($data)->remember($item)->map($item->tuple())->toJson();
         
         //then
         self::assertSame($expected, $result);

@@ -24,7 +24,7 @@ final class LimitedSequenceMemo extends BaseSequenceMemo
         }
         
         $this->length = $length;
-        $this->buffer = EntryBufferFactory::initial($this, $length);
+        $this->initBuffer();
     }
     
     /**
@@ -183,5 +183,15 @@ final class LimitedSequenceMemo extends BaseSequenceMemo
         $this->clear();
         $this->buffer->destroy();
         $this->length = 1;
+    }
+    
+    public function __clone()
+    {
+        $this->initBuffer();
+    }
+    
+    private function initBuffer(): void
+    {
+        $this->buffer = EntryBufferFactory::initial($this, $this->length);
     }
 }
