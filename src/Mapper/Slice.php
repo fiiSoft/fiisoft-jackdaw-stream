@@ -83,7 +83,7 @@ final class Slice extends Internal\StateMapper
      */
     public function equals(Mapper $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->offset === $this->offset
             && $other->length === $this->length
             && $other->reindex === $this->reindex;

@@ -10,8 +10,6 @@ abstract class BaseFilter extends AbstractFilter
     
     protected function __construct(?int $mode)
     {
-        parent::__construct();
-        
         $this->mode = Mode::get($mode);
     }
     
@@ -22,6 +20,6 @@ abstract class BaseFilter extends AbstractFilter
     
     public function equals(Filter $other): bool
     {
-        return $other instanceof $this && $other->mode === $this->mode;
+        return $other === $this || $other instanceof $this && $other->mode === $this->mode;
     }
 }

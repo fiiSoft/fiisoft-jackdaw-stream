@@ -120,7 +120,7 @@ final class SequenceMatcherPredicate extends BaseSequencePredicate
     
     public function equals(SequencePredicate $other): bool
     {
-        if ($other instanceof self
+        if ($other === $this || $other instanceof self
             && $other->size === $this->size
             && $other->matcher->equals($this->matcher)
             && parent::equals($other)

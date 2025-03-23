@@ -44,8 +44,13 @@ final class IntValueFilter extends BaseFilterAdapter
     
     public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->intValue->equals($this->intValue)
             && parent::equals($other);
+    }
+    
+    protected function createFilter(Filter $filter): Filter
+    {
+        return new self($this->intValue, $filter);
     }
 }

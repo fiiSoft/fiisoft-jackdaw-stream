@@ -7,11 +7,6 @@ use FiiSoft\Jackdaw\Filter\FilterFactory;
 
 final class TypeFilterFactory extends FilterFactory implements TypeFilterPicker
 {
-    public static function instance(?int $mode = null): self
-    {
-        return new self($mode);
-    }
-    
     public function not(): TypeFilterPicker
     {
         return $this->negate();

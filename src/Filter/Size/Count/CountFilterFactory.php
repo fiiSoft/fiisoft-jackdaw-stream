@@ -8,11 +8,6 @@ use FiiSoft\Jackdaw\Filter\Filters;
 
 final class CountFilterFactory extends FilterFactory implements CountFilterPicker
 {
-    public static function instance(?int $mode = null): self
-    {
-        return new self($mode);
-    }
-    
     public function isCountable(): Filter
     {
         return $this->get(Filters::isCountable($this->mode));

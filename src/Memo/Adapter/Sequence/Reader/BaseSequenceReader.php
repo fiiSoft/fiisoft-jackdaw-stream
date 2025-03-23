@@ -18,7 +18,7 @@ abstract class BaseSequenceReader implements MemoReader
     
     final public function equals(MemoReader $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->index === $this->index
             && $other->sequence === $this->sequence;
     }

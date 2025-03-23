@@ -25,7 +25,7 @@ final class SequenceCallableInspector extends BaseSequencePredicate
     
     public function equals(SequencePredicate $other): bool
     {
-        return $other instanceof self
+        return $other === $this || $other instanceof self
             && $other->inspector === $this->inspector
             && parent::equals($other);
     }

@@ -22,8 +22,6 @@ abstract class TwoArgsLogicFilter extends BaseLogicFilter
      */
     protected function __construct($first, $second, ?int $mode = null)
     {
-        parent::__construct();
-        
         $this->first = Filters::getAdapter($first, $mode);
         $this->second = Filters::getAdapter($second, $mode);
     }
@@ -37,8 +35,24 @@ abstract class TwoArgsLogicFilter extends BaseLogicFilter
     
     final public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->first->equals($this->first)
             && $other->second->equals($this->second);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    final protected function collectFilters(): array
+    {
+        return [$this->first, $this->second];
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    final protected function createFilter(array $filters, ?int $mode = null): Filter
+    {
+        return static::create($filters[0], $filters[1], $mode);
     }
 }

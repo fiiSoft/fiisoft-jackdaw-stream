@@ -21,13 +21,7 @@ abstract class BaseMapper implements Mapper
      */
     public function equals(Mapper $other): bool
     {
-        return $this === $other
-            || (
-                $this instanceof $other
-                && $this->isStateless()
-                && $other instanceof BaseMapper
-                && $other->isStateless()
-            );
+        return $other === $this || $other instanceof static && $other->isStateless() && $this->isStateless();
     }
     
     abstract protected function isStateless(): bool;

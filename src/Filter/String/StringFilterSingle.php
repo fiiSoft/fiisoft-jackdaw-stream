@@ -28,7 +28,7 @@ abstract class StringFilterSingle extends AbstractStringFilter
     
     final public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->value === $this->value
             && $other->length === $this->length
             && parent::equals($other);

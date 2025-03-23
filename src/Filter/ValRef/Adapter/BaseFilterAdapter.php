@@ -2,30 +2,19 @@
 
 namespace FiiSoft\Jackdaw\Filter\ValRef\Adapter;
 
-use FiiSoft\Jackdaw\Filter\BaseFilter;
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\SingleFilterHolder;
 use FiiSoft\Jackdaw\Internal\Check;
 
-abstract class BaseFilterAdapter extends BaseFilter
+abstract class BaseFilterAdapter extends SingleFilterHolder
 {
-    protected Filter $filter;
-    
-    public function __construct(Filter $filter)
+    protected function __construct(Filter $filter)
     {
-        parent::__construct(Check::VALUE);
-        
-        $this->filter = $filter->checkValue();
+        parent::__construct($filter->checkValue(), Check::VALUE);
     }
     
     final public function inMode(?int $mode): Filter
     {
         return $this;
-    }
-    
-    public function equals(Filter $other): bool
-    {
-        return $other instanceof $this
-            && $other->filter->equals($this->filter)
-            && parent::equals($other);
     }
 }

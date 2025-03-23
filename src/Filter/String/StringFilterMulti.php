@@ -26,7 +26,7 @@ abstract class StringFilterMulti extends AbstractStringFilter
         
         $this->oryginal = $values;
         
-        $this->prepare();
+        $this->initialize();
     }
     
     final public function inMode(?int $mode): StringFilter
@@ -41,8 +41,12 @@ abstract class StringFilterMulti extends AbstractStringFilter
      */
     final public function ignoreCase(): StringFilter
     {
+        if ($this->ignoreCase) {
+            return $this;
+        }
+        
         $copy = parent::ignoreCase();
-        $copy->prepare();
+        $copy->initialize();
         
         return $copy;
     }
@@ -52,21 +56,25 @@ abstract class StringFilterMulti extends AbstractStringFilter
      */
     final public function caseSensitive(): StringFilter
     {
-        $copy = parent::caseSensitive();
-        $copy->prepare();
+        if ($this->ignoreCase) {
+            $copy = parent::caseSensitive();
+            $copy->initialize();
+            
+            return $copy;
+        }
         
-        return $copy;
+        return $this;
     }
     
     final public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->values === $this->values
             && $other->oryginal === $this->oryginal
             && parent::equals($other);
     }
     
-    private function prepare(): void
+    private function initialize(): void
     {
         $this->values = [];
         

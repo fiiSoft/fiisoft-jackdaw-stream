@@ -45,11 +45,11 @@ class FourArgsOR extends ThreeArgsOR
     }
     
     /**
-     * @return Filter[]
+     * @inheritDoc
      */
-    public function getFilters(): array
+    protected function collectFilters(): array
     {
-        $filters = parent::getFilters();
+        $filters = parent::collectFilters();
         $filters[] = $this->fourth;
         
         return $filters;

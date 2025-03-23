@@ -51,7 +51,7 @@ final class WeekDay extends TimeComparator
     
     public function equals(TimeComparator $other): bool
     {
-        return $other instanceof static
+        return $other === $this || $other instanceof self
             && $other->isDay === $this->isDay
             && $other->days === $this->days;
     }

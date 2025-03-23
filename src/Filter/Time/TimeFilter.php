@@ -54,7 +54,7 @@ abstract class TimeFilter extends BaseFilter
     
     public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->comparator->equals($this->comparator)
             && parent::equals($other);
     }

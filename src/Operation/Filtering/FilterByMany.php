@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
+use FiiSoft\Jackdaw\Filter\Adjuster\UnwrapFilterAdjuster;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterFieldData;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
@@ -68,6 +69,8 @@ final class FilterByMany extends BaseOperation
      */
     private function buildFilterStream(iterable $stream): iterable
     {
+        $this->unwrapNestedFilters();
+        
         foreach ($stream as $key => $value) {
             foreach ($this->checks as $check) {
                 if ($check->filter->isAllowed($value[$check->field], $key)) {
@@ -87,6 +90,8 @@ final class FilterByMany extends BaseOperation
      */
     private function buildOmitStream(iterable $stream): iterable
     {
+        $this->unwrapNestedFilters();
+        
         foreach ($stream as $key => $value) {
             foreach ($this->checks as $check) {
                 if ($check->filter->isAllowed($value[$check->field], $key)) {
@@ -95,6 +100,13 @@ final class FilterByMany extends BaseOperation
             }
             
             yield $key => $value;
+        }
+    }
+    
+    private function unwrapNestedFilters(): void
+    {
+        foreach ($this->checks as $check) {
+            $check->filter = UnwrapFilterAdjuster::unwrap($check->filter);
         }
     }
     

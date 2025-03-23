@@ -38,7 +38,7 @@ abstract class SingleArg extends NumberFilter
     
     final public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->number === $this->number
             && parent::equals($other);
     }

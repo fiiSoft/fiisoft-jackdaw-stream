@@ -4,6 +4,7 @@ namespace FiiSoft\Jackdaw\Filter;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Adapter\SequencePredicateAdapter;
+use FiiSoft\Jackdaw\Filter\Adjuster\UnwrapFilterAdjuster;
 use FiiSoft\Jackdaw\Filter\CheckType\TypeFilterFactory;
 use FiiSoft\Jackdaw\Filter\CheckType\TypeFilterPicker;
 use FiiSoft\Jackdaw\Filter\Generic\GenericFilter;
@@ -43,7 +44,7 @@ final class Filters
     public static function getAdapter($filter, ?int $mode = null): Filter
     {
         if ($filter instanceof Filter) {
-            return $filter->inMode($mode);
+            return UnwrapFilterAdjuster::unwrap($filter)->inMode($mode);
         }
     
         if (\is_callable($filter)) {
@@ -288,7 +289,7 @@ final class Filters
      */
     public static function filterBy($field, $filter): Filter
     {
-        return FilterBy::create($field, $filter);
+        return new FilterBy($field, $filter);
     }
     
     /**
@@ -342,7 +343,7 @@ final class Filters
     }
     
     /**
-     * @param array<mixed>|scalar|null $var REFERENCE
+     * @param array<mixed>|object|scalar|null $var REFERENCE
      */
     public static function readFrom(&$var): FilterPicker
     {

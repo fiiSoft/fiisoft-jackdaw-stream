@@ -22,7 +22,6 @@ class ThreeArgsAND extends TwoArgsAND
         $this->third = Filters::getAdapter($third, $mode);
     }
     
-    
     public function isAllowed($value, $key = null): bool
     {
         return $this->first->isAllowed($value, $key)
@@ -30,9 +29,12 @@ class ThreeArgsAND extends TwoArgsAND
             && $this->third->isAllowed($value, $key);
     }
     
-    public function getFilters(): array
+    /**
+     * @inheritDoc
+     */
+    protected function collectFilters(): array
     {
-        $filters = parent::getFilters();
+        $filters = parent::collectFilters();
         $filters[] = $this->third;
         
         return $filters;

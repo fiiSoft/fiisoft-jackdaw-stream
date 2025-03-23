@@ -49,4 +49,9 @@ final class ReferenceFilter extends BaseFilterAdapter
     {
         return $other === $this;
     }
+    
+    protected function createFilter(Filter $filter): Filter
+    {
+        return new self($this->variable, $filter);
+    }
 }

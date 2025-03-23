@@ -31,7 +31,7 @@ trait FieldCastMapper
     
     final public function equals(Mapper $other): bool
     {
-        return $other instanceof $this && $this->fields === $other->fields;
+        return $other === $this || $other instanceof $this && $this->fields === $other->fields;
     }
     
     final public function mergeWith(Mapper $other): bool

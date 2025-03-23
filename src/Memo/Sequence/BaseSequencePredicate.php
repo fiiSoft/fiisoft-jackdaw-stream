@@ -16,6 +16,6 @@ abstract class BaseSequencePredicate implements SequencePredicate
     
     public function equals(SequencePredicate $other): bool
     {
-        return $other instanceof $this && $other->sequence === $this->sequence;
+        return $other === $this || $other instanceof $this && $other->sequence === $this->sequence;
     }
 }

@@ -54,11 +54,11 @@ class SevenArgsOR extends SixArgsOR
     }
     
     /**
-     * @return Filter[]
+     * @inheritDoc
      */
-    public function getFilters(): array
+    protected function collectFilters(): array
     {
-        $filters = parent::getFilters();
+        $filters = parent::collectFilters();
         $filters[] = $this->seventh;
         
         return $filters;

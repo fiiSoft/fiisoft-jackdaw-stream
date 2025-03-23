@@ -8,8 +8,7 @@ use FiiSoft\Jackdaw\Internal\StreamBuilder;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
-interface Filter extends LogicFilter, StreamBuilder, FilterReady, MapperReady, DiscriminatorReady,
-    ComparatorReady, TransformerReady
+interface Filter extends StreamBuilder, FilterReady, MapperReady, DiscriminatorReady, ComparatorReady, TransformerReady
 {
     /**
      * @param mixed $value
@@ -31,5 +30,41 @@ interface Filter extends LogicFilter, StreamBuilder, FilterReady, MapperReady, D
     
     public function negate(): self;
     
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function and($filter): self;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function andNot($filter): self;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function or($filter): self;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function orNot($filter): self;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function xor($filter): self;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function xnor($filter): self;
+    
     public function equals(Filter $other): bool;
+    
+    /**
+     * Allows to apply various changes on the filter.
+     * It should return the same filter when unmodified, and must return a new filter when modified.
+     */
+    public function adjust(FilterAdjuster $adjuster): self;
 }

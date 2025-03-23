@@ -8,11 +8,6 @@ use FiiSoft\Jackdaw\Filter\Filters;
 
 final class NumberFilterFactory extends FilterFactory implements NumberFilterPicker
 {
-    public static function instance(?int $mode = null): self
-    {
-        return new self($mode);
-    }
-    
     public function isInt(): Filter
     {
         return $this->get(Filters::isInt($this->mode));

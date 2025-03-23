@@ -22,6 +22,6 @@ abstract class SetTimeComp extends CompoundTimeComp
     
     final public function equals(TimeComparator $other): bool
     {
-        return $other instanceof static && $other->dates === $this->dates;
+        return $other === $this || $other instanceof static && $other->dates === $this->dates;
     }
 }

@@ -3,15 +3,12 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
-use FiiSoft\Jackdaw\Filter\Logic\ConditionalFilter;
-use FiiSoft\Jackdaw\Filter\Logic\OpOR\BaseOR;
-use FiiSoft\Jackdaw\Memo\Memo;
-use FiiSoft\Jackdaw\ValueRef\IntNum;
 use FiiSoft\Jackdaw\Filter\CheckType\{IsBool, IsFloat, IsInt, IsNull, IsNumeric, IsString};
 use FiiSoft\Jackdaw\Filter\Exception\FilterExceptionFactory;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Filter\IdleFilter;
+use FiiSoft\Jackdaw\Filter\Logic\ConditionalFilter;
 use FiiSoft\Jackdaw\Filter\Number\{Between, Equal, GreaterOrEqual, GreaterThan, Inside, IsEven, IsOdd, LessOrEqual,
     LessThan, NotEqual, NotInside, Outside};
 use FiiSoft\Jackdaw\Filter\OnlyIn\OnlyIn;
@@ -26,7 +23,9 @@ use FiiSoft\Jackdaw\Filter\Time\Day;
 use FiiSoft\Jackdaw\Filter\Time\TimeFilter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Mode;
+use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\ValueRef\IntNum;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

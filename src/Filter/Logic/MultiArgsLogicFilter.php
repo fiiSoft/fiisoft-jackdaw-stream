@@ -7,7 +7,7 @@ use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
 
-abstract class MultiArgsLogicFilter extends BaseCompoundFilter
+abstract class MultiArgsLogicFilter extends BaseMultiLogicFilter
 {
     /** @var Filter[] */
     protected array $filters = [];
@@ -22,8 +22,6 @@ abstract class MultiArgsLogicFilter extends BaseCompoundFilter
      */
     protected function __construct(array $filters, ?int $mode = null)
     {
-        parent::__construct();
-        
         if (empty($filters)) {
             throw InvalidParamException::byName('filters');
         }
@@ -38,11 +36,22 @@ abstract class MultiArgsLogicFilter extends BaseCompoundFilter
     final public function inMode(?int $mode): Filter
     {
         return $mode !== null && $mode !== $this->getMode()
-            ? static::create($this->filters, $mode)
+            ? $this->createFilter($this->filters, $mode)
             : $this;
     }
     
-    final public function getFilters(): array
+    /**
+     * @inheritDoc
+     */
+    final protected function createFilter(array $filters, ?int $mode = null): Filter
+    {
+        return static::create($filters, $mode);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    final protected function collectFilters(): array
     {
         return $this->filters;
     }

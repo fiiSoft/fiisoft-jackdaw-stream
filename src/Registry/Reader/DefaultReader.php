@@ -35,7 +35,7 @@ final class DefaultReader implements RegReader
     
     public function equals(MemoReader $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->name === $this->name
             && $other->orElse === $this->orElse
             && $other->storage === $this->storage;

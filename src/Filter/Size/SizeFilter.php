@@ -2,25 +2,21 @@
 
 namespace FiiSoft\Jackdaw\Filter\Size;
 
-use FiiSoft\Jackdaw\Filter\BaseFilter;
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\SingleFilterHolder;
 
-abstract class SizeFilter extends BaseFilter
+abstract class SizeFilter extends SingleFilterHolder
 {
-    protected Filter $filter;
-    
     abstract protected static function create(int $mode, Filter $filter): self;
     
-    final protected function __construct(int $mode, Filter $filter)
+    final protected function __construct(Filter $filter, int $mode)
     {
-        parent::__construct($mode);
-        
-        $this->filter = $filter;
+        parent::__construct($filter, $mode);
     }
     
     final public function negate(): Filter
     {
-        return static::create($this->mode, $this->filter->negate());
+        return $this->createFilter($this->filter->negate());
     }
     
     final public function inMode(?int $mode): Filter
@@ -30,10 +26,8 @@ abstract class SizeFilter extends BaseFilter
             : $this;
     }
     
-    final public function equals(Filter $other): bool
+    final protected function createFilter(Filter $filter): Filter
     {
-        return $other instanceof $this
-            && $other->filter->equals($this->filter)
-            && parent::equals($other);
+        return static::create($this->mode, $filter);
     }
 }

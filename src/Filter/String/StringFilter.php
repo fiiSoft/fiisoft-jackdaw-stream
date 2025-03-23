@@ -3,24 +3,55 @@
 namespace FiiSoft\Jackdaw\Filter\String;
 
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterReady;
 
 interface StringFilter extends Filter
 {
     public function inMode(?int $mode): self;
 
     public function checkValue(): self;
-    
+
     public function checkKey(): self;
-    
+
     public function checkBoth(): self;
-    
+
     public function checkAny(): self;
-    
+
     public function negate(): self;
     
-    public function ignoreCase(): StringFilter;
+    public function ignoreCase(): self;
     
-    public function caseSensitive(): StringFilter;
+    public function caseSensitive(): self;
     
     public function isCaseInsensitive(): bool;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function and($filter): self;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function andNot($filter): self;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function or($filter): self;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function orNot($filter): self;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function xor($filter): self;
+    
+    /**
+     * @param FilterReady|callable|mixed $filter
+     */
+    public function xnor($filter): self;
 }

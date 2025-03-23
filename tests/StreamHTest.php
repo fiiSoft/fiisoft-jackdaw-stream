@@ -11,8 +11,8 @@ use FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter\IdleForkHandler;
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 
 final class StreamHTest extends TestCase
 {

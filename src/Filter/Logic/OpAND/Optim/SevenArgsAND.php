@@ -37,9 +37,12 @@ class SevenArgsAND extends SixArgsAND
             && $this->seventh->isAllowed($value, $key);
     }
     
-    public function getFilters(): array
+    /**
+     * @inheritDoc
+     */
+    protected function collectFilters(): array
     {
-        $filters = parent::getFilters();
+        $filters = parent::collectFilters();
         $filters[] = $this->seventh;
         
         return $filters;

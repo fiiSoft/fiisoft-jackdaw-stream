@@ -2,17 +2,17 @@
 
 namespace FiiSoft\Jackdaw\Filter\Logic;
 
+use FiiSoft\Jackdaw\Filter\AbstractFilter;
 use FiiSoft\Jackdaw\Filter\Filter;
+use FiiSoft\Jackdaw\Filter\FilterAdjuster;
 use FiiSoft\Jackdaw\Internal\Check;
 
-final class FilterNOT extends BaseLogicFilter
+final class FilterNOT extends AbstractFilter
 {
     private Filter $filter;
     
     protected function __construct(Filter $filter)
     {
-        parent::__construct();
-        
         $this->filter = $filter;
     }
     
@@ -67,6 +67,17 @@ final class FilterNOT extends BaseLogicFilter
     
     public function equals(Filter $other): bool
     {
-        return $other instanceof $this && $other->filter->equals($this->filter);
+        return $other === $this || $other instanceof $this && $other->filter->equals($this->filter);
+    }
+    
+    public function adjust(FilterAdjuster $adjuster): Filter
+    {
+        $adjusted = $this->filter->adjust($adjuster);
+        
+        if ($adjusted->equals($this->filter)) {
+            return $this;
+        }
+        
+        return new self($adjusted);
     }
 }

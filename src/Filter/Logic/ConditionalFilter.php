@@ -29,8 +29,6 @@ abstract class ConditionalFilter extends BaseLogicFilter
      */
     final protected function __construct($condition, $filter)
     {
-        parent::__construct();
-
         $this->condition = Filters::getAdapter($condition);
         $this->filter = Filters::getAdapter($filter);
     }
@@ -49,8 +47,18 @@ abstract class ConditionalFilter extends BaseLogicFilter
 
     final public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->condition->equals($this->condition)
             && $other->filter->equals($this->filter);
+    }
+    
+    final protected function collectFilters(): array
+    {
+        return [$this->condition, $this->filter];
+    }
+    
+    final protected function createFilter(array $filters, ?int $mode = null): Filter
+    {
+        return new static($filters[0], $filters[1]);
     }
 }

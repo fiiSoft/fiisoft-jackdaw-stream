@@ -45,7 +45,7 @@ final class MemoStringFilter extends BaseStringFilterAdapter
     
     public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->reader->equals($this->reader)
             && parent::equals($other);
     }

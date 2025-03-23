@@ -48,7 +48,7 @@ final class ByArgs extends BaseFilter
     
     public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->consumer === $this->consumer
             && parent::equals($other);
     }

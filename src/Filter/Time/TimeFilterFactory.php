@@ -21,11 +21,6 @@ use FiiSoft\Jackdaw\Filter\Time\Compare\WeekDay;
 
 final class TimeFilterFactory extends FilterFactory implements TimeFilterPicker
 {
-    public static function instance(?int $mode = null): self
-    {
-        return new self($mode);
-    }
-    
     public function isDateTime(): Filter
     {
         return $this->get(Filters::isDateTime($this->mode));

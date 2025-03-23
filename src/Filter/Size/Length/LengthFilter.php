@@ -13,13 +13,13 @@ abstract class LengthFilter extends SizeFilter
     {
         switch ($mode) {
             case Check::VALUE:
-                return new ValueLength($mode, $filter);
+                return new ValueLength($filter, $mode);
             case Check::KEY:
-                return new KeyLength($mode, $filter);
+                return new KeyLength($filter, $mode);
             case Check::BOTH:
-                return new BothLength($mode, $filter);
+                return new BothLength($filter, $mode);
             case Check::ANY:
-                return new AnyLength($mode, $filter);
+                return new AnyLength($filter, $mode);
             default:
                 throw Mode::invalidModeException($mode);
         }

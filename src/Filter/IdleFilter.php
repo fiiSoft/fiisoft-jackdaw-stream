@@ -54,6 +54,6 @@ final class IdleFilter extends BaseFilter
     
     public function equals(Filter $other): bool
     {
-        return $other instanceof $this && $other->result === $this->result;
+        return $other === $this || $other instanceof $this && $other->result === $this->result;
     }
 }

@@ -5,12 +5,12 @@ namespace FiiSoft\Jackdaw\Filter\Logic\OpOR\Optim;
 use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
-use FiiSoft\Jackdaw\Filter\Logic\BaseCompoundFilter;
+use FiiSoft\Jackdaw\Filter\Logic\BaseMultiLogicFilter;
 use FiiSoft\Jackdaw\Filter\Logic\OpAND\BaseAND;
 use FiiSoft\Jackdaw\Filter\Logic\OpOR\BaseOR;
 use FiiSoft\Jackdaw\Filter\Logic\OpOR\LogicOR;
 
-class TwoArgsOR extends BaseCompoundFilter implements LogicOR
+class TwoArgsOR extends BaseMultiLogicFilter implements LogicOR
 {
     protected Filter $first, $second;
     
@@ -20,8 +20,6 @@ class TwoArgsOR extends BaseCompoundFilter implements LogicOR
      */
     public function __construct($first, $second, ?int $mode = null)
     {
-        parent::__construct();
-        
         $this->first = Filters::getAdapter($first, $mode);
         $this->second = Filters::getAdapter($second, $mode);
     }
@@ -43,8 +41,16 @@ class TwoArgsOR extends BaseCompoundFilter implements LogicOR
     final public function inMode(?int $mode): Filter
     {
         return $mode !== null && $mode !== $this->getMode()
-            ? BaseOR::create($this->getFilters(), $mode)
+            ? $this->createFilter($this->getFilters(), $mode)
             : $this;
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    final protected function createFilter(array $filters, ?int $mode = null): Filter
+    {
+        return BaseOR::create($filters, $mode);
     }
     
     final public function negate(): Filter
@@ -53,9 +59,9 @@ class TwoArgsOR extends BaseCompoundFilter implements LogicOR
     }
     
     /**
-     * @return Filter[]
+     * @inheritDoc
      */
-    public function getFilters(): array
+    protected function collectFilters(): array
     {
         return [$this->first, $this->second];
     }

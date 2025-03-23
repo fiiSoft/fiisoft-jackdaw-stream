@@ -41,6 +41,6 @@ final class ApplyForEach extends StateMapper
     
     public function equals(Mapper $other): bool
     {
-        return $other instanceof $this && $other->mapper->equals($this->mapper);
+        return $other === $this || $other instanceof $this && $other->mapper->equals($this->mapper);
     }
 }

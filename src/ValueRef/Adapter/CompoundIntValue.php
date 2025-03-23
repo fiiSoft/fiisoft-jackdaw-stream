@@ -75,6 +75,6 @@ final class CompoundIntValue implements IntValue
     
     public function equals(IntValue $other): bool
     {
-        return false;
+        return $other === $this && $this->isConstant();
     }
 }

@@ -5,10 +5,8 @@ namespace FiiSoft\Jackdaw\Filter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 
-final class FilterBy extends BaseFilter
+final class FilterBy extends SingleFilterHolder
 {
-    private Filter $filter;
-    
     /** @var string|int */
     private $field;
     
@@ -16,20 +14,11 @@ final class FilterBy extends BaseFilter
      * @param string|int $field valid key in array
      * @param FilterReady|callable|mixed $filter
      */
-    public static function create($field, $filter): self
+    public function __construct($field, $filter)
     {
-        return new self(Helper::validField($field, 'field'), Filters::getAdapter($filter, Check::VALUE));
-    }
-    
-    /**
-     * @param string|int $field valid key in array
-     */
-    private function __construct($field, Filter $filter)
-    {
-        parent::__construct(Check::VALUE);
+        parent::__construct(Filters::getAdapter($filter, Check::VALUE), Check::VALUE);
         
-        $this->field = $field;
-        $this->filter = $filter;
+        $this->field = Helper::validField($field, 'field');
     }
     
     /**
@@ -61,9 +50,13 @@ final class FilterBy extends BaseFilter
     
     public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->field === $this->field
-            && $other->filter->equals($this->filter)
             && parent::equals($other);
+    }
+    
+    protected function createFilter(Filter $filter): Filter
+    {
+        return new self($this->field, $filter);
     }
 }

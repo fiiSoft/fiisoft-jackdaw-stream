@@ -13,13 +13,13 @@ abstract class CountFilter extends SizeFilter
     {
         switch ($mode) {
             case Check::VALUE:
-                return new ValueCount($mode, $filter);
+                return new ValueCount($filter, $mode);
             case Check::KEY:
-                return new KeyCount($mode, $filter);
+                return new KeyCount($filter, $mode);
             case Check::BOTH:
-                return new BothCount($mode, $filter);
+                return new BothCount($filter, $mode);
             case Check::ANY:
-                return new AnyCount($mode, $filter);
+                return new AnyCount($filter, $mode);
             default:
                 throw Mode::invalidModeException($mode);
         }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 12.0.0
+
+#### Incompatible changes:
+
+- added Filter::adjust()
+
 ## 11.3.0
 
 - added Stream::categorizeByKey()

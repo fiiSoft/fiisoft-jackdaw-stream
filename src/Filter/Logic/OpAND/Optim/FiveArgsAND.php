@@ -33,9 +33,12 @@ class FiveArgsAND extends FourArgsAND
             && $this->fifth->isAllowed($value, $key);
     }
     
-    public function getFilters(): array
+    /**
+     * @inheritDoc
+     */
+    protected function collectFilters(): array
     {
-        $filters = parent::getFilters();
+        $filters = parent::collectFilters();
         $filters[] = $this->fifth;
         
         return $filters;

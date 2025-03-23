@@ -28,6 +28,10 @@ abstract class BaseStringFilterAdapter extends AbstractStringFilter
      */
     final public function ignoreCase(): StringFilter
     {
+        if ($this->ignoreCase) {
+            return $this;
+        }
+        
         $copy = parent::ignoreCase();
         $copy->filter = $copy->filter->ignoreCase();
         
@@ -39,10 +43,14 @@ abstract class BaseStringFilterAdapter extends AbstractStringFilter
      */
     final public function caseSensitive(): StringFilter
     {
-        $copy = parent::caseSensitive();
-        $copy->filter = $copy->filter->caseSensitive();
+        if ($this->ignoreCase) {
+            $copy = parent::caseSensitive();
+            $copy->filter = $copy->filter->caseSensitive();
+            
+            return $copy;
+        }
         
-        return $copy;
+        return $this;
     }
     
     final protected function compareCaseInsensitive(iterable $stream): iterable
@@ -69,7 +77,7 @@ abstract class BaseStringFilterAdapter extends AbstractStringFilter
     
     public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->filter->equals($this->filter)
             && parent::equals($other);
     }

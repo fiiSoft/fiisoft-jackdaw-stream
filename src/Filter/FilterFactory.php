@@ -9,9 +9,27 @@ abstract class FilterFactory
     protected int $mode;
     protected bool $isNot;
     
-    final protected function __construct(?int $mode, bool $isNot = false)
+    /** @var array<string, static> */
+    private static array $factories = [];
+    
+    /**
+     * @return static
+     */
+    final public static function instance(?int $mode = null, bool $isNot = false)
     {
-        $this->mode = Mode::get($mode);
+        $mode = Mode::get($mode);
+        $key = static::class.'_'.$mode.'_'.($isNot ? '1' : '0');
+        
+        if (!isset(self::$factories[$key])) {
+            self::$factories[$key] = new static($mode, $isNot);
+        }
+        
+        return self::$factories[$key];
+    }
+    
+    final protected function __construct(int $mode, bool $isNot)
+    {
+        $this->mode = $mode;
         $this->isNot = $isNot;
     }
     
@@ -20,7 +38,7 @@ abstract class FilterFactory
      */
     final protected function negate()
     {
-        return new static($this->mode, !$this->isNot);
+        return static::instance($this->mode, !$this->isNot);
     }
     
     final protected function get(Filter $filter): Filter

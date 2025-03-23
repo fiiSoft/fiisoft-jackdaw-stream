@@ -24,7 +24,7 @@ abstract class RangeTimeComp extends CompoundTimeComp
     
     final public function equals(TimeComparator $other): bool
     {
-        return $other instanceof static
+        return $other === $this || $other instanceof static
             && $other->earlier == $this->earlier
             && $other->later == $this->later;
     }

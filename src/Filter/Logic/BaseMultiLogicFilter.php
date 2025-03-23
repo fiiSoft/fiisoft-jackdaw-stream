@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Filter\Logic;
 
 use FiiSoft\Jackdaw\Filter\Filter;
 
-abstract class BaseCompoundFilter extends BaseLogicFilter implements CompoundFilter
+abstract class BaseMultiLogicFilter extends BaseLogicFilter
 {
     protected ?int $mode = null;
     
@@ -38,6 +38,10 @@ abstract class BaseCompoundFilter extends BaseLogicFilter implements CompoundFil
     
     final public function equals(Filter $other): bool
     {
+        if ($other === $this) {
+            return true;
+        }
+        
         if ($other instanceof static) {
             
             if ($other->getMode() !== $this->getMode()) {

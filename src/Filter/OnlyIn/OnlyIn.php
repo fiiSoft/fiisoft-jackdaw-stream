@@ -150,7 +150,7 @@ abstract class OnlyIn extends BaseFilter
     
     final public function equals(Filter $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->ints === $this->ints
             && $other->strings === $this->strings
             && $other->other === $this->other

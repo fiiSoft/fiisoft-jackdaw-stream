@@ -8,11 +8,6 @@ use FiiSoft\Jackdaw\Filter\Filters;
 
 final class LengthFilterFactory extends FilterFactory implements LengthFilterPicker
 {
-    public static function instance(?int $mode = null): self
-    {
-        return new self($mode);
-    }
-    
     public function isString(): Filter
     {
         return $this->get(Filters::isString($this->mode));

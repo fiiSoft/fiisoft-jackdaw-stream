@@ -1568,8 +1568,8 @@ final class StreamGTest extends TestCase
             ->filterBy('age', Filters::isInt())
             ->filterBy('age', Filters::greaterOrEqual(18))
             ->filterBy('sex', 'female')
-            ->filterBy('name', $str->startsWith('k')->ignoreCase())
-            ->filterBy('name', $str->endsWith('a', true)->or($str->endsWith('o', true)))
+            ->filterBy('name', $str->startsWith('K')->ignoreCase())
+            ->filterBy('name', $str->endsWith('A', true)->or($str->endsWith('O', true)))
             ->extract('id')
             ->toArray();
         
@@ -1584,8 +1584,8 @@ final class StreamGTest extends TestCase
             ->omitBy('age', Filters::NOT('is_int'))
             ->omitBy('age', Filters::lessThan(18))
             ->omitBy('sex', 'male')
-            ->omitBy('name', $str->notStartsWith('k', true))
-            ->omitBy('name', $str->notEndsWith('a', true)->and($str->notEndsWith('o', true)))
+            ->omitBy('name', $str->notStartsWith('K')->ignoreCase())
+            ->omitBy('name', $str->notEndsWith('A')->and($str->notEndsWith('O'))->ignoreCase())
             ->extract('id')
             ->toArray();
         
@@ -1600,8 +1600,8 @@ final class StreamGTest extends TestCase
             ->omitBy('age', Filters::NOT('is_int'))
             ->filterBy('age', Filters::greaterOrEqual(18))
             ->omitBy('sex', 'male')
-            ->omitBy('name', $str->notStartsWith('k', true))
-            ->omitBy('name', $str->notEndsWith('a', true)->and($str->notEndsWith('o', true)))
+            ->omitBy('name', $str->notStartsWith('K', true))
+            ->omitBy('name', $str->notEndsWith('A', true)->and($str->notEndsWith('O', true)))
             ->extract('id')
             ->toArray();
         
@@ -1616,8 +1616,8 @@ final class StreamGTest extends TestCase
             ->filterBy('age', Filters::greaterOrEqual(18))
             ->omitBy('age', Filters::NOT('is_int'))
             ->omitBy('sex', 'male')
-            ->omitBy('name', $str->notStartsWith('k', true))
-            ->omitBy('name', $str->notEndsWith('a', true)->and($str->notEndsWith('o', true)))
+            ->omitBy('name', $str->notStartsWith('K', true))
+            ->omitBy('name', $str->notEndsWith('A')->and($str->notEndsWith('O'))->ignoreCase())
             ->extract('id')
             ->toArray();
         

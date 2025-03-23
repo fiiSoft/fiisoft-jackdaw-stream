@@ -9,11 +9,6 @@ use FiiSoft\Jackdaw\Filter\Size\Length\LengthFilterPicker;
 
 final class StringFilterFactory extends FilterFactory implements StringFilterPicker
 {
-    public static function instance(?int $mode = null): self
-    {
-        return new self($mode);
-    }
-    
     public function isString(): Filter
     {
         return $this->get(Filters::isString($this->mode));

@@ -29,7 +29,7 @@ final class TupleReader implements RegReader
     
     public function equals(MemoReader $other): bool
     {
-        return $other instanceof $this
+        return $other === $this || $other instanceof $this
             && $other->name === $this->name
             && $other->index === $this->index
             && $other->storage === $this->storage;
