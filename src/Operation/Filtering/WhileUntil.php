@@ -15,8 +15,8 @@ abstract class WhileUntil extends BaseOperation
     protected bool $active = true;
     
     /**
-     * @param FilterReady|callable|mixed $condition
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function __construct($condition, $filter, ?int $mode = null)
     {

@@ -16,7 +16,7 @@ final class MapFieldWhen extends ConditionalMap
     
     /**
      * @param string|int $field
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */

@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Collector;
 
-use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
+use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 use FiiSoft\Jackdaw\Stream;
 
 /**

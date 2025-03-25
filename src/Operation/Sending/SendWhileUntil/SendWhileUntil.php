@@ -20,7 +20,7 @@ abstract class SendWhileUntil extends BaseOperation
     protected bool $isActive = true;
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param ConsumerReady|callable|resource $consumer
      */
     final public function __construct($condition, $consumer)

@@ -8,8 +8,8 @@ use FiiSoft\Jackdaw\Internal\Check;
 final class FilterXNORAny extends BaseXNOR
 {
     /**
-     * @param FilterReady|callable|mixed $first
-     * @param FilterReady|callable|mixed $second
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $first
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $second
      */
     protected function __construct($first, $second)
     {

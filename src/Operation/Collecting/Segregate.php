@@ -23,7 +23,7 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
     /** @var Bucket[] */
     private array $buckets = [];
     
-    private int $maxBuckets, $countBuckets = 0, $lastBucket = 0;
+    private int $maxBuckets, $countBuckets = 0, $lastBucket = 0, $limit;
     private bool $reindex;
     
     /**
@@ -39,12 +39,25 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
             throw InvalidParamException::describe('buckets', $buckets);
         }
         
-        $this->comparison = Comparison::prepare($comparison);
-        $this->comparator = ItemComparatorFactory::getForComparison($this->comparison);
-        $this->maxBuckets = $buckets;
+        if ($limit === null) {
+            $limit = \PHP_INT_MAX;
+        } elseif ($limit < 1) {
+            throw InvalidParamException::describe('limit', $limit);
+        }
         
-        $this->buckets[0] = new Bucket($reindex, $limit);
         $this->reindex = $reindex;
+        $this->maxBuckets = $buckets;
+        $this->limit = $limit;
+        
+        $this->comparison = Comparison::prepare($comparison);
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
+        
+        $this->comparator = ItemComparatorFactory::getForComparison($this->comparison);
+        $this->buckets[0] = new Bucket($this->reindex, $this->limit);
     }
     
     public function handle(Signal $signal): void

@@ -26,32 +26,32 @@ interface StringFilter extends Filter
     public function isCaseInsensitive(): bool;
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function and($filter): self;
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function andNot($filter): self;
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function or($filter): self;
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function orNot($filter): self;
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function xor($filter): self;
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function xnor($filter): self;
 }

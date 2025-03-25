@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher;
 
 use FiiSoft\Jackdaw\Internal\Signal;
 
-interface Handler
+interface DispatchHandler
 {
     public function handle(Signal $signal): void;
     

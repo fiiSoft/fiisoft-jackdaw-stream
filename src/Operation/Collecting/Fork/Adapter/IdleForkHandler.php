@@ -3,13 +3,18 @@
 namespace FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter;
 
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\ForkHandler;
-use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
+use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 
 final class IdleForkHandler implements ForkHandler, ForkReady
 {
     public function create(): ForkHandler
     {
         return $this;
+    }
+    
+    final public function prepare(): void
+    {
+        //noop
     }
     
     /**

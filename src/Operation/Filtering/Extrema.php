@@ -21,16 +21,27 @@ final class Extrema extends BaseOperation
     private int $direction;
     private bool $allowLimits, $isFirst = true;
     
+    /** @var Comparable|callable|null */
+    private $comparison;
+    
     /**
      * @param Comparable|callable|null $comparison
      */
     public function __construct(bool $allowLimits = true, $comparison = null)
     {
         $this->allowLimits = $allowLimits;
-        $this->direction = $allowLimits ? self::UP : self::FLAT;
-        $this->comparator = ItemComparatorFactory::getForComparison(Comparison::prepare($comparison));
+        $this->comparison = $comparison;
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
         
+        $this->direction = $this->allowLimits ? self::UP : self::FLAT;
+        $this->comparator = ItemComparatorFactory::getForComparison(Comparison::prepare($this->comparison));
         $this->item = new Item();
+        
+        $this->comparison = null;
     }
     
     public function handle(Signal $signal): void

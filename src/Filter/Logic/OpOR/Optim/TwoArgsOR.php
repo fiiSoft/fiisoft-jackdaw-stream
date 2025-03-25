@@ -15,8 +15,8 @@ class TwoArgsOR extends BaseMultiLogicFilter implements LogicOR
     protected Filter $first, $second;
     
     /**
-     * @param FilterReady|callable|mixed $first
-     * @param FilterReady|callable|mixed $second
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $first
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $second
      */
     public function __construct($first, $second, ?int $mode = null)
     {

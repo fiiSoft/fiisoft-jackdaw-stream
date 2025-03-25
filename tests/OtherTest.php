@@ -5,6 +5,7 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Comparator\Sorting\By;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Filter\Logic\MultiArgsLogicFilter;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Item;
@@ -16,14 +17,22 @@ use FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter\IdleForkHandler;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
 use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterConditionalData;
 use FiiSoft\Jackdaw\Operation\Filtering\FilterData\FilterFieldData;
+use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\CircularItemBuffer;
+use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\ItemBuffer;
+use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\ItemBufferClient;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\ValueRef\Adapter\CompoundIntValue;
 use FiiSoft\Jackdaw\ValueRef\IntNum;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-final class OtherTest extends TestCase
+final class OtherTest extends TestCase implements ItemBufferClient
 {
+    public function setItemBuffer(ItemBuffer $buffer): void
+    {
+        //required to test CircularItemBuffer
+    }
+    
     public function test_iterate_over_nested_arrays_without_oryginal_keys(): void
     {
         $arr = ['a', ['b', 'c',], 'd', ['e', ['f', ['g', 'h',], 'i'], [[['j'], 'k',], 'l',], 'm',], 'n'];
@@ -271,14 +280,14 @@ final class OtherTest extends TestCase
         self::assertSame($expected, \array_map('\count', $data));
     }
     
-    public function test_compare_letter_a_with_digit_0_using_spaceship_operator(): void
+    public function test_compare_various_types_using_spaceship_operator(): void
     {
-        if (\version_compare(\PHP_VERSION, '8.0.0') === -1) {
-            // :(
+        if (\PHP_MAJOR_VERSION < 8) {
             self::assertSame(0, 'a' <=> 0);
+            self::assertSame(0, true <=> 1);
         } else {
-            // :)
             self::assertSame(1, 'a' <=> 0);
+            self::assertSame(0, true <=> 1);
         }
     }
     
@@ -813,5 +822,59 @@ final class OtherTest extends TestCase
         $this->expectExceptionObject(InvalidParamException::byName('value'));
         
         IntNum::getAdapter(15.0);
+    }
+    
+    public function test_CircularItemBuffer_length_1(): void
+    {
+        $buffer = CircularItemBuffer::initial($this, 1);
+        
+        self::assertSame(1, $buffer->getLength());
+        self::assertSame(0, $buffer->count());
+        self::assertEmpty($buffer->fetchData());
+        
+        $buffer->hold(new Item(2, 'c'));
+        
+        self::assertSame(1, $buffer->count());
+        self::assertSame([2 => 'c'], $buffer->fetchData());
+    }
+    
+    public function test_CircularItemBuffer_length_2(): void
+    {
+        $buffer = CircularItemBuffer::initial($this, 2);
+        
+        self::assertSame(2, $buffer->getLength());
+        self::assertSame(0, $buffer->count());
+        self::assertEmpty($buffer->fetchData());
+        
+        $buffer->hold(new Item(2, 'c'));
+        
+        self::assertSame(1, $buffer->count());
+        self::assertSame([2 => 'c'], $buffer->fetchData());
+    }
+    
+    public function test_array_unset(): void
+    {
+        $numerical = ['a', 'b', 'c'];
+        unset($numerical[1]);
+        
+        self::assertSame(['a', 2 => 'c'], $numerical);
+        
+        $assoc = \array_flip(['a', 'b', 'c']);
+        unset($assoc['b']);
+        
+        self::assertSame(['a' => 0, 'c' => 2], $assoc);
+    }
+    
+    public function test_MultiArgsLogicFilter_removeDuplicates(): void
+    {
+        $filters = ['is_string', Filters::isString(), 'is_string', Filters::isString()];
+        
+        $refl = new \ReflectionClass(MultiArgsLogicFilter::class);
+        $method = $refl->getMethod('removeDuplicates');
+        $method->setAccessible(true);
+        
+        $filtered = $method->invoke(null, $filters);
+        
+        self::assertEquals(['is_string', Filters::isString()], $filtered);
     }
 }

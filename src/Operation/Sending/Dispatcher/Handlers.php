@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Memo\MemoWriter;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\CollectorAdapter;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\ConsumerAdapter;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\MemoWriterAdapter;
@@ -17,15 +18,15 @@ use FiiSoft\Jackdaw\Reducer\Reducer;
 final class Handlers
 {
     /**
-     * @param HandlerReady[] $handlers
-     * @return Handler[]
+     * @param DispatchReady[] $handlers
+     * @return DispatchHandler[]
      */
     public static function prepare(array $handlers): array
     {
-        return \array_map(static fn($handler): Handler => self::getAdapter($handler), $handlers);
+        return \array_map(static fn($handler): DispatchHandler => self::getAdapter($handler), $handlers);
     }
     
-    public static function getAdapter(HandlerReady $handler): Handler
+    public static function getAdapter(DispatchReady $handler): DispatchHandler
     {
         if ($handler instanceof Reducer) {
             return new ReducerAdapter($handler);

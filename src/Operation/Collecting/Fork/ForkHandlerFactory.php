@@ -11,7 +11,7 @@ use FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter\IdleForkHandler;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter\ReducerFork;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter\SequenceFork;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter\StreamFork;
-use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
+use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class ForkHandlerFactory

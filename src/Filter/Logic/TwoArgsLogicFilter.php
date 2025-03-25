@@ -11,14 +11,14 @@ abstract class TwoArgsLogicFilter extends BaseLogicFilter
     protected Filter $first, $second;
     
     /**
-     * @param FilterReady|callable|mixed $first
-     * @param FilterReady|callable|mixed $second
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $first
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $second
      */
     abstract protected static function create($first, $second, ?int $mode = null): Filter;
     
     /**
-     * @param FilterReady|callable|mixed $first
-     * @param FilterReady|callable|mixed $second
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $first
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $second
      */
     protected function __construct($first, $second, ?int $mode = null)
     {

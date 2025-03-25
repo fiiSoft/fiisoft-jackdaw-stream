@@ -19,7 +19,7 @@ abstract class StackableFilterBy extends BaseOperation
     
     /**
      * @param string|int $field
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function __construct($field, $filter)
     {

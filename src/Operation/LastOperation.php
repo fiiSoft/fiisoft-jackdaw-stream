@@ -5,11 +5,11 @@ namespace FiiSoft\Jackdaw\Operation;
 use FiiSoft\Jackdaw\Exception\JackdawException;
 use FiiSoft\Jackdaw\Internal\ResultApi;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
-use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
+use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 
-abstract class LastOperation extends StreamPipe implements ResultApi, ForkReady, HandlerReady
+abstract class LastOperation extends StreamPipe implements ResultApi, ForkReady, DispatchReady
 {
     /**
      * Create new stream from the current one and set provided Producer as source of data for it.

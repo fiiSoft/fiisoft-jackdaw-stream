@@ -27,6 +27,11 @@ final class FullSizeZip extends Zip
         
         $this->producers = $producers;
         $this->size = \count($this->producers);
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
         
         for ($i = 0; $i < $this->size; ++$i) {
             $this->items[$i] = new Item();

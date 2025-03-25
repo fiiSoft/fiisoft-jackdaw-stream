@@ -21,7 +21,7 @@ final class SendWhen extends BaseOperation
     private ?Consumer $elseConsumer = null;
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param ConsumerReady|callable|resource $consumer
      * @param ConsumerReady|callable|resource|null $elseConsumer
      */

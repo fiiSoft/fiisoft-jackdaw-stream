@@ -20,15 +20,32 @@ final class Maxima extends BaseOperation
     private int $state;
     private bool $allowLimits;
     
+    /** @var Comparable|callable|null */
+    private $comparison;
+    
+    private bool $reversed;
+    
     /**
      * @param Comparable|callable|null $comparison
      */
     public function __construct(bool $allowLimits = true, bool $reversed = false, $comparison = null)
     {
         $this->allowLimits = $allowLimits;
-        $this->state = $allowLimits ? self::UP : self::FLAT;
+        $this->reversed = $reversed;
+        $this->comparison = $comparison;
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
         
-        $this->comparator = ItemComparatorFactory::getForComparison(Comparison::prepare($comparison), $reversed);
+        $this->state = $this->allowLimits ? self::UP : self::FLAT;
+        
+        $this->comparator = ItemComparatorFactory::getForComparison(
+            Comparison::prepare($this->comparison), $this->reversed
+        );
+        
+        $this->comparison = null;
     }
     
     public function handle(Signal $signal): void

@@ -3,9 +3,9 @@
 namespace FiiSoft\Jackdaw\Memo;
 
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
 
-interface MemoWriter extends ConsumerReady, HandlerReady
+interface MemoWriter extends ConsumerReady, DispatchReady
 {
     /**
      * @param mixed $value

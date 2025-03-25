@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter;
 
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Handler;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\DispatchHandler;
 
-abstract class PrimitiveHandler implements Handler
+abstract class PrimitiveDispatchHandler implements DispatchHandler
 {
     final public function prepare(): void
     {

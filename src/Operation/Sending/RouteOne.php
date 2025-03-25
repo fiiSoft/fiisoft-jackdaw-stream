@@ -6,24 +6,24 @@ use FiiSoft\Jackdaw\Filter\Filter;
 use FiiSoft\Jackdaw\Filter\FilterReady;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\DispatchHandler;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\DispatchOperation;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Handler;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 
 final class RouteOne extends DispatchOperation
 {
     private Filter $condition;
-    private Handler $handler;
+    private DispatchHandler $handler;
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      */
-    public function __construct($condition, HandlerReady $handler)
+    public function __construct($condition, DispatchReady $handler)
     {
         parent::__construct([$handler]);
         
-        $this->handler = $this->handlers[0];
         $this->condition = Filters::getAdapter($condition);
+        $this->handler = $this->handlers[0];
     }
     
     public function handle(Signal $signal): void

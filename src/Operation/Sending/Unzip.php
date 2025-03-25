@@ -4,8 +4,8 @@ namespace FiiSoft\Jackdaw\Operation\Sending;
 
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\DispatchOperation;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 
 final class Unzip extends DispatchOperation
 {
@@ -14,7 +14,7 @@ final class Unzip extends DispatchOperation
     private int $count;
     
     /**
-     * @param HandlerReady[] $consumers
+     * @param DispatchReady[] $consumers
      */
     public function __construct(array $consumers)
     {

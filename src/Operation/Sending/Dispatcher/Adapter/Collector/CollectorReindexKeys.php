@@ -12,6 +12,9 @@ final class CollectorReindexKeys extends CollectorAdapter
         $this->collector->add($signal->item->value);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function handlePair($value, $key): void
     {
         $this->collector->add($value);

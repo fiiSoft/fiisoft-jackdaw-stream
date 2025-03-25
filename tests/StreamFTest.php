@@ -1881,4 +1881,16 @@ final class StreamFTest extends TestCase
     {
         self::assertSame([3 => 'a'], Stream::from([3 => 'a'])->best(100)->toArrayAssoc());
     }
+    
+    public function test_filter_null(): void
+    {
+        self::assertSame([1, 2, 3], Stream::from([1, 2, null, 3])->omit(null)->toArray());
+    }
+    
+    public function test_filterBy_with_null(): void
+    {
+        $rows = [['foo' => 'a'], ['foo' => null]];
+        
+        self::assertSame([['foo' => null]], Stream::from($rows)->filterBy('foo', null)->toArray());
+    }
 }

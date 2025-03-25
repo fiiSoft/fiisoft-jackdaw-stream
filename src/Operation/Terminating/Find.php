@@ -16,7 +16,7 @@ final class Find extends SimpleFinal
     private ?Item $item = null;
     
     /**
-     * @param FilterReady|callable|mixed $predicate
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $predicate
      */
     public function __construct(Stream $stream, $predicate, ?int $mode = null)
     {

@@ -36,13 +36,11 @@ final class Window extends BaseOperation implements ItemBufferClient
         $this->size = $size;
         $this->step = $step;
         $this->reindex = $reindex;
-        
-        $this->initializeState();
     }
     
-    protected function __clone()
+    public function prepare(): void
     {
-        parent::__clone();
+        parent::prepare();
         
         $this->initializeState();
     }

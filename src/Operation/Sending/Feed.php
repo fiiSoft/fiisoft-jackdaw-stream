@@ -32,7 +32,7 @@ final class Feed extends ProcessOperation
     
     public function buildStream(iterable $stream): iterable
     {
-        $signal = $this->createSignal();
+        $signal = Signal::shared();
         $item = $signal->item;
         
         foreach ($stream as $item->key => $item->value) {

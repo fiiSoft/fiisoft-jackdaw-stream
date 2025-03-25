@@ -6,7 +6,7 @@ use FiiSoft\Jackdaw\Collector\Collector;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\Collector\CollectorPreserveKeys;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter\Collector\CollectorReindexKeys;
 
-abstract class CollectorAdapter extends PrimitiveHandler
+abstract class CollectorAdapter extends PrimitiveDispatchHandler
 {
     protected Collector $collector;
     

@@ -123,6 +123,7 @@ final class Producers
         if (\is_string($producer) && $producer !== '') {
             $fp = @\fopen($producer, 'rb');
             if (\is_resource($fp)) {
+                \fclose($fp);
                 return self::resource($producer, true);
             }
         }

@@ -6,18 +6,19 @@ use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Operation\Internal\CommonOperationCode;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Stream;
 
 abstract class DispatchOperation extends StreamPipe implements Operation
 {
-    use CommonOperationCode;
+    use CommonOperationCode { prepare as commonPrepare; }
     
-    /** @var Handler[] */
+    /** @var DispatchHandler[] */
     protected array $handlers;
     
     /**
-     * @param HandlerReady[] $handlers
+     * @param DispatchReady[] $handlers
      */
     public function __construct(array $handlers)
     {
@@ -26,6 +27,11 @@ abstract class DispatchOperation extends StreamPipe implements Operation
         }
         
         $this->handlers = Handlers::prepare($handlers);
+    }
+    
+    public function prepare(): void
+    {
+        $this->commonPrepare();
         
         foreach ($this->handlers as $handler) {
             $handler->prepare();

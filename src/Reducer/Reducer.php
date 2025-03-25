@@ -4,11 +4,11 @@ namespace FiiSoft\Jackdaw\Reducer;
 
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
-use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
+use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
-interface Reducer extends ConsumerReady, MapperReady, HandlerReady, ForkReady, TransformerReady
+interface Reducer extends ConsumerReady, MapperReady, DispatchReady, ForkReady, TransformerReady
 {
     /**
      * @param mixed $value

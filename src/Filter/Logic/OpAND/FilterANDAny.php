@@ -8,7 +8,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 final class FilterANDAny extends BaseAND
 {
     /**
-     * @param array<FilterReady|callable|mixed> $filters
+     * @param array<FilterReady|callable|array<string|int, mixed>|scalar> $filters
      */
     protected function __construct(array $filters)
     {

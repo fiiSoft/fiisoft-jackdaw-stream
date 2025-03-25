@@ -6,8 +6,8 @@ use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\DispatchOperation;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 
 final class RouteMany extends DispatchOperation
 {
@@ -15,7 +15,7 @@ final class RouteMany extends DispatchOperation
     
     /**
      * @param DiscriminatorReady|callable|array<string|int> $discriminator
-     * @param HandlerReady[] $handlers
+     * @param DispatchReady[] $handlers
      */
     public function __construct($discriminator, array $handlers)
     {

@@ -39,7 +39,7 @@ use FiiSoft\Jackdaw\ValueRef\IntValue;
 final class Filters
 {
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function getAdapter($filter, ?int $mode = null): Filter
     {
@@ -253,7 +253,9 @@ final class Filters
      */
     public static function same($value, ?int $mode = null): Filter
     {
-        return self::simple($mode)->same($value);
+        return $value === null
+            ? self::isNull($mode)
+            : self::simple($mode)->same($value);
     }
     
     /**
@@ -285,7 +287,7 @@ final class Filters
     
     /**
      * @param string|int $field
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function filterBy($field, $filter): Filter
     {
@@ -293,7 +295,7 @@ final class Filters
     }
     
     /**
-     * @param FilterReady|callable|mixed ...$filters
+     * @param FilterReady|callable|array<string|int, mixed>|scalar ...$filters
      */
     public static function AND(...$filters): Filter
     {
@@ -301,7 +303,7 @@ final class Filters
     }
     
     /**
-     * @param FilterReady|callable|mixed ...$filters
+     * @param FilterReady|callable|array<string|int, mixed>|scalar ...$filters
      */
     public static function OR(...$filters): Filter
     {
@@ -309,8 +311,8 @@ final class Filters
     }
     
     /**
-     * @param FilterReady|callable|mixed $first
-     * @param FilterReady|callable|mixed $second
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $first
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $second
      */
     public static function XOR($first, $second): Filter
     {
@@ -318,8 +320,8 @@ final class Filters
     }
     
     /**
-     * @param FilterReady|callable|mixed $first
-     * @param FilterReady|callable|mixed $second
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $first
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $second
      */
     public static function XNOR($first, $second): Filter
     {
@@ -327,7 +329,7 @@ final class Filters
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function NOT($filter): Filter
     {

@@ -1115,13 +1115,8 @@ final class StreamBTest extends TestCase
                 $stream = Stream::empty()->join(...$elements);
         }
         
-        $result = $stream->reindex()
-            ->limit(19)
-            ->mapWhen('is_string', 'trim')
-            ->toArray();
-        
         //Assert
-        self::assertSame($expected, $result);
+        self::assertSame($expected, $stream->reindex()->limit(19)->mapWhen('is_string', 'trim')->toArray());
     }
     
     public static function getAllPossibleTypesOfSourceForStream(): array
@@ -1906,5 +1901,42 @@ final class StreamBTest extends TestCase
             ->toArrayAssoc();
         
         self::assertSame([5 => 'a', 3 => 'd', 1 => 'e'], $result);
+    }
+    
+    public function test_filter_by_negated_string_filter(): void
+    {
+        $filter = Filters::contains('a')->and(Filters::length()->eq(3))->ignoreCase()->negate();
+        
+        self::assertSame(['ab', 'cde'], Stream::from(['ab', 'abc', 'cde'])->filter($filter)->toArray());
+    }
+    
+    public function test_filter_by_single_filterBy(): void
+    {
+        $rows = [
+            ['foo' => 1, 'bar' => 'ouch'],
+            ['foo' => 5, 'bar' => false],
+            ['foo' => 3, 'bar' => 'holymoly'],
+        ];
+        
+        $result = Stream::from($rows)
+            ->filterBy('bar', Filters::isString())
+            ->filterBy('bar', Filters::length()->le(5))
+            ->toArray();
+        
+        self::assertSame([['foo' => 1, 'bar' => 'ouch']], $result);
+    }
+    
+    public function test_filter_by_filterMany_with_onerror_handler(): void
+    {
+        $data = [5, 'foo', 2, 'aaron', 'anna', 3];
+        
+        $result = Stream::from($data)
+            ->onError(OnError::abort())
+            ->onlyStrings()
+            ->filterWhen(Filters::startsWith('a'), Filters::endsWith('n'));
+        
+        self::assertSame(['foo', 'aaron'], $result->toArray());
+        
+        $result->destroy();
     }
 }

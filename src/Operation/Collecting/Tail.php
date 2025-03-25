@@ -22,25 +22,23 @@ final class Tail extends BaseOperation implements ItemBufferClient
         }
         
         $this->length = $length;
-        
-        $this->prepareBuffer($this->length);
     }
     
-    protected function __clone()
+    public function prepare(): void
     {
-        parent::__clone();
+        parent::prepare();
         
-        $this->prepareBuffer($this->length);
+        $this->prepareBuffer();
     }
     
     public function mergeWith(Tail $other): void
     {
-        $this->prepareBuffer(\min($this->length(), $other->length()));
+        $this->length = \min($this->length, $other->length);
     }
     
-    private function prepareBuffer(int $size): void
+    private function prepareBuffer(): void
     {
-        $this->buffer = CircularItemBuffer::initial($this, $size);
+        $this->buffer = CircularItemBuffer::initial($this, $this->length);
     }
     
     public function handle(Signal $signal): void
@@ -79,11 +77,12 @@ final class Tail extends BaseOperation implements ItemBufferClient
     public function setItemBuffer(ItemBuffer $buffer): void
     {
         $this->buffer = $buffer;
+        $this->length = $buffer->getLength();
     }
     
     public function length(): int
     {
-        return $this->buffer->getLength();
+        return $this->length;
     }
     
     public function destroy(): void

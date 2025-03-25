@@ -26,6 +26,11 @@ final class Unique extends BaseOperation
     public function __construct($comparison = null)
     {
         $this->comparison = Comparison::prepare($comparison);
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
         
         $this->prepareStrategy();
     }
@@ -81,13 +86,6 @@ final class Unique extends BaseOperation
             default:
                 $this->checker = new StandardChecker\Double\CheckValueOrKey($strategy);
         }
-    }
-    
-    protected function __clone()
-    {
-        $this->prepareStrategy();
-        
-        parent::__clone();
     }
     
     public function comparison(): Comparison

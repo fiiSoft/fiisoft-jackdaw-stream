@@ -18,10 +18,8 @@ final class SourceReady extends Source
     
     public function hasNextItem(): bool
     {
-        if ($this->nextValue->isSet) {
-            $this->item->key = $this->nextValue->key;
-            $this->item->value = $this->nextValue->value;
-            $this->nextValue->isSet = false;
+        if ($this->hasNextValue) {
+            $this->hasNextValue = false;
             
             return true;
         }

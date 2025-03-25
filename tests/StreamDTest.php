@@ -841,9 +841,7 @@ final class StreamDTest extends TestCase
                 [13 => 4],
                 [15 => 6, 2],
             ],
-            Stream::from([5,8,2,1,4,2,6,3,7,2,8,4,1,4,5,6,2,3,7])
-                ->accumulate(Filters::number()->isEven())
-                ->toArray()
+            Stream::from([5,8,2,1,4,2,6,3,7,2,8,4,1,4,5,6,2,3,7])->accumulate(Filters::number()->isEven())->toArray()
         );
     }
     
@@ -978,11 +976,10 @@ final class StreamDTest extends TestCase
             ['id' => 9, 'name' => 'Chris', 'age' => 17],
         ];
         
-        $result = Stream::from($rowset)
-            ->mapFieldWhen('name', 'is_string', Mappers::value(), Mappers::value())
-            ->toArray();
-        
-        self::assertSame($rowset, $result);
+        self::assertSame(
+            $rowset,
+            Stream::from($rowset)->mapFieldWhen('name', 'is_string', Mappers::value(), Mappers::value())->toArray()
+        );
     }
     
     public function test_stream_can_abort_processing_silently_on_error(): void

@@ -4,7 +4,6 @@ namespace FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
 
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparator;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
-use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
@@ -16,11 +15,11 @@ final class SingleSortLimited extends SortLimited
     private ItemComparator $comparator;
     private ?Item $best = null;
     
-    protected function __construct(Sorting $sorting)
+    public function prepare(): void
     {
-        parent::__construct($sorting);
+        parent::prepare();
         
-        $this->comparator = ItemComparatorFactory::getForSorting($sorting);
+        $this->comparator = ItemComparatorFactory::getForSorting($this->sorting);
     }
     
     public function handle(Signal $signal): void

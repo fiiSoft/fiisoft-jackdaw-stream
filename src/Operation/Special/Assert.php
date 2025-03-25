@@ -14,7 +14,7 @@ final class Assert extends BaseOperation
     private Filter $filter;
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function __construct($filter, ?int $mode = null)
     {

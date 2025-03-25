@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
-final class ReducerAdapter extends PrimitiveHandler
+final class ReducerAdapter extends PrimitiveDispatchHandler
 {
     private Reducer $reducer;
     
@@ -19,6 +19,9 @@ final class ReducerAdapter extends PrimitiveHandler
         $this->reducer->consume($signal->item->value);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function handlePair($value, $key): void
     {
         $this->reducer->consume($value);

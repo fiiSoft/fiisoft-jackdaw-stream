@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Memo;
 use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Matcher\Matcher;
-use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
+use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\TransformerReady;

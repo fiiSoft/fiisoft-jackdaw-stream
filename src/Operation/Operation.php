@@ -31,4 +31,6 @@ interface Operation extends StreamAware, Destroyable, StreamBuilder
     public function streamingFinished(Signal $signal): bool;
     
     public function resume(): void;
+    
+    public function prepare(): void;
 }

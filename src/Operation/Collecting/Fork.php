@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\BaseFork;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\ForkHandler;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\ForkHandlerFactory;
+use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 
 final class Fork extends BaseFork
 {
@@ -20,6 +21,13 @@ final class Fork extends BaseFork
         parent::__construct($discriminator);
         
         $this->prototype = ForkHandlerFactory::adaptPrototype($prototype);
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
+        
+        $this->prototype->prepare();
     }
     
     public function handle(Signal $signal): void

@@ -80,4 +80,9 @@ final class Ending implements Operation
     {
         //noop
     }
+    
+    public function prepare(): void
+    {
+        //noop
+    }
 }

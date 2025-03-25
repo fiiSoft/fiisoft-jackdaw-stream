@@ -94,9 +94,24 @@ final class PipeTest extends TestCase
 
         yield 'Feed_Feed' => [OP::feed($stream), OP::feed($stream), FeedMany::class];
 
-        yield 'Filter_Filter_Unique_Filter' => [
+        yield 'Filter_Filter_Unique_Filter_1' => [
             OP::filter('is_string'), OP::filter('is_string'), OP::unique(), OP::filter('is_string'),
+            FilterOp::class, OmitReps::class, Unique::class
+        ];
+
+        yield 'Filter_Filter_Unique_Filter_2' => [
+            OP::filter('is_string'), OP::filter('is_int'), OP::unique(), OP::filter('is_string'),
+            FilterOp::class, OmitReps::class, Unique::class
+        ];
+
+        yield 'Filter_FilterWhen_Unique_Filter' => [
+            OP::filter('is_string'), OP::filterWhen('is_int', 'is_string'), OP::unique(), OP::filter('is_string'),
             FilterMany::class, OmitReps::class, Unique::class
+        ];
+
+        yield 'Filter_Omit_Unique_Filter' => [
+            OP::filter('is_string'), OP::omit('is_int'), OP::unique(), OP::filter('is_string'),
+            FilterOp::class, OmitReps::class, Unique::class
         ];
         
         yield 'Filter_First' => [OP::filter('is_string'), OP::first($stream), Find::class];
@@ -357,7 +372,7 @@ final class PipeTest extends TestCase
         
         yield 'Reverse_Unique_Shuffle_Filter_Filter' => [
             OP::reverse(), OP::unique(), OP::shuffle(), OP::filter('is_string'), OP::filter('is_int'),
-            FilterMany::class, Reverse::class, OmitReps::class, Unique::class, Shuffle::class
+            FilterOp::class, Reverse::class, OmitReps::class, Unique::class, Shuffle::class
         ];
         
         yield 'IsEmpty' => [

@@ -11,8 +11,8 @@ use FiiSoft\Jackdaw\Internal\Check;
 abstract class BaseXOR extends TwoArgsLogicFilter
 {
     /**
-     * @param FilterReady|callable|mixed $first
-     * @param FilterReady|callable|mixed $second
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $first
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $second
      */
     final public static function create($first, $second, ?int $mode = null): Filter
     {

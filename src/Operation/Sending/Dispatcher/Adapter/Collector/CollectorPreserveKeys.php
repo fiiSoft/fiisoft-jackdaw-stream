@@ -12,6 +12,9 @@ final class CollectorPreserveKeys extends CollectorAdapter
         $this->collector->set($signal->item->key, $signal->item->value);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function handlePair($value, $key): void
     {
         $this->collector->set($key, $value);

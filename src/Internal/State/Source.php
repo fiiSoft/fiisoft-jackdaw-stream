@@ -10,19 +10,17 @@ use FiiSoft\Jackdaw\Producer\MultiProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Producer\Producers;
-use FiiSoft\Jackdaw\Stream;
 
 abstract class Source extends StreamSource implements Destroyable
 {
     /** @var Producer<string|int, mixed> */
     public Producer $producer;
     
-    protected SourceData  $data;
-    
+    protected SourceData $data;
     protected \Iterator $currentSource;
-    protected NextValue $nextValue;
-    protected Stream $stream;
     protected Item $item;
+    
+    protected bool $hasNextValue = false;
     
     private Sources $sources;
     private Pipe $pipe;
@@ -34,14 +32,12 @@ abstract class Source extends StreamSource implements Destroyable
      */
     public function __construct(SourceData $data, Producer $producer)
     {
-        $this->data = $data;
         $this->producer = $producer;
-        $this->stream = $data->stream;
+        
+        $this->data = $data;
+        $this->item = $data->signal->item;
         $this->sources = $data->sources;
         $this->pipe = $data->pipe;
-        $this->nextValue = $data->nextValue;
-        
-        $this->item = $data->signal->item;
     }
     
     /**
@@ -82,7 +78,7 @@ abstract class Source extends StreamSource implements Destroyable
         $this->pipe->head = \array_pop($this->pipe->stack);
         
         if (!empty($this->sources->stack)) {
-            $this->stream->setSource(\array_pop($this->sources->stack));
+            $this->data->stream->setSource(\array_pop($this->sources->stack));
         }
         
         return empty($this->sources->stack);
@@ -147,16 +143,14 @@ abstract class Source extends StreamSource implements Destroyable
      */
     private function sourceIsNotReady(Producer $producer): void
     {
-        $this->stream->setSource(new SourceNotReady(
-            $this->data, $producer
-        ));
+        $this->data->stream->setSource(new SourceNotReady($this->data, $producer));
     }
     
     final protected function setNextItem(Item $item): void
     {
-        $this->nextValue->isSet = true;
-        $this->nextValue->key = $item->key;
-        $this->nextValue->value = $item->value;
+        $this->item->key = $item->key;
+        $this->item->value = $item->value;
+        $this->hasNextValue = true;
     }
     
     abstract public function hasNextItem(): bool;

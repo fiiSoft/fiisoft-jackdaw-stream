@@ -8,6 +8,8 @@ interface ForkHandler extends Destroyable
 {
     public function create(): ForkHandler;
     
+    public function prepare(): void;
+    
     /**
      * @param mixed $value
      * @param mixed $key

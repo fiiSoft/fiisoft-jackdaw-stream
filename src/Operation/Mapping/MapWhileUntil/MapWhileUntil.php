@@ -18,7 +18,7 @@ abstract class MapWhileUntil extends BaseOperation
     protected bool $isActive = true;
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      */
     final public function __construct($condition, $mapper)

@@ -62,6 +62,13 @@ trait CommonOperationCode
         $this->next->resume();
     }
     
+    public function prepare(): void
+    {
+        if ($this->next !== null) {
+            $this->next->prepare();
+        }
+    }
+    
     public function destroy(): void
     {
         if (!$this->isDestroying) {

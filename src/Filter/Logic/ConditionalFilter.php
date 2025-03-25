@@ -13,8 +13,8 @@ abstract class ConditionalFilter extends BaseLogicFilter
     protected Filter $condition, $filter;
     
     /**
-     * @param FilterReady|callable|mixed $condition
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     final public static function create($condition, $filter, bool $negation): self
     {
@@ -24,8 +24,8 @@ abstract class ConditionalFilter extends BaseLogicFilter
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     final protected function __construct($condition, $filter)
     {

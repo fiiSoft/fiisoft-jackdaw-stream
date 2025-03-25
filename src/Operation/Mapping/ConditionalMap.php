@@ -19,7 +19,7 @@ abstract class ConditionalMap extends BaseOperation
     protected ?Mapper $elseMapper = null;
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */

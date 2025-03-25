@@ -1098,10 +1098,7 @@ final class StreamGTest extends TestCase
     {
         $this->expectExceptionObject(AssertionFailed::exception('foo', 2, Check::VALUE));
         
-        Stream::empty()
-            ->assert('is_int')
-            ->reduce(Reducers::sum())
-            ->consume([6, 3, 'foo', 2, 4]);
+        Stream::empty()->assert('is_int')->reduce(Reducers::sum())->consume([6, 3, 'foo', 2, 4]);
     }
     
     public function test_consume_with_error_thrown_by_substituted_producer(): void

@@ -46,7 +46,9 @@ final class SingleItemBuffer implements ItemBuffer
      */
     public function fetchData(bool $reindex = false, int $skip = 0): array
     {
-        return $skip > 0 ? [] : [$reindex ? 0 : $this->item->key => $this->item->value];
+        return $this->item === null || $skip > 0
+            ? []
+            : [$reindex ? 0 : $this->item->key => $this->item->value];
     }
     
     public function createProducer(): Producer

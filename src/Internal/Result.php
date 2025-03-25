@@ -2,13 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
 use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
 
-final class Result implements ResultApi, HandlerReady
+final class Result implements ResultApi, DispatchReady
 {
     private Stream $stream;
     private FinalOperation $resultProvider;

@@ -19,6 +19,11 @@ final class SequenceFork implements ForkHandler
         return new self(clone $this->sequence);
     }
     
+    final public function prepare(): void
+    {
+        //noop
+    }
+    
     /**
      * @inheritDoc
      */

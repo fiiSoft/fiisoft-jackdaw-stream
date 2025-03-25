@@ -13,7 +13,7 @@ abstract class StackableFilter extends BaseOperation
     protected Filter $filter;
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function __construct($filter, ?int $mode = null)
     {

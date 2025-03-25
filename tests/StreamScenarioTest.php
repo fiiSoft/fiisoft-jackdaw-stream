@@ -1056,12 +1056,10 @@ final class StreamScenarioTest extends TestCase
             2,2,4,6,    //even
         ];
         
-        $stream = Stream::from($data)
-            ->accumulate(Filters::number()->isEven(), true)
-            ->rsort(By::size())
-            ->first();
-        
-        self::assertSame([2,2,8,6,4,6,4,8], $stream->get());
+        self::assertSame(
+            [2,2,8,6,4,6,4,8],
+            Stream::from($data)->accumulate(Filters::number()->isEven(), true)->rsort(By::size())->first()->get()
+        );
     }
     
     public function test_scenario_57(): void

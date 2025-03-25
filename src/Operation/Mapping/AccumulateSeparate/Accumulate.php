@@ -9,7 +9,7 @@ use FiiSoft\Jackdaw\Operation\Mapping\AccumulateSeparate;
 abstract class Accumulate extends AccumulateSeparate
 {
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     final public static function create($filter, ?int $mode = null, bool $reindex = false): self
     {

@@ -8,7 +8,6 @@ use FiiSoft\Jackdaw\Stream;
 
 final class SourceData
 {
-    public NextValue $nextValue;
     public Stream $stream;
     public Signal $signal;
     public Pipe $pipe;
@@ -24,7 +23,5 @@ final class SourceData
         $this->signal = $signal;
         $this->pipe = $pipe;
         $this->sources = $sources;
-        
-        $this->nextValue = new NextValue();
     }
 }

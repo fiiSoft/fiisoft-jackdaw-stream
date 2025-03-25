@@ -578,22 +578,20 @@ final class PipeBuildTest extends TestCase
     {
         $mapper = static fn(int $num): int => $num * 2;
         
-        $result = Stream::from([1, 2, 3, 4])
-            ->mapWhen(Filters::lessOrEqual(2), $mapper, $mapper)
-            ->toArrayAssoc();
-            
-        self::assertSame([2, 4, 6, 8], $result);
+        self::assertSame(
+            [2, 4, 6, 8],
+            Stream::from([1, 2, 3, 4])->mapWhen(Filters::lessOrEqual(2), $mapper, $mapper)->toArrayAssoc()
+        );
     }
     
     public function test_MapWhen_3(): void
     {
         $mapper = static fn(int $num): int => $num * 2;
         
-        $result = Stream::from([1, 2, 3, 4])
-            ->mapWhen(Filters::lessOrEqual(2), $mapper, Mappers::value())
-            ->toArrayAssoc();
-            
-        self::assertSame([2, 4, 3, 4], $result);
+        self::assertSame(
+            [2, 4, 3, 4],
+            Stream::from([1, 2, 3, 4])->mapWhen(Filters::lessOrEqual(2), $mapper, Mappers::value())->toArrayAssoc()
+        );
     }
     
     public function test_MapWhen_4(): void
@@ -615,15 +613,11 @@ final class PipeBuildTest extends TestCase
         
         $mapper = Mappers::getAdapter('strtoupper');
         
-        $stream = Stream::from($rowset)
-            ->mapFieldWhen('bar', 'is_string', $mapper)
-            ->collect();
-        
         self::assertSame([
             ['foo' => 3, 'bar' => 'D'],
             ['foo' => null, 'bar' => 'O'],
             ['foo' => 2, 'bar' => 'N'],
-        ], $stream->toArray());
+        ], Stream::from($rowset)->mapFieldWhen('bar', 'is_string', $mapper)->collect()->toArray());
     }
     
     public function test_MapFieldWhen_barren(): void
@@ -636,15 +630,11 @@ final class PipeBuildTest extends TestCase
         
         $mapper = Mappers::getAdapter('strtoupper');
         
-        $stream = Stream::from($rowset)
-            ->mapFieldWhen('bar', 'is_string', $mapper, $mapper)
-            ->collect();
-        
         self::assertSame([
             ['foo' => 3, 'bar' => 'D'],
             ['foo' => null, 'bar' => 'O'],
             ['foo' => 2, 'bar' => 'N'],
-        ], $stream->toArray());
+        ], Stream::from($rowset)->mapFieldWhen('bar', 'is_string', $mapper, $mapper)->collect()->toArray());
     }
     
     public function test_Sort_Find(): void

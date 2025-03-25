@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Collector;
 
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
 
-interface Collector extends HandlerReady
+interface Collector extends DispatchReady
 {
     /**
      * @param string|int $key

@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Memo\MemoWriter;
 
-final class MemoWriterAdapter extends PrimitiveHandler
+final class MemoWriterAdapter extends PrimitiveDispatchHandler
 {
     private MemoWriter $memo;
     

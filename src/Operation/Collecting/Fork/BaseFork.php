@@ -6,6 +6,7 @@ use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Internal\Signal;
+use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 use FiiSoft\Jackdaw\Operation\Internal\ProcessOperation;
 use FiiSoft\Jackdaw\Producer\Producer;
 
@@ -20,10 +21,24 @@ abstract class BaseFork extends ProcessOperation
     
     /**
      * @param DiscriminatorReady|callable|array<string|int> $discriminator
+     * @param array<string|int, ForkReady> $handlers
      */
-    public function __construct($discriminator)
+    public function __construct($discriminator, array $handlers = [])
     {
         $this->discriminator = Discriminators::getAdapter($discriminator);
+        
+        foreach ($handlers as $key => $handler) {
+            $this->handlers[$key] = ForkHandlerFactory::adaptHandler($handler);
+        }
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
+        
+        foreach ($this->handlers as $handler) {
+            $handler->prepare();
+        }
     }
     
     final public function streamingFinished(Signal $signal): bool

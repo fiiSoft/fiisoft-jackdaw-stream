@@ -27,9 +27,11 @@ final class FilterNOT extends AbstractFilter
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            if (!$this->filter->isAllowed($value, $key)) {
-                yield $key => $value;
+            if ($this->filter->isAllowed($value, $key)) {
+                continue;
             }
+            
+            yield $key => $value;
         }
     }
     

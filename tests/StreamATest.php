@@ -17,7 +17,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Exception\PipeExceptionFactory;
 use FiiSoft\Jackdaw\Mapper\Internal\StatelessMapper;
 use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Operation\Collecting\ForkReady;
+use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 use FiiSoft\Jackdaw\Producer\Generator\Exception\GeneratorExceptionFactory;
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;
 use FiiSoft\Jackdaw\Producer\Producers;
@@ -888,18 +888,12 @@ final class StreamATest extends TestCase
     
         self::assertSame(
             [0, 1, 3, 6, 10, 15],
-            $data->stream()
-                ->filter(Filters::lessOrEqual(4), Check::KEY)
-                ->scan(0, Reducers::sum())
-                ->toArray()
+            $data->stream()->filter(Filters::lessOrEqual(4), Check::KEY)->scan(0, Reducers::sum())->toArray()
         );
     
         self::assertSame(
             [0, 1, 3, 6, 10, 15],
-            $data->stream()
-                ->filter(Filters::lessOrEqual(5), Check::VALUE)
-                ->scan(0, Reducers::sum())
-                ->toArray()
+            $data->stream()->filter(Filters::lessOrEqual(5), Check::VALUE)->scan(0, Reducers::sum())->toArray()
         );
     }
     
@@ -909,18 +903,12 @@ final class StreamATest extends TestCase
     
         self::assertSame(
             [0, 1, 3, 6, 10, 15],
-            $data->stream()
-                ->omit(Filters::greaterThan(4), Check::KEY)
-                ->scan(0, Reducers::sum())
-                ->toArray()
+            $data->stream()->omit(Filters::greaterThan(4), Check::KEY)->scan(0, Reducers::sum())->toArray()
         );
     
         self::assertSame(
             [0, 1, 3, 6, 10, 15],
-            $data->stream()
-                ->omit(Filters::greaterThan(5), Check::VALUE)
-                ->scan(0, Reducers::sum())
-                ->toArray()
+            $data->stream()->omit(Filters::greaterThan(5), Check::VALUE)->scan(0, Reducers::sum())->toArray()
         );
     }
     
@@ -1779,10 +1767,7 @@ final class StreamATest extends TestCase
     
     public function test_flat_only_arrays(): void
     {
-        $result = Stream::from([5, ['q', 'w', 'e'], 2, ['a'], 3, 1, ['z', 'x']])
-            ->filter('is_array')
-            ->flat()
-            ->toArray();
+        $result = Stream::from([5, ['q', 'w', 'e'], 2, ['a'], 3, 1, ['z', 'x']])->filter('is_array')->flat()->toArray();
         
         self::assertSame(['q', 'w', 'e', 'a', 'z', 'x'], $result);
     }

@@ -16,12 +16,23 @@ final class OmitReps extends BaseOperation
     
     private ?Item $previous = null;
     
+    /** @var ComparatorReady|callable|null */
+    private $comparison;
+    
     /**
      * @param ComparatorReady|callable|null $comparison
      */
     public function __construct($comparison = null)
     {
-        $this->comparer = ComparerFactory::createComparer(Comparison::prepare($comparison));
+        $this->comparison = $comparison;
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
+        
+        $this->comparer = ComparerFactory::createComparer(Comparison::prepare($this->comparison));
+        $this->comparison = null;
     }
     
     public function handle(Signal $signal): void

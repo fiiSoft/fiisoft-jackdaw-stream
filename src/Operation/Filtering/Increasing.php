@@ -13,15 +13,31 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 final class Increasing extends BaseOperation
 {
     private ItemComparator $comparator;
-    
     private ?Item $previous = null;
+    
+    /** @var Comparable|callable|null */
+    private $comparison;
+    
+    private bool $reversed;
     
     /**
      * @param Comparable|callable|null $comparison
      */
     public function __construct(bool $reversed = false, $comparison = null)
     {
-        $this->comparator = ItemComparatorFactory::getForComparison(Comparison::prepare($comparison), $reversed);
+        $this->reversed = $reversed;
+        $this->comparison = $comparison;
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
+        
+        $this->comparator = ItemComparatorFactory::getForComparison(
+            Comparison::prepare($this->comparison), $this->reversed
+        );
+        
+        $this->comparison = null;
     }
     
     public function handle(Signal $signal): void

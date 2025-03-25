@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Filter\CheckType\{IsBool, IsFloat, IsInt, IsNull, IsNumeric, IsString};
 use FiiSoft\Jackdaw\Filter\Exception\FilterExceptionFactory;
 use FiiSoft\Jackdaw\Filter\Filter;
@@ -16,7 +17,7 @@ use FiiSoft\Jackdaw\Filter\Simple\SimpleFilterFactory;
 use FiiSoft\Jackdaw\Filter\Size\Count\CountFilter;
 use FiiSoft\Jackdaw\Filter\Size\Length\LengthFilter;
 use FiiSoft\Jackdaw\Filter\String\{Contains, EndsWith, InSet, NotContains, NotEndsWith, NotInSet, NotStartsWith,
-    StartsWith, StrIs, StrIsNot};
+    StartsWith, StringFilterPhony, StrIs, StrIsNot};
 use FiiSoft\Jackdaw\Filter\Time\Compare\IdleTimeComp;
 use FiiSoft\Jackdaw\Filter\Time\Compare\Point\Is;
 use FiiSoft\Jackdaw\Filter\Time\Day;
@@ -1887,7 +1888,7 @@ final class FiltersATest extends TestCase
     public function test_change_mode_of_large_logic_multifilter(): void
     {
         $filter = Filters::AND(
-            //there must beat least 8 filters
+            //there must be at least 8 filters
             Filters::isString(),
             Filters::contains('a'),
             Filters::contains('b'),
@@ -1906,5 +1907,30 @@ final class FiltersATest extends TestCase
         self::assertTrue($checkKey->isAllowed('a', 'abcdefg'));
         self::assertFalse($checkKey->isAllowed('a', 'abcXefg'));
         self::assertFalse($checkKey->isAllowed('abcdefg', 'a'));
+    }
+    
+    public function test_StringFilterPhony_can_build_stream(): void
+    {
+        $filter = Filters::contains('a')->and(Filters::length()->eq(3))->ignoreCase();
+        self::assertInstanceOf(StringFilterPhony::class, $filter);
+        
+        $result = [];
+        foreach ($filter->buildStream(['ab', 'cde', 'abc', 'u']) as $value) {
+            $result[] = $value;
+        }
+        
+        self::assertSame(['abc'], $result);
+    }
+    
+    public function test_SortLimited_with_skip_on_error(): void
+    {
+        $stream = Stream::from(['a', 'e', 'b', 'd', 'c'])
+            ->onError(OnError::skip())
+            ->callWhen(Filters::equal('b'), static function () {
+                throw new \RuntimeException('error');
+            })
+            ->best(3);
+        
+        self::assertSame(['a', 4 => 'c', 3 => 'd'], $stream->toArrayAssoc());
     }
 }

@@ -13,7 +13,7 @@ final class ConditionalExtract extends StateMapper
     private bool $negate;
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function __construct($filter, ?int $mode = null, bool $negate = false)
     {

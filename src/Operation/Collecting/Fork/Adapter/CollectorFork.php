@@ -26,6 +26,11 @@ abstract class CollectorFork implements ForkHandler
         return new static(clone $this->collector);
     }
     
+    final public function prepare(): void
+    {
+        //noop
+    }
+    
     final public function isEmpty(): bool
     {
         return $this->collector->count() === 0;

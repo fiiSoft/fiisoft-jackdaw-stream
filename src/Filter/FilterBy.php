@@ -12,7 +12,7 @@ final class FilterBy extends SingleFilterHolder
     
     /**
      * @param string|int $field valid key in array
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public function __construct($field, $filter)
     {

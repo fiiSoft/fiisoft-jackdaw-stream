@@ -5,7 +5,7 @@ namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter;
 use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Internal\Signal;
 
-final class ConsumerAdapter extends PrimitiveHandler
+final class ConsumerAdapter extends PrimitiveDispatchHandler
 {
     private Consumer $consumer;
     
@@ -19,6 +19,9 @@ final class ConsumerAdapter extends PrimitiveHandler
         $this->consumer->consume($signal->item->value, $signal->item->key);
     }
     
+    /**
+     * @inheritDoc
+     */
     public function handlePair($value, $key): void
     {
         $this->consumer->consume($value, $key);

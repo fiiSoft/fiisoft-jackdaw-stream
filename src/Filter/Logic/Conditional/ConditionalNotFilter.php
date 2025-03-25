@@ -18,9 +18,11 @@ final class ConditionalNotFilter extends ConditionalFilter
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            if (!$this->condition->isAllowed($value, $key) || !$this->filter->isAllowed($value, $key)) {
-                yield $key => $value;
+            if ($this->condition->isAllowed($value, $key) && $this->filter->isAllowed($value, $key)) {
+                continue;
             }
+            
+            yield $key => $value;
         }
     }
     

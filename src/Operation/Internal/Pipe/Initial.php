@@ -94,4 +94,9 @@ final class Initial extends ProtectedCloning implements Operation
     {
         $this->next->resume();
     }
+    
+    public function prepare(): void
+    {
+        $this->next->prepare();
+    }
 }

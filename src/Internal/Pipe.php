@@ -11,7 +11,7 @@ use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Gather, Reverse, Segregate
 use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, FilterByMany, FilterMany, FilterOp, Omit, OmitReps, Skip, SkipNth,
     StackableFilter, StackableFilterBy, Unique};
 use FiiSoft\Jackdaw\Operation\Internal\{Limitable, Operations as OP, Pipe\Initial, PossiblyInversible, Reindexable,
-    Shuffle};
+    Shuffle, SingularOperation};
 use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate, Aggregate, Chunk, ChunkBy, Classify, ConditionalMap, Flat,
     Flip, Map, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapMany, MapWhen, Reindex, Scan, Tokenize, Tuple, UnpackTuple,
@@ -23,7 +23,7 @@ use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, Find, Fi
     Last};
 use FiiSoft\Jackdaw\Stream;
 
-final class Pipe implements Destroyable
+final class Pipe implements StreamBuilder, Destroyable
 {
     public Operation $head;
     public Operation $last;
@@ -94,8 +94,10 @@ final class Pipe implements Destroyable
     public function prepare(): void
     {
         if (!$this->isPrepared) {
-            $this->optimizeMore();
-            $this->removeFirst();
+            $this->optimizeSwapHeadOperations();
+            $this->optimizeSingularOperations();
+            $this->removeInitialNode();
+            $this->head->prepare();
             $this->isPrepared = true;
         }
     }
@@ -137,11 +139,6 @@ final class Pipe implements Destroyable
             && !$operation instanceof FeedMany;
     }
     
-    public function append(Operation $operation): void
-    {
-        $this->last = $this->last->setNext($operation);
-    }
-    
     private function canAppend(Operation $next): bool
     {
         if ($this->last instanceof LastOperation) {
@@ -176,7 +173,7 @@ final class Pipe implements Destroyable
                 return !($this->last->mapper() instanceof Value && $next->mapper() instanceof Key);
             }
             if ($this->last instanceof Flip && $next->mapper() instanceof Key) {
-                $this->removeLast();
+                $this->removeLastNode();
                 $this->stream->mapKey(Mappers::value());
                 return false;
             }
@@ -213,7 +210,7 @@ final class Pipe implements Destroyable
                 return false;
             }
             if ($this->last instanceof Flip && $next->mapper() instanceof Value) {
-                $this->removeLast();
+                $this->removeLastNode();
                 $this->stream->map(Mappers::key());
                 return false;
             }
@@ -236,7 +233,7 @@ final class Pipe implements Destroyable
                 return false;
             }
             if ($this->last instanceof Reverse) {
-                $this->removeLast();
+                $this->removeLastNode();
                 $this->stream->tail($next->limit())->reverse();
                 return false;
             }
@@ -247,7 +244,7 @@ final class Pipe implements Destroyable
             }
         } elseif ($next instanceof Reverse) {
             if ($this->last instanceof Reverse) {
-                $this->removeLast();
+                $this->removeLastNode();
                 return false;
             }
             if ($this->last instanceof Shuffle) {
@@ -266,7 +263,7 @@ final class Pipe implements Destroyable
                 return false;
             }
             if ($this->last instanceof MapKey) {
-                $this->removeLast();
+                $this->removeLastNode();
             } elseif ($next->isDefaultReindex()) {
                 if ($this->last instanceof Gather
                     || $this->last instanceof AccumulateSeparate
@@ -281,16 +278,16 @@ final class Pipe implements Destroyable
             }
         } elseif ($next instanceof Flip) {
             if ($this->last instanceof Flip) {
-                $this->removeLast();
+                $this->removeLastNode();
                 return false;
             }
             if ($this->last instanceof Map && $this->last->mapper() instanceof Key) {
-                $this->removeLast();
+                $this->removeLastNode();
                 $this->stream->map(Mappers::key());
                 return false;
             }
             if ($this->last instanceof MapKey && $this->last->mapper() instanceof Value) {
-                $this->removeLast();
+                $this->removeLastNode();
                 $this->stream->mapKey(Mappers::value());
                 return false;
             }
@@ -301,7 +298,7 @@ final class Pipe implements Destroyable
             }
             if ($next instanceof ShuffleAll) {
                 if ($this->last instanceof Reverse || $this->last instanceof Sort) {
-                    $this->removeLast();
+                    $this->removeLastNode();
                 }
             }
             if ($this->last instanceof Limitable && $this->last->limit() === 1) {
@@ -324,7 +321,7 @@ final class Pipe implements Destroyable
                 return false;
             }
             if ($this->last instanceof Reverse) {
-                $this->removeLast();
+                $this->removeLastNode();
                 $this->stream->limit($next->length())->reverse();
                 return false;
             }
@@ -336,14 +333,14 @@ final class Pipe implements Destroyable
             if ($this->last instanceof Map) {
                 $mapper = $this->last->mapper();
                 if ($mapper instanceof TokenizeMapper) {
-                    $this->removeLast();
+                    $this->removeLastNode();
                     $this->stream->tokenize($mapper->tokens());
                     return false;
                 }
             }
             if ($this->last instanceof Gather) {
                 $reindex = $this->last->isReindexed();
-                $this->removeLast();
+                $this->removeLastNode();
                 if ($reindex) {
                     $this->stream->reindex();
                 }
@@ -355,7 +352,7 @@ final class Pipe implements Destroyable
                 }
             }
             if ($this->last instanceof Chunk && !$this->last->isReindexed()) {
-                $this->removeLast();
+                $this->removeLastNode();
                 return !$next->isLevel(1);
             }
         } elseif ($next instanceof SendTo) {
@@ -374,18 +371,18 @@ final class Pipe implements Destroyable
             }
             if ($this->last instanceof SendTo) {
                 $next->addConsumers($this->last->consumer());
-                $this->removeLast();
+                $this->removeLastNode();
             }
         } elseif ($next instanceof Sort || $next instanceof SortLimited) {
             if ($this->changesTheOrder($this->last)) {
-                $this->removeLast();
+                $this->removeLastNode();
             }
         } elseif ($next instanceof Gather) {
             if ($this->last instanceof Reindex) {
                 if ($next->isReindexed()) {
-                    $this->removeLast();
+                    $this->removeLastNode();
                 } elseif ($this->last->isDefaultReindex()) {
-                    $this->removeLast();
+                    $this->removeLastNode();
                     $this->append($next->reindexed());
                     return false;
                 }
@@ -409,13 +406,13 @@ final class Pipe implements Destroyable
             if ($this->last instanceof Sort) {
                 $this->stream->limit(1);
             } elseif ($this->last instanceof Limit) {
-                $this->removeLast();
+                $this->removeLastNode();
             } elseif ($this->last instanceof Limitable) {
                 if (!$this->last->applyLimit(1)) {
                     $this->replaceLastOperation($this->last->createWithLimit(1));
                 }
             } elseif ($this->last instanceof Reverse) {
-                $this->removeLast();
+                $this->removeLastNode();
                 $this->replacement = $this->stream->last();
                 return false;
             } elseif ($this->last instanceof FilterOp || $this->last instanceof Omit) {
@@ -429,12 +426,12 @@ final class Pipe implements Destroyable
                 return false;
             }
             if ($this->last instanceof Reverse) {
-                $this->removeLast();
+                $this->removeLastNode();
                 $this->replacement = $this->stream->first();
                 return false;
             }
             if ($this->last instanceof Tail) {
-                $this->removeLast();
+                $this->removeLastNode();
             }
         } elseif ($next instanceof IsEmpty) {
             if ($this->last instanceof Sort
@@ -463,7 +460,7 @@ final class Pipe implements Destroyable
                 || $this->last instanceof Segregate
                 || $this->last instanceof OmitReps
             ) {
-                $this->removeLast();
+                $this->removeLastNode();
                 return $this->canAppend($next);
             }
         } elseif ($next instanceof Find
@@ -472,12 +469,12 @@ final class Pipe implements Destroyable
             || $next instanceof HasEvery
         ) {
             if ($this->changesTheOrder($this->last)) {
-                $this->removeLast();
+                $this->removeLastNode();
                 return $this->canAppend($next);
             }
         } elseif ($next instanceof Count) {
             if ($this->keepsQuantity($this->last)) {
-                $this->removeLast();
+                $this->removeLastNode();
                 return $this->canAppend($next);
             }
         } elseif ($next instanceof Unique) {
@@ -496,15 +493,15 @@ final class Pipe implements Destroyable
             }
         } elseif ($next instanceof UnpackTuple) {
             if ($this->last instanceof Tuple && $next->isAssoc() === $this->last->isAssoc()) {
-                $this->removeLast();
+                $this->removeLastNode();
                 return false;
             }
             if ($this->last instanceof Reindex || $this->last instanceof MapKey) {
-                $this->removeLast();
+                $this->removeLastNode();
             }
         } elseif ($next instanceof Tuple) {
             if ($this->last instanceof UnpackTuple && $next->isAssoc() === $this->last->isAssoc()) {
-                $this->removeLast();
+                $this->removeLastNode();
                 return false;
             }
         } elseif ($next instanceof PossiblyInversible) {
@@ -527,7 +524,7 @@ final class Pipe implements Destroyable
         } elseif ($next instanceof SkipNth) {
             if ($next->num() === 2) {
                 if ($this->last instanceof SkipNth && $this->last->num() === 3) {
-                    $this->removeLast();
+                    $this->removeLastNode();
                     $this->stream->everyNth(3);
                 } else {
                     $this->stream->everyNth(2);
@@ -553,7 +550,7 @@ final class Pipe implements Destroyable
         }
         
         if ($next instanceof Reindexable && $this->last instanceof Reindex && $next->isReindexed()) {
-            $this->removeLast();
+            $this->removeLastNode();
         }
 
         return true;
@@ -567,16 +564,21 @@ final class Pipe implements Destroyable
     
     private function replaceLastOperation(Operation $operation): void
     {
-        $this->removeLast();
+        $this->removeLastNode();
         $this->append($operation);
     }
     
-    private function removeFirst(): void
+    public function append(Operation $operation): void
+    {
+        $this->last = $this->last->setNext($operation);
+    }
+    
+    private function removeInitialNode(): void
     {
         $this->head = $this->head->removeFromChain();
     }
     
-    private function removeLast(): void
+    private function removeLastNode(): void
     {
         $this->last = $this->last->removeFromChain();
     }
@@ -642,7 +644,16 @@ final class Pipe implements Destroyable
         return $prev !== null;
     }
     
-    private function optimizeMore(): void
+    private function optimizeSingularOperations(): void
+    {
+        for ($node = $this->head->getNext(); $node !== null; $node = $node->getNext()) {
+            if ($node instanceof SingularOperation && $node->isSingular()) {
+                $this->replaceNode($node, $node->getSingular());
+            }
+        }
+    }
+    
+    private function optimizeSwapHeadOperations(): void
     {
         $first = $this->head->getNext();
         
@@ -692,6 +703,8 @@ final class Pipe implements Destroyable
         if ($next !== null) {
             $tail->setNext($next, true);
         }
+        
+        $this->last = $this->head->getLast();
     }
     
     public function containsSwapOperation(): bool

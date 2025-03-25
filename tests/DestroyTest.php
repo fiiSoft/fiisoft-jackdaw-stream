@@ -76,9 +76,7 @@ final class DestroyTest extends TestCase
     {
         $onlyChars = Stream::empty()->onlyStrings()->reduce(Reducers::concat());
         
-        Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e'])
-            ->feed($onlyChars)
-            ->mapWhen('\is_string', '\strtoupper');
+        Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e'])->feed($onlyChars)->mapWhen('\is_string', '\strtoupper');
         
         self::assertSame('abcde', $onlyChars->get());
         
@@ -292,8 +290,7 @@ final class DestroyTest extends TestCase
     
     public function test_Accumulate_destroy(): void
     {
-        $stream = Stream::from(['a', 1, 2, 'b', 3, 'c', 4])
-            ->accumulate('is_int', true);
+        $stream = Stream::from(['a', 1, 2, 'b', 3, 'c', 4])->accumulate('is_int', true);
         
         self::assertSame([
             [1, 2],
@@ -469,7 +466,7 @@ final class DestroyTest extends TestCase
         
     }
     
-    public function test_SortLimited_destroy_with_forced_break(): void
+    public function test_SortLimited_destroy_with_abort_on_error(): void
     {
         $stream = Stream::from(['a', 'b', 'c', 'd', 'e'])
             ->onError(OnError::abort())

@@ -22,7 +22,7 @@ abstract class ReadWhileUntil extends SwapHead
     protected bool $isFirstTime = true;
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
     final public function __construct(

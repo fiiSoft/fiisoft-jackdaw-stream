@@ -8,10 +8,8 @@ final class SourceNotReady extends Source
 {
     public function hasNextItem(): bool
     {
-        if ($this->nextValue->isSet) {
-            $this->item->key = $this->nextValue->key;
-            $this->item->value = $this->nextValue->value;
-            $this->nextValue->isSet = false;
+        if ($this->hasNextValue) {
+            $this->hasNextValue = false;
             
             return true;
         }
@@ -29,7 +27,7 @@ final class SourceNotReady extends Source
     
     private function sourceIsReady(): void
     {
-        $this->stream->setSource(new SourceReady(
+        $this->data->stream->setSource(new SourceReady(
             $this->data,
             $this->producer,
             $this->currentSource

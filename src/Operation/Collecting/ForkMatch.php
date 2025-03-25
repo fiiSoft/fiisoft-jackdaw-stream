@@ -8,6 +8,7 @@ use FiiSoft\Jackdaw\Operation\Collecting\Fork\BaseFork;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\ForkHandler;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\ForkHandlerFactory;
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
+use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 
 final class ForkMatch extends BaseFork
 {
@@ -19,18 +20,23 @@ final class ForkMatch extends BaseFork
      */
     public function __construct($discriminator, array $handlers, ?ForkReady $prototype = null)
     {
-        parent::__construct($discriminator);
-        
         if (empty($handlers)) {
             throw OperationExceptionFactory::forkMatchHandlersCannotBeEmpty();
         }
         
-        foreach ($handlers as $key => $handler) {
-            $this->handlers[$key] = ForkHandlerFactory::adaptHandler($handler);
-        }
-        
         if ($prototype !== null) {
             $this->prototype = ForkHandlerFactory::adaptPrototype($prototype);
+        }
+        
+        parent::__construct($discriminator, $handlers);
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
+        
+        if ($this->prototype !== null) {
+            $this->prototype->prepare();
         }
     }
     

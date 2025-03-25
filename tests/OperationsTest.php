@@ -22,11 +22,11 @@ use FiiSoft\Jackdaw\Operation\Filtering\FilterMany;
 use FiiSoft\Jackdaw\Operation\Filtering\StackableFilter;
 use FiiSoft\Jackdaw\Operation\Filtering\StackableFilterBy;
 use FiiSoft\Jackdaw\Operation\Filtering\Unique\ItemByItemChecker\FullAssocChecker;
+use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
 use FiiSoft\Jackdaw\Operation\Internal\Operations as OP;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Initial;
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\HandlerReady;
 use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Handlers;
 use FiiSoft\Jackdaw\Operation\Special\Iterate;
 use FiiSoft\Jackdaw\Reducer\Reducers;
@@ -110,7 +110,7 @@ final class OperationsTest extends TestCase
     {
         $operation = $this->endingOperation();
         
-        self::assertFalse($operation->streamingFinished($this->signal()));
+        self::assertFalse($operation->streamingFinished(Signal::shared()));
     }
     
     public function test_Ending_operation_cannot_be_removed_from_chain(): void
@@ -163,7 +163,7 @@ final class OperationsTest extends TestCase
             $flag = true;
         }));
         
-        $signal = $this->signal();
+        $signal = Signal::shared();
         $signal->item->key = 'a';
         $signal->item->value = 'a';
         
@@ -187,7 +187,7 @@ final class OperationsTest extends TestCase
             $passedData[$key] = $value;
         }));
         
-        $signal = $this->signal();
+        $signal = Signal::shared();
         $signal->item->key = 'a';
         
         //when
@@ -597,7 +597,7 @@ final class OperationsTest extends TestCase
     public function test_Dispatch_throws_exception_when_there_is_no_handler_defined_for_classifier(): void
     {
         //Arrange
-        $signal = $this->signal();
+        $signal = Signal::shared();
         $signal->item->key = 1;
         $signal->item->value = 'foo';
         
@@ -616,7 +616,7 @@ final class OperationsTest extends TestCase
         $this->expectExceptionObject(OperationExceptionFactory::handlerIsNotDefined('ohno'));
         
         //Arrange
-        $signal = $this->signal();
+        $signal = Signal::shared();
         $signal->item->key = 1;
         $signal->item->value = 'foo';
         
@@ -633,7 +633,7 @@ final class OperationsTest extends TestCase
     {
         $this->expectExceptionObject(InvalidParamException::byName('handler'));
 
-        Handlers::getAdapter(new class implements HandlerReady {});
+        Handlers::getAdapter(new class implements DispatchReady {});
     }
     
     public function test_StoreIn_throws_exception_when_param_buffer_is_invalid(): void
@@ -1049,10 +1049,5 @@ final class OperationsTest extends TestCase
         $this->expectExceptionObject(OperationExceptionFactory::forkMatchHandlersCannotBeEmpty());
         
         OP::forkMatch('is_string', []);
-    }
-    
-    private function signal(): Signal
-    {
-        return new Signal(Stream::empty());
     }
 }

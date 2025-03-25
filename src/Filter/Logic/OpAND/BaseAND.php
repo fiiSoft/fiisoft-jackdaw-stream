@@ -17,11 +17,11 @@ use FiiSoft\Jackdaw\Internal\Check;
 abstract class BaseAND extends MultiArgsLogicFilter
 {
     /**
-     * @param array<FilterReady|callable|mixed> $filters
+     * @param array<FilterReady|callable|array<string|int, mixed>|scalar> $filters
      */
     final public static function create(array $filters, ?int $mode = null): Filter
     {
-        $collection = self::flatFilters($filters);
+        $collection = self::removeDuplicates(self::flatFilters($filters));
         
         if ($mode === Check::ANY) {
             return new FilterANDAny($collection);
@@ -42,10 +42,8 @@ abstract class BaseAND extends MultiArgsLogicFilter
     }
     
     /**
-     * Helper method.
-     *
-     * @param array<FilterReady|callable|mixed> $filters
-     * @return array<FilterReady|callable|mixed>
+     * @param array<FilterReady|callable|array<string|int, mixed>|scalar> $filters
+     * @return array<FilterReady|callable|array<string|int, mixed>|scalar>
      */
     private static function flatFilters(array $filters): array
     {

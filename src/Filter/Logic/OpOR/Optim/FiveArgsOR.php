@@ -11,11 +11,11 @@ class FiveArgsOR extends FourArgsOR
     protected Filter $fifth;
     
     /**
-     * @param FilterReady|callable|mixed $first
-     * @param FilterReady|callable|mixed $second
-     * @param FilterReady|callable|mixed $third
-     * @param FilterReady|callable|mixed $fourth
-     * @param FilterReady|callable|mixed $fifth
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $first
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $second
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $third
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $fourth
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $fifth
      */
     public function __construct($first, $second, $third, $fourth, $fifth, ?int $mode = null)
     {

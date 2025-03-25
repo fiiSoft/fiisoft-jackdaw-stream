@@ -16,6 +16,17 @@ final class Signal extends Collaborator
     
     private Stream $stream;
     
+    private static ?Signal $signal = null;
+    
+    public static function shared(): self
+    {
+        if (self::$signal === null) {
+            self::$signal = new self(Stream::empty());
+        }
+        
+        return self::$signal;
+    }
+    
     public function __construct(Stream $stream)
     {
         $this->stream = $stream;

@@ -1712,10 +1712,7 @@ final class StreamETest extends TestCase
             '---', 'm', 'n', 'o', 'p',
         ];
         
-        Stream::from($data)
-            ->filter('---')
-            ->readMany([2, 1, 0], true)
-            ->toArray();
+        Stream::from($data)->filter('---')->readMany([2, 1, 0], true)->toArray();
     }
     
     public function test_readMany_does_not_read_next_values_when_the_number_of_readings_is_0(): void
@@ -1728,12 +1725,10 @@ final class StreamETest extends TestCase
             '---', 'm', 'n', 'o', 'p',
         ];
         
-        $result = Stream::from($data)
-            ->filter('---')
-            ->readMany(IntNum::infinitely([2, 1, 0]))
-            ->toArray();
-        
-        self::assertSame(['a', 'b', 'e', 'm', 'n'], $result);
+        self::assertSame(
+            ['a', 'b', 'e', 'm', 'n'],
+            Stream::from($data)->filter('---')->readMany(IntNum::infinitely([2, 1, 0]))->toArray()
+        );
     }
     
     public function test_array_of_numbers_can_be_used_as_IntProvider_for_consecutive_readings(): void
@@ -1746,12 +1741,10 @@ final class StreamETest extends TestCase
             '---', 'm', 'n', 'o', 'p',
         ];
         
-        $result = Stream::from($data)
-            ->filter('---')
-            ->readMany([2, 1, 0, 2])
-            ->toArray();
-        
-        self::assertSame(['a', 'b', 'e', 'm', 'n'], $result);
+        self::assertSame(
+            ['a', 'b', 'e', 'm', 'n'],
+            Stream::from($data)->filter('---')->readMany([2, 1, 0, 2])->toArray()
+        );
     }
     
     public function test_InfiniteIterator_can_be_used_as_IntProvider_for_consecutive_readings(): void
@@ -1782,12 +1775,10 @@ final class StreamETest extends TestCase
             '---', 'm', 'n', 'o', 'p',
         ];
         
-        $result = Stream::from($data)
-            ->filter('---')
-            ->readMany(new \ArrayIterator([2, 1, 0, 2]))
-            ->toArray();
-        
-        self::assertSame(['a', 'b', 'e', 'm', 'n'], $result);
+        self::assertSame(
+            ['a', 'b', 'e', 'm', 'n'],
+            Stream::from($data)->filter('---')->readMany(new \ArrayIterator([2, 1, 0, 2]))->toArray()
+        );
     }
     
     public function test_Iterator_can_be_used_as_IntProvider_for_consecutive_readings_2(): void

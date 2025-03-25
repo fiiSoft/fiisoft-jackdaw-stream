@@ -13,8 +13,8 @@ use FiiSoft\Jackdaw\Internal\{Check, ForkCollaborator};
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Memo\MemoWriter;
-use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkMatch, ForkReady, Gather, Reverse, Segregate, Sort,
-    SortLimited, Tail};
+use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkMatch, Gather, Reverse, Segregate, Sort, SortLimited,
+    Tail};
 use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Extrema, FilterBy, FilterOp, FilterUntil, FilterWhen, FilterWhile,
     Increasing, Maxima, Omit, OmitBy, OmitReps, OmitWhen, Skip, SkipNth, SkipUntil, SkipWhile, Unique, Uptrends};
 use FiiSoft\Jackdaw\Operation\LastOperation;
@@ -22,9 +22,9 @@ use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate\Accumulate, Accumulate
     ChunkBy, Classify, Flat, Flip, Map, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapWhen, MapWhileUntil\MapUntil,
     MapWhileUntil\MapWhile, Reindex, Scan, Tokenize, Tuple, UnpackTuple, Window, Zip};
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Operation\Sending\{CollectIn, CollectKeysIn, CountIn, Dispatch, Dispatcher\HandlerReady, Feed,
-    FeedMany, Remember, RouteMany, RouteOne, SendTo, SendToMany, SendToMax, SendWhen, SendWhileUntil\SendUntil,
-    SendWhileUntil\SendWhile, StoreIn, Unzip};
+use FiiSoft\Jackdaw\Operation\Sending\{CollectIn, CollectKeysIn, CountIn, Dispatch, Feed, FeedMany, Remember, RouteMany,
+    RouteOne, SendTo, SendToMany, SendToMax, SendWhen, SendWhileUntil\SendUntil, SendWhileUntil\SendWhile, StoreIn,
+    Unzip};
 use FiiSoft\Jackdaw\Operation\Special\{Assert, Limit, ReadMany, ReadNext, ReadWhileUntil\ReadUntil,
     ReadWhileUntil\ReadWhile, WhileUntil\UntilTrue, WhileUntil\WhileTrue};
 use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, FinalOperation, Find, First, Fold, GroupBy, Has,
@@ -51,7 +51,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function skipWhile($filter, ?int $mode = null): PossiblyInversible
     {
@@ -59,7 +59,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function skipUntil($filter, ?int $mode = null): PossiblyInversible
     {
@@ -67,7 +67,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function assert($filter, ?int $mode = null): Operation
     {
@@ -75,7 +75,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function filter($filter, ?int $mode = null): Operation
     {
@@ -84,7 +84,7 @@ final class Operations
     
     /**
      * @param string|int $field
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function filterBy($field, $filter): Operation
     {
@@ -92,8 +92,8 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function filterWhen($condition, $filter, ?int $mode = null): Operation
     {
@@ -101,8 +101,8 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function filterWhile($condition, $filter, ?int $mode = null): Operation
     {
@@ -110,8 +110,8 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function filterUntil($condition, $filter, ?int $mode = null): Operation
     {
@@ -124,7 +124,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function omit($filter, ?int $mode = null): Operation
     {
@@ -133,7 +133,7 @@ final class Operations
     
     /**
      * @param string|int $field
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function omitBy($field, $filter): Operation
     {
@@ -141,8 +141,8 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function omitWhen($condition, $filter, ?int $mode = null): Operation
     {
@@ -166,7 +166,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
@@ -177,7 +177,7 @@ final class Operations
     
     /**
      * @param string|int $field
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      * @param MapperReady|callable|iterable|mixed|null $elseMapper
      */
@@ -187,7 +187,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      */
     public static function mapWhile($condition, $mapper): Operation
@@ -196,7 +196,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param MapperReady|callable|iterable|mixed $mapper
      */
     public static function mapUntil($condition, $mapper): Operation
@@ -288,7 +288,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param ConsumerReady|callable|resource $consumer
      * @param ConsumerReady|callable|resource|null $elseConsumer
      */
@@ -298,7 +298,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param ConsumerReady|callable|resource $consumer
      */
     public static function callWhile($condition, $consumer): Operation
@@ -307,7 +307,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      * @param ConsumerReady|callable|resource $consumer
      */
     public static function callUntil($condition, $consumer): Operation
@@ -405,7 +405,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function accumulate($filter, bool $reindex = false, ?int $mode = null): Operation
     {
@@ -413,7 +413,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function separateBy($filter, bool $reindex = false, ?int $mode = null): Operation
     {
@@ -448,7 +448,7 @@ final class Operations
     
     /**
      * @param DiscriminatorReady|callable|array<string|int> $discriminator
-     * @param HandlerReady[] $handlers
+     * @param DispatchReady[] $handlers
      */
     public static function dispatch($discriminator, array $handlers): Operation
     {
@@ -456,16 +456,16 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $condition
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
      */
-    public static function route($condition, HandlerReady $handler): Operation
+    public static function route($condition, DispatchReady $handler): Operation
     {
         return new RouteOne($condition, $handler);
     }
     
     /**
      * @param DiscriminatorReady|callable|array<string|int> $discriminator
-     * @param HandlerReady[] $handlers
+     * @param DispatchReady[] $handlers
      */
     public static function switch($discriminator, array $handlers): Operation
     {
@@ -473,7 +473,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function while($filter, ?int $mode = null): PossiblyInversible
     {
@@ -481,7 +481,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      */
     public static function until($filter, ?int $mode = null): PossiblyInversible
     {
@@ -534,7 +534,7 @@ final class Operations
         return Zip::create($sources);
     }
     
-    public static function unzip(HandlerReady ...$consumers): Operation
+    public static function unzip(DispatchReady ...$consumers): Operation
     {
         return new Unzip($consumers);
     }
@@ -634,7 +634,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
     public static function readWhile($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Operation
@@ -643,7 +643,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $filter
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $filter
      * @param ConsumerReady|callable|resource|null $consumer resource must be writeable
      */
     public static function readUntil($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Operation
@@ -695,7 +695,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $predicate
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $predicate
      */
     public static function has(Stream $stream, $predicate, ?int $mode = null): FinalOperation
     {
@@ -719,7 +719,7 @@ final class Operations
     }
     
     /**
-     * @param FilterReady|callable|mixed $predicate
+     * @param FilterReady|callable|array<string|int, mixed>|scalar $predicate
      */
     public static function find(Stream $stream, $predicate, ?int $mode = null): FinalOperation
     {

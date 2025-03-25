@@ -4,10 +4,9 @@ namespace FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Adapter;
 
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
-use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\Handler;
-use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\Operation\Sending\Dispatcher\DispatchHandler;
 
-final class StreamPipeAdapter extends StreamPipe implements Handler
+final class StreamPipeAdapter extends StreamPipe implements DispatchHandler
 {
     private ?StreamPipe $stream, $toFinish = null;
     
@@ -16,7 +15,7 @@ final class StreamPipeAdapter extends StreamPipe implements Handler
     public function __construct(StreamPipe $streamPipe)
     {
         $this->stream = $streamPipe;
-        $this->signal = new Signal(Stream::empty());
+        $this->signal = Signal::shared();
     }
     
     public function handle(Signal $signal): void
