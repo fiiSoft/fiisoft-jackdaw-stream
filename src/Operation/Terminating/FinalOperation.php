@@ -14,8 +14,8 @@ abstract class FinalOperation extends LastOperation implements Operation
 {
     use CommonOperationCode { destroy as commonDestroy; resume as commonResume; }
     
-    private Stream $stream;
-    private ?Result $result = null;
+    protected Stream $stream;
+    protected ?Result $result = null;
     
     /** @var Stream[] */
     private array $parents = [];
@@ -128,7 +128,7 @@ abstract class FinalOperation extends LastOperation implements Operation
         return $this->result()->count();
     }
     
-    final public function getIterator(): \Iterator
+    public function getIterator(): \Iterator
     {
         return $this->result()->getIterator();
     }
@@ -254,6 +254,13 @@ abstract class FinalOperation extends LastOperation implements Operation
             $this->stream->destroy();
         }
     }
+    
+    public function refreshResult(): void
+    {
+        $this->refreshResult = true;
+    }
+    
+    abstract public function isReindexed(): bool;
     
     abstract public function getResult(): ?Item;
 }

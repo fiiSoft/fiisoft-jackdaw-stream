@@ -50,6 +50,11 @@ abstract class HasOnly extends SimpleFinal
         return new Item(0, $this->hasOnly);
     }
     
+    final public function isReindexed(): bool
+    {
+        return true;
+    }
+    
     final public function destroy(): void
     {
         if (!$this->isDestroying) {

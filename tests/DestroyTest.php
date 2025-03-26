@@ -273,11 +273,12 @@ final class DestroyTest extends TestCase
         self::assertSame('', $producer->stream()->toString());
     }
     
-    public function test_ResultAdapter_destroy(): void
+    public function test_ResultAdapter_resue_the_same_stream_source_many_times_destroy(): void
     {
         //given
         $producer = Producers::getAdapter(Stream::from(['a', 'b', 'c'])->collect());
         
+        self::assertSame(3, $producer->stream()->count()->get());
         self::assertSame(3, $producer->stream()->count()->get());
         self::assertSame(3, $producer->stream()->count()->get());
         

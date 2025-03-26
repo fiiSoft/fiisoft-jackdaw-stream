@@ -114,7 +114,6 @@ final class OtherTest extends TestCase implements ItemBufferClient
     
         self::assertFalse($heap->isCorrupted());
     
-    
         foreach ([6,2,8,4,5,9,1,7,3] as $value) {
             $heap->insert($value);
         }

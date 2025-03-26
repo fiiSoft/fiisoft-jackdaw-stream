@@ -5,10 +5,12 @@ namespace FiiSoft\Test\Jackdaw;
 use FiiSoft\Jackdaw\Collector\Collectors;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Handler\OnError;
+use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter\IdleForkHandler;
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
+use FiiSoft\Jackdaw\Operation\Special\Assert\AssertionFailed;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -483,5 +485,129 @@ final class StreamHTest extends TestCase
             'even' => [2, 4],
             'odd' => [5, 3, 1],
         ], $result);
+    }
+    
+    public function test_iterating_of_collectKey_returns_keys(): void
+    {
+        $keys = ['a', 'b', 'c', 'd', 'e', 'f'];
+        
+        $stream = Stream::from(\array_flip($keys))->collectKeys();
+        
+        self::assertSame($keys, \iterator_to_array($stream));
+        self::assertSame($keys, $stream->toArrayAssoc());
+        self::assertSame($keys, $stream->toArray());
+        self::assertSame($keys, $stream->get());
+        
+        self::assertCount(\count($keys), $stream);
+        
+        $stream->destroy();
+    }
+    
+    public function test_iterating_of_collectKey_with_onerror_handler(): void
+    {
+        $keys = ['a', 'b', 'c', 'd', 'e', 'f'];
+        
+        $stream = Stream::from(\array_flip($keys))->onError(OnError::abort())->collectKeys();
+        
+        self::assertSame($keys, \iterator_to_array($stream));
+        self::assertSame($keys, $stream->toArrayAssoc());
+        self::assertSame($keys, $stream->toArray());
+        self::assertSame($keys, $stream->get());
+        
+        self::assertCount(\count($keys), $stream);
+        
+        $stream->destroy();
+    }
+    
+    public function test_iterating_of_collectValues_returns_values_without_keys(): void
+    {
+        $data = [5 => 'a', 2 => 'b', 4 => 'c', 1 => 'd', 3 => 'e', 6 => 'f'];
+        $values = \array_values($data);
+        
+        $stream = Stream::from($data)->collectValues();
+        
+        self::assertSame($values, \iterator_to_array($stream));
+        self::assertSame($values, $stream->toArrayAssoc());
+        self::assertSame($values, $stream->toArray());
+        self::assertSame($values, $stream->get());
+        
+        self::assertCount(\count($values), $stream);
+        
+        $stream->destroy();
+    }
+    
+    public function test_iterating_of_collectValues_with_onerror_handler(): void
+    {
+        $data = [5 => 'a', 2 => 'b', 4 => 'c', 1 => 'd', 3 => 'e', 6 => 'f'];
+        $values = \array_values($data);
+        
+        $stream = Stream::from($data)->onError(OnError::abort())->collectValues();
+        
+        self::assertSame($values, \iterator_to_array($stream));
+        self::assertSame($values, $stream->toArrayAssoc());
+        self::assertSame($values, $stream->toArray());
+        self::assertSame($values, $stream->get());
+        
+        self::assertCount(\count($values), $stream);
+        
+        $stream->destroy();
+    }
+    
+    public function test_transform_result_into_iterator(): void
+    {
+        $data = ['a' => 3, 'b' => 4, 'c' => 1];
+        
+        $result = Stream::from($data)
+            ->collect()
+            ->transform(static fn(array $result): \Iterator => new \ArrayIterator($result));
+        
+        self::assertInstanceOf(\Iterator::class, $result->get());
+        
+        self::assertSame($data, \iterator_to_array($result));
+        self::assertSame($data, \iterator_to_array($result));
+    }
+    
+    public function test_consume_collect_iterate(): void
+    {
+        $stream = Stream::from(['e', 'f'])->reindex()->collect();
+        
+        $stream->consume(['a', 'b']);
+        self::assertSame(['a', 'b', 'e', 'f'], \iterator_to_array($stream));
+        
+        $stream->consume(['c', 'd']);
+        self::assertSame(['a', 'b', 'e', 'f', 'c', 'd'], \iterator_to_array($stream));
+        
+        $stream->consume(['g', 'h']);
+        self::assertSame(['a', 'b', 'e', 'f', 'c', 'd', 'g', 'h'], $stream->toArray());
+        
+        $stream->consume(['i', 'j']);
+        self::assertSame(['a', 'b', 'e', 'f', 'c', 'd', 'g', 'h', 'i', 'j'], $stream->get());
+    }
+    
+    public function test_collector_consume_with_stacked_producer(): void
+    {
+        $stream = Stream::empty()->tokenize()->collectValues();
+        $stream->consume(['a b c', 'd e']);
+        
+        self::assertSame(['a', 'b', 'c', 'd', 'e'], $stream->get());
+    }
+    
+    public function test_iterate_stream_without_any_values_with_onerror_handler(): void
+    {
+        self::assertEmpty(\iterator_to_array(Stream::from(['a', 'b', 'c'])->onError(OnError::abort())->onlyIntegers()));
+    }
+    
+    public function test_iterate_stream_with_stacked_producer_and_onerror_handler(): void
+    {
+        $stream = Stream::from(['a b c', 'd e'])->onError(OnError::abort())->tokenize();
+        
+        self::assertSame(['a', 'b', 'c', 'd', 'e'], \iterator_to_array($stream));
+    }
+    
+    public function test_iterate_stream_with_onerror_handler_and_failed_assertion(): void
+    {
+        $this->expectExceptionObject(AssertionFailed::exception(null, 2, Check::VALUE));
+        
+        \iterator_to_array(Stream::from(['a', 'b', null, 'c', 'd'])->onError(OnError::skip())->assert('is_string'));
     }
 }

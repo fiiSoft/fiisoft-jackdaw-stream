@@ -1464,8 +1464,8 @@ final class StreamCTest extends TestCase
             ->countIn($countNonEmptyLines)
             ->run();
         
-        self::assertSame(103, $countAllLines);
-        self::assertSame(85, $countNonEmptyLines);
+        self::assertSame(102, $countAllLines);
+        self::assertSame(83, $countNonEmptyLines);
     }
     
     public function test_stream_few_times_over_datetime_sequence(): void

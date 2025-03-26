@@ -81,6 +81,11 @@ final class CollectionTest extends TestCase
     
     public function test_return_collected_data_as_stream_for_further_processing(): void
     {
+        $reducer = Stream::empty()
+            ->reduce(static fn(string $longest, string $current) =>
+                \strlen($current) > \strlen($longest) ? $current : $longest
+            );
+        
         $data = $this->collection
             ->stream()
             ->mapWhen(
@@ -89,13 +94,7 @@ final class CollectionTest extends TestCase
             )
             ->mapWhen(
                 Filters::keyIs('words'),
-                static function (array $words): string {
-                    return Stream::from($words)
-                        ->reduce(static fn(string $longest, string $current) =>
-                            \strlen($current) > \strlen($longest) ? $current : $longest
-                        )
-                        ->get();
-                }
+                static fn(array $words): string => $reducer->wrap($words)->get()
             )->toArrayAssoc();
         
         self::assertSame(['numbers' => 9, 'words' => 'quick'], $data);

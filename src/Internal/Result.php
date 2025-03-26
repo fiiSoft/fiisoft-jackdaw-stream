@@ -39,17 +39,11 @@ final class Result implements ResultApi, DispatchReady
         $this->parents = $parents;
     }
     
-    /**
-     * @inheritDoc
-     */
     public function found(): bool
     {
         return $this->do()->found();
     }
     
-    /**
-     * @inheritDoc
-     */
     public function notFound(): bool
     {
         return $this->do()->notFound();
@@ -183,7 +177,7 @@ final class Result implements ResultApi, DispatchReady
             $result = $this->resultProvider->getResult();
             
             $this->resultItem = $result !== null
-                ? ResultItem::createFound($result, $this->transformer)
+                ? ResultItem::createFound($result, $this->transformer, $this->resultProvider->isReindexed())
                 : ResultItem::createNotFound($this->orElse);
         }
         

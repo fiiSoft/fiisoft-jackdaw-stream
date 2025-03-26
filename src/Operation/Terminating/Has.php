@@ -49,4 +49,9 @@ final class Has extends SimpleFinal
     {
         return new Item(0, $this->has);
     }
+    
+    public function isReindexed(): bool
+    {
+        return true;
+    }
 }

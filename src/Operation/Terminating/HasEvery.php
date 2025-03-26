@@ -52,6 +52,11 @@ abstract class HasEvery extends SimpleFinal
         return new Item(0, $this->hasEvery);
     }
     
+    final public function isReindexed(): bool
+    {
+        return true;
+    }
+    
     public function destroy(): void
     {
         if (!$this->isDestroying) {

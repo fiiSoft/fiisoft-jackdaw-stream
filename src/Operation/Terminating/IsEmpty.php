@@ -38,4 +38,9 @@ final class IsEmpty extends SimpleFinal
     {
         return new Item(0, $this->isEmpty);
     }
+    
+    public function isReindexed(): bool
+    {
+        return true;
+    }
 }

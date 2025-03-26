@@ -5,8 +5,6 @@ parameters:
         analyse:
             - src/Filter/OnlyIn/Mixed/MixedBothOnlyIn.php
             - src/Internal/Collection/StreamCollection81.php
-            - src/Internal/Iterator/StreamIterator81.php
-            - src/Internal/Iterator/FastIterator81.php
     ignoreErrors:
         - '#Call to protected method*#'
         - '#Parameter \#4 \$length of function substr_compare expects int, null given.#'
@@ -52,5 +50,5 @@ parameters:
             message: '#Offset 0 on array.+ on left side of \?\? always exists and is not nullable.#'
             path: 'src/Stream.php'
         -
-            message: '#Method FiiSoft\\Jackdaw\\Stream::toArray\(\) should return array<int\|string, mixed> but returns array<int\|string, mixed>\|ArrayAccess<int\|string, mixed>.#'
+            message: '#Unreachable statement - code above always terminates.#'
             path: 'src/Stream.php'

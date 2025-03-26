@@ -50,6 +50,11 @@ final class Find extends SimpleFinal
         return $this->item;
     }
     
+    public function isReindexed(): bool
+    {
+        return false;
+    }
+    
     protected function __clone()
     {
         parent::__clone();

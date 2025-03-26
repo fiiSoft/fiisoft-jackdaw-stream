@@ -20,7 +20,7 @@ use FiiSoft\Jackdaw\Operation\Internal\Operations as OP;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Initial;
 use FiiSoft\Jackdaw\Operation\Internal\Shuffle;
-use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate\Accumulate, Aggregate, Chunk, ChunkBy, Flat, Map,
+use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate\Accumulate, Aggregate, Chunk, ChunkBy, Flat, Flip, Map,
     MapFieldWhen, MapKey, MapMany, MapWhen, Reindex, Tokenize, Tuple, UnpackTuple, Window};
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{FeedMany, SendToMany};
@@ -122,7 +122,8 @@ final class PipeTest extends TestCase
             FilterByMany::class
         ];
 
-        yield 'Flip_Collect' => [OP::flip(), OP::collect($stream), CollectKeys::class];
+        yield 'Flip_Collect_keep_keys' => [OP::flip(), OP::collect($stream), Flip::class, Collect::class];
+        yield 'Flip_Collect_reindex_keys' => [OP::flip(), OP::collect($stream, true), CollectKeys::class];
         yield 'Flip_CollectKeys' => [OP::flip(), OP::collectKeys($stream), Collect::class];
 
         yield 'Gather_Flat_1' => [OP::gather(), OP::flat(), Flat::class];
@@ -245,7 +246,7 @@ final class PipeTest extends TestCase
         yield 'Reindex_ChunkBy_2' => [OP::reindex(), OP::chunkBy($discriminator, true), ChunkBy::class];
         yield 'Reindex_ChunkBy_3' => [OP::reindex(1, 2), OP::chunkBy($discriminator), Reindex::class, ChunkBy::class];
         yield 'Reindex_ChunkBy_4' => [OP::reindex(1, 2), OP::chunkBy($discriminator, true), ChunkBy::class];
-        yield 'Reindex_Collect_1' => [OP::reindex(), OP::collect($stream), Reindex::class, Collect::class];
+        yield 'Reindex_Collect_1' => [OP::reindex(), OP::collect($stream), Collect::class];
         yield 'Reindex_Collect_2' => [OP::reindex(), OP::collect($stream, true), Collect::class];
         yield 'Reindex_Collect_3' => [OP::reindex(1, 2), OP::collect($stream), Reindex::class, Collect::class];
         yield 'Reindex_Collect_4' => [OP::reindex(1, 2), OP::collect($stream, true), Collect::class];

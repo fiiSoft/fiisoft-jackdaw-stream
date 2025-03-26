@@ -16,8 +16,6 @@
             <file>src/Internal/Collaborator.php</file>
             <file>src/Internal/Collection/StreamCollection81.php</file>
             <file>src/Internal/ForkCollaborator.php</file>
-            <file>src/Internal/Iterator/FastIterator81.php</file>
-            <file>src/Internal/Iterator/StreamIterator81.php</file>
             <file>src/Internal/ProtectedCloning.php</file>
             <file>src/Internal/State/StreamSource.php</file>
             <file>src/Internal/StreamPipe.php</file>

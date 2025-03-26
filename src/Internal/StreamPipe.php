@@ -19,14 +19,20 @@ abstract class StreamPipe extends ForkCollaborator
         throw ImpossibleSituationException::called(__METHOD__);
     }
     
-    //BaseStreamIterator->, DispatchOperation->, *FinalOperation->, *Stream->
+    //DispatchOperation->, *FinalOperation->, *Stream->
     protected function continueIteration(bool $once = false): bool
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }
     
-    //BaseFastIterator->, BaseStreamIterator->, *FinalOperation->, *Stream->
+    //*FinalOperation->, *Stream->
     protected function finish(): void
+    {
+        throw ImpossibleSituationException::called(__METHOD__);
+    }
+    
+    //BaseCollect->, *Stream->
+    protected function canBuildPowerStream(): bool
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }

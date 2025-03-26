@@ -45,4 +45,9 @@ final class Last extends SimpleFinal
         
         $this->item = null;
     }
+    
+    public function isReindexed(): bool
+    {
+        return false;
+    }
 }

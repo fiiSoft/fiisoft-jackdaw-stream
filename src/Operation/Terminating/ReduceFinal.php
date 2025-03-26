@@ -57,4 +57,9 @@ abstract class ReduceFinal extends FinalOperation
             parent::destroy();
         }
     }
+    
+    final public function isReindexed(): bool
+    {
+        return true;
+    }
 }

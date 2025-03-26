@@ -11,6 +11,7 @@ final class ResultItem implements ResultApi
 {
     private bool $found = false;
     private bool $isDestroying = false;
+    private bool $isReindexed = false;
     
     /** @var string|int|null */
     private $key;
@@ -21,9 +22,9 @@ final class ResultItem implements ResultApi
     /** @var mixed|null */
     private $finalValue = null;
     
-    public static function createFound(Item $item, ?Transformer $transformer = null): self
+    public static function createFound(Item $item, ?Transformer $transformer = null, bool $isReindexed = false): self
     {
-        return new self(true, $item->value, $item->key, null, $transformer);
+        return new self(true, $item->value, $item->key, null, $transformer, $isReindexed);
     }
     
     /**
@@ -39,9 +40,9 @@ final class ResultItem implements ResultApi
      * @param mixed $data
      * @param string|int $id
      */
-    public static function createFromData($data, $id): self
+    public static function createFromData($data, $id, bool $isReindexed = false): self
     {
-        return new self(true, $data, $id);
+        return new self(true, $data, $id, null, null, $isReindexed);
     }
     
     /**
@@ -49,9 +50,11 @@ final class ResultItem implements ResultApi
      * @param mixed $key
      * @param mixed $default
      */
-    private function __construct(bool $found, $value, $key, $default = null, ?Transformer $transformer = null)
-    {
+    private function __construct(
+        bool $found, $value, $key, $default = null, ?Transformer $transformer = null, bool $isReindexed = false
+    ) {
         $this->key = $key;
+        $this->isReindexed = $isReindexed;
         
         if ($found) {
             $this->found = true;
@@ -62,17 +65,11 @@ final class ResultItem implements ResultApi
         }
     }
     
-    /**
-     * @inheritdoc
-     */
     public function found(): bool
     {
         return $this->found;
     }
     
-    /**
-     * @inheritdoc
-     */
     public function notFound(): bool
     {
         return !$this->found;
@@ -245,7 +242,9 @@ final class ResultItem implements ResultApi
     {
         if ($this->found || $this->finalValue !== null) {
             if (\is_array($this->finalValue)) {
-                return $preserveKeys ? $this->finalValue : \array_values($this->finalValue);
+                return $preserveKeys || $this->isReindexed
+                    ? $this->finalValue
+                    : \array_values($this->finalValue);
             }
         
             if ($this->finalValue instanceof \Traversable) {

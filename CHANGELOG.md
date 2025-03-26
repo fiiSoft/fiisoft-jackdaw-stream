@@ -1,5 +1,10 @@
 # Changelog
 
+## 12.1.0
+
+- added Stream::collectValues()
+- improved iterating over Stream
+
 ## 12.0.0
 
 #### Incompatible changes:

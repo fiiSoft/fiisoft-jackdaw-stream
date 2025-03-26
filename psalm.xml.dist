@@ -75,5 +75,6 @@
         <RiskyTruthyFalsyComparison errorLevel="suppress" />
         <LoopInvalidation errorLevel="suppress" />
         <MixedClone errorLevel="suppress" />
+        <UnevaluatedCode errorLevel="suppress" />
     </issueHandlers>
 </psalm>

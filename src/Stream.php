@@ -9,12 +9,12 @@ use FiiSoft\Jackdaw\Discriminator\{DiscriminatorReady, Discriminators};
 use FiiSoft\Jackdaw\Exception\{InvalidParamException, StreamExceptionFactory};
 use FiiSoft\Jackdaw\Filter\{FilterReady, Filters};
 use FiiSoft\Jackdaw\Handler\{ErrorHandler, OnError};
-use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyable, Executable, Helper, Item,
-    Iterator\BaseFastIterator, Iterator\BaseStreamIterator, Iterator\Interruption, Mode, Pipe, Signal, State\Source,
-    State\SourceData, State\SourceNotReady, State\Sources, State\StreamSource, StreamPipe};
+use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyable, Executable, Item,
+    Iterator\Interruption, Mode, Pipe, Signal, State\Source, State\SourceData, State\SourceNotReady, State\Sources,
+    State\StreamSource, StreamPipe};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, MapperReady, Mappers};
 use FiiSoft\Jackdaw\Memo\MemoWriter;
-use FiiSoft\Jackdaw\Operation\{Internal\Operations, LastOperation, Operation};
+use FiiSoft\Jackdaw\Operation\{Internal\Operations, LastOperation, Operation, Terminating\FinalOperation};
 use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
 use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 use FiiSoft\Jackdaw\Operation\Special\{Assert\AssertionFailed, Iterate};
@@ -45,7 +45,6 @@ final class Stream extends StreamSource
     private bool $isStarted = false;
     private bool $isResuming = false;
     private bool $streamingFinished = false;
-    private bool $isConsumer = false;
     
     /** @var StreamPipe[] */
     private array $pushToStreams = [];
@@ -111,7 +110,6 @@ final class Stream extends StreamSource
         $this->isInitialized = false;
         $this->isExecuted = false;
         $this->isStarted = false;
-        $this->isConsumer = false;
         
         $this->pipe->prepare();
         $this->producer = MultiProducer::oneTime();
@@ -1458,12 +1456,12 @@ final class Stream extends StreamSource
     
     public function toJson(?int $flags = null, bool $preserveKeys = false): string
     {
-        return \json_encode($this->toArray($preserveKeys), Helper::jsonFlags($flags));
+        return $this->collect(!$preserveKeys)->toJson($flags, $preserveKeys);
     }
     
     public function toString(string $separator = ','): string
     {
-        return \implode($separator, $this->toArray());
+        return $this->collect(true)->toString($separator);
     }
     
     /**
@@ -1481,10 +1479,7 @@ final class Stream extends StreamSource
      */
     public function toArray(bool $preserveKeys = false): array
     {
-        $buffer = [];
-        $this->runWith(Operations::storeIn($buffer, !$preserveKeys));
-        
-        return $buffer;
+        return $this->collect(!$preserveKeys)->toArray($preserveKeys);
     }
     
     /**
@@ -1501,6 +1496,14 @@ final class Stream extends StreamSource
     public function collectKeys(): LastOperation
     {
         return $this->runLast(Operations::collectKeys($this));
+    }
+    
+    /**
+     * Syntax sugar to collect values with keys indexed numerically.
+     */
+    public function collectValues(): LastOperation
+    {
+        return $this->collect(true);
     }
     
     /**
@@ -1743,56 +1746,66 @@ final class Stream extends StreamSource
         if (!$this->isInitialized) {
             $this->prepareToRun();
             $this->initialize();
-         
-            $this->isConsumer = true;
         }
         
-        if ($this->signal->isWorking) {
-            $item = $this->signal->item;
-            
-            foreach (Producers::getAdapter($producer) as $item->key => $item->value) {
-                try {
-                    goto PUSH_ITEM; //THIS IS MARVELOUS
+        if (!$this->signal->isWorking) {
+            return;
+        }
+        
+        $this->refreshResult();
+        $item = $this->signal->item;
+        
+        foreach (Producers::getAdapter($producer) as $item->key => $item->value) {
+            try {
+                goto PUSH_ITEM; //THIS IS MARVELOUS
+                
+                ITERATION_LOOP:
+                if ($this->signal->isWorking) {
                     
-                    ITERATION_LOOP:
-                    if ($this->signal->isWorking) {
-                        
-                        TRY_AGAIN:
-                        if ($this->source->hasNextItem()) {
-                            PUSH_ITEM:
-                            $this->pipe->head->handle($this->signal);
-                        } elseif (empty($this->pipe->stack)) {
-                            $this->signal->streamIsEmpty();
-                        } else {
-                            $this->isFirstProducer = $this->source->restoreFromStack();
-                            $this->signal->resume();
-                        }
-                        
-                        if ($this->isFirstProducer) {
-                            continue;
-                        }
-                        
-                        goto ITERATION_LOOP;
+                    TRY_AGAIN:
+                    if ($this->source->hasNextItem()) {
+                        PUSH_ITEM:
+                        $this->pipe->head->handle($this->signal);
+                    } elseif (empty($this->pipe->stack)) {
+                        $this->signal->streamIsEmpty();
+                    } else {
+                        $this->isFirstProducer = $this->source->restoreFromStack();
+                        $this->signal->resume();
                     }
                     
-                    if ($this->shouldContinueAfterStreamingFinished()) {
-                        goto TRY_AGAIN;
+                    if ($this->isFirstProducer) {
+                        continue;
                     }
                     
-                } catch (Interruption|AssertionFailed $e) {
-                    throw $e;
-                } catch (\Throwable $e) {
-                    if ($this->shouldContinueAfterError($e)) {
-                        if ($this->isFirstProducer) {
-                            continue;
-                        }
-                        
-                        goto ITERATION_LOOP;
-                    }
+                    goto ITERATION_LOOP;
                 }
                 
-                break;
+                if ($this->shouldContinueAfterStreamingFinished()) {
+                    goto TRY_AGAIN;
+                }
+                
+            } catch (Interruption|AssertionFailed $e) {
+                throw $e;
+            } catch (\Throwable $e) {
+                if ($this->shouldContinueAfterError($e)) {
+                    if ($this->isFirstProducer) {
+                        continue;
+                    }
+                    
+                    goto ITERATION_LOOP;
+                }
             }
+            
+            break;
+        }
+    }
+    
+    private function refreshResult(): void
+    {
+        $lastOperation = $this->getLastOperation();
+        
+        if ($lastOperation instanceof FinalOperation) {
+            $lastOperation->refreshResult();
         }
     }
     
@@ -1849,16 +1862,63 @@ final class Stream extends StreamSource
         if ($this->canBuildPowerStream()) {
             $this->prepareToRun();
             
-            return BaseFastIterator::create($this, $this->pipe->buildStream($this->producer));
+            return (function (): \Generator {
+                yield from $this->pipe->buildStream($this->producer);
+                $this->finish();
+            })();
         }
         
-        $this->chainOperation(new Iterate());
-        $this->initialize();
+        $this->prepareForIterate();
         
-        return BaseStreamIterator::create($this, $this->signal->item);
+        return (function (): \Generator {
+            $item = $this->signal->item;
+            
+            try {
+                $this->run();
+                return;
+                
+                ITERATION_LOOP:
+                if ($this->signal->isWorking) {
+                    
+                    TRY_AGAIN:
+                    if ($this->source->hasNextItem()) {
+                        $this->pipe->head->handle($this->signal);
+                    } elseif (empty($this->pipe->stack)) {
+                        $this->signal->streamIsEmpty();
+                    } else {
+                        $this->isFirstProducer = $this->source->restoreFromStack();
+                        $this->signal->resume();
+                    }
+                    
+                    goto ITERATION_LOOP;
+                }
+                
+                if ($this->shouldContinueAfterStreamingFinished()) {
+                    goto TRY_AGAIN;
+                }
+                
+            } catch (Interruption $_) {
+                yield $item->key => $item->value;
+                goto ITERATION_LOOP;
+            } catch (AssertionFailed $e) {
+                throw $e;
+            } catch (\Throwable $e) {
+                if ($this->shouldContinueAfterError($e)) {
+                    goto ITERATION_LOOP;
+                }
+            }
+
+            $this->finish();
+        })();
     }
     
-    private function canBuildPowerStream(): bool
+    private function prepareForIterate(): void
+    {
+        $this->chainOperation(new Iterate());
+        $this->initialize();
+    }
+    
+    protected function canBuildPowerStream(): bool
     {
         return empty($this->onErrorHandlers) && !$this->isLoop && !$this->pipe->containsSwapOperation();
     }
@@ -1866,11 +1926,7 @@ final class Stream extends StreamSource
     private function prepareToRun(): void
     {
         if ($this->isExecuted) {
-            if ($this->isConsumer) {
-                $this->isConsumer = false;
-            } else {
-                throw StreamExceptionFactory::cannotExecuteStreamMoreThanOnce();
-            }
+            throw StreamExceptionFactory::cannotExecuteStreamMoreThanOnce();
         }
         
         $this->pipe->prepare();

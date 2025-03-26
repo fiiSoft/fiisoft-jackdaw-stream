@@ -482,13 +482,17 @@ final class Pipe implements StreamBuilder, Destroyable
                 $this->stream->omitReps($next->comparison());
             }
         } elseif ($next instanceof Collect) {
-            if ($this->last instanceof Flip) {
-                $this->replaceTerminatingOperation(new CollectKeys($this->stream));
+            if ($this->last instanceof Reindex && $this->last->isDefaultReindex()) {
+                $this->replaceTerminatingOperation($next->reindexed());
+                return false;
+            }
+            if ($this->last instanceof Flip && $next->isReindexed()) {
+                $this->replaceTerminatingOperation(OP::collectKeys($this->stream));
                 return false;
             }
         } elseif ($next instanceof CollectKeys) {
             if ($this->last instanceof Flip) {
-                $this->replaceTerminatingOperation(Collect::create($this->stream, true));
+                $this->replaceTerminatingOperation(OP::collect($this->stream, true));
                 return false;
             }
         } elseif ($next instanceof UnpackTuple) {

@@ -27,4 +27,9 @@ final class Count extends SimpleFinal
     {
         return new Item(0, $this->count);
     }
+    
+    public function isReindexed(): bool
+    {
+        return true;
+    }
 }

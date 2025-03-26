@@ -431,7 +431,7 @@ final class StreamATest extends TestCase
         self::assertSame([6, 3, 8], Stream::from([6, 3, 6, 8, 3])->unique()->toArray());
     }
     
-    public function test_unique_keys(): void
+    public function test_unique_keys_flip_keep_keys(): void
     {
         $keys = ['a', 'b', true, 'a', 'c', true, 'a'];
         
@@ -442,6 +442,20 @@ final class StreamATest extends TestCase
                 ->unique(Compare::keys())
                 ->flip()
                 ->toArrayAssoc()
+        );
+    }
+    
+    public function test_unique_keys_flip_reindex_keys(): void
+    {
+        $keys = ['a', 'b', true, 'a', 'c', true, 'a'];
+        
+        self::assertSame(
+            ['a', 'b', true, 'c'],
+            Stream::from([0, 1, 2, 3, 4, 5, 6])
+                ->mapKey(static fn(int $value) => $keys[$value]) //to produce non-unique keys in stream
+                ->unique(Compare::keys())
+                ->flip()
+                ->toArray()
         );
     }
     

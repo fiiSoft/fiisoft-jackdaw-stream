@@ -2,20 +2,43 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
-use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 
-final class CollectKeys extends SimpleFinal
+final class CollectKeys extends BaseCollect
 {
-    /** @var array<int, mixed> */
-    private array $collected = [];
-    
     public function handle(Signal $signal): void
     {
         $this->collected[] = $signal->item->key;
     }
     
+    /**
+     * @inheritDoc
+     */
     public function buildStream(iterable $stream): iterable
+    {
+        return $this->isSelfStream ? $this->iteratingStream($stream) : $this->collectingStream($stream);
+    }
+    
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
+    private function iteratingStream(iterable $stream): iterable
+    {
+        $index = -1;
+        
+        foreach ($stream as $key => $_) {
+            $this->collected[] = $key;
+            
+            yield ++$index => $key;
+        }
+    }
+    
+    /**
+     * @param iterable<mixed, mixed> $stream
+     * @return iterable<mixed, mixed>
+     */
+    private function collectingStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $_) {
             $this->collected[] = $key;
@@ -24,17 +47,8 @@ final class CollectKeys extends SimpleFinal
         yield;
     }
     
-    public function getResult(): Item
+    public function isReindexed(): bool
     {
-        return new Item(0, $this->collected);
-    }
-    
-    public function destroy(): void
-    {
-        if (!$this->isDestroying) {
-            $this->collected = [];
-            
-            parent::destroy();
-        }
+        return true;
     }
 }

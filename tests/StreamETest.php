@@ -257,6 +257,18 @@ final class StreamETest extends TestCase
         self::assertSame(['a', 'b', 'c'], $letters);
     }
     
+    public function test_StoreIn_preserve_keys_with_onerror_handler(): void
+    {
+        $letters = [];
+        Stream::from(['a', 1, 'b', 2, 'c', 3])
+            ->onError(OnError::abort())
+            ->onlyStrings()
+            ->storeIn($letters)
+            ->run();
+        
+        self::assertSame(['a', 2 => 'b', 4 => 'c'], $letters);
+    }
+    
     public function test_StoreIn_can_also_handle_all_ArrayAccess_instances(): void
     {
         $letters = new \ArrayObject();

@@ -1697,7 +1697,7 @@ final class StreamFTest extends TestCase
         ], Stream::from($rowset)->filterBy('age', Filters::greaterOrEqual(18))->toArray());
     }
     
-    public function test_iterate_stream_with_onError_handlers(): void
+    public function test_iterate_stream_with_onError_handler_and_uncaught_exception(): void
     {
         $stream = Stream::from(['a', 'b', 'c', 'd'])
             ->map('strtoupper')
@@ -1706,7 +1706,10 @@ final class StreamFTest extends TestCase
                     throw new \RuntimeException('Error');
                 }
             })
-            ->onError(OnError::call(static fn() => null));
+            ->onError(OnError::call(static fn() => null))
+            ->onFinish(static function (): void {
+                self::fail('OnFinish handler should not be fired');
+            });
         
         try {
             $result = [];
@@ -1718,6 +1721,26 @@ final class StreamFTest extends TestCase
         }
         
         self::assertSame(['A', 'B', 'C'], $result);
+    }
+    
+    public function test_iterate_stream_with_onError_handler_and_onFinish_handler(): void
+    {
+        $finishHandlerFired = false;
+        
+        $stream = Stream::from(['a', 'b', 'c', 'd'])
+            ->map('strtoupper')
+            ->call(static function ($value, $key) {
+                if ($key === 2) {
+                    throw new \RuntimeException('Error');
+                }
+            })
+            ->onError(OnError::skip())
+            ->onFinish(static function () use (&$finishHandlerFired) {
+                $finishHandlerFired = true;
+            });
+        
+        self::assertSame(['A', 'B', 3 => 'D'], \iterator_to_array($stream));
+        self::assertTrue($finishHandlerFired);
     }
     
     public function test_result_can_be_use_as_producer(): void

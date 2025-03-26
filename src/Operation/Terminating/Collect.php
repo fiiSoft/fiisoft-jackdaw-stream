@@ -2,17 +2,14 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
-use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
+use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Terminating\Collect\CollectKeepKeys;
 use FiiSoft\Jackdaw\Operation\Terminating\Collect\CollectReindexKeys;
 use FiiSoft\Jackdaw\Stream;
 
-abstract class Collect extends SimpleFinal implements Reindexable
+abstract class Collect extends BaseCollect implements Reindexable
 {
-    /** @var array<string|int, mixed> */
-    protected array $collected = [];
-    
     private bool $reindex;
     
     final public static function create(Stream $stream, bool $reindex = false): self
@@ -29,22 +26,13 @@ abstract class Collect extends SimpleFinal implements Reindexable
         $this->reindex = $reindex;
     }
     
-    final public function getResult(): Item
-    {
-        return new Item(0, $this->collected);
-    }
-    
     final public function isReindexed(): bool
     {
         return $this->reindex;
     }
     
-    final public function destroy(): void
+    final public function reindexed(): Operation
     {
-        if (!$this->isDestroying) {
-            $this->collected = [];
-            
-            parent::destroy();
-        }
+        return $this->reindex ? $this : self::create($this->stream, true);
     }
 }
