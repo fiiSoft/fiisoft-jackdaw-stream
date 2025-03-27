@@ -145,6 +145,15 @@ final class OperationsTest extends TestCase
         $operation->setPrev($this->endingOperation());
     }
     
+    public function test_Initial_operation_getPrev_always_returns_null(): void
+    {
+        $operation = new Initial();
+        self::assertNull($operation->getPrev());
+        
+        $operation->setNext(OP::limit(1));
+        self::assertNull($operation->getPrev());
+    }
+    
     public function test_Initial_cannot_prepend_other_operation(): void
     {
         $operation = new Initial();

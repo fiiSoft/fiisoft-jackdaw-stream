@@ -3,7 +3,7 @@
 namespace FiiSoft\Jackdaw\Comparator\Sorting;
 
 use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
-use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\ComparisonSpec;
 use FiiSoft\Jackdaw\Comparator\Sorting\Specs\DoubleSorting;
@@ -14,7 +14,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 abstract class Sorting implements ComparisonSpec
 {
     /**
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     final public static function prepare($sorting): self
     {
@@ -22,7 +22,7 @@ abstract class Sorting implements ComparisonSpec
     }
     
     /**
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     final public static function reverse($sorting = null, int $mode = Check::VALUE): self
     {
@@ -30,7 +30,7 @@ abstract class Sorting implements ComparisonSpec
     }
     
     /**
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     final public static function create(bool $reversed = false, $sorting = null, int $mode = Check::VALUE): self
     {

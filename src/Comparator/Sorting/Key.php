@@ -3,7 +3,7 @@
 namespace FiiSoft\Jackdaw\Comparator\Sorting;
 
 use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
-use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
 use FiiSoft\Jackdaw\Internal\Check;
@@ -11,7 +11,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 final class Key
 {
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function asc($comparator = null): Sorting
     {
@@ -19,7 +19,7 @@ final class Key
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function desc($comparator = null): Sorting
     {
@@ -27,7 +27,7 @@ final class Key
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function from(bool $reversed, $comparator = null): Sorting
     {

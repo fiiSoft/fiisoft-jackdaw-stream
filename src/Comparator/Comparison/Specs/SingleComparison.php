@@ -2,8 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Comparator\Comparison\Specs;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
 use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Internal\Check;
@@ -13,7 +13,7 @@ final class SingleComparison extends Comparison
     private ?Comparator $comparator;
     
     /**
-     * @param Comparable|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     protected function __construct($comparator = null, int $mode = Check::VALUE)
     {

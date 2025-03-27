@@ -53,7 +53,7 @@ final class Compare
     }
     
     /**
-     * Compares full pairs (key,value).
+     * Compares pairs key => value.
      *
      * @param ComparatorReady|callable|null $valueComparator
      * @param ComparatorReady|callable|null $keyComparator

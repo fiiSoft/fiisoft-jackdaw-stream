@@ -21,17 +21,6 @@ abstract class Comparison implements ComparisonSpec
     private bool $isPairComp;
     
     /**
-     * @param ComparatorReady|callable|null $comparator
-     */
-    final public static function create(int $mode, $comparator = null): self
-    {
-        $comparator = Comparators::getAdapter($comparator);
-        $mode = self::adjustMode($mode, $comparator);
-        
-        return self::simple($mode, $comparator);
-    }
-    
-    /**
      * @param ComparatorReady|callable|null $comparison
      */
     final public static function prepare($comparison): self

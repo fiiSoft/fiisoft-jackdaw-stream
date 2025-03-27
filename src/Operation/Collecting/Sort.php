@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Collecting;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Item;
@@ -18,7 +18,7 @@ final class Sort extends BaseOperation
     private array $items = [];
     
     /**
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     public function __construct($sorting = null)
     {

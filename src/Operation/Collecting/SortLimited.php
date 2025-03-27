@@ -2,13 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Operation\Collecting;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Operation\Internal\Limitable;
 use FiiSoft\Jackdaw\Operation\Collecting\SortLimited\MultiSortLimited;
 use FiiSoft\Jackdaw\Operation\Collecting\SortLimited\SingleSortLimited;
+use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Internal\Limitable;
 use FiiSoft\Jackdaw\Producer\Producer;
 
 abstract class SortLimited extends BaseOperation implements Limitable
@@ -16,7 +16,7 @@ abstract class SortLimited extends BaseOperation implements Limitable
     protected Sorting $sorting;
     
     /**
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     final public static function create(int $limit, $sorting = null): self
     {

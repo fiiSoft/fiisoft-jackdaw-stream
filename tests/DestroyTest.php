@@ -3,7 +3,8 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
-use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
+use FiiSoft\Jackdaw\Comparator\Comparison\Compare;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Filter\Filters;
@@ -12,9 +13,9 @@ use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
-use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\SingleItemBuffer;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\BucketListIterator;
 use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\CircularBufferIterator;
+use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\SingleItemBuffer;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use FiiSoft\Jackdaw\Producer\MultiProducer;
@@ -548,15 +549,14 @@ final class DestroyTest extends TestCase
     
     /**
      * @dataProvider getDataForTestUniqueDestroy
+     * @param ComparatorReady|callable|null $comparison
      */
     #[DataProvider('getDataForTestUniqueDestroy')]
-    public function test_Unique_destroy($comparator, int $mode, array $expected): void
+    public function test_Unique_destroy($comparison, array $expected): void
     {
         //given
         $keys =   [0,  'b', 2, 1,   'a', 1,  'b',   2,    'a'];
         $values = ['a', 3,  2, 'a', 'b', 'b', true, true, 'c'];
-        
-        $comparison = Comparison::create($mode, $comparator);
         
         //when
         $stream = Stream::from(Producers::combinedFrom($keys, $values))->unique($comparison);
@@ -572,13 +572,16 @@ final class DestroyTest extends TestCase
         $twoArgs = static fn($a, $b): int => \gettype($a) <=> \gettype($b) ?: $a <=> $b;
         
         $fourArgs = static function ($v1, $v2, $k1, $k2): int {
-            $cmp = \gettype($v1) <=> \gettype($v2) ?: $v1 <=> $v2;
-            if ($cmp !== 0) {
-                $cmp = \gettype($k1) <=> \gettype($k2) ?: $k1 <=> $k2;
-                if ($cmp !== 0) {
-                    $cmp = \gettype($v1) <=> \gettype($k2) ?: $v1 <=> $k2;
-                    if ($cmp !== 0) {
-                        return \gettype($v2) <=> \gettype($k1) ?: $v2 <=> $k1;
+            $cmp1 = \gettype($v1) <=> \gettype($v2) ?: $v1 <=> $v2;
+            if ($cmp1 !== 0) {
+                $cmp2 = \gettype($k1) <=> \gettype($k2) ?: $k1 <=> $k2;
+                if ($cmp2 !== 0) {
+                    $cmp3 = \gettype($v1) <=> \gettype($k2) ?: $v1 <=> $k2;
+                    if ($cmp3 !== 0) {
+                        $cmp4 = \gettype($v2) <=> \gettype($k1) ?: $v2 <=> $k1;
+                        if ($cmp4 !== 0) {
+                            return 8 * $cmp1 + 4 * $cmp2 + 2 * $cmp3 + $cmp4;
+                        }
                     }
                 }
             }
@@ -586,22 +589,26 @@ final class DestroyTest extends TestCase
             return 0;
         };
         
-        //random mode because its doesn't matter when four-argument callable is used to compare items
-        $randomMode = \mt_rand(Check::VALUE, Check::ANY);
-        
         return [
             //comparator, mode, expected (tuples)
-            0 => [null, Check::VALUE, [[0, 'a'], ['b', 3], [2, 2], ['a', 'b'], ['b', true], ['a', 'c']]],
-            [null, Check::KEY,   [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b']]],
-            [null, Check::ANY,   [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b'], ['b', true], ['a', 'c']]],
-            [null, Check::BOTH,  [[0, 'a'], ['b', 3], [2, 2], ['a', 'b']]],
+            0 => [null, [[0, 'a'], ['b', 3], [2, 2], ['a', 'b'], ['b', true], ['a', 'c']]],
+            [Compare::values(), [[0, 'a'], ['b', 3], [2, 2], ['a', 'b'], ['b', true], ['a', 'c']]],
+            [Compare::keys(),   [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b']]],
+            [Compare::valuesAndKeysSeparately(),
+                [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b'], ['b', true], ['a', 'c']]
+            ],
+            [Compare::bothValuesAndKeysTogether(),  [[0, 'a'], ['b', 3], [2, 2], ['a', 'b']]],
 
-            4 => [$twoArgs, Check::VALUE, [[0, 'a'], ['b', 3], [2, 2], ['a', 'b'], ['b', true], ['a', 'c']]],
-            [$twoArgs, Check::KEY,   [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b']]],
-            [$twoArgs, Check::ANY,   [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b'], ['b', true], ['a', 'c']]],
-            [$twoArgs, Check::BOTH,  [[0, 'a'], ['b', 3], [2, 2], ['a', 'b']]],
-            
-            8 => [$fourArgs, $randomMode, [[0, 'a'], ['b', 3], [2, 2]]],
+            5 => [$twoArgs, [[0, 'a'], ['b', 3], [2, 2], ['a', 'b'], ['b', true], ['a', 'c']]],
+            6 => [Compare::values($twoArgs), [[0, 'a'], ['b', 3], [2, 2], ['a', 'b'], ['b', true], ['a', 'c']]],
+            [Compare::keys($twoArgs),   [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b']]],
+            [Compare::valuesAndKeysSeparately($twoArgs),
+                [[0, 'a'], ['b', 3], [2, 2], [1, 'a'],   ['a', 'b'], ['b', true], ['a', 'c']]
+            ],
+            [Compare::bothValuesAndKeysTogether($twoArgs),  [[0, 'a'], ['b', 3], [2, 2], ['a', 'b']]],
+
+            10 => [$fourArgs, [[0, 'a'], ['b', 3], [2, 2]]],
+            [Compare::assoc($fourArgs), [[0, 'a'], ['b', 3], [2, 2]]],
         ];
     }
     

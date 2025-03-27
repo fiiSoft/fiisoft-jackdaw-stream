@@ -2,8 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Comparator\Basic;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
 use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 
@@ -13,7 +13,7 @@ final class MultiComparator extends BaseComparator
     private array $comparators = [];
     
     /**
-     * @param Comparable|callable $comparators
+     * @param ComparatorReady|callable $comparators
      */
     public function __construct(...$comparators)
     {
@@ -55,7 +55,7 @@ final class MultiComparator extends BaseComparator
     }
     
     /**
-     * @param array<Comparable|callable|null> $comparators
+     * @param array<ComparatorReady|callable|null> $comparators
      */
     public function addComparators(array $comparators): void
     {

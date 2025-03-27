@@ -363,10 +363,10 @@ final class StreamGTest extends TestCase
             ->omit(Filters::OR('is_int', $sequence->inspect(new SequenceIsEmpty())))
             ->classify($operation->value(0))
             ->callWhen(Filters::keyIs(':'), $reset)
-            ->omit(':', Check::KEY)
+            ->omitKey(':')
             ->map($sequence)
             ->call($reset)
-            ->mapBy(Discriminators::byKey(), [
+            ->mapByKey([
                 '+' => '\array_sum',
                 '*' => '\array_product',
                 '-' => Reducers::generic(static fn(int $acc, int $value): int => $acc - $value),

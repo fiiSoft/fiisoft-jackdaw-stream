@@ -386,13 +386,13 @@ final class Mappers
     }
     
     /**
-     * Syntax sugar for extract() to reorders key in array-like values by extracting them.
+     * Change the order of keys in array-like values.
      *
      * @param array<string|int> $keys
      */
     public static function reorderKeys(array $keys): Mapper
     {
-        return self::extract(\array_keys(\array_flip($keys)));
+        return new ReorderKeys($keys);
     }
     
     public static function byArgs(callable $mapper): Mapper

@@ -21,7 +21,7 @@ abstract class QuickChecker implements UniquenessChecker
         $right = $this->count - 1;
         
         while ($left <= $right) {
-            $index = (int) \floor(($left + $right) / 2);
+            $index = (int) (($left + $right) / 2);
             
             $compare = $this->compare($item, $this->unique[$index]);
             

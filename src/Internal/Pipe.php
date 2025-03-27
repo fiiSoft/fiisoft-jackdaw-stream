@@ -477,10 +477,6 @@ final class Pipe implements StreamBuilder, Destroyable
                 $this->removeLastNode();
                 return $this->canAppend($next);
             }
-        } elseif ($next instanceof Unique) {
-            if (!$this->isOmitRepsInPipe()) {
-                $this->stream->omitReps($next->comparison());
-            }
         } elseif ($next instanceof Collect) {
             if ($this->last instanceof Reindex && $this->last->isDefaultReindex()) {
                 $this->replaceTerminatingOperation($next->reindexed());
@@ -636,16 +632,6 @@ final class Pipe implements StreamBuilder, Destroyable
         return $operation instanceof Reverse
             || $operation instanceof Shuffle
             || $operation instanceof Sort;
-    }
-    
-    private function isOmitRepsInPipe(): bool
-    {
-        $prev = $this->last;
-        while ($prev !== null && ! $prev instanceof OmitReps) {
-            $prev = $prev->getPrev();
-        }
-        
-        return $prev !== null;
     }
     
     private function optimizeSingularOperations(): void

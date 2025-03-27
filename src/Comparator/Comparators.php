@@ -38,7 +38,7 @@ final class Comparators
             return $comparator;
         }
         
-        if ($comparator instanceof Comparable) {
+        if ($comparator instanceof ComparisonSpec) {
             return $comparator->comparator();
         }
         
@@ -92,7 +92,7 @@ final class Comparators
     }
     
     /**
-     * @param Comparator|callable $comparators
+     * @param ComparatorReady|callable $comparators
      */
     public static function multi(...$comparators): MultiComparator
     {

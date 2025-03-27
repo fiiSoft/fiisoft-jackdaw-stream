@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparator;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
@@ -20,13 +20,13 @@ final class Maxima extends BaseOperation
     private int $state;
     private bool $allowLimits;
     
-    /** @var Comparable|callable|null */
+    /** @var ComparatorReady|callable|null */
     private $comparison;
     
     private bool $reversed;
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function __construct(bool $allowLimits = true, bool $reversed = false, $comparison = null)
     {

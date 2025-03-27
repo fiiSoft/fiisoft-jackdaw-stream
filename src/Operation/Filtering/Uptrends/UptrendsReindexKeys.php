@@ -2,7 +2,6 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering\Uptrends;
 
-use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Filtering\Uptrends;
@@ -15,7 +14,6 @@ final class UptrendsReindexKeys extends Uptrends
         
         if ($this->previous === null) {
             $this->previous = clone $item;
-            $this->comparator = ItemComparatorFactory::getForComparison($this->comparison, $this->downtrend);
         } elseif ($this->comparator->compare($this->previous, $item) < 0) {
             $this->trend[] = $this->previous->value;
             
@@ -47,7 +45,6 @@ final class UptrendsReindexKeys extends Uptrends
         foreach ($stream as $item->key => $item->value) {
             if ($this->previous === null) {
                 $this->previous = clone $item;
-                $this->comparator = ItemComparatorFactory::getForComparison($this->comparison, $this->downtrend);
             } elseif ($this->comparator->compare($this->previous, $item) < 0) {
                 $this->trend[] = $this->previous->value;
                 

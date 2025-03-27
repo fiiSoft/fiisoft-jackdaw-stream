@@ -942,4 +942,19 @@ final class MappersTest extends TestCase
         self::assertFalse($mapper->equals(Mappers::forEach('strtoupper')));
         self::assertFalse($mapper->equals(Mappers::concat()));
     }
+    
+    public function test_ReorderKeys_throws_exception_when_param_fields_is_invalid(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::byName('fields'));
+        
+        Mappers::reorderKeys([]);
+    }
+    
+    public function test_ReorderKeys_keeps_the_remaining_keys_at_the_end(): void
+    {
+        self::assertSame(
+            ['a' => 8, 'e' => 9, 'g' => 5, 'n' => 3],
+            Mappers::reorderKeys(['a', 'e'])->map(['g' => 5, 'e' => 9, 'n' => 3, 'a' => 8])
+        );
+    }
 }

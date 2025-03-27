@@ -3,7 +3,7 @@
 namespace FiiSoft\Jackdaw\Comparator\Sorting\Specs;
 
 use FiiSoft\Jackdaw\Comparator\Comparator;
-use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Check;
@@ -16,7 +16,7 @@ final class SingleSorting extends Sorting
     private int $mode;
     
     /**
-     * @param Comparable|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     protected function __construct(
         bool $reversed = false,

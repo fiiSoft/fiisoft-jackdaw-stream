@@ -17,9 +17,7 @@ final class ReverseComparator extends BaseComparator
      */
     public function compareAssoc($value1, $value2, $key1, $key2): int
     {
-        return \gettype($value2) <=> \gettype($value1)
-            ?: $value2 <=> $value1
-            ?: \gettype($key2) <=> \gettype($key1)
-            ?: $key2 <=> $key1;
+        return \gettype($value2) <=> \gettype($value1) ?: $value2 <=> $value1
+            ?: \gettype($key2) <=> \gettype($key1) ?: $key2 <=> $key1;
     }
 }

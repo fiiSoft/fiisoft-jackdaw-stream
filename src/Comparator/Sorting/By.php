@@ -2,14 +2,14 @@
 
 namespace FiiSoft\Jackdaw\Comparator\Sorting;
 
-use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Internal\Check;
 
 final class By
 {
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function value($comparator = null, bool $reversed = false): Sorting
     {
@@ -17,7 +17,7 @@ final class By
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function valueAsc($comparator = null): Sorting
     {
@@ -25,7 +25,7 @@ final class By
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function valueDesc($comparator = null): Sorting
     {
@@ -33,7 +33,7 @@ final class By
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function key($comparator = null, bool $reversed = false): Sorting
     {
@@ -41,7 +41,7 @@ final class By
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function keyAsc($comparator = null): Sorting
     {
@@ -49,7 +49,7 @@ final class By
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function keyDesc($comparator = null): Sorting
     {
@@ -57,7 +57,7 @@ final class By
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function assoc($comparator = null, bool $reversed = false): Sorting
     {
@@ -65,7 +65,7 @@ final class By
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function assocAsc($comparator = null): Sorting
     {
@@ -73,7 +73,7 @@ final class By
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function assocDesc($comparator = null): Sorting
     {
@@ -86,7 +86,7 @@ final class By
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function bothAsc($comparator = null): Sorting
     {
@@ -94,7 +94,7 @@ final class By
     }
     
     /**
-     * @param Comparator|callable|null $comparator
+     * @param ComparatorReady|callable|null $comparator
      */
     public static function bothDesc($comparator = null): Sorting
     {

@@ -168,6 +168,14 @@ final class StreamFTest extends TestCase
         );
     }
     
+    public function test_omitReps_with_onerror_handler(): void
+    {
+        self::assertSame(
+            [3, 2, 4, 1, 2, 1, 5, 2],
+            Stream::from([3, 2, 2, 4, 4, 1, 2, 1, 1, 1, 5, 5, 2, 2])->onError(OnError::abort())->omitReps()->toArray()
+        );
+    }
+    
     public function test_iterate_stream_as_array_with_filter(): void
     {
         $data = ['d' => 3, 'a' => 1, 'c' => 2, 'e' => 4, 'g' => 3, 'b' => 2, 'f' => 1, 'i' => 5];

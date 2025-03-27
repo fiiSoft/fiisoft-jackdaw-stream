@@ -2,7 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Collecting;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparator;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
@@ -10,10 +10,10 @@ use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
+use FiiSoft\Jackdaw\Operation\Collecting\Segregate\BucketListIterator;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Limitable;
 use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
-use FiiSoft\Jackdaw\Operation\Collecting\Segregate\BucketListIterator;
 
 final class Segregate extends BaseOperation implements Limitable, Reindexable
 {
@@ -28,7 +28,7 @@ final class Segregate extends BaseOperation implements Limitable, Reindexable
     
     /**
      * @param int|null $buckets null means collect all elements
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      * @param int|null $limit max number of collected elements in each bucket; null means no limits
      */
     public function __construct(?int $buckets = null, bool $reindex = false, $comparison = null, ?int $limit = null)

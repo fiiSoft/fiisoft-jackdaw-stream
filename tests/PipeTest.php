@@ -96,22 +96,22 @@ final class PipeTest extends TestCase
 
         yield 'Filter_Filter_Unique_Filter_1' => [
             OP::filter('is_string'), OP::filter('is_string'), OP::unique(), OP::filter('is_string'),
-            FilterOp::class, OmitReps::class, Unique::class
+            FilterOp::class, Unique::class
         ];
 
         yield 'Filter_Filter_Unique_Filter_2' => [
             OP::filter('is_string'), OP::filter('is_int'), OP::unique(), OP::filter('is_string'),
-            FilterOp::class, OmitReps::class, Unique::class
+            FilterOp::class, Unique::class
         ];
 
         yield 'Filter_FilterWhen_Unique_Filter' => [
             OP::filter('is_string'), OP::filterWhen('is_int', 'is_string'), OP::unique(), OP::filter('is_string'),
-            FilterMany::class, OmitReps::class, Unique::class
+            FilterMany::class, Unique::class
         ];
 
         yield 'Filter_Omit_Unique_Filter' => [
             OP::filter('is_string'), OP::omit('is_int'), OP::unique(), OP::filter('is_string'),
-            FilterOp::class, OmitReps::class, Unique::class
+            FilterOp::class, Unique::class
         ];
         
         yield 'Filter_First' => [OP::filter('is_string'), OP::first($stream), Find::class];
@@ -344,9 +344,13 @@ final class PipeTest extends TestCase
         yield 'Tuple_Reindex_custom' => [OP::makeTuple(), OP::reindex(1), Tuple::class, Reindex::class];
         yield 'Tuple_Reindex_default' => [OP::makeTuple(), OP::reindex(), Tuple::class];
         
-        yield 'Unique' => [OP::unique(), OmitReps::class, Unique::class];
+        yield 'Unique' => [OP::unique(), Unique::class];
         yield 'Unique_FilterBy' => [
             OP::unique(), OP::filterBy('a', 'is_int'), OP::filterBy('b', 'is_string'),
+            FilterByMany::class, Unique::class
+        ];
+        yield 'OmitReps_Unique_FilterBy' => [
+            OP::omitReps(), OP::unique(), OP::filterBy('a', 'is_int'), OP::filterBy('b', 'is_string'),
             FilterByMany::class, OmitReps::class, Unique::class
         ];
         
@@ -368,12 +372,12 @@ final class PipeTest extends TestCase
         
         yield 'Reverse_Unique_Shuffle_Filter' => [
             OP::reverse(), OP::unique(), OP::shuffle(), OP::filter('is_string'),
-            FilterOp::class, Reverse::class, OmitReps::class, Unique::class, Shuffle::class
+            FilterOp::class, Reverse::class, Unique::class, Shuffle::class
         ];
         
         yield 'Reverse_Unique_Shuffle_Filter_Filter' => [
             OP::reverse(), OP::unique(), OP::shuffle(), OP::filter('is_string'), OP::filter('is_int'),
-            FilterOp::class, Reverse::class, OmitReps::class, Unique::class, Shuffle::class
+            FilterOp::class, Reverse::class, Unique::class, Shuffle::class
         ];
         
         yield 'IsEmpty' => [

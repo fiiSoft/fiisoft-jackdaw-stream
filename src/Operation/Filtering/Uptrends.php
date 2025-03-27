@@ -2,32 +2,35 @@
 
 namespace FiiSoft\Jackdaw\Operation\Filtering;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparison\Comparison;
 use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparator;
+use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
 use FiiSoft\Jackdaw\Operation\Filtering\Uptrends\UptrendsKeepKeys;
 use FiiSoft\Jackdaw\Operation\Filtering\Uptrends\UptrendsReindexKeys;
+use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
+use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
 
 abstract class Uptrends extends BaseOperation implements Reindexable
 {
     protected ItemComparator $comparator;
-    protected Comparison $comparison;
     protected ?Item $previous = null;
     
     /** @var array<string|int, mixed> */
     protected array $trend = [];
     
     protected int $index = -1;
-    protected bool $downtrend;
     
+    /** @var ComparatorReady|callable|null $comparison */
+    private $comparison;
+    
+    private bool $downtrend;
     private bool $reindex;
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     final public static function create(bool $reindex = false, bool $downtrend = false, $comparison = null): self
     {
@@ -37,13 +40,25 @@ abstract class Uptrends extends BaseOperation implements Reindexable
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     final protected function __construct(bool $reindex = false, bool $downtrend = false, $comparison = null)
     {
         $this->reindex = $reindex;
         $this->downtrend = $downtrend;
-        $this->comparison = Comparison::prepare($comparison);
+        $this->comparison = $comparison;
+    }
+    
+    public function prepare(): void
+    {
+        parent::prepare();
+        
+        $this->comparator = ItemComparatorFactory::getForComparison(
+            Comparison::prepare($this->comparison),
+            $this->downtrend
+        );
+        
+        $this->comparison = null;
     }
     
     final public function streamingFinished(Signal $signal): bool

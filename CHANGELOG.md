@@ -1,5 +1,10 @@
 # Changelog
 
+## 12.2.0
+
+- added Stream::mapByKey()
+- added Stream::forkByKey()
+
 ## 12.1.0
 
 - added Stream::collectValues()

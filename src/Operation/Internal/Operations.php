@@ -3,15 +3,12 @@
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
 use FiiSoft\Jackdaw\Collector\Collector;
-use FiiSoft\Jackdaw\Comparator\{Comparable, ComparatorReady};
-use FiiSoft\Jackdaw\Consumer\ConsumerReady;
-use FiiSoft\Jackdaw\Consumer\Consumers;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
+use FiiSoft\Jackdaw\Consumer\{ConsumerReady, Consumers};
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
-use FiiSoft\Jackdaw\Filter\FilterReady;
-use FiiSoft\Jackdaw\Filter\Filters;
+use FiiSoft\Jackdaw\Filter\{FilterReady, Filters};
 use FiiSoft\Jackdaw\Internal\{Check, ForkCollaborator};
-use FiiSoft\Jackdaw\Mapper\MapperReady;
-use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Mapper\{MapperReady, Mappers};
 use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkMatch, Gather, Reverse, Segregate, Sort, SortLimited,
     Tail};
@@ -32,8 +29,7 @@ use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, FinalOpe
 use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
-use FiiSoft\Jackdaw\ValueRef\IntNum;
-use FiiSoft\Jackdaw\ValueRef\IntProvider;
+use FiiSoft\Jackdaw\ValueRef\{IntNum, IntProvider};
 
 final class Operations
 {
@@ -329,7 +325,7 @@ final class Operations
     }
     
     /**
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     public static function sort($sorting = null): Operation
     {
@@ -337,7 +333,7 @@ final class Operations
     }
     
     /**
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     public static function sortLimited(int $limit, $sorting = null): Limitable
     {
@@ -499,7 +495,7 @@ final class Operations
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public static function segregate(
         ?int $buckets = null, bool $reindex = false, $comparison = null, ?int $limit = null
@@ -562,7 +558,7 @@ final class Operations
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public static function accumulateUptrends(bool $reindex = false, $comparison = null): Operation
     {
@@ -570,7 +566,7 @@ final class Operations
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public static function accumulateDowntrends(bool $reindex = false, $comparison = null): Operation
     {
@@ -578,7 +574,7 @@ final class Operations
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public static function onlyMaxima(bool $allowLimits = true, $comparison = null): Operation
     {
@@ -586,7 +582,7 @@ final class Operations
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public static function onlyMinima(bool $allowLimits = true, $comparison = null): Operation
     {
@@ -594,7 +590,7 @@ final class Operations
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public static function onlyExtrema(bool $allowLimits = true, $comparison = null): Operation
     {
@@ -602,7 +598,7 @@ final class Operations
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public static function increasingTrend($comparison = null): Operation
     {
@@ -610,7 +606,7 @@ final class Operations
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public static function decreasingTrend($comparison = null): Operation
     {

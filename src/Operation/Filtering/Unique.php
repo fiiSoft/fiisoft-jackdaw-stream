@@ -18,14 +18,16 @@ use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 final class Unique extends BaseOperation
 {
     private UniquenessChecker $checker;
-    private Comparison $comparison;
+    
+    /** @var ComparatorReady|callable|null */
+    private $comparison;
     
     /**
      * @param ComparatorReady|callable|null $comparison
      */
     public function __construct($comparison = null)
     {
-        $this->comparison = Comparison::prepare($comparison);
+        $this->comparison = $comparison;
     }
     
     public function prepare(): void
@@ -55,12 +57,15 @@ final class Unique extends BaseOperation
     
     private function prepareStrategy(): void
     {
-        if ($this->comparison->isPairComparison()) {
-            $this->checker = new PairChecker(...$this->comparison->getComparators());
+        $comparison = Comparison::prepare($this->comparison);
+        $this->comparison = null;
+        
+        if ($comparison->isPairComparison()) {
+            $this->checker = new PairChecker(...$comparison->getComparators());
             return;
         }
         
-        $comparator = $this->comparison->comparator();
+        $comparator = $comparison->comparator();
         
         if ($comparator !== null) {
             if ($comparator instanceof GenericComparator && $comparator->isFullAssoc()) {
@@ -73,7 +78,7 @@ final class Unique extends BaseOperation
             $strategy = new ComparisonStrategy\StandardComparator();
         }
         
-        switch ($this->comparison->mode()) {
+        switch ($comparison->mode()) {
             case Check::VALUE:
                 $this->checker = new StandardChecker\Single\CheckValue($strategy);
             break;
@@ -86,11 +91,6 @@ final class Unique extends BaseOperation
             default:
                 $this->checker = new StandardChecker\Double\CheckValueOrKey($strategy);
         }
-    }
-    
-    public function comparison(): Comparison
-    {
-        return $this->comparison;
     }
     
     public function destroy(): void

@@ -1489,9 +1489,7 @@ final class StreamBTest extends TestCase
             9 => 'c',
         ];
         
-        $result = Stream::from($data)
-            ->sort(By::assoc(Comparators::reverse()))
-            ->toArrayAssoc();
+        $result = Stream::from($data)->sort(By::assoc(Comparators::reverse()))->toArrayAssoc();
         
         $expected = [
             9 => 'c',
@@ -1938,5 +1936,15 @@ final class StreamBTest extends TestCase
         self::assertSame(['foo', 'aaron'], $result->toArray());
         
         $result->destroy();
+    }
+    
+    public function test_sort_with_custom_assoc_two_args_callable_comparator(): void
+    {
+        self::assertSame(
+            ['a' => 2, 'k' => 3, 't' => 3, 'u' => 4, 'c' => 5, 'e' => 5],
+            Stream::from(['u' => 4, 't' => 3, 'a' => 2, 'e' => 5, 'k' => 3, 'c' => 5])
+                ->sort(By::assoc(static fn($a, $b): int => $a <=> $b))
+                ->toArrayAssoc()
+        );
     }
 }

@@ -1156,7 +1156,7 @@ final class StreamCTest extends TestCase
         $actual = Stream::from($data)
             ->split(';')
             ->unpackTuple()
-            ->fork(Discriminators::byKey(), Stream::empty()->castToFloat()->reduce(Reducers::basicStats(2)))
+            ->forkByKey(Stream::empty()->castToFloat()->reduce(Reducers::basicStats(2)))
             ->extract(['min', 'avg', 'max'])
             ->concat(';')
             ->segregate(null, false, By::key())
@@ -1180,7 +1180,7 @@ final class StreamCTest extends TestCase
         $actual = Stream::from($data)
             ->split(';')
             ->unpackTuple()
-            ->fork(Discriminators::byKey(), Stream::empty()->castToFloat()->reduce(Reducers::basicStats(2)))
+            ->forkByKey(Stream::empty()->castToFloat()->reduce(Reducers::basicStats(2)))
             ->extract(['min', 'avg', 'max'])
             ->concat(';')
             ->sort(By::key());

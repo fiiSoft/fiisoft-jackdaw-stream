@@ -3,7 +3,7 @@
 namespace FiiSoft\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collector;
-use FiiSoft\Jackdaw\Comparator\{Comparable, ComparatorReady, Sorting\By, Sorting\Sorting};
+use FiiSoft\Jackdaw\Comparator\{ComparatorReady, Sorting\By, Sorting\Sorting};
 use FiiSoft\Jackdaw\Consumer\{ConsumerReady, Consumers};
 use FiiSoft\Jackdaw\Discriminator\{DiscriminatorReady, Discriminators};
 use FiiSoft\Jackdaw\Exception\{InvalidParamException, StreamExceptionFactory};
@@ -14,10 +14,11 @@ use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyabl
     State\StreamSource, StreamPipe};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, MapperReady, Mappers};
 use FiiSoft\Jackdaw\Memo\MemoWriter;
-use FiiSoft\Jackdaw\Operation\{Internal\Operations, LastOperation, Operation, Terminating\FinalOperation};
-use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
-use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
+use FiiSoft\Jackdaw\Operation\Internal\{DispatchReady, ForkReady, Operations};
+use FiiSoft\Jackdaw\Operation\LastOperation;
+use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Special\{Assert\AssertionFailed, Iterate};
+use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Producer\{Internal\EmptyProducer, MultiProducer, Producer, ProducerReady, Producers};
 use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\ValueRef\IntProvider;
@@ -538,6 +539,16 @@ final class Stream extends StreamSource
         return $this;
     }
     
+    /**
+     * Syntax sugar for $stream->mapBy(Discriminators::byKey(), $mappers)
+     *
+     * @param array<string|int, MapperReady|callable|iterable|mixed> $mappers
+     */
+    public function mapByKey(array $mappers): Stream
+    {
+        return $this->mapBy(Discriminators::byKey(), $mappers);
+    }
+    
     public function mapArgs(callable $mapper): Stream
     {
         $this->chainOperation(Operations::mapArgs($mapper));
@@ -754,7 +765,7 @@ final class Stream extends StreamSource
     /**
      * Normal (ascending) sorting.
      *
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     public function sort($sorting = null): Stream
     {
@@ -765,7 +776,7 @@ final class Stream extends StreamSource
     /**
      * Reversed (descending) sorting.
      *
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     public function rsort($sorting = null): Stream
     {
@@ -776,7 +787,7 @@ final class Stream extends StreamSource
     /**
      * Normal sorting with limited number of {$limit} first values passed further to stream.
      *
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     public function best(int $limit, $sorting = null): Stream
     {
@@ -787,7 +798,7 @@ final class Stream extends StreamSource
     /**
      * Reversed sorting with limited number of {$limit} values passed further to stream.
      *
-     * @param Comparable|callable|null $sorting
+     * @param ComparatorReady|callable|null $sorting
      */
     public function worst(int $limit, $sorting = null): Stream
     {
@@ -1156,7 +1167,7 @@ final class Stream extends StreamSource
     
     /**
      * @param int|null $buckets null means collect all elements
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      * @param int|null $limit max number of collected elements in each bucket; null means no limits
      */
     public function segregate(
@@ -1185,7 +1196,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * Syntactic sugar for $stream->categorize(Disriminators::byKey()).
+     * Syntax sugar for $stream->categorize(Disriminators::byKey())
      */
     public function categorizeByKey(?bool $reindex = null): Stream
     {
@@ -1249,6 +1260,14 @@ final class Stream extends StreamSource
     }
     
     /**
+     * Syntax sugar for $stream->fork(Disriminators::byKey(), $prototype)
+     */
+    public function forkByKey(ForkReady $prototype): Stream
+    {
+        return $this->fork(Discriminators::byKey(), $prototype);
+    }
+    
+    /**
      * @param DiscriminatorReady|callable|array<string|int> $discriminator
      * @param array<string|int, ForkReady> $handlers
      */
@@ -1268,7 +1287,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function accumulateUptrends(bool $reindex = false, $comparison = null): Stream
     {
@@ -1277,7 +1296,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function accumulateDowntrends(bool $reindex = false, $comparison = null): Stream
     {
@@ -1287,7 +1306,7 @@ final class Stream extends StreamSource
     
     /**
      * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function onlyMaxima(bool $allowLimits = true, $comparison = null): Stream
     {
@@ -1297,7 +1316,7 @@ final class Stream extends StreamSource
     
     /**
      * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function onlyMinima(bool $allowLimits = true, $comparison = null): Stream
     {
@@ -1307,7 +1326,7 @@ final class Stream extends StreamSource
     
     /**
      * @param bool $allowLimits when true then allow for limit values (first and last element in the stream)
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function onlyExtrema(bool $allowLimits = true, $comparison = null): Stream
     {
@@ -1316,7 +1335,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function increasingTrend($comparison = null): Stream
     {
@@ -1325,7 +1344,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * @param Comparable|callable|null $comparison
+     * @param ComparatorReady|callable|null $comparison
      */
     public function decreasingTrend($comparison = null): Stream
     {

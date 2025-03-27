@@ -2,8 +2,8 @@
 
 namespace FiiSoft\Jackdaw\Comparator\ValueKeyCombined;
 
-use FiiSoft\Jackdaw\Comparator\Comparable;
 use FiiSoft\Jackdaw\Comparator\Comparator;
+use FiiSoft\Jackdaw\Comparator\ComparatorReady;
 use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Exception\ComparatorExceptionFactory;
 use FiiSoft\Jackdaw\Internal\Check;
@@ -14,8 +14,8 @@ abstract class ValueKeyComparator implements Comparator
     protected Comparator $keyComparator;
     
     /**
-     * @param Comparable|callable|null $valueComparator
-     * @param Comparable|callable|null $keyComparator
+     * @param ComparatorReady|callable|null $valueComparator
+     * @param ComparatorReady|callable|null $keyComparator
      */
     public function __construct($valueComparator = null, $keyComparator = null)
     {
