@@ -14,18 +14,18 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Operation\Collecting\{Gather, Reverse, Segregate, ShuffleAll, Sort, SortLimited,
     SortLimited\SingleSortLimited, Tail};
-use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, FilterOp, FilterByMany, FilterMany, Omit, OmitReps, Skip, SkipUntil,
+use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, FilterByMany, FilterMany, FilterOp, Omit, OmitReps, Skip, SkipUntil,
     SkipWhile, Unique, Uptrends};
 use FiiSoft\Jackdaw\Operation\Internal\Operations as OP;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Ending;
 use FiiSoft\Jackdaw\Operation\Internal\Pipe\Initial;
-use FiiSoft\Jackdaw\Operation\Internal\Shuffle;
 use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate\Accumulate, Aggregate, Chunk, ChunkBy, Flat, Flip, Map,
     MapFieldWhen, MapKey, MapMany, MapWhen, Reindex, Tokenize, Tuple, UnpackTuple, Window};
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{FeedMany, SendToMany};
 use FiiSoft\Jackdaw\Operation\Special\{Limit, ReadNext, ReadWhileUntil\ReadUntil, ReadWhileUntil\ReadWhile,
     ShuffleChunks, WhileUntil\WhileTrue};
+use FiiSoft\Jackdaw\Operation\Special\Shuffle;
 use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, Find, First, Has, HasEvery, HasOnly, IsEmpty,
     Last};
 use FiiSoft\Jackdaw\Producer\Generator\Flattener;

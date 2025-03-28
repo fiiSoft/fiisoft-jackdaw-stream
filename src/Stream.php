@@ -9,7 +9,7 @@ use FiiSoft\Jackdaw\Discriminator\{DiscriminatorReady, Discriminators};
 use FiiSoft\Jackdaw\Exception\{InvalidParamException, StreamExceptionFactory};
 use FiiSoft\Jackdaw\Filter\{FilterReady, Filters};
 use FiiSoft\Jackdaw\Handler\{ErrorHandler, OnError};
-use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyable, Executable, Item,
+use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyable, Executable, Helper, Item,
     Iterator\Interruption, Mode, Pipe, Signal, State\Source, State\SourceData, State\SourceNotReady, State\Sources,
     State\StreamSource, StreamPipe};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, MapperReady, Mappers};
@@ -46,6 +46,7 @@ final class Stream extends StreamSource
     private bool $isStarted = false;
     private bool $isResuming = false;
     private bool $streamingFinished = false;
+    private bool $isConsumer = false;
     
     /** @var StreamPipe[] */
     private array $pushToStreams = [];
@@ -111,6 +112,7 @@ final class Stream extends StreamSource
         $this->isInitialized = false;
         $this->isExecuted = false;
         $this->isStarted = false;
+        $this->isConsumer = false;
         
         $this->pipe->prepare();
         $this->producer = MultiProducer::oneTime();
@@ -1475,12 +1477,12 @@ final class Stream extends StreamSource
     
     public function toJson(?int $flags = null, bool $preserveKeys = false): string
     {
-        return $this->collect(!$preserveKeys)->toJson($flags, $preserveKeys);
+        return \json_encode($this->toArray($preserveKeys), Helper::jsonFlags($flags));
     }
     
     public function toString(string $separator = ','): string
     {
-        return $this->collect(true)->toString($separator);
+        return \implode($separator, $this->toArray());
     }
     
     /**
@@ -1498,7 +1500,10 @@ final class Stream extends StreamSource
      */
     public function toArray(bool $preserveKeys = false): array
     {
-        return $this->collect(!$preserveKeys)->toArray($preserveKeys);
+        $operation = Operations::collectInArray($preserveKeys);
+        $this->runWith($operation);
+
+        return $operation->result();
     }
     
     /**
@@ -1765,6 +1770,8 @@ final class Stream extends StreamSource
         if (!$this->isInitialized) {
             $this->prepareToRun();
             $this->initialize();
+            
+            $this->isConsumer = true;
         }
         
         if (!$this->signal->isWorking) {
@@ -1945,7 +1952,11 @@ final class Stream extends StreamSource
     private function prepareToRun(): void
     {
         if ($this->isExecuted) {
-            throw StreamExceptionFactory::cannotExecuteStreamMoreThanOnce();
+            if ($this->isConsumer) {
+                $this->isConsumer = false;
+            } else {
+                throw StreamExceptionFactory::cannotExecuteStreamMoreThanOnce();
+            }
         }
         
         $this->pipe->prepare();

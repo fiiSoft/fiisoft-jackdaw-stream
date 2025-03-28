@@ -4,7 +4,7 @@ namespace FiiSoft\Jackdaw\Operation\Collecting;
 
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\Shuffle;
+use FiiSoft\Jackdaw\Operation\Special\Shuffle;
 
 final class ShuffleAll extends Shuffle
 {

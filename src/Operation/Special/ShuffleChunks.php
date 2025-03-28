@@ -5,7 +5,6 @@ namespace FiiSoft\Jackdaw\Operation\Special;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\Shuffle;
 
 final class ShuffleChunks extends Shuffle
 {

@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace FiiSoft\Jackdaw\Operation\Internal;
+namespace FiiSoft\Jackdaw\Operation\Special;
 
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\ShuffleAll;
-use FiiSoft\Jackdaw\Operation\Special\ShuffleChunks;
+use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 
 abstract class Shuffle extends BaseOperation

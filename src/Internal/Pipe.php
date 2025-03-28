@@ -11,14 +11,15 @@ use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Gather, Reverse, Segregate
 use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, FilterByMany, FilterMany, FilterOp, Omit, OmitReps, Skip, SkipNth,
     StackableFilter, StackableFilterBy, Unique};
 use FiiSoft\Jackdaw\Operation\Internal\{Limitable, Operations as OP, Pipe\Initial, PossiblyInversible, Reindexable,
-    Shuffle, SingularOperation};
+    SingularOperation};
 use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate, Aggregate, Chunk, ChunkBy, Classify, ConditionalMap, Flat,
     Flip, Map, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapMany, MapWhen, Reindex, Scan, Tokenize, Tuple, UnpackTuple,
     Window};
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{Feed, FeedMany, SendTo, SendToMany, StoreIn};
-use FiiSoft\Jackdaw\Operation\Special\{CountableRead, Limit, ReadMany, ReadNext, ReadWhileUntil, SwapHead};
+use FiiSoft\Jackdaw\Operation\Special\{CollectInArray, CountableRead, Limit, ReadMany, ReadNext, ReadWhileUntil,
+    Shuffle, SwapHead};
 use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, Find, First, Has, HasEvery, HasOnly, IsEmpty,
     Last};
 use FiiSoft\Jackdaw\Stream;
@@ -133,6 +134,7 @@ final class Pipe implements StreamBuilder, Destroyable
     private function cannotChain(Operation $operation): bool
     {
         return $this->isPrepared
+            && !$operation instanceof CollectInArray
             && !$operation instanceof StoreIn
             && !$operation instanceof LastOperation
             && !$operation instanceof Feed

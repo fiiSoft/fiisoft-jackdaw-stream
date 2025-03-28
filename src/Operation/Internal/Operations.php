@@ -22,8 +22,8 @@ use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Sending\{CollectIn, CollectKeysIn, CountIn, Dispatch, Feed, FeedMany, Remember, RouteMany,
     RouteOne, SendTo, SendToMany, SendToMax, SendWhen, SendWhileUntil\SendUntil, SendWhileUntil\SendWhile, StoreIn,
     Unzip};
-use FiiSoft\Jackdaw\Operation\Special\{Assert, Limit, ReadMany, ReadNext, ReadWhileUntil\ReadUntil,
-    ReadWhileUntil\ReadWhile, WhileUntil\UntilTrue, WhileUntil\WhileTrue};
+use FiiSoft\Jackdaw\Operation\Special\{Assert, CollectInArray, Limit, ReadMany, ReadNext, ReadWhileUntil\ReadUntil,
+    ReadWhileUntil\ReadWhile, Shuffle, WhileUntil\UntilTrue, WhileUntil\WhileTrue};
 use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, FinalOperation, Find, First, Fold, GroupBy, Has,
     HasEvery, HasOnly, IsEmpty, Last, Reduce};
 use FiiSoft\Jackdaw\Producer\ProducerReady;
@@ -241,6 +241,11 @@ final class Operations
     public static function countIn(?int &$counter): Operation
     {
         return new CountIn($counter);
+    }
+    
+    public static function collectInArray(bool $preserveKeys = false): CollectInArray
+    {
+        return CollectInArray::create($preserveKeys);
     }
     
     /**
