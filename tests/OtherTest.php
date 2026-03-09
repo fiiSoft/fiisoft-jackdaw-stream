@@ -216,22 +216,22 @@ final class OtherTest extends TestCase implements ItemBufferClient
     public function test_Helper_has_method_to_create_exception_with_message_that_describes_problem(): void
     {
         self::assertSame(
-            'Something have to accept 0 arguments, but requires 1',
+            'Something has to accept 0 arguments, but requires 1',
             Helper::wrongNumOfArgsException('Something', 1)->getMessage()
         );
         
         self::assertSame(
-            'Something have to accept 0 arguments, but requires 1',
+            'Something has to accept 0 arguments, but requires 1',
             Helper::wrongNumOfArgsException('Something', 1, 0)->getMessage()
         );
         
         self::assertSame(
-            'Something have to accept 1 arguments, but requires 0',
+            'Something has to accept 1 arguments, but requires 0',
             Helper::wrongNumOfArgsException('Something', 0, 1)->getMessage()
         );
         
         self::assertSame(
-            'Something have to accept 1 or 2 arguments, but requires 0',
+            'Something has to accept 1 or 2 arguments, but requires 0',
             Helper::wrongNumOfArgsException('Something', 0, 1, 2)->getMessage()
         );
     }

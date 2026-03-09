@@ -23,7 +23,7 @@ final class Handlers
      */
     public static function prepare(array $handlers): array
     {
-        return \array_map(static fn($handler): DispatchHandler => self::getAdapter($handler), $handlers);
+        return \array_map(static fn(DispatchReady $handler): DispatchHandler => self::getAdapter($handler), $handlers);
     }
     
     public static function getAdapter(DispatchReady $handler): DispatchHandler

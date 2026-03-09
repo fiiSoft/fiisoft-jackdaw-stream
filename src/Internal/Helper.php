@@ -2,12 +2,15 @@
 
 namespace FiiSoft\Jackdaw\Internal;
 
+use FiiSoft\Jackdaw\Discriminator\ByKey;
+use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Exception\JackdawException;
 
 final class Helper
 {
     private const BUILD_IN_COMPARATORS = ['strcasecmp', 'strcmp', 'strnatcasecmp', 'strnatcmp'];
+    private const ITERABLES = ['iterable', 'array', 'Generator', 'Iterator', 'Traversable'];
     
     public static function getNumOfArgs(callable $callable): int
     {
@@ -17,6 +20,11 @@ final class Helper
     public static function isDeclaredReturnTypeArray(callable $callable): bool
     {
         return self::isReturnType($callable, 'array');
+    }
+    
+    public static function isDeclaredReturnTypeIterable(callable $callable): bool
+    {
+        return self::isReturnType($callable, 'iterable');
     }
     
     public static function isDeclaredReturnTypeInt(callable $callable): bool
@@ -31,6 +39,10 @@ final class Helper
         if ($refl->hasReturnType()) {
             $returnType = $refl->getReturnType();
             if ($returnType instanceof \ReflectionNamedType) {
+                if ($type === 'iterable') {
+                    return \in_array($returnType->getName(), self::ITERABLES, true);
+                }
+                
                 return $returnType->getName() === $type;
             }
         } elseif ($type === 'int' && \is_string($callable) && $refl->isInternal()) {
@@ -63,7 +75,7 @@ final class Helper
         }
         
         $last = \array_pop($alowed);
-        $message = $name.' have to accept ';
+        $message = $name.' has to accept ';
         
         if (empty($alowed)) {
             $message .= $last;
@@ -189,5 +201,21 @@ final class Helper
     public static function jsonFlags(?int $flags = null): int
     {
         return ($flags ?? \JSON_PRESERVE_ZERO_FRACTION) | \JSON_THROW_ON_ERROR;
+    }
+    
+    /**
+     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
+     */
+    public static function shouldReindex($discriminator, ?bool $reindex = null): bool
+    {
+        if ($discriminator instanceof ByKey) {
+            if ($reindex === null) {
+                return true;
+            }
+        } elseif ($reindex === null) {
+            return false;
+        }
+        
+        return $reindex;
     }
 }

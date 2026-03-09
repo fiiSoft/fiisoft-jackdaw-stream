@@ -1,5 +1,10 @@
 # Changelog
 
+## 12.3.0
+
+- added Stream::iterate()
+- added Stream::chunkByKey()
+
 ## 12.2.0
 
 - added Stream::mapByKey()

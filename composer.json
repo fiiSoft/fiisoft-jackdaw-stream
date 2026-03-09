@@ -7,7 +7,7 @@
     ],
     "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
     "license": "MIT",
-    "version": "12.2.1",
+    "version": "12.3.0",
     "authors": [
         {
             "name": "fiiSoft",
@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "php": ">=7.4.0 <8.5.0",
+        "php": ">=7.4.0 <8.6.0",
         "ext-json": "*",
         "ext-mbstring": "*"
     },

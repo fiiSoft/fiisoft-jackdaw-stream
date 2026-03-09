@@ -14,7 +14,7 @@ final class OnError
     {
         return new class implements ErrorHandler {
             /** @inheritdoc */
-            public function handle(\Throwable $error, $key, $value): ?bool {
+            public function handle(\Throwable $error, $key, $value): bool {
                 return true;
             }
         };
@@ -24,7 +24,7 @@ final class OnError
     {
         return new class implements ErrorHandler {
             /** @inheritdoc */
-            public function handle(\Throwable $error, $key, $value): ?bool {
+            public function handle(\Throwable $error, $key, $value): bool {
                 return false;
             }
         };

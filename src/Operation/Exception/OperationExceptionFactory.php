@@ -34,9 +34,21 @@ final class OperationExceptionFactory
         return Helper::wrongNumOfArgsException('KeyValue mapper', $numOfArgs, 0, 1, 2);
     }
     
+    public static function invalidIterateOverCallback(int $numOfArgs): JackdawException
+    {
+        return Helper::wrongNumOfArgsException('Iterate() callback', $numOfArgs, 0, 1, 2);
+    }
+    
     public static function wrongTypeOfKeyValueMapper(): JackdawException
     {
         return InvalidParamException::create('KeyValue mapper must have declared array as its return type');
+    }
+    
+    public static function wrongTypeOfIterateOverCallback(): JackdawException
+    {
+        return InvalidParamException::create(
+            'Callback passed to iterate() must return explicity declared iterable result'
+        );
     }
     
     public static function invalidComparator(): JackdawException

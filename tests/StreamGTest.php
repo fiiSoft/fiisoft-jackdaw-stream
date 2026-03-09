@@ -434,9 +434,9 @@ final class StreamGTest extends TestCase
     {
         $sequence = Memo::sequence(3);
         
-        $result = Stream::from(['a' => 'z', 'b' => 'x', 'c' => 'c', 'd' => 'd', 'e' => 'e', 'f' => 'n', 'g' => 'm'])
+        $result = Stream::from(['u' => 'u', 'a' => 'z', 'b' => 'x', 'c' => 'c', 'd' => 'd', 'e' => 'e', 'f' => 'n'])
             ->remember($sequence)
-            ->filter(static fn(string $v, string $k): bool => $v === $k)
+            ->filter(static fn(string $v, string $k): bool => $v === $k && $sequence->isFull())
             ->find($sequence->inspect(static function (SequenceMemo $sequence): bool {
                 foreach ($sequence as $key => $value) {
                     if ($key !== $value) {
@@ -641,17 +641,29 @@ final class StreamGTest extends TestCase
         $stream->wrap([1]);
     }
     
-    public function test_skip_with_volatile_int(): void
+    public function test_skip_with_volatile_int_1(): void
     {
         $skip = Memo::value();
         
-        $result = Stream::from([3, 'a', 'b', 'c', 6, 2, 8])
+        $result = Stream::from([3, 'a', 'b', 'c', 6, 2, 8, 5])
             ->callOnce($skip)
             ->skip(1)
             ->skip($skip)
             ->toArray();
         
-        self::assertSame([6, 2, 8], $result);
+        self::assertSame([6, 2, 8, 5], $result);
+    }
+    
+    public function test_skip_with_volatile_int_2(): void
+    {
+        $skip = Memo::value();
+        
+        $result = Stream::from([3, 'a', 'b', 'c', 6, 2, 8, 5])
+            ->callOnce($skip)
+            ->skip(static fn(): int => $skip->read() + 1)
+            ->toArray();
+        
+        self::assertSame([6, 2, 8, 5], $result);
     }
     
     public function test_skip_with_volatile_int_and_onerror_handler(): void

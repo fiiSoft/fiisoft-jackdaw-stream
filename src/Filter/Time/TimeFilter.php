@@ -42,13 +42,13 @@ abstract class TimeFilter extends BaseFilter
     
     final public function negate(): Filter
     {
-        return static::create($this->mode, $this->comparator->negation());
+        return self::create($this->mode, $this->comparator->negation());
     }
     
     final public function inMode(?int $mode): Filter
     {
         return $mode !== null && $mode !== $this->mode
-            ? static::create($mode, $this->comparator)
+            ? self::create($mode, $this->comparator)
             : $this;
     }
     

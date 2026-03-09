@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Operation\Collecting;
 
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
+use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\Categorize\CategorizeKeepKeys;
 use FiiSoft\Jackdaw\Operation\Collecting\Categorize\CategorizeReindexKeys;
@@ -16,7 +17,7 @@ abstract class Categorize extends GroupingOperation
      */
     final public static function create($discriminator, ?bool $reindex = null): self
     {
-        return self::shouldReindex($discriminator, $reindex)
+        return Helper::shouldReindex($discriminator, $reindex)
             ? new CategorizeReindexKeys($discriminator)
             : new CategorizeKeepKeys($discriminator);
     }

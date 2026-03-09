@@ -895,10 +895,18 @@ final class Stream extends StreamSource
     /**
      * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
-    public function chunkBy($discriminator, bool $reindex = false): Stream
+    public function chunkBy($discriminator, ?bool $reindex = null): Stream
     {
         $this->chainOperation(Operations::chunkBy($discriminator, $reindex));
         return $this;
+    }
+    
+    /**
+     * Syntax sugar for $stream->chunkBy(Discriminators::byKey())
+     */
+    public function chunkByKey(?bool $reindex = null): Stream
+    {
+        return $this->chunkBy(Discriminators::byKey(), $reindex);
     }
     
     public function window(int $size, int $step = 1, bool $reindex = false): Stream
@@ -1038,6 +1046,17 @@ final class Stream extends StreamSource
     public function flatMap($mapper, int $level = 0): Stream
     {
         return $this->map($mapper)->flat($level);
+    }
+    
+    /**
+     * The $producer callable can take zero, one (value), or two (value, key) parameters and MUST return an iterable
+     * which elements will be passed on to the stream. In other words, it's kind of flatMap operation, but it can be
+     * much more robust and memory effective when Generator is used to produce consecutive values.
+     */
+    public function iterate(callable $producer): Stream
+    {
+        $this->chainOperation(Operations::iterateOver($producer));
+        return $this;
     }
     
     /**
@@ -1198,7 +1217,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * Syntax sugar for $stream->categorize(Disriminators::byKey())
+     * Syntax sugar for $stream->categorize(Discriminators::byKey())
      */
     public function categorizeByKey(?bool $reindex = null): Stream
     {
@@ -1262,7 +1281,7 @@ final class Stream extends StreamSource
     }
     
     /**
-     * Syntax sugar for $stream->fork(Disriminators::byKey(), $prototype)
+     * Syntax sugar for $stream->fork(Discriminators::byKey(), $prototype)
      */
     public function forkByKey(ForkReady $prototype): Stream
     {

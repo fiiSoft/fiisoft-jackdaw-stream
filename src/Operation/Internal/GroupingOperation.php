@@ -2,7 +2,6 @@
 
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
-use FiiSoft\Jackdaw\Discriminator\ByKey;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
@@ -15,22 +14,6 @@ abstract class GroupingOperation extends BaseOperation
     
     /** @var array<string|int, mixed> */
     protected array $collections = [];
-    
-    /**
-     * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
-     */
-    final protected static function shouldReindex($discriminator, ?bool $reindex = null): bool
-    {
-        if ($discriminator instanceof ByKey) {
-            if ($reindex === null) {
-                $reindex = true;
-            }
-        } elseif ($reindex === null) {
-            $reindex = false;
-        }
-        
-        return $reindex;
-    }
     
     /**
      * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator

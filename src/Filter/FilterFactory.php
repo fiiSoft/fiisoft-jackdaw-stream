@@ -38,7 +38,7 @@ abstract class FilterFactory
      */
     final protected function negate()
     {
-        return static::instance($this->mode, !$this->isNot);
+        return self::instance($this->mode, !$this->isNot);
     }
     
     final protected function get(Filter $filter): Filter

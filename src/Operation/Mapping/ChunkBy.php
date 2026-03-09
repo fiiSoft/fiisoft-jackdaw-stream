@@ -5,6 +5,7 @@ namespace FiiSoft\Jackdaw\Operation\Mapping;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
+use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Reindexable;
@@ -26,11 +27,11 @@ abstract class ChunkBy extends BaseOperation implements Reindexable
     /**
      * @param DiscriminatorReady|callable|array<string|int>|string|int $discriminator
      */
-    final public static function create($discriminator, bool $reindex = false): self
+    final public static function create($discriminator, ?bool $reindex = null): self
     {
-        return $reindex
-            ? new ChunkByReindexKeys($discriminator, $reindex)
-            : new ChunkByKeepKeys($discriminator, $reindex);
+        return Helper::shouldReindex($discriminator, $reindex)
+            ? new ChunkByReindexKeys($discriminator, true)
+            : new ChunkByKeepKeys($discriminator, false);
     }
     
     /**
