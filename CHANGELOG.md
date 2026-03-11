@@ -1,5 +1,16 @@
 # Changelog
 
+## 14.0.0
+
+- added Stream::prototype()
+- SequenceMemo::reduce() can also accept Reducer and returns null when the sequence is empty
+
+#### Incompatible changes:
+
+- removed StreamAware
+- removed Counter::count()
+- modified SequenceMemo::reduce()
+
 ## 12.3.0
 
 - added Stream::iterate()

@@ -2,11 +2,13 @@
 
 namespace FiiSoft\Jackdaw\Memo;
 
+use FiiSoft\Jackdaw\Exception\JackdawException;
 use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Mapper\MapperReady;
 use FiiSoft\Jackdaw\Matcher\Matcher;
 use FiiSoft\Jackdaw\Operation\Internal\ForkReady;
 use FiiSoft\Jackdaw\Producer\ProducerReady;
+use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
@@ -74,13 +76,14 @@ interface SequenceMemo extends MemoWriter, ForkReady, ProducerReady, MapperReady
     public function fold($initial, callable $reducer);
     
     /**
-     * It operates only on values and value of the first element is assigned to accumulator as initial value,
-     * so the sequence cannot be empty to call this operation!
+     * It operates only on values. When sequence is empty, returns null.
+     * Reducer is automatically reset on each call, so it behaves the same as callable.
      *
-     * @param callable $reducer Callable accepts two arguments: accumulator and value
+     * @param Reducer|callable $reducer Callable accepts two arguments: accumulator and value
+     * @throws JackdawException when $reducer is neither Reducer nor a proper callable
      * @return mixed
      */
-    public function reduce(callable $reducer);
+    public function reduce($reducer);
     
     /**
      * @param SequenceInspector|callable(SequenceMemo): bool $inspector callable gets SequenceMemo as the argument

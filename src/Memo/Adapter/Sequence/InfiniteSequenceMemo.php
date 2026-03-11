@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Memo\Adapter\Sequence;
 
 use FiiSoft\Jackdaw\Memo\Entry;
+use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class InfiniteSequenceMemo extends BaseSequenceMemo
 {
@@ -86,7 +87,7 @@ final class InfiniteSequenceMemo extends BaseSequenceMemo
     /**
      * @inheritDoc
      */
-    public function reduce(callable $reducer)
+    protected function reduceByCallable(callable $reducer)
     {
         $acc = $this->entries[0]->value;
         
@@ -95,6 +96,18 @@ final class InfiniteSequenceMemo extends BaseSequenceMemo
         }
         
         return $acc;
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    protected function reduceByReducer(Reducer $reducer)
+    {
+        foreach ($this->entries as $value) {
+            $reducer->consume($value->value);
+        }
+        
+        return $reducer->result();
     }
     
     public function clear(): void

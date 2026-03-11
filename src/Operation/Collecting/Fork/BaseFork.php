@@ -51,11 +51,7 @@ abstract class BaseFork extends ProcessOperation
     
     final protected function finishStreaming(): \Generator
     {
-        $producer = $this->createProducer();
-        yield from $producer;
-        
-        $producer->destroy();
-        $this->handlers = [];
+        yield from $this->createProducer();
     }
     
     private function createProducer(): Producer

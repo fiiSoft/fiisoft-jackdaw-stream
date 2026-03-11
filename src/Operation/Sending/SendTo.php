@@ -6,9 +6,7 @@ use FiiSoft\Jackdaw\Consumer\Consumer;
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
 use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Internal\StreamAware;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Stream;
 
 final class SendTo extends BaseOperation
 {
@@ -45,14 +43,5 @@ final class SendTo extends BaseOperation
     public function createSendToMany(SendTo $other): SendToMany
     {
         return new SendToMany($this->consumer, $other->consumer);
-    }
-    
-    public function assignStream(Stream $stream): void
-    {
-        parent::assignStream($stream);
-        
-        if ($this->consumer instanceof StreamAware) {
-            $this->consumer->assignStream($stream);
-        }
     }
 }

@@ -47,6 +47,7 @@ final class Stream extends StreamSource
     private bool $isResuming = false;
     private bool $streamingFinished = false;
     private bool $isConsumer = false;
+    private bool $isPrototype = false;
     
     /** @var StreamPipe[] */
     private array $pushToStreams = [];
@@ -59,6 +60,9 @@ final class Stream extends StreamSource
     
     /** @var ErrorHandler[] */
     private array $onErrorHandlers = [];
+    
+    /** @var array<array<ProducerReady|resource|callable|iterable<string|int, mixed>|string>> */
+    private array $joinProducers = [];
     
     /**
      * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|object|scalar ...$elements
@@ -79,6 +83,21 @@ final class Stream extends StreamSource
     public static function empty(): Stream
     {
         return new self(new EmptyProducer());
+    }
+    
+    /**
+     * Experimental. Returns immutable Stream object appropriate to build various streams based on prototype.
+     * Any Producers, Consumers, etc. are shared by related streams build on top of prototype instances.
+     * I'm pretty sure it's not well tested yet. A bit risky, but it offers some new, nice possibilities.
+     *
+     * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|string|null $producer
+     */
+    public static function prototype($producer = null): Stream
+    {
+        $prototype = $producer !== null ? self::from($producer) : self::empty();
+        $prototype->isPrototype = true;
+        
+        return $prototype;
     }
     
     private function __construct(Producer $producer)
@@ -122,8 +141,7 @@ final class Stream extends StreamSource
     
     public function limit(int $limit): Stream
     {
-        $this->chainOperation(Operations::limit($limit));
-        return $this;
+        return $this->addOperation(Operations::limit($limit));
     }
     
     /**
@@ -131,8 +149,7 @@ final class Stream extends StreamSource
      */
     public function skip($offset): Stream
     {
-        $this->chainOperation(Operations::skip($offset));
-        return $this;
+        return $this->addOperation(Operations::skip($offset));
     }
     
     /**
@@ -140,8 +157,7 @@ final class Stream extends StreamSource
      */
     public function skipWhile($filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::skipWhile($filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::skipWhile($filter, $mode));
     }
     
     /**
@@ -149,8 +165,7 @@ final class Stream extends StreamSource
      */
     public function skipUntil($filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::skipUntil($filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::skipUntil($filter, $mode));
     }
     
     /**
@@ -272,8 +287,7 @@ final class Stream extends StreamSource
      */
     public function assert($filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::assert($filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::assert($filter, $mode));
     }
     
     /**
@@ -290,8 +304,7 @@ final class Stream extends StreamSource
      */
     public function filterBy($field, $filter): Stream
     {
-        $this->chainOperation(Operations::filterBy($field, $filter));
-        return $this;
+        return $this->addOperation(Operations::filterBy($field, $filter));
     }
     
     /**
@@ -299,8 +312,7 @@ final class Stream extends StreamSource
      */
     public function filter($filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::filter($filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::filter($filter, $mode));
     }
     
     /**
@@ -309,8 +321,7 @@ final class Stream extends StreamSource
      */
     public function filterWhen($condition, $filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::filterWhen($condition, $filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::filterWhen($condition, $filter, $mode));
     }
     
     /**
@@ -319,8 +330,7 @@ final class Stream extends StreamSource
      */
     public function filterWhile($condition, $filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::filterWhile($condition, $filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::filterWhile($condition, $filter, $mode));
     }
     
     /**
@@ -329,14 +339,12 @@ final class Stream extends StreamSource
      */
     public function filterUntil($condition, $filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::filterUntil($condition, $filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::filterUntil($condition, $filter, $mode));
     }
     
     public function filterArgs(callable $filter): Stream
     {
-        $this->chainOperation(Operations::filterArgs($filter));
-        return $this;
+        return $this->addOperation(Operations::filterArgs($filter));
     }
     
     /**
@@ -353,8 +361,7 @@ final class Stream extends StreamSource
      */
     public function omitBy($field, $filter): Stream
     {
-        $this->chainOperation(Operations::omitBy($field, $filter));
-        return $this;
+        return $this->addOperation(Operations::omitBy($field, $filter));
     }
     
     /**
@@ -362,8 +369,7 @@ final class Stream extends StreamSource
      */
     public function omit($filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::omit($filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::omit($filter, $mode));
     }
     
     /**
@@ -372,8 +378,7 @@ final class Stream extends StreamSource
      */
     public function omitWhen($condition, $filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::omitWhen($condition, $filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::omitWhen($condition, $filter, $mode));
     }
     
     /**
@@ -384,8 +389,7 @@ final class Stream extends StreamSource
      */
     public function omitReps($comparison = null): Stream
     {
-        $this->chainOperation(Operations::omitReps($comparison));
-        return $this;
+        return $this->addOperation(Operations::omitReps($comparison));
     }
     
     /**
@@ -475,8 +479,7 @@ final class Stream extends StreamSource
      */
     public function map($mapper): Stream
     {
-        $this->chainOperation(Operations::map($mapper));
-        return $this;
+        return $this->addOperation(Operations::map($mapper));
     }
     
     /**
@@ -486,8 +489,7 @@ final class Stream extends StreamSource
      */
     public function mapWhen($condition, $mapper, $elseMapper = null): Stream
     {
-        $this->chainOperation(Operations::mapWhen($condition, $mapper, $elseMapper));
-        return $this;
+        return $this->addOperation(Operations::mapWhen($condition, $mapper, $elseMapper));
     }
     
     /**
@@ -507,8 +509,7 @@ final class Stream extends StreamSource
      */
     public function mapFieldWhen($field, $condition, $mapper, $elseMapper = null): Stream
     {
-        $this->chainOperation(Operations::mapFieldWhen($field, $condition, $mapper, $elseMapper));
-        return $this;
+        return $this->addOperation(Operations::mapFieldWhen($field, $condition, $mapper, $elseMapper));
     }
     
     /**
@@ -517,8 +518,7 @@ final class Stream extends StreamSource
      */
     public function mapWhile($condition, $mapper): Stream
     {
-        $this->chainOperation(Operations::mapWhile($condition, $mapper));
-        return $this;
+        return $this->addOperation(Operations::mapWhile($condition, $mapper));
     }
     
     /**
@@ -527,8 +527,7 @@ final class Stream extends StreamSource
      */
     public function mapUntil($condition, $mapper): Stream
     {
-        $this->chainOperation(Operations::mapUntil($condition, $mapper));
-        return $this;
+        return $this->addOperation(Operations::mapUntil($condition, $mapper));
     }
     
     /**
@@ -537,8 +536,7 @@ final class Stream extends StreamSource
      */
     public function mapBy($discriminator, array $mappers): Stream
     {
-        $this->chainOperation(Operations::mapBy($discriminator, $mappers));
-        return $this;
+        return $this->addOperation(Operations::mapBy($discriminator, $mappers));
     }
     
     /**
@@ -553,8 +551,7 @@ final class Stream extends StreamSource
     
     public function mapArgs(callable $mapper): Stream
     {
-        $this->chainOperation(Operations::mapArgs($mapper));
-        return $this;
+        return $this->addOperation(Operations::mapArgs($mapper));
     }
     
     /**
@@ -565,8 +562,7 @@ final class Stream extends StreamSource
      */
     public function classify($discriminator): Stream
     {
-        $this->chainOperation(Operations::classify($discriminator));
-        return $this;
+        return $this->addOperation(Operations::classify($discriminator));
     }
     
     /**
@@ -585,8 +581,7 @@ final class Stream extends StreamSource
      */
     public function mapKey($mapper): Stream
     {
-        $this->chainOperation(Operations::mapKey($mapper));
-        return $this;
+        return $this->addOperation(Operations::mapKey($mapper));
     }
     
     /**
@@ -596,8 +591,7 @@ final class Stream extends StreamSource
      */
     public function mapKV(callable $keyValueMapper): Stream
     {
-        $this->chainOperation(Operations::mapKeyValue($keyValueMapper));
-        return $this;
+        return $this->addOperation(Operations::mapKeyValue($keyValueMapper));
     }
     
     /**
@@ -607,8 +601,7 @@ final class Stream extends StreamSource
      */
     public function countIn(?int &$counter): Stream
     {
-        $this->chainOperation(Operations::countIn($counter));
-        return $this;
+        return $this->addOperation(Operations::countIn($counter));
     }
     
     /**
@@ -619,8 +612,7 @@ final class Stream extends StreamSource
      */
     public function storeIn(&$buffer, bool $reindex = false): Stream
     {
-        $this->chainOperation(Operations::storeIn($buffer, $reindex));
-        return $this;
+        return $this->addOperation(Operations::storeIn($buffer, $reindex));
     }
     
     /**
@@ -628,8 +620,7 @@ final class Stream extends StreamSource
     */
     public function collectIn($collector, ?bool $reindex = null): Stream
     {
-        $this->chainOperation(Operations::collectIn($collector, $reindex));
-        return $this;
+        return $this->addOperation(Operations::collectIn($collector, $reindex));
     }
     
     /**
@@ -637,8 +628,7 @@ final class Stream extends StreamSource
      */
     public function collectKeysIn($collector): Stream
     {
-        $this->chainOperation(Operations::collectKeysIn($collector));
-        return $this;
+        return $this->addOperation(Operations::collectKeysIn($collector));
     }
     
     /**
@@ -646,8 +636,7 @@ final class Stream extends StreamSource
      */
     public function call(...$consumers): Stream
     {
-        $this->chainOperation(Operations::call(...$consumers));
-        return $this;
+        return $this->addOperation(Operations::call(...$consumers));
     }
     
     /**
@@ -663,8 +652,7 @@ final class Stream extends StreamSource
      */
     public function callMax(int $times, $consumer): Stream
     {
-        $this->chainOperation(Operations::callMax($times, $consumer));
-        return $this;
+        return $this->addOperation(Operations::callMax($times, $consumer));
     }
     
     /**
@@ -674,8 +662,7 @@ final class Stream extends StreamSource
      */
     public function callWhen($condition, $consumer, $elseConsumer = null): Stream
     {
-        $this->chainOperation(Operations::callWhen($condition, $consumer, $elseConsumer));
-        return $this;
+        return $this->addOperation(Operations::callWhen($condition, $consumer, $elseConsumer));
     }
     
     /**
@@ -684,8 +671,7 @@ final class Stream extends StreamSource
      */
     public function callWhile($condition, $consumer): Stream
     {
-        $this->chainOperation(Operations::callWhile($condition, $consumer));
-        return $this;
+        return $this->addOperation(Operations::callWhile($condition, $consumer));
     }
     
     /**
@@ -694,14 +680,12 @@ final class Stream extends StreamSource
      */
     public function callUntil($condition, $consumer): Stream
     {
-        $this->chainOperation(Operations::callUntil($condition, $consumer));
-        return $this;
+        return $this->addOperation(Operations::callUntil($condition, $consumer));
     }
     
     public function callArgs(callable $consumer): Stream
     {
-        $this->chainOperation(Operations::callArgs($consumer));
-        return $this;
+        return $this->addOperation(Operations::callArgs($consumer));
     }
     
     /**
@@ -736,12 +720,21 @@ final class Stream extends StreamSource
     }
     
     /**
+     * The name of this method is very misleading. It should be called: addProducers().
+     * It doesn't matter where in the build stream this is called - it simply adds new producers to the stream.
+     *
      * @param ProducerReady|resource|callable|iterable<string|int, mixed>|string ...$producers
      */
     public function join(...$producers): Stream
     {
+        if ($this->isPrototype) {
+            $copy = clone $this;
+            $copy->joinProducers[] = $producers;
+         
+            return $copy;
+        }
+
         $this->initialize();
-        
         $this->source->addProducers($producers);
         
         return $this;
@@ -752,8 +745,7 @@ final class Stream extends StreamSource
      */
     public function unique($comparison = null): Stream
     {
-        $this->chainOperation(Operations::unique($comparison));
-        return $this;
+        return $this->addOperation(Operations::unique($comparison));
     }
     
     /**
@@ -771,8 +763,7 @@ final class Stream extends StreamSource
      */
     public function sort($sorting = null): Stream
     {
-        $this->chainOperation(Operations::sort($sorting));
-        return $this;
+        return $this->addOperation(Operations::sort($sorting));
     }
     
     /**
@@ -782,8 +773,7 @@ final class Stream extends StreamSource
      */
     public function rsort($sorting = null): Stream
     {
-        $this->sort(Sorting::reverse($sorting));
-        return $this;
+        return $this->sort(Sorting::reverse($sorting));
     }
     
     /**
@@ -793,8 +783,7 @@ final class Stream extends StreamSource
      */
     public function best(int $limit, $sorting = null): Stream
     {
-        $this->chainOperation(Operations::sortLimited($limit, $sorting));
-        return $this;
+        return $this->addOperation(Operations::sortLimited($limit, $sorting));
     }
     
     /**
@@ -804,8 +793,7 @@ final class Stream extends StreamSource
      */
     public function worst(int $limit, $sorting = null): Stream
     {
-        $this->best($limit, Sorting::reverse($sorting));
-        return $this;
+        return $this->best($limit, Sorting::reverse($sorting));
     }
     
     /**
@@ -814,8 +802,7 @@ final class Stream extends StreamSource
      */
     public function reverse(): Stream
     {
-        $this->chainOperation(Operations::reverse());
-        return $this;
+        return $this->addOperation(Operations::reverse());
     }
     
     /**
@@ -826,8 +813,7 @@ final class Stream extends StreamSource
      */
     public function shuffle(?int $chunkSize = null): Stream
     {
-        $this->chainOperation(Operations::shuffle($chunkSize));
-        return $this;
+        return $this->addOperation(Operations::shuffle($chunkSize));
     }
     
     /**
@@ -839,8 +825,7 @@ final class Stream extends StreamSource
      */
     public function reindex(int $start = 0, int $step = 1): Stream
     {
-        $this->chainOperation(Operations::reindex($start, $step));
-        return $this;
+        return $this->addOperation(Operations::reindex($start, $step));
     }
     
     /**
@@ -869,8 +854,7 @@ final class Stream extends StreamSource
      */
     public function flip(): Stream
     {
-        $this->chainOperation(Operations::flip());
-        return $this;
+        return $this->addOperation(Operations::flip());
     }
     
     /**
@@ -879,8 +863,7 @@ final class Stream extends StreamSource
      */
     public function scan($initial, $reducer): Stream
     {
-        $this->chainOperation(Operations::scan($initial, $reducer));
-        return $this;
+        return $this->addOperation(Operations::scan($initial, $reducer));
     }
     
     /**
@@ -888,8 +871,7 @@ final class Stream extends StreamSource
      */
     public function chunk($size, bool $reindex = false): Stream
     {
-        $this->chainOperation(Operations::chunk($size, $reindex));
-        return $this;
+        return $this->addOperation(Operations::chunk($size, $reindex));
     }
     
     /**
@@ -897,8 +879,7 @@ final class Stream extends StreamSource
      */
     public function chunkBy($discriminator, ?bool $reindex = null): Stream
     {
-        $this->chainOperation(Operations::chunkBy($discriminator, $reindex));
-        return $this;
+        return $this->addOperation(Operations::chunkBy($discriminator, $reindex));
     }
     
     /**
@@ -911,20 +892,17 @@ final class Stream extends StreamSource
     
     public function window(int $size, int $step = 1, bool $reindex = false): Stream
     {
-        $this->chainOperation(Operations::window($size, $step, $reindex));
-        return $this;
+        return $this->addOperation(Operations::window($size, $step, $reindex));
     }
     
     public function everyNth(int $num): Stream
     {
-        $this->chainOperation(Operations::everyNth($num));
-        return $this;
+        return $this->addOperation(Operations::everyNth($num));
     }
     
     public function skipNth(int $num): Stream
     {
-        $this->chainOperation(Operations::skipNth($num));
-        return $this;
+        return $this->addOperation(Operations::skipNth($num));
     }
     
     /**
@@ -932,8 +910,7 @@ final class Stream extends StreamSource
      */
     public function accumulate($filter, bool $reindex = false, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::accumulate($filter, $reindex, $mode));
-        return $this;
+        return $this->addOperation(Operations::accumulate($filter, $reindex, $mode));
     }
     
     /**
@@ -941,8 +918,7 @@ final class Stream extends StreamSource
      */
     public function separateBy($filter, bool $reindex = false, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::separateBy($filter, $reindex, $mode));
-        return $this;
+        return $this->addOperation(Operations::separateBy($filter, $reindex, $mode));
     }
     
     /**
@@ -950,8 +926,7 @@ final class Stream extends StreamSource
      */
     public function aggregate(array $keys): Stream
     {
-        $this->chainOperation(Operations::aggregate($keys));
-        return $this;
+        return $this->addOperation(Operations::aggregate($keys));
     }
     
     /**
@@ -1030,14 +1005,12 @@ final class Stream extends StreamSource
     
     public function tokenize(string $tokens = ' '): Stream
     {
-        $this->chainOperation(Operations::tokenize($tokens));
-        return $this;
+        return $this->addOperation(Operations::tokenize($tokens));
     }
     
     public function flat(int $level = 0): Stream
     {
-        $this->chainOperation(Operations::flat($level));
-        return $this;
+        return $this->addOperation(Operations::flat($level));
     }
     
     /**
@@ -1055,8 +1028,7 @@ final class Stream extends StreamSource
      */
     public function iterate(callable $producer): Stream
     {
-        $this->chainOperation(Operations::iterateOver($producer));
-        return $this;
+        return $this->addOperation(Operations::iterateOver($producer));
     }
     
     /**
@@ -1064,23 +1036,15 @@ final class Stream extends StreamSource
      */
     public function feed(StreamPipe ...$streams): Stream
     {
+        $instance = $this->instance();
+        
         foreach ($streams as $stream) {
-            $id = \spl_object_id($stream);
-            
-            if (!isset($this->pushToStreams[$id])) {
-                $this->pushToStreams[$id] = $stream;
-                
-                if ($stream === $this) {
-                    $this->isLoop = true;
-                }
-                
-                $stream->prepareSubstream($this->isLoop);
-            }
+            $instance->registerFeedStream($stream);
         }
         
-        $this->chainOperation(Operations::feed(...$streams));
+        $instance->chainOperation(Operations::feed(...$streams));
         
-        return $this;
+        return $instance;
     }
     
     /**
@@ -1095,9 +1059,7 @@ final class Stream extends StreamSource
             }
         }
         
-        $this->chainOperation(Operations::dispatch($discriminator, $handlers));
-        
-        return $this;
+        return $this->addOperation(Operations::dispatch($discriminator, $handlers));
     }
     
     /**
@@ -1105,8 +1067,7 @@ final class Stream extends StreamSource
      */
     public function route($condition, DispatchReady $handler): Stream
     {
-        $this->chainOperation(Operations::route($condition, $handler));
-        return $this;
+        return $this->addOperation(Operations::route($condition, $handler));
     }
     
     /**
@@ -1115,8 +1076,7 @@ final class Stream extends StreamSource
      */
     public function switch($discriminator, array $handlers): Stream
     {
-        $this->chainOperation(Operations::switch($discriminator, $handlers));
-        return $this;
+        return $this->addOperation(Operations::switch($discriminator, $handlers));
     }
     
     /**
@@ -1126,8 +1086,7 @@ final class Stream extends StreamSource
      */
     public function while($filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::while($filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::while($filter, $mode));
     }
     
     /**
@@ -1137,8 +1096,7 @@ final class Stream extends StreamSource
      */
     public function until($filter, ?int $mode = null): Stream
     {
-        $this->chainOperation(Operations::until($filter, $mode));
-        return $this;
+        return $this->addOperation(Operations::until($filter, $mode));
     }
     
     /**
@@ -1146,8 +1104,7 @@ final class Stream extends StreamSource
      */
     public function tail(int $numOfItems): Stream
     {
-        $this->chainOperation(Operations::tail($numOfItems));
-        return $this;
+        return $this->addOperation(Operations::tail($numOfItems));
     }
     
     /**
@@ -1158,8 +1115,7 @@ final class Stream extends StreamSource
      */
     public function gather(bool $reindex = false): Stream
     {
-        $this->chainOperation(Operations::gather($reindex));
-        return $this;
+        return $this->addOperation(Operations::gather($reindex));
     }
     
     /**
@@ -1195,8 +1151,7 @@ final class Stream extends StreamSource
         ?int $buckets = null, bool $reindex = false, $comparison = null, ?int $limit = null
     ): Stream
     {
-        $this->chainOperation(Operations::segregate($buckets, $reindex, $comparison, $limit));
-        return $this;
+        return $this->addOperation(Operations::segregate($buckets, $reindex, $comparison, $limit));
     }
     
     /**
@@ -1204,8 +1159,7 @@ final class Stream extends StreamSource
      */
     public function categorize($discriminator, ?bool $reindex = null): Stream
     {
-        $this->chainOperation(Operations::categorize($discriminator, $reindex));
-        return $this;
+        return $this->addOperation(Operations::categorize($discriminator, $reindex));
     }
     
     /**
@@ -1231,8 +1185,7 @@ final class Stream extends StreamSource
      */
     public function makeTuple(bool $assoc = false): Stream
     {
-        $this->chainOperation(Operations::makeTuple($assoc));
-        return $this;
+        return $this->addOperation(Operations::makeTuple($assoc));
     }
     
     /**
@@ -1241,8 +1194,7 @@ final class Stream extends StreamSource
      */
     public function unpackTuple(bool $assoc = false): Stream
     {
-        $this->chainOperation(Operations::unpackTuple($assoc));
-        return $this;
+        return $this->addOperation(Operations::unpackTuple($assoc));
     }
     
     /**
@@ -1253,14 +1205,12 @@ final class Stream extends StreamSource
      */
     public function zip(...$sources): Stream
     {
-        $this->chainOperation(Operations::zip(...$sources));
-        return $this;
+        return $this->addOperation(Operations::zip(...$sources));
     }
     
     public function unzip(DispatchReady ...$consumers): Stream
     {
-        $this->chainOperation(Operations::unzip(...$consumers));
-        return $this;
+        return $this->addOperation(Operations::unzip(...$consumers));
     }
     
     /**
@@ -1268,8 +1218,7 @@ final class Stream extends StreamSource
      */
     public function fork($discriminator, ForkReady $prototype): Stream
     {
-        $this->chainOperation(Operations::fork($discriminator, $prototype));
-        return $this;
+        return $this->addOperation(Operations::fork($discriminator, $prototype));
     }
     
     /**
@@ -1294,8 +1243,7 @@ final class Stream extends StreamSource
      */
     public function forkMatch($discriminator, array $handlers, ?ForkReady $prototype = null): Stream
     {
-        $this->chainOperation(Operations::forkMatch($discriminator, $handlers, $prototype));
-        return $this;
+        return $this->addOperation(Operations::forkMatch($discriminator, $handlers, $prototype));
     }
     
     /**
@@ -1303,8 +1251,7 @@ final class Stream extends StreamSource
      */
     public function remember(MemoWriter $memo): Stream
     {
-        $this->chainOperation(Operations::remember($memo));
-        return $this;
+        return $this->addOperation(Operations::remember($memo));
     }
     
     /**
@@ -1312,8 +1259,7 @@ final class Stream extends StreamSource
      */
     public function accumulateUptrends(bool $reindex = false, $comparison = null): Stream
     {
-        $this->chainOperation(Operations::accumulateUptrends($reindex, $comparison));
-        return $this;
+        return $this->addOperation(Operations::accumulateUptrends($reindex, $comparison));
     }
     
     /**
@@ -1321,8 +1267,7 @@ final class Stream extends StreamSource
      */
     public function accumulateDowntrends(bool $reindex = false, $comparison = null): Stream
     {
-        $this->chainOperation(Operations::accumulateDowntrends($reindex, $comparison));
-        return $this;
+        return $this->addOperation(Operations::accumulateDowntrends($reindex, $comparison));
     }
     
     /**
@@ -1331,8 +1276,7 @@ final class Stream extends StreamSource
      */
     public function onlyMaxima(bool $allowLimits = true, $comparison = null): Stream
     {
-        $this->chainOperation(Operations::onlyMaxima($allowLimits, $comparison));
-        return $this;
+        return $this->addOperation(Operations::onlyMaxima($allowLimits, $comparison));
     }
     
     /**
@@ -1341,8 +1285,7 @@ final class Stream extends StreamSource
      */
     public function onlyMinima(bool $allowLimits = true, $comparison = null): Stream
     {
-        $this->chainOperation(Operations::onlyMinima($allowLimits, $comparison));
-        return $this;
+        return $this->addOperation(Operations::onlyMinima($allowLimits, $comparison));
     }
     
     /**
@@ -1351,8 +1294,7 @@ final class Stream extends StreamSource
      */
     public function onlyExtrema(bool $allowLimits = true, $comparison = null): Stream
     {
-        $this->chainOperation(Operations::onlyExtrema($allowLimits, $comparison));
-        return $this;
+        return $this->addOperation(Operations::onlyExtrema($allowLimits, $comparison));
     }
     
     /**
@@ -1360,8 +1302,7 @@ final class Stream extends StreamSource
      */
     public function increasingTrend($comparison = null): Stream
     {
-        $this->chainOperation(Operations::increasingTrend($comparison));
-        return $this;
+        return $this->addOperation(Operations::increasingTrend($comparison));
     }
     
     /**
@@ -1369,8 +1310,7 @@ final class Stream extends StreamSource
      */
     public function decreasingTrend($comparison = null): Stream
     {
-        $this->chainOperation(Operations::decreasingTrend($comparison));
-        return $this;
+        return $this->addOperation(Operations::decreasingTrend($comparison));
     }
     
     /**
@@ -1392,8 +1332,7 @@ final class Stream extends StreamSource
      */
     public function readNext($howMany = 1): Stream
     {
-        $this->chainOperation(Operations::readNext($howMany));
-        return $this;
+        return $this->addOperation(Operations::readNext($howMany));
     }
     
     /**
@@ -1402,8 +1341,7 @@ final class Stream extends StreamSource
      */
     public function readMany($howMany, bool $reindex = false): Stream
     {
-        $this->chainOperation(Operations::readMany($howMany, $reindex));
-        return $this;
+        return $this->addOperation(Operations::readMany($howMany, $reindex));
     }
     
     /**
@@ -1412,8 +1350,7 @@ final class Stream extends StreamSource
      */
     public function readWhile($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Stream
     {
-        $this->chainOperation(Operations::readWhile($filter, $mode, $reindex, $consumer));
-        return $this;
+        return $this->addOperation(Operations::readWhile($filter, $mode, $reindex, $consumer));
     }
     
     /**
@@ -1422,8 +1359,7 @@ final class Stream extends StreamSource
      */
     public function readUntil($filter, ?int $mode = null, bool $reindex = false, $consumer = null): Stream
     {
-        $this->chainOperation(Operations::readUntil($filter, $mode, $reindex, $consumer));
-        return $this;
+        return $this->addOperation(Operations::readUntil($filter, $mode, $reindex, $consumer));
     }
     
     /**
@@ -1438,17 +1374,19 @@ final class Stream extends StreamSource
             $handler = OnError::call($handler);
         }
         
+        $instance = $this->instance();
+        
         if ($handler instanceof ErrorHandler) {
             if ($replace) {
-                $this->onErrorHandlers = [$handler];
+                $instance->onErrorHandlers = [$handler];
             } else {
-                $this->onErrorHandlers[] = $handler;
+                $instance->onErrorHandlers[] = $handler;
             }
         } else {
             throw InvalidParamException::describe('handler', $handler);
         }
         
-        return $this;
+        return $instance;
     }
     
     /**
@@ -1459,13 +1397,15 @@ final class Stream extends StreamSource
      */
     public function onSuccess(callable $handler, bool $replace = false): Stream
     {
+        $instance = $this->instance();
+        
         if ($replace) {
-            $this->onSuccessHandlers = [$handler];
+            $instance->onSuccessHandlers = [$handler];
         } else {
-            $this->onSuccessHandlers[] = $handler;
+            $instance->onSuccessHandlers[] = $handler;
         }
         
-        return $this;
+        return $instance;
     }
     
     /**
@@ -1477,13 +1417,15 @@ final class Stream extends StreamSource
      */
     public function onFinish(callable $handler, bool $replace = false): Stream
     {
+        $instance = $this->instance();
+        
         if ($replace) {
-            $this->onFinishHandlers = [$handler];
+            $instance->onFinishHandlers = [$handler];
         } else {
-            $this->onFinishHandlers[] = $handler;
+            $instance->onFinishHandlers[] = $handler;
         }
         
-        return $this;
+        return $instance;
     }
     
     /**
@@ -1530,7 +1472,7 @@ final class Stream extends StreamSource
      */
     public function collect(bool $reindex = false): LastOperation
     {
-        return $this->runLast(Operations::collect($this, $reindex));
+        return $this->addLastOperation(Operations::collect($this->instance(), $reindex));
     }
     
     /**
@@ -1538,7 +1480,7 @@ final class Stream extends StreamSource
      */
     public function collectKeys(): LastOperation
     {
-        return $this->runLast(Operations::collectKeys($this));
+        return $this->addLastOperation(Operations::collectKeys($this->instance()));
     }
     
     /**
@@ -1572,7 +1514,7 @@ final class Stream extends StreamSource
      */
     public function count(): LastOperation
     {
-        return $this->runLast(Operations::count($this));
+        return $this->addLastOperation(Operations::count($this->instance()));
     }
     
     /**
@@ -1581,7 +1523,7 @@ final class Stream extends StreamSource
      */
     public function reduce($reducer, $orElse = null): LastOperation
     {
-        return $this->runLast(Operations::reduce($this, $reducer, $orElse));
+        return $this->addLastOperation(Operations::reduce($this->instance(), $reducer, $orElse));
     }
     
     /**
@@ -1590,7 +1532,7 @@ final class Stream extends StreamSource
      */
     public function fold($initial, $reducer): LastOperation
     {
-        return $this->runLast(Operations::fold($this, $initial, $reducer));
+        return $this->addLastOperation(Operations::fold($this->instance(), $initial, $reducer));
     }
     
     /**
@@ -1598,7 +1540,7 @@ final class Stream extends StreamSource
      */
     public function isNotEmpty(): LastOperation
     {
-        return $this->runLast(Operations::isNotEmpty($this));
+        return $this->addLastOperation(Operations::isNotEmpty($this->instance()));
     }
     
     /**
@@ -1606,7 +1548,7 @@ final class Stream extends StreamSource
      */
     public function isEmpty(): LastOperation
     {
-        return $this->runLast(Operations::isEmpty($this));
+        return $this->addLastOperation(Operations::isEmpty($this->instance()));
     }
     
     /**
@@ -1616,7 +1558,7 @@ final class Stream extends StreamSource
      */
     public function has($value, ?int $mode = null): LastOperation
     {
-        return $this->runLast(Operations::has($this, $value, $mode));
+        return $this->addLastOperation(Operations::has($this->instance(), $value, $mode));
     }
     
     /**
@@ -1632,7 +1574,7 @@ final class Stream extends StreamSource
      */
     public function hasEvery(array $values, int $mode = Check::VALUE): LastOperation
     {
-        return $this->runLast(Operations::hasEvery($this, $values, $mode));
+        return $this->addLastOperation(Operations::hasEvery($this->instance(), $values, $mode));
     }
     
     /**
@@ -1640,7 +1582,7 @@ final class Stream extends StreamSource
      */
     public function hasOnly(array $values, int $mode = Check::VALUE): LastOperation
     {
-        return $this->runLast(Operations::hasOnly($this, $values, $mode));
+        return $this->addLastOperation(Operations::hasOnly($this->instance(), $values, $mode));
     }
     
     /**
@@ -1650,7 +1592,7 @@ final class Stream extends StreamSource
      */
     public function find($predicate, ?int $mode = null): LastOperation
     {
-        return $this->runLast(Operations::find($this, $predicate, $mode));
+        return $this->addLastOperation(Operations::find($this->instance(), $predicate, $mode));
     }
     
     /**
@@ -1666,7 +1608,7 @@ final class Stream extends StreamSource
      */
     public function first(): LastOperation
     {
-        return $this->runLast(Operations::first($this));
+        return $this->addLastOperation(Operations::first($this->instance()));
     }
     
     /**
@@ -1676,7 +1618,7 @@ final class Stream extends StreamSource
      */
     public function firstOrElse($orElse): LastOperation
     {
-        return $this->runLast(Operations::first($this, $orElse));
+        return $this->addLastOperation(Operations::first($this->instance(), $orElse));
     }
     
     /**
@@ -1684,7 +1626,7 @@ final class Stream extends StreamSource
      */
     public function last(): LastOperation
     {
-        return $this->runLast(Operations::last($this));
+        return $this->addLastOperation(Operations::last($this->instance()));
     }
     
     /**
@@ -1694,7 +1636,7 @@ final class Stream extends StreamSource
      */
     public function lastOrElse($orElse): LastOperation
     {
-        return $this->runLast(Operations::last($this, $orElse));
+        return $this->addLastOperation(Operations::last($this->instance(), $orElse));
     }
     
     /**
@@ -1728,16 +1670,7 @@ final class Stream extends StreamSource
     
     private function runWith(Operation $operation): void
     {
-        $this->chainOperation($operation);
-        $this->run();
-    }
-    
-    private function runLast(Operation $operation): LastOperation
-    {
-        $next = $this->chainOperation($operation);
-        
-        \assert($next instanceof LastOperation);
-        return $next;
+        $this->addOperation($operation)->run();
     }
     
     /**
@@ -1747,13 +1680,16 @@ final class Stream extends StreamSource
      */
     public function loop(bool $run = false): Executable
     {
-        $this->feed($this);
+        $instance = $this->instance();
+        
+        $instance->registerFeedStream($instance);
+        $instance->chainOperation(Operations::feed($instance));
         
         if ($run) {
-            $this->run();
+            $instance->run();
         }
         
-        return $this;
+        return $instance;
     }
     
     /**
@@ -1762,6 +1698,16 @@ final class Stream extends StreamSource
      */
     public function run(bool $onlyIfNotRunYet = false): void
     {
+        if ($this->isPrototype && !empty($this->joinProducers)) {
+            $this->initialize();
+            
+            foreach ($this->joinProducers as $producers) {
+                $this->source->addProducers($producers);
+            }
+            
+            $this->joinProducers = [];
+        }
+        
         if ($onlyIfNotRunYet && !$this->isNotStartedYet()) {
             return;
         }
@@ -2163,6 +2109,42 @@ final class Stream extends StreamSource
         $this->source->limitReached($operation);
     }
     
+    private function addLastOperation(Operation $operation): LastOperation
+    {
+        $next = $this->instance()->chainOperation($operation);
+        \assert($next instanceof LastOperation);
+        
+        return $next;
+    }
+    
+    private function addOperation(Operation $operation): Stream
+    {
+        $instance = $this->instance();
+        $instance->chainOperation($operation);
+        
+        return $instance;
+    }
+    
+    private function instance(): Stream
+    {
+        return $this->isPrototype ? clone $this : $this;
+    }
+    
+    private function registerFeedStream(StreamPipe $stream): void
+    {
+        $id = \spl_object_id($stream);
+        
+        if (!isset($this->pushToStreams[$id])) {
+            $this->pushToStreams[$id] = $stream;
+            
+            if ($stream === $this) {
+                $this->isLoop = true;
+            }
+            
+            $stream->prepareSubstream($this->isLoop);
+        }
+    }
+    
     private function chainOperation(Operation $next): Operation
     {
         $operation = $this->pipe->chainOperation($next);
@@ -2204,5 +2186,10 @@ final class Stream extends StreamSource
         if ($stream !== $this) {
             $this->parents[\spl_object_id($stream)] = $stream;
         }
+    }
+    
+    protected function isPrototype(): bool
+    {
+        return $this->isPrototype;
     }
 }

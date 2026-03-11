@@ -89,7 +89,7 @@ final class OperationsTest extends TestCase
         $counter = Consumers::counter();
         Stream::from([[]])->flat()->call($counter)->run();
         
-        self::assertSame(0, $counter->count());
+        self::assertSame(0, $counter->get());
     }
     
     public function test_MapFieldWhen_throws_exception_when_param_field_is_invalid(): void

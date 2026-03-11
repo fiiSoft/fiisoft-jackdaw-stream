@@ -36,4 +36,10 @@ abstract class StreamPipe extends ForkCollaborator
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }
+    
+    //FinalOperation->, *Stream
+    protected function isPrototype(): bool
+    {
+        throw ImpossibleSituationException::called(__METHOD__);
+    }
 }

@@ -4,10 +4,10 @@ namespace FiiSoft\Jackdaw\Operation;
 
 use FiiSoft\Jackdaw\Internal\Destroyable;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Internal\StreamAware;
 use FiiSoft\Jackdaw\Internal\StreamBuilder;
+use FiiSoft\Jackdaw\Stream;
 
-interface Operation extends StreamAware, Destroyable, StreamBuilder
+interface Operation extends Destroyable, StreamBuilder
 {
     public function handle(Signal $signal): void;
     
@@ -29,6 +29,8 @@ interface Operation extends StreamAware, Destroyable, StreamBuilder
      * @return bool return true to resume stream processing, false otherwise
      */
     public function streamingFinished(Signal $signal): bool;
+    
+    public function assignStream(Stream $stream): void;
     
     public function resume(): void;
     

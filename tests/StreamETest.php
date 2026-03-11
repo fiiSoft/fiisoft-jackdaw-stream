@@ -464,7 +464,7 @@ final class StreamETest extends TestCase
             ->toArray();
         
         self::assertSame([['a', 'b', 'c']], $result);
-        self::assertSame(4, $counter->count());
+        self::assertSame(4, $counter->get());
     }
     
     public function test_gatherUntil_with_stacked_producers(): void
@@ -472,11 +472,11 @@ final class StreamETest extends TestCase
         $result = Stream::from(['a b', 'c d'])
             ->tokenize()
             ->call($counter = Consumers::counter())
-            ->gatherUntil(fn(): bool => $counter->count() > 3, true)
+            ->gatherUntil(fn(): bool => $counter->get() > 3, true)
             ->toArray();
         
         self::assertSame([['a', 'b', 'c']], $result);
-        self::assertSame(4, $counter->count());
+        self::assertSame(4, $counter->get());
     }
     
     public function test_gather_with_stacked_producers_and_limit(): void
@@ -489,7 +489,7 @@ final class StreamETest extends TestCase
             ->toArray();
         
         self::assertSame([['a', 'b', 'c']], $result);
-        self::assertSame(3, $counter->count());
+        self::assertSame(3, $counter->get());
     }
     
     public function test_UnpackTuple(): void

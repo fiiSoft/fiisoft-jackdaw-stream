@@ -203,7 +203,7 @@ final class PipeBuildTest extends TestCase
         
         Stream::from(['a', 'b'])->call($counter)->call($counter)->run();
         
-        self::assertSame(4, $counter->count());
+        self::assertSame(4, $counter->get());
     }
     
     public function test_Segregate_Limit(): void

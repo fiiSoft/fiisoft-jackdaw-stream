@@ -572,8 +572,8 @@ final class StreamScenarioTest extends TestCase
         $result = $stream->reduce(Reducers::average(0));
         
         //then
-        self::assertSame(3, $counter->count());
         self::assertSame(53.0, $result->get());
+        self::assertSame(3, $counter->get());
     }
     
     public function test_scenario_36(): void
@@ -1701,7 +1701,7 @@ final class StreamScenarioTest extends TestCase
         //Assert
         self::assertSame(5, $countInts->get());
         self::assertSame(27, $sumInts->result());
-        self::assertSame(3, $countBools->count());
+        self::assertSame(3, $countBools->get());
         self::assertSame(2, $countObjects->get());
         self::assertSame([2.35, 4.16, 5.22, 3.94, 14.33], $collectFloats->toArray());
         self::assertSame([2, 6, 1], $idsOfAdultWomen->toArray());
@@ -1737,7 +1737,7 @@ final class StreamScenarioTest extends TestCase
         ], $stream->toArrayAssoc());
         
         self::assertSame([0 => 2, 2, 3 => 4, 5 => 6, 8, 8 => 8, 11 => 2, 14 => 4], $allEvenNumbers->toArray());
-        self::assertSame(7, $countOddNumbers->count());
+        self::assertSame(7, $countOddNumbers->get());
     }
     
     public function test_scenario_88(): void
@@ -1868,7 +1868,7 @@ final class StreamScenarioTest extends TestCase
         //Assert
         self::assertSame(5, $count->get());
         self::assertSame(27, $sumInts->result());
-        self::assertSame(5, $countBools->count());
+        self::assertSame(5, $countBools->get());
         self::assertSame(2, $countObjects->get());
         self::assertSame([2.35, 4.16, 5.22, 3.94, 14.33], $collectFloats->toArray());
         self::assertSame([2, 6], $idsOfAdultWomen->toArray());

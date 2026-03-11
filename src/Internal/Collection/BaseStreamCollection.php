@@ -53,7 +53,7 @@ abstract class BaseStreamCollection implements Destroyable, \Iterator
     }
     
     /**
-     * @param string|int|bool $id remember that bool is casted to int (true=>1, false=>0)!
+     * @param string|int|bool $id remember that bool is cast to int (true=>1, false=>0)!
      */
     final public function get($id): ResultApi
     {

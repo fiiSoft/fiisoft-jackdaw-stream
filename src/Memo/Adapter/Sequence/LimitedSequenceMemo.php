@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Memo\Adapter\Sequence\Limited\EntryBuffer;
 use FiiSoft\Jackdaw\Memo\Adapter\Sequence\Limited\EntryBufferFactory;
 use FiiSoft\Jackdaw\Memo\Entry;
 use FiiSoft\Jackdaw\Memo\Sequence\Matcher\SequenceMatcherPredicate;
+use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class LimitedSequenceMemo extends BaseSequenceMemo
 {
@@ -118,9 +119,6 @@ final class LimitedSequenceMemo extends BaseSequenceMemo
         return $this->buffer->fetchKeys();
     }
     
-    /**
-     * @inheritDoc
-     */
     public function count(): int
     {
         return $this->buffer->count();
@@ -143,7 +141,7 @@ final class LimitedSequenceMemo extends BaseSequenceMemo
     /**
      * @inheritDoc
      */
-    public function reduce(callable $reducer)
+    protected function reduceByCallable(callable $reducer)
     {
         $isFirst = true;
         $acc = null;
@@ -158,6 +156,18 @@ final class LimitedSequenceMemo extends BaseSequenceMemo
         }
         
         return $acc;
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    protected function reduceByReducer(Reducer $reducer)
+    {
+        foreach ($this->buffer->getIterator() as $value) {
+            $reducer->consume($value);
+        }
+        
+        return $reducer->result();
     }
     
     public function register(SequenceMatcherPredicate $observer): void

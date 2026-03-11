@@ -1537,9 +1537,10 @@ final class StreamCTest extends TestCase
         Stream::from($queue = Producers::queue([new \DateTimeImmutable('2024-12-01')]))
             ->callWhen(Filters::NOT($isDayOff), $workingDays = Consumers::counter())
             ->map(static fn(\DateTimeImmutable $dt): \DateTimeImmutable => $dt->modify('+1 day'))
-            ->callWhen(Filters::time()->until('2024-12-31'), $queue);
+            ->callWhen(Filters::time()->until('2024-12-31'), $queue)
+            ->run();
         
-        self::assertSame(20, $workingDays->count());
+        self::assertSame(20, $workingDays->get());
     }
     
     public function test_streaming_of_invalid_datetime_values_throws_exception(): void
@@ -1641,41 +1642,26 @@ final class StreamCTest extends TestCase
         //s3:[5] c:16
         //s3 -> [5] -> s4, s4:[5] c:17
         
-        self::assertSame(17, $counter->count());
+        //the iteration must be triggered by any of the streams
+        $stream4->count();
+        
+        self::assertSame(17, $counter->get());
     }
     
-    public function test_how_Counter_methods_get_and_count_work(): void
-    {
-        //given
-        $counter = Consumers::counter();
-        Stream::from(['a', 1, 'b', 2])->onlyIntegers()->call($counter);
-        
-        //method get() returns current value hold by counter
-        self::assertSame(0, $counter->get());
-        
-        //method count() triggers stream iterating
-        self::assertSame(2, $counter->count());
-        
-        //and then, get() returns counted value
-        self::assertSame(2, $counter->get());
-        
-        //both method can be called again but it does nothing
-        self::assertSame(2, $counter->count());
-        self::assertSame(2, $counter->get());
-    }
-    
-    public function test_Counter_method_count_can_be_called_after_iterating_the_stream(): void
+    public function test_how_Counter_method_get_works(): void
     {
         //given
         $counter = Consumers::counter();
         $stream = Stream::from(['a', 1, 'b', 2])->onlyIntegers()->call($counter);
         
-        //when
+        //method get() returns current value hold by counter
+        self::assertSame(0, $counter->get());
+        
+        //start iteration
         $stream->run();
         
-        //then
+        //and then, get() returns counted value
         self::assertSame(2, $counter->get());
-        self::assertSame(2, $counter->count());
     }
     
     public function test_trigger_processing_by_the_last_element_from_feedMany_operation(): void

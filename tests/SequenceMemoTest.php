@@ -12,6 +12,7 @@ use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Memo\SequenceMemo;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\ValueRef\IntNum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class SequenceMemoTest extends TestCase
@@ -605,7 +606,7 @@ final class SequenceMemoTest extends TestCase
         $sequence->write('c', 3);
         
         self::assertSame('a', $sequence->valueOf(0));
-            self::assertSame(1, $sequence->keyOf(0));
+        self::assertSame(1, $sequence->keyOf(0));
         
         self::assertSame('c', $sequence->valueOf(-1));
         self::assertSame(3, $sequence->keyOf(-1));
@@ -897,6 +898,11 @@ final class SequenceMemoTest extends TestCase
         
         self::assertTrue($predicate->evaluate());
         self::assertSame(['a', 'b', 'c', 'd'], $seq->getValues());
+        
+        $seq->clear();
+        
+        self::assertFalse($predicate->evaluate());
+        self::assertSame([], $seq->getValues());
     }
     
     public function test_change_state_of_infinite_sequence_in_runtime_is_reflected_by_predicate(): void
@@ -931,6 +937,69 @@ final class SequenceMemoTest extends TestCase
         
         self::assertFalse($predicate->evaluate());
         self::assertSame([], $seq->getValues());
+    }
+    
+    /**
+     * @dataProvider getDataForTestReduceOnEmptySequenceReturnsNull
+     */
+    #[DataProvider('getDataForTestReduceOnEmptySequenceReturnsNull')]
+    public function test_reduce_on_empty_sequence_returns_null(SequenceMemo $sequence): void
+    {
+        self::assertNull($sequence->reduce(static fn(int $acc, int $v): int => $acc + $v));
+        self::assertNull($sequence->reduce(Reducers::sum()));
+    }
+    
+    public static function getDataForTestReduceOnEmptySequenceReturnsNull(): iterable
+    {
+        return [
+            'single' => [Memo::sequence(1)],
+            'limited' => [Memo::sequence(5)],
+            'infinite' => [Memo::sequence()],
+        ];
+    }
+    
+    /**
+     * @dataProvider getDataForTestReduceNonEmptySequenceByReducerAndCallable
+     */
+    #[DataProvider('getDataForTestReduceNonEmptySequenceByReducerAndCallable')]
+    public function test_reduce_non_empty_sequence_by_reducer_and_callable(SequenceMemo $sequence): void
+    {
+        $reducer1 = static fn(int $acc, int $v): int => $acc + $v;
+        $reducer2 = Reducers::sum();
+        
+        $sequence->write(1, 'a');
+        $sequence->write(2, 'b');
+        
+        self::assertSame(3, $sequence->reduce($reducer1));
+        self::assertSame(3, $sequence->reduce($reducer2));
+        
+        $sequence->write(3, 'c');
+        $sequence->write(4, 'd');
+        
+        self::assertSame(10, $sequence->reduce($reducer1));
+        self::assertSame(10, $sequence->reduce($reducer2));
+    }
+    
+    public static function getDataForTestReduceNonEmptySequenceByReducerAndCallable(): iterable
+    {
+        return [
+            'limited' => [Memo::sequence(10)],
+            'infinite' => [Memo::sequence()],
+        ];
+    }
+    
+    public function test_sequence_throws_exception_when_callable_passed_to_reduce_is_invalid(): void
+    {
+        $this->expectExceptionObject(Helper::wrongNumOfArgsException('Reducer', 1, 2));
+        
+        $this->sequence()->reduce(static fn(int $a): int => $a);
+    }
+    
+    public function test_sequence_reduce_throws_exception_when_param_reducer_is_invalid(): void
+    {
+        $this->expectExceptionObject(InvalidParamException::describe('Reducer', 'this_is_not_callable'));
+        
+        $this->sequence()->reduce('this_is_not_callable');
     }
     
     private function limitedSequence(): SequenceMemo

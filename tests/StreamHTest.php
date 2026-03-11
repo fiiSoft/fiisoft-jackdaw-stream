@@ -3,7 +3,9 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
+use FiiSoft\Jackdaw\Consumer\Consumers;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
+use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
@@ -801,5 +803,425 @@ final class StreamHTest extends TestCase
         $this->expectExceptionObject(OperationExceptionFactory::wrongTypeOfIterateOverCallback());
         
         Stream::empty()->iterate(static fn(): int => 5);
+    }
+    
+    public function test_prototype_creates_separate_instances_of_stream(): void
+    {
+        $s1 = Stream::prototype()->filter(Filters::isString()->or(Filters::isInt()));
+        
+        $s2 = $s1->join(['a', 'b', false, 'c', 'd', 'e']);
+        $s3 = $s2->only(['e', 'y', 'u', 'i', 'o', 'a']);
+        $s4 = $s3->map('strtoupper');
+        
+        $s5 = $s1->join([1, 2, false, 3, 4, 5]);
+        $s6 = $s5->filter(Filters::number()->isOdd());
+        $s7 = $s5->filter(Filters::number()->isEven());
+        $s8 = $s7->reduce(Reducers::sum());
+        
+        $s9 = $s6->rsort()->limit(2);
+        
+        self::assertTrue($s1->isEmpty()->get());
+        self::assertSame('abcde', $s2->toString(''));
+        self::assertSame('ae', $s3->toString(''));
+        self::assertSame('AE', $s4->toString(''));
+        self::assertSame('12345', $s5->toString(''));
+        self::assertSame('135', $s6->toString(''));
+        self::assertSame('24', $s7->toString(''));
+        self::assertSame('6', $s8->toString(''));
+        self::assertSame('53', $s9->toString(''));
+        
+        self::assertSame([2, 4], $s7->toArray());
+        self::assertSame(3, $s6->skip(1)->first()->get());
+        self::assertSame('["E","A"]', $s4->reverse()->toJson());
+        self::assertSame(3, $s1->wrap([1, true, 2, 3])->count()->get());
+        
+        $s10 = $s6->omitReps()->collectValues();
+        $s10->consume([2, 5, 9, 3, 8, 7, 1, 4]);
+        self::assertSame([5, 9, 3, 7, 1, 3, 5], $s10->get());
+        
+        $s11 = $s2->find('c');
+        self::assertTrue($s11->found());
+        self::assertSame([3, 'c'], $s11->tuple());
+        
+        self::assertSame(4, $s9->reduce(Reducers::average())->get());
+    }
+    
+    public function test_prototype_with_group(): void
+    {
+        $stream = Stream::prototype(['the quick brown fox', 'jumps over the lazy dog'])
+            ->flatMap(static fn(string $line): array => \explode(' ', $line), 1)
+            ->filter(Filters::length()->between(4, 5))
+            ->countIn($countWords)
+            ->mapKey('strlen');
+        
+        //first iteration
+        $group1 = $stream->group();
+        
+        self::assertSame(5, $countWords);
+        self::assertSame([5, 4], $group1->classifiers());
+        self::assertSame(['over', 'lazy'], $group1->get(4)->get());
+        
+        //second iteration
+        $group2 = $stream->group();
+        
+        self::assertSame(10, $countWords);
+        self::assertSame([5, 4], $group2->classifiers());
+        self::assertSame(['quick', 'brown', 'jumps'], $group2->get(5)->get());
+    }
+    
+    public function test_prototype_with_feed(): void
+    {
+        $sumA = Stream::empty()->filterKey('a')->reduce(Reducers::sum());
+        
+        $stream = Stream::prototype()
+            ->join(['b:5', 'c:3', 'a:8', 'c:2', 'a:1', 'b:2', 'c:2', 'a:4', 'c:5'])
+            ->split(':')
+            ->unpackTuple()
+            ->castToInt()
+            ->feed($sumA)
+            ->limit(7);
+        
+        //first iteration
+        self::assertSame([
+            'b' => [5, 2],
+            'c' => [3, 2, 2],
+            'a' => [8, 1],
+        ], $stream->categorizeByKey()->toArrayAssoc());
+        
+        self::assertSame(9, $sumA->get());
+        
+        //second iteration
+        self::assertSame([3, 2, 1, 2, 2], $stream->lessThan(5)->toArray());
+        
+        self::assertSame(18, $sumA->get());
+        
+        //third iteration
+        self::assertSame([5, 3, 8, 2, 1, 2, 2], $stream->toArray());
+        
+        self::assertSame(27, $sumA->get());
+    }
+    
+    public function test_prototype_with_loop_and_call(): void
+    {
+        $collatz = Memo::sequence();
+        $counter = 0;
+        
+        $stream = Stream::prototype([3])
+            ->call($collatz)
+            ->while(Filters::greaterThan(1))
+            ->mapWhen(
+                static fn(int $n): bool => ($n & 1) === 0,
+                static fn (int $n): int => $n >> 1,
+                static fn (int $n): int => (3 * $n + 1),
+            );
+        
+        $withCounter = $stream->countIn($counter);
+        $withFilter = $stream->filter(Filters::number()->isOdd()->or(Filters::number()->isEven()));
+
+        $expected = [3, 10, 5, 16, 8, 4, 2, 1];
+        
+        //first iteration
+        $stream->loop()->run();
+        
+        self::assertSame(0, $counter);
+        self::assertSame(\count($expected), $collatz->count());
+        self::assertSame($expected, $collatz->getValues());
+        self::assertSame(\array_sum($expected), $collatz->reduce(Reducers::sum()));
+        
+        //second iteration
+        $withCounter->loop(true);
+        
+        self::assertSame(7, $counter);
+        self::assertSame(2 * \count($expected), $collatz->count());
+        self::assertSame(2 * \array_sum($expected), $collatz->reduce(Reducers::sum()));
+        
+        //third iteration
+        $counter = 0;
+        $withFilter->loop()->run();
+        
+        self::assertSame(0, $counter);
+        self::assertSame(3 * \count($expected), $collatz->count());
+        self::assertSame(3 * \array_sum($expected), $collatz->reduce(Reducers::sum()));
+    }
+    
+    public function test_prototype_with_call_counter(): void
+    {
+        $counter = Consumers::counter();
+        $stream = Stream::prototype(['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e', 5])->call($counter);
+        
+        //first iteration
+        self::assertSame('abcde', $stream->onlyStrings()->toString(''));
+        
+        self::assertSame(10, $counter->get());
+        
+        //second iteration
+        self::assertSame('12345', $stream->onlyIntegers()->toString(''));
+        
+        self::assertSame(20, $counter->get());
+    }
+    
+    public function test_prototype_with_callOnce_and_callMax(): void
+    {
+        $once = Consumers::counter();
+        $twice = Consumers::counter();
+        
+        $stream = Stream::prototype()
+            ->join(['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e', 5])
+            ->callOnce($once)
+            ->callMax(2, $twice);
+        
+        //first iteration
+        self::assertSame('abcde', $stream->onlyStrings()->toString(''));
+        
+        self::assertSame(1, $once->get());
+        self::assertSame(2, $twice->get());
+        
+        //second iteration
+        self::assertSame(15, $stream->onlyIntegers()->reduce(Reducers::sum())->get());
+        
+        self::assertSame(2, $once->get());
+        self::assertSame(4, $twice->get());
+
+        $other = $stream->chunk(2, true)->unpackTuple();
+    
+        //third iteration
+        self::assertSame('abcde', $other->collectKeys()->toString(''));
+        
+        self::assertSame(3, $once->get());
+        self::assertSame(6, $twice->get());
+    
+        //fourth iteration
+        self::assertSame([1, 2, 3, 4, 5], $other->toArray());
+        
+        self::assertSame(4, $once->get());
+        self::assertSame(8, $twice->get());
+    }
+    
+    public function test_prototype_with_route(): void
+    {
+        $sumInts = Reducers::sum();
+        $strings = Collectors::values();
+        
+        $stream = Stream::prototype()
+            ->route('is_string', $strings)
+            ->route('is_int', $sumInts)
+            ->join(['a', 1, 15.0, 'b', 2, 'c', false, 3, 'd', 25.0]);
+        
+        //first iteration
+        self::assertSame(3, $stream->count()->get());
+        
+        self::assertSame(6, $sumInts->result());
+        self::assertSame('abcd', $strings->toString(''));
+        
+        //second iteration
+        self::assertSame([15.0, 25.0], $stream->filter(Filters::isFloat())->toArray());
+        
+        self::assertSame(12, $sumInts->result());
+        self::assertSame('abcdabcd', $strings->toString(''));
+        
+        //third iteration
+        self::assertSame([2 => 15.0, 6 => false, 9 => 25.0], $stream->toArray(true));
+        
+        self::assertSame(18, $sumInts->result());
+        self::assertSame('abcdabcdabcd', $strings->toString(''));
+    }
+    
+    public function test_prototype_with_switch(): void
+    {
+        $sumInts = Reducers::sum();
+        $strings = Collectors::values();
+        
+        $discriminator = static function ($v): string {
+            switch (true) {
+                case \is_string($v): return 'str';
+                case \is_int($v): return 'int';
+                default: return 'other';
+            }
+        };
+        
+        $stream = Stream::prototype()
+            ->limit(10)
+            ->switch($discriminator, [
+                'str' => $strings,
+                'int' => $sumInts,
+            ])
+            ->join(['a', 1, 15.0, 'b', 2, 'c', false, 3, 'd', 25.0, 'e']);
+        
+        //first iteration
+        self::assertSame(3, $stream->count()->get());
+        
+        self::assertSame(6, $sumInts->result());
+        self::assertSame('abcd', $strings->toString(''));
+        
+        //second iteration
+        self::assertSame([15.0, 25.0], $stream->filter(Filters::isFloat())->toArray());
+        
+        self::assertSame(12, $sumInts->result());
+        self::assertSame('abcdabcd', $strings->toString(''));
+        
+        //third iteration
+        self::assertSame([2 => 15.0, 6 => false, 9 => 25.0], $stream->toArray(true));
+        
+        self::assertSame(18, $sumInts->result());
+        self::assertSame('abcdabcdabcd', $strings->toString(''));
+    }
+    
+    public function test_prototype_with_dispatch(): void
+    {
+        $sumInts = Reducers::sum();
+        $strings = Collectors::values();
+        
+        $discriminator = static function ($v): string {
+            switch (true) {
+                case \is_string($v): return 'str';
+                case \is_int($v): return 'int';
+                default: return 'other';
+            }
+        };
+        
+        $stream = Stream::prototype(['a', 1, 15.0, 'b', 2, 'c', false, 3, 'd', 25.0, 'e'])
+            ->dispatch($discriminator, [
+                'str' => $strings,
+                'int' => $sumInts,
+                'other' => Consumers::idle(),
+            ])
+            ->limit(5);
+        
+        //first iteration
+        self::assertSame(5, $stream->count()->get());
+        
+        self::assertSame(3, $sumInts->result());
+        self::assertSame('ab', $strings->toString(''));
+        
+        //second iteration
+        self::assertSame([15.0], $stream->filter('is_float')->toArray());
+        
+        self::assertSame(6, $sumInts->result());
+        self::assertSame('abab', $strings->toString(''));
+        
+        //third iteration
+        self::assertSame(['a', 1, 15.0, 'b', 2], $stream->toArray(true));
+        
+        self::assertSame(9, $sumInts->result());
+        self::assertSame('ababab', $strings->toString(''));
+    }
+    
+    public function test_prototype_with_fork(): void
+    {
+        $counter = Consumers::counter();
+        
+        $stream = Stream::prototype()
+            ->callOnce($counter)
+            ->onlyIntegers()
+            ->fork(Discriminators::evenOdd(), Stream::empty()->greaterOrEqual(5)->lessOrEqual(10)->collectValues())
+            ->join([5, 2, 3, 'a', 4, 1, 6, 'b', 15, 2, 9, 'c', 3, 6, 4, 'd', 12]);
+        
+        //first iteration
+        self::assertSame([
+            'odd' => [5, 9],
+            'even' => [6, 6],
+        ], $stream->toArrayAssoc());
+        
+        self::assertSame(1, $counter->get());
+        
+        //second iteration
+        self::assertSame(2, $stream->count()->get());
+        
+        self::assertSame(2, $counter->get());
+        
+        //third iteration
+        self::assertSame('{"odd":[5,9],"even":[6,6]}', $stream->toJsonAssoc());
+        
+        self::assertSame(3, $counter->get());
+        
+        //fourth iteration
+        self::assertSame(['odd' => 14, 'even' => 12], $stream->map(Reducers::sum())->toArrayAssoc());
+        
+        self::assertSame(4, $counter->get());
+    }
+    
+    public function test_prototype_with_forkMatch(): void
+    {
+        $counter = Consumers::counter();
+        
+        $stream = Stream::prototype()
+            ->callOnce($counter)
+            ->forkMatch(Discriminators::yesNo('is_string', 'str', 'int'), [
+                'str' => Stream::empty()->map('strtoupper')->reduce(Reducers::concat()),
+                'int' => Stream::empty()
+                    ->filter(Filters::number()->between(5, 10))
+                    ->classify(Discriminators::evenOdd())
+                    ->forkByKey(Reducers::sum())
+                    ->collect()
+            ])
+            ->flat(1)
+            ->join([5, 2, 3, 'a', 4, 1, 6, 'b', 15, 2, 9, 'c', 3, 6, 4, 'd', 12]);
+        
+        //first iteration
+        self::assertSame([
+            'str' => 'ABCD',
+            'odd' => 14,
+            'even' => 12,
+        ], $stream->toArrayAssoc());
+        
+        self::assertSame(1, $counter->get());
+        
+        //second iteration
+        self::assertSame(3, $stream->count()->get());
+
+        self::assertSame(2, $counter->get());
+
+        //third iteration
+        self::assertSame('{"str":"ABCD","odd":14,"even":12}', $stream->toJsonAssoc());
+
+        self::assertSame(3, $counter->get());
+
+        //fourth iteration
+        self::assertSame(['even', 'odd', 'str'], $stream->collectKeys()->transform('sort')->get());
+
+        self::assertSame(4, $counter->get());
+    }
+    
+    public function test_prototype_with_forkMatch_with_onerror_handler(): void
+    {
+        $counter = Consumers::counter();
+        
+        $stream = Stream::prototype()
+            ->onError(OnError::abort())
+            ->callOnce($counter)
+            ->forkMatch(Discriminators::yesNo('is_string', 'str', 'int'), [
+                'str' => Stream::empty()->map('strtoupper')->reduce(Reducers::concat()),
+                'int' => Stream::empty()
+                    ->filter(Filters::number()->between(5, 10))
+                    ->classify(Discriminators::evenOdd())
+                    ->forkByKey(Reducers::sum())
+                    ->collect()
+            ])
+            ->flat(1)
+            ->join([5, 2, 3, 'a', 4, 1, 6, 'b', 15, 2, 9, 'c', 3, 6, 4, 'd', 12]);
+        
+        //first iteration
+        self::assertSame([
+            'str' => 'ABCD',
+            'odd' => 14,
+            'even' => 12,
+        ], $stream->toArrayAssoc());
+        
+        self::assertSame(1, $counter->get());
+        
+        //second iteration
+        self::assertSame(3, $stream->count()->get());
+
+        self::assertSame(2, $counter->get());
+
+        //third iteration
+        self::assertSame('{"str":"ABCD","odd":14,"even":12}', $stream->toJsonAssoc());
+
+        self::assertSame(3, $counter->get());
+
+        //fourth iteration
+        self::assertSame(['even', 'odd', 'str'], $stream->collectKeys()->transform('sort')->get());
+
+        self::assertSame(4, $counter->get());
     }
 }

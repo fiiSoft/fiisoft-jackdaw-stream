@@ -1123,8 +1123,8 @@ final class StreamATest extends TestCase
             ->call($after = Consumers::counter())
             ->run();
         
-        self::assertSame(3, $before->count());
-        self::assertSame(2, $after->count());
+        self::assertSame(3, $before->get());
+        self::assertSame(2, $after->get());
     }
     
     public function test_until(): void
@@ -1427,7 +1427,7 @@ final class StreamATest extends TestCase
         $counter = Consumers::counter();
         Stream::from([1, 2])->limit(0)->call($counter)->run();
         
-        self::assertSame(0, $counter->count());
+        self::assertSame(0, $counter->get());
     }
     
     public function test_sort_by_keys_with_comparator(): void
@@ -1746,9 +1746,9 @@ final class StreamATest extends TestCase
             ->call($all = Consumers::counter())
             ->run();
         
-        self::assertSame(1, $onlyOnce->count());
-        self::assertSame(2, $maxTwice->count());
-        self::assertSame(3, $all->count());
+        self::assertSame(1, $onlyOnce->get());
+        self::assertSame(2, $maxTwice->get());
+        self::assertSame(3, $all->get());
     }
     
     public function test_callWhen(): void
@@ -1757,8 +1757,8 @@ final class StreamATest extends TestCase
             ->callWhen('is_int', $countInts = Consumers::counter(), $countOthers = Consumers::counter())
             ->run();
         
-        self::assertSame(3, $countInts->count());
-        self::assertSame(2, $countOthers->count());
+        self::assertSame(3, $countInts->get());
+        self::assertSame(2, $countOthers->get());
     }
     
     public function test_mapWhen(): void

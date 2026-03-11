@@ -177,7 +177,9 @@ abstract class FinalOperation extends LastOperation implements Operation
     
     final public function assignSource(Stream $stream): void
     {
-        $this->parents[\spl_object_id($stream)] = $stream;
+        if (!$stream->isPrototype()) {
+            $this->parents[\spl_object_id($stream)] = $stream;
+        }
     }
     
     /**

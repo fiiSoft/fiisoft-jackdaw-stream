@@ -12,6 +12,8 @@ use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Memo\Memo;
+use FiiSoft\Jackdaw\Operation\Collecting\Fork\Adapter\IdleForkHandler;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\Bucket;
 use FiiSoft\Jackdaw\Operation\Collecting\Segregate\BucketListIterator;
 use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\CircularBufferIterator;
@@ -94,7 +96,7 @@ final class DestroyTest extends TestCase
         $result = $stream->toArray();
         
         self::assertSame([['a', 'b', 'c']], $result);
-        self::assertSame(4, $counter->count());
+        self::assertSame(4, $counter->get());
         
         $stream->destroy();
     }
@@ -432,6 +434,51 @@ final class DestroyTest extends TestCase
             );
         
         self::assertSame(['odd' => 'ace', 'even' => 'bd'], $stream->toArrayAssoc());
+        
+        $stream->destroy();
+    }
+    
+    public function test_Fork_destroy_IdleForkHandler(): void
+    {
+        $stream = Stream::from([1, 2, 3, 4])
+            ->fork(
+                Discriminators::evenOdd(),
+                new IdleForkHandler()
+            );
+        
+        self::assertTrue($stream->isEmpty()->get());
+        
+        $stream->destroy();
+    }
+
+    public function test_Fork_destroy_SequenceFork(): void
+    {
+        $stream = Stream::from([1, 2, 3, 4])
+            ->fork(
+                Discriminators::evenOdd(),
+                Memo::sequence()
+            );
+        
+        self::assertSame([
+            'odd' => [0 => 1, 2 => 3],
+            'even' => [1 => 2, 3 => 4]
+        ], $stream->toArrayAssoc());
+        
+        $stream->destroy();
+    }
+    
+    public function test_Fork_destroy_StreamFork(): void
+    {
+        $stream = Stream::from([1, 'a', 2, 'b', 3, 'c', 4, 'd'])
+            ->fork(
+                'is_string',
+                Stream::empty()->limit(3)->castToString()->reduce(Reducers::concat())
+            );
+        
+        self::assertSame([
+            false => '123',
+            true => 'abc',
+        ], $stream->toArrayAssoc());
         
         $stream->destroy();
     }

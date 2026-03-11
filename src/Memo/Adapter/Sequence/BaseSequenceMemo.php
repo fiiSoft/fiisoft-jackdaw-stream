@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Memo\Adapter\Sequence;
 
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
+use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Memo\Adapter\Sequence\Reader\KeyReader;
 use FiiSoft\Jackdaw\Memo\Adapter\Sequence\Reader\PairReader;
 use FiiSoft\Jackdaw\Memo\Adapter\Sequence\Reader\TupleReader;
@@ -14,6 +15,7 @@ use FiiSoft\Jackdaw\Memo\Sequence\Matcher\SequenceMatcherPredicate;
 use FiiSoft\Jackdaw\Memo\SequenceInspector;
 use FiiSoft\Jackdaw\Memo\SequenceMemo;
 use FiiSoft\Jackdaw\Memo\SequencePredicate;
+use FiiSoft\Jackdaw\Reducer\Reducer;
 use FiiSoft\Jackdaw\Stream;
 
 abstract class BaseSequenceMemo implements SequenceMemo
@@ -52,6 +54,42 @@ abstract class BaseSequenceMemo implements SequenceMemo
         }
         
         throw InvalidParamException::describe('inspector', $inspector);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    final public function reduce($reducer)
+    {
+        $this->assertReducerIsValid($reducer);
+        
+        if ($this->isEmpty()) {
+            return null;
+        }
+        
+        return $reducer instanceof Reducer ? $this->reduceByReducer($reducer) : $this->reduceByCallable($reducer);
+    }
+    
+    /**
+     * @param Reducer|callable $reducer
+     */
+    private function assertReducerIsValid($reducer): void
+    {
+        if ($reducer instanceof Reducer) {
+            $reducer->reset();
+            
+            return;
+        }
+        
+        if (\is_callable($reducer)) {
+            if (Helper::getNumOfArgs($reducer) === 2) {
+                return;
+            }
+            
+            throw Helper::wrongNumOfArgsException('Reducer', Helper::getNumOfArgs($reducer), 2);
+        }
+        
+        throw InvalidParamException::describe('Reducer', $reducer);
     }
     
     final public function key(int $index): MemoReader
@@ -94,4 +132,14 @@ abstract class BaseSequenceMemo implements SequenceMemo
     {
         return Stream::from($this);
     }
+    
+    /**
+     * @return mixed
+     */
+    abstract protected function reduceByCallable(callable $reducer);
+    
+    /**
+     * @return mixed
+     */
+    abstract protected function reduceByReducer(Reducer $reducer);
 }

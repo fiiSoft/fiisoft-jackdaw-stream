@@ -277,8 +277,8 @@ final class StreamFTest extends TestCase
             ->callWhen('is_int', $countInts)
             ->run();
         
-        self::assertSame(3, $countInts->count());
-        self::assertSame(2, $countStrings->count());
+        self::assertSame(3, $countInts->get());
+        self::assertSame(2, $countStrings->get());
     }
     
     public function test_callWhen_with_else_consumer_and_onerror_handler(): void
@@ -291,8 +291,8 @@ final class StreamFTest extends TestCase
             ->callWhen('is_string', $countStrings, $countInts)
             ->run();
         
-        self::assertSame(3, $countInts->count());
-        self::assertSame(2, $countStrings->count());
+        self::assertSame(3, $countInts->get());
+        self::assertSame(2, $countStrings->get());
     }
     
     public function test_callWhile(): void
@@ -301,7 +301,7 @@ final class StreamFTest extends TestCase
         
         Stream::from([3, 2, 'a', 1, 2, 'b'])->callWhile('is_int', $numOfIntsAtTheBeginning)->run();
         
-        self::assertSame(2, $numOfIntsAtTheBeginning->count());
+        self::assertSame(2, $numOfIntsAtTheBeginning->get());
     }
     
     public function test_callWhile_with_onerror_handler(): void
@@ -313,7 +313,7 @@ final class StreamFTest extends TestCase
             ->callWhile('is_int', $numOfIntsAtTheBeginning)
             ->run();
         
-        self::assertSame(2, $numOfIntsAtTheBeginning->count());
+        self::assertSame(2, $numOfIntsAtTheBeginning->get());
     }
     
     public function test_callUntil_with_onerror_handler(): void
@@ -325,7 +325,7 @@ final class StreamFTest extends TestCase
             ->callUntil('is_string', $numOfIntsAtTheBeginning)
             ->run();
         
-        self::assertSame(2, $numOfIntsAtTheBeginning->count());
+        self::assertSame(2, $numOfIntsAtTheBeginning->get());
     }
     
     public function test_skip(): void
