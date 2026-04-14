@@ -2,7 +2,9 @@
 
 namespace FiiSoft\Jackdaw\Operation\Internal;
 
+use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Operation;
+use FiiSoft\Jackdaw\Stream;
 
 trait CommonOperationCode
 {
@@ -57,6 +59,21 @@ trait CommonOperationCode
         return $this->next->getLast();
     }
     
+    public function assignStream(Stream $stream): void
+    {
+        $this->next->assignStream($stream);
+    }
+    
+    public function streamingStart(Signal $signal): void
+    {
+        $this->next->streamingStart($signal);
+    }
+    
+    public function streamingFinished(Signal $signal): bool
+    {
+        return $this->next->streamingFinished($signal);
+    }
+    
     public function resume(): void
     {
         $this->next->resume();
@@ -64,9 +81,7 @@ trait CommonOperationCode
     
     public function prepare(): void
     {
-        if ($this->next !== null) {
-            $this->next->prepare();
-        }
+        $this->next->prepare();
     }
     
     public function destroy(): void

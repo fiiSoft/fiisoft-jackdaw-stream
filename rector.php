@@ -48,7 +48,6 @@ return static function (RectorConfig $configurator): void {
     $configurator->import(SetList::CODE_QUALITY);
     $configurator->import(SetList::CODING_STYLE);
     $configurator->import(SetList::DEAD_CODE);
-    $configurator->import(SetList::STRICT_BOOLEANS);
     $configurator->import(SetList::GMAGICK_TO_IMAGICK);
     $configurator->import(SetList::NAMING);
     $configurator->import(SetList::PHP_74);

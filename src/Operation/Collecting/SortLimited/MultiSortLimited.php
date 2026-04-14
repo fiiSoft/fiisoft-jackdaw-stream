@@ -171,9 +171,9 @@ final class MultiSortLimited extends SortLimited
 
     protected function __clone()
     {
-        parent::__clone();
-
         $this->buffer = clone $this->buffer;
+
+        parent::__clone();
     }
 
     public function destroy(): void

@@ -8,8 +8,6 @@ use FiiSoft\Jackdaw\Internal\Pipe;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Producer\MultiProducer;
 use FiiSoft\Jackdaw\Producer\Producer;
-use FiiSoft\Jackdaw\Producer\ProducerReady;
-use FiiSoft\Jackdaw\Producer\Producers;
 
 abstract class Source extends StreamSource implements Destroyable
 {
@@ -40,23 +38,10 @@ abstract class Source extends StreamSource implements Destroyable
         $this->pipe = $data->pipe;
     }
     
-    /**
-     * @param array<ProducerReady|resource|callable|iterable<string|int, mixed>|string> $producers
-     */
-    final public function addProducers(array $producers): void
-    {
-        if ($this->producer instanceof MultiProducer) {
-            foreach ($producers as $producer) {
-                $this->producer->addProducer(Producers::getAdapter($producer));
-            }
-        } else {
-            $this->sourceIsNotReady(Producers::multiSourced($this->producer, ...$producers));
-        }
-    }
-    
     final protected function restartWith(Producer $producer, Operation $operation): void
     {
-        $this->pipe->head = $operation;
+        $this->pipe->restartWith($operation);
+        
         $this->sourceIsNotReady($producer);
     }
     

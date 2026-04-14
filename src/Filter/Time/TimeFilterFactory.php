@@ -150,7 +150,7 @@ final class TimeFilterFactory extends FilterFactory implements TimeFilterPicker
     /**
      * @param string ...$days at least one of Day::* constants
      */
-    public function isDay(...$days): Filter
+    public function isDay(string ...$days): Filter
     {
         return $this->get(TimeFilter::create($this->mode, new WeekDay(true, $days)));
     }
@@ -158,7 +158,7 @@ final class TimeFilterFactory extends FilterFactory implements TimeFilterPicker
     /**
      * @param string ...$days at least one of Day::* constants
      */
-    public function isNotDay(...$days): Filter
+    public function isNotDay(string ...$days): Filter
     {
         return $this->get(TimeFilter::create($this->mode, new WeekDay(false, $days)));
     }

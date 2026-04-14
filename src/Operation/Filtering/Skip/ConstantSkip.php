@@ -27,11 +27,16 @@ final class ConstantSkip extends Skip
     
     public function handle(Signal $signal): void
     {
-        if ($this->count === $this->offset) {
-            $this->next->handle($signal);
-            $signal->forget($this);
+        if ($this->isActive) {
+            if ($this->count === $this->offset) {
+                $this->isActive = false;
+                $signal->forget($this);
+                $this->next->handle($signal);
+            } else {
+                ++$this->count;
+            }
         } else {
-            ++$this->count;
+            $this->next->handle($signal);
         }
     }
     
@@ -53,5 +58,13 @@ final class ConstantSkip extends Skip
     protected function offset(): IntValue
     {
         return IntNum::constant($this->offset);
+    }
+    
+    protected function __clone()
+    {
+        $this->isActive = true;
+        $this->count = 0;
+        
+        parent::__clone();
     }
 }

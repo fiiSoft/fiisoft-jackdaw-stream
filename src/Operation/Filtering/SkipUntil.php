@@ -14,9 +14,14 @@ final class SkipUntil extends PossiblyInversible
     
     public function handle(Signal $signal): void
     {
-        if ($this->filter->isAllowed($signal->item->value, $signal->item->key)) {
+        if ($this->isActive) {
+            if ($this->filter->isAllowed($signal->item->value, $signal->item->key)) {
+                $this->isActive = false;
+                $signal->forget($this);
+                $this->next->handle($signal);
+            }
+        } else {
             $this->next->handle($signal);
-            $signal->forget($this);
         }
     }
     
@@ -38,5 +43,12 @@ final class SkipUntil extends PossiblyInversible
     protected function inversedOperation(Filter $filter): Operation
     {
         return Operations::skipWhile($filter);
+    }
+    
+    protected function __clone()
+    {
+        $this->isActive = true;
+        
+        parent::__clone();
     }
 }

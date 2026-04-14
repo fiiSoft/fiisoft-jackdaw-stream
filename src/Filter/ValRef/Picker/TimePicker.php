@@ -21,7 +21,7 @@ final class TimePicker extends BasePicker implements TimeFilterPicker
     /**
      * @inheritDoc
      */
-    public function isDay(...$days): Filter
+    public function isDay(string ...$days): Filter
     {
         return $this->createFilter(Filters::time()->isDay(...$days));
     }
@@ -29,7 +29,7 @@ final class TimePicker extends BasePicker implements TimeFilterPicker
     /**
      * @inheritDoc
      */
-    public function isNotDay(...$days): Filter
+    public function isNotDay(string ...$days): Filter
     {
         return $this->createFilter(Filters::time()->isNotDay(...$days));
     }

@@ -10,8 +10,8 @@ use FiiSoft\Jackdaw\Exception\{InvalidParamException, StreamExceptionFactory};
 use FiiSoft\Jackdaw\Filter\{FilterReady, Filters};
 use FiiSoft\Jackdaw\Handler\{ErrorHandler, OnError};
 use FiiSoft\Jackdaw\Internal\{Check, Collection\BaseStreamCollection, Destroyable, Executable, Helper, Item,
-    Iterator\Interruption, Mode, Pipe, Signal, State\Source, State\SourceData, State\SourceNotReady, State\Sources,
-    State\StreamSource, StreamPipe};
+    Iterator\Interruption, Mode, Pipe, Pipe\ChainOperationResult, Signal, State\Source, State\SourceData,
+    State\SourceNotReady, State\Sources, State\StreamSource, StreamPipe};
 use FiiSoft\Jackdaw\Mapper\{Internal\ConditionalExtract, MapperReady, Mappers};
 use FiiSoft\Jackdaw\Memo\MemoWriter;
 use FiiSoft\Jackdaw\Operation\Internal\{DispatchReady, ForkReady, Operations};
@@ -29,14 +29,13 @@ use FiiSoft\Jackdaw\ValueRef\IntProvider;
 final class Stream extends StreamSource
     implements ProducerReady, DispatchReady, Executable, Destroyable, \IteratorAggregate
 {
+//    private static int $instanceCounter = 0;
+    
     private Producer $producer;
     private Sources $sources;
     private Source $source;
     private Signal $signal;
     private Pipe $pipe;
-    
-    /** @var Stream[] */
-    private array $parents = [];
     
     private bool $isExecuted = false;
     private bool $isLoop = false;
@@ -47,7 +46,13 @@ final class Stream extends StreamSource
     private bool $isResuming = false;
     private bool $streamingFinished = false;
     private bool $isConsumer = false;
-    private bool $isPrototype = false;
+    
+    private bool $isPrototype;
+    
+//    private int $myNumber;
+    
+    /** @var Stream[] */
+    private array $parents = [];
     
     /** @var StreamPipe[] */
     private array $pushToStreams = [];
@@ -60,9 +65,6 @@ final class Stream extends StreamSource
     
     /** @var ErrorHandler[] */
     private array $onErrorHandlers = [];
-    
-    /** @var array<array<ProducerReady|resource|callable|iterable<string|int, mixed>|string>> */
-    private array $joinProducers = [];
     
     /**
      * @param ProducerReady|\Traversable<mixed>|resource|callable|iterable<mixed>|object|scalar ...$elements
@@ -94,29 +96,34 @@ final class Stream extends StreamSource
      */
     public static function prototype($producer = null): Stream
     {
-        $prototype = $producer !== null ? self::from($producer) : self::empty();
-        $prototype->isPrototype = true;
-        
-        return $prototype;
+        return new self($producer === null ? new EmptyProducer() : Producers::getAdapter($producer), true);
     }
     
-    private function __construct(Producer $producer)
+    private function __construct(Producer $producer, bool $isPrototype = false)
     {
+//        $this->myNumber = ++self::$instanceCounter;
+        
         $this->producer = $producer;
-        $this->pipe = new Pipe($this);
+        $this->isPrototype = $isPrototype;
+        
+        $this->pipe = new Pipe($this, $this->isPrototype);
     }
     
     protected function __clone()
     {
-        if ($this->isInitialized || $this->isExecuted) {
+//        $this->myNumber = ++self::$instanceCounter;
+        
+        if ($this->isPrototype) {
+            $this->isStarted = $this->isExecuted = false;
+        } elseif ($this->isInitialized || $this->isExecuted) {
             throw StreamExceptionFactory::cannotReuseUtilizedStream();
         }
-        
-        $this->pipe = clone $this->pipe;
-        $this->pipe->head->assignStream($this);
+
+        $this->pipe = $this->pipe->clone();
+        $this->pipe->assignStream($this);
     }
     
-    protected function cloneStream(): Stream
+    protected function cloneForFork(): Stream
     {
         $copy = clone $this;
         $copy->prepareForFork();
@@ -632,6 +639,17 @@ final class Stream extends StreamSource
     }
     
     /**
+     * Cache is shared between all prototypes which inherit from common root prototype, so it might lead to
+     * unexpected behaviors and results when used improperly.
+     *
+     * This method is intended for use with a prototype Stream only. Its use with a regular Stream has no effect.
+     */
+    public function cache(): Stream
+    {
+        return $this->isPrototype ? $this->addOperation(Operations::cache()) : $this;
+    }
+    
+    /**
      * @param ConsumerReady|callable|resource $consumers resource must be writeable
      */
     public function call(...$consumers): Stream
@@ -727,17 +745,11 @@ final class Stream extends StreamSource
      */
     public function join(...$producers): Stream
     {
-        if ($this->isPrototype) {
-            $copy = clone $this;
-            $copy->joinProducers[] = $producers;
-         
-            return $copy;
-        }
-
-        $this->initialize();
-        $this->source->addProducers($producers);
+        $instance = $this->instance();
+        $instance->producer = Producers::multiSourced($instance->producer, ...$producers);
+        $instance->pipe->prepareForJoin();
         
-        return $this;
+        return $instance;
     }
     
     /**
@@ -1042,9 +1054,7 @@ final class Stream extends StreamSource
             $instance->registerFeedStream($stream);
         }
         
-        $instance->chainOperation(Operations::feed(...$streams));
-        
-        return $instance;
+        return $instance->chainOperation(Operations::feed(...$streams))->stream;
     }
     
     /**
@@ -1321,6 +1331,7 @@ final class Stream extends StreamSource
     public function wrap($producer): Stream
     {
         $copy = clone $this;
+        $copy->pipe->prepareForWrap();
         $copy->producer = Producers::getAdapter($producer);
         
         return $copy;
@@ -1472,7 +1483,9 @@ final class Stream extends StreamSource
      */
     public function collect(bool $reindex = false): LastOperation
     {
-        return $this->addLastOperation(Operations::collect($this->instance(), $reindex));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::collect($stream, $reindex));
     }
     
     /**
@@ -1480,7 +1493,9 @@ final class Stream extends StreamSource
      */
     public function collectKeys(): LastOperation
     {
-        return $this->addLastOperation(Operations::collectKeys($this->instance()));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::collectKeys($stream));
     }
     
     /**
@@ -1514,7 +1529,9 @@ final class Stream extends StreamSource
      */
     public function count(): LastOperation
     {
-        return $this->addLastOperation(Operations::count($this->instance()));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::count($stream));
     }
     
     /**
@@ -1523,7 +1540,9 @@ final class Stream extends StreamSource
      */
     public function reduce($reducer, $orElse = null): LastOperation
     {
-        return $this->addLastOperation(Operations::reduce($this->instance(), $reducer, $orElse));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::reduce($stream, $reducer, $orElse));
     }
     
     /**
@@ -1532,7 +1551,9 @@ final class Stream extends StreamSource
      */
     public function fold($initial, $reducer): LastOperation
     {
-        return $this->addLastOperation(Operations::fold($this->instance(), $initial, $reducer));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::fold($stream, $initial, $reducer));
     }
     
     /**
@@ -1540,7 +1561,9 @@ final class Stream extends StreamSource
      */
     public function isNotEmpty(): LastOperation
     {
-        return $this->addLastOperation(Operations::isNotEmpty($this->instance()));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::isNotEmpty($stream));
     }
     
     /**
@@ -1548,7 +1571,9 @@ final class Stream extends StreamSource
      */
     public function isEmpty(): LastOperation
     {
-        return $this->addLastOperation(Operations::isEmpty($this->instance()));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::isEmpty($stream));
     }
     
     /**
@@ -1558,7 +1583,9 @@ final class Stream extends StreamSource
      */
     public function has($value, ?int $mode = null): LastOperation
     {
-        return $this->addLastOperation(Operations::has($this->instance(), $value, $mode));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::has($stream, $value, $mode));
     }
     
     /**
@@ -1574,7 +1601,9 @@ final class Stream extends StreamSource
      */
     public function hasEvery(array $values, int $mode = Check::VALUE): LastOperation
     {
-        return $this->addLastOperation(Operations::hasEvery($this->instance(), $values, $mode));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::hasEvery($stream, $values, $mode));
     }
     
     /**
@@ -1582,7 +1611,9 @@ final class Stream extends StreamSource
      */
     public function hasOnly(array $values, int $mode = Check::VALUE): LastOperation
     {
-        return $this->addLastOperation(Operations::hasOnly($this->instance(), $values, $mode));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::hasOnly($stream, $values, $mode));
     }
     
     /**
@@ -1592,7 +1623,9 @@ final class Stream extends StreamSource
      */
     public function find($predicate, ?int $mode = null): LastOperation
     {
-        return $this->addLastOperation(Operations::find($this->instance(), $predicate, $mode));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::find($stream, $predicate, $mode));
     }
     
     /**
@@ -1608,7 +1641,9 @@ final class Stream extends StreamSource
      */
     public function first(): LastOperation
     {
-        return $this->addLastOperation(Operations::first($this->instance()));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::first($stream));
     }
     
     /**
@@ -1618,7 +1653,9 @@ final class Stream extends StreamSource
      */
     public function firstOrElse($orElse): LastOperation
     {
-        return $this->addLastOperation(Operations::first($this->instance(), $orElse));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::first($stream, $orElse));
     }
     
     /**
@@ -1626,7 +1663,9 @@ final class Stream extends StreamSource
      */
     public function last(): LastOperation
     {
-        return $this->addLastOperation(Operations::last($this->instance()));
+        $stream = $this->instance();
+        
+        return $stream->addLastOperation(Operations::last($stream));
     }
     
     /**
@@ -1636,7 +1675,9 @@ final class Stream extends StreamSource
      */
     public function lastOrElse($orElse): LastOperation
     {
-        return $this->addLastOperation(Operations::last($this->instance(), $orElse));
+        $stream = $this->instance();
+        
+        return $this->addLastOperation(Operations::last($stream, $orElse));
     }
     
     /**
@@ -1681,15 +1722,15 @@ final class Stream extends StreamSource
     public function loop(bool $run = false): Executable
     {
         $instance = $this->instance();
-        
         $instance->registerFeedStream($instance);
-        $instance->chainOperation(Operations::feed($instance));
+        
+        $stream = $instance->chainOperation(Operations::feed($instance))->stream;
         
         if ($run) {
-            $instance->run();
+            $stream->run();
         }
         
-        return $instance;
+        return $stream;
     }
     
     /**
@@ -1698,16 +1739,6 @@ final class Stream extends StreamSource
      */
     public function run(bool $onlyIfNotRunYet = false): void
     {
-        if ($this->isPrototype && !empty($this->joinProducers)) {
-            $this->initialize();
-            
-            foreach ($this->joinProducers as $producers) {
-                $this->source->addProducers($producers);
-            }
-            
-            $this->joinProducers = [];
-        }
-        
         if ($onlyIfNotRunYet && !$this->isNotStartedYet()) {
             return;
         }
@@ -1733,6 +1764,8 @@ final class Stream extends StreamSource
     public function consume($producer): void
     {
         if (!$this->isInitialized) {
+            $this->pipe->prepareForConsume();
+            
             $this->prepareToRun();
             $this->initialize();
             
@@ -1905,8 +1938,7 @@ final class Stream extends StreamSource
     
     private function prepareForIterate(): void
     {
-        $this->chainOperation(new Iterate());
-        $this->initialize();
+        $this->chainOperation(new Iterate())->stream->initialize();
     }
     
     protected function canBuildPowerStream(): bool
@@ -1966,17 +1998,21 @@ final class Stream extends StreamSource
     
     private function initialize(): void
     {
-        if (!$this->isInitialized) {
-            $this->signal = new Signal($this);
-            $this->sources = new Sources();
-            
-            $this->setSource(new SourceNotReady(
-                new SourceData($this, $this->signal, $this->pipe, $this->sources),
-                $this->producer
-            ));
-            
-            $this->isInitialized = true;
+        if ($this->isInitialized && !$this->isPrototype) {
+            return;
         }
+        
+        $this->signal = new Signal($this);
+        $this->sources = new Sources();
+        
+        $this->setSource(new SourceNotReady(
+            new SourceData($this, $this->signal, $this->pipe, $this->sources),
+            $this->producer
+        ));
+        
+        $this->pipe->head->streamingStart($this->signal);
+        
+        $this->isInitialized = true;
     }
     
     protected function finish(): void
@@ -2086,7 +2122,9 @@ final class Stream extends StreamSource
     
     protected function forget(Operation $operation): void
     {
-        $this->source->forget($operation);
+        if (!$this->isPrototype) {
+            $this->source->forget($operation);
+        }
     }
     
     protected function swapHead(Operation $operation): void
@@ -2111,18 +2149,16 @@ final class Stream extends StreamSource
     
     private function addLastOperation(Operation $operation): LastOperation
     {
-        $next = $this->instance()->chainOperation($operation);
-        \assert($next instanceof LastOperation);
+        $result = $this->chainOperation($operation);
         
-        return $next;
+        $this->pipe = $result->pipe;
+        
+        return $result->getLastOperation();
     }
     
     private function addOperation(Operation $operation): Stream
     {
-        $instance = $this->instance();
-        $instance->chainOperation($operation);
-        
-        return $instance;
+        return $this->instance()->chainOperation($operation)->stream;
     }
     
     private function instance(): Stream
@@ -2145,20 +2181,20 @@ final class Stream extends StreamSource
         }
     }
     
-    private function chainOperation(Operation $next): Operation
+    private function chainOperation(Operation $next): ChainOperationResult
     {
-        $operation = $this->pipe->chainOperation($next);
-        \assert($operation instanceof Operation);
+        if ($this->isExecuted && !$this->isConsumer) {
+            throw StreamExceptionFactory::cannotAddOperationToStartedStream();
+        }
         
-        $operation->assignStream($this);
-        
-        return $operation;
+        return $this->pipe->chainOperation($next);
     }
     
     protected function prepareSubstream(bool $isLoop): void
     {
         $this->initialize();
         $this->source->prepareSubstream($isLoop);
+        $this->refreshResult();
     }
     
     protected function process(Signal $signal): bool
@@ -2173,6 +2209,11 @@ final class Stream extends StreamSource
         $last = $this->pipe->last;
         
         return $last instanceof LastOperation ? $last : null;
+    }
+    
+    protected function cloneStream(): Stream
+    {
+        return clone $this;
     }
     
     protected function setSource(Source $state): void

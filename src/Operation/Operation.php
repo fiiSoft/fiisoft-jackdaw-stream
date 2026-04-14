@@ -25,6 +25,8 @@ interface Operation extends Destroyable, StreamBuilder
     
     public function prepend(Operation $operation): void;
     
+    public function streamingStart(Signal $signal): void;
+    
     /**
      * @return bool return true to resume stream processing, false otherwise
      */

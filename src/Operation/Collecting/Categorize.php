@@ -26,6 +26,8 @@ abstract class Categorize extends GroupingOperation
     {
         $signal->restartWith(Producers::getAdapter($this->collections), $this->next);
         
+        $this->collections = [];
+        
         return true;
     }
 }

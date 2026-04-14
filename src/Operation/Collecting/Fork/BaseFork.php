@@ -14,10 +14,13 @@ abstract class BaseFork extends ProcessOperation
 {
     protected Discriminator $discriminator;
     
-    protected ?Producer $producer = null;
-    
     /** @var array<string|int, ForkHandler> */
     protected array $handlers = [];
+    
+    /** @var array<string|int, ForkHandler> */
+    private array $prototypes = [];
+    
+    private ?Producer $producer = null;
     
     /**
      * @param DiscriminatorReady|callable|array<string|int> $discriminator
@@ -28,7 +31,7 @@ abstract class BaseFork extends ProcessOperation
         $this->discriminator = Discriminators::getAdapter($discriminator);
         
         foreach ($handlers as $key => $handler) {
-            $this->handlers[$key] = ForkHandlerFactory::adaptHandler($handler);
+            $this->prototypes[$key] = ForkHandlerFactory::getAdapter($handler);
         }
     }
     
@@ -36,8 +39,10 @@ abstract class BaseFork extends ProcessOperation
     {
         parent::prepare();
         
-        foreach ($this->handlers as $handler) {
-            $handler->prepare();
+        $this->handlers = [];
+        
+        foreach ($this->prototypes as $name => $prototype) {
+            $this->handlers[$name] = $prototype->create();
         }
     }
     

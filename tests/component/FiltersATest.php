@@ -1356,7 +1356,7 @@ final class FiltersATest extends TestCase
     public function test_isDay_filter_throws_exception_when_param_days_is_invalid(...$days): void
     {
         $this->expectExceptionObject(InvalidParamException::describe('days', $days));
-        
+
         Filters::time()->isDay(...$days);
     }
     
@@ -1367,7 +1367,7 @@ final class FiltersATest extends TestCase
     public function test_isNotDay_filter_throws_exception_when_param_days_is_invalid(...$days): void
     {
         $this->expectExceptionObject(InvalidParamException::describe('days', $days));
-        
+
         Filters::time()->isNotDay(...$days);
     }
     
@@ -1376,7 +1376,6 @@ final class FiltersATest extends TestCase
         return [
             [],
             [''],
-            [1],
             [Day::SAT, 'foo']
         ];
     }

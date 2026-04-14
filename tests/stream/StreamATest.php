@@ -1595,7 +1595,7 @@ final class StreamATest extends TestCase
     
     public function test_unable_to_chain_operation_after_terminating_one(): void
     {
-        $this->expectExceptionObject(PipeExceptionFactory::cannotAddOperationToFinalOne());
+        $this->expectExceptionObject(PipeExceptionFactory::cannotAddOperationToTheFinalOne());
         
         $stream = Stream::empty();
         $stream->fold(1, Reducers::average());
@@ -1788,57 +1788,15 @@ final class StreamATest extends TestCase
     
     public function test_reindex_keys_in_array_values_using_mapper_simple(): void
     {
-        $data = [
-            5 => ['a' => 1, 'b' => 2, 'c' => 3],
-            2 => ['d' => 4, 'e' => 5, 'f' => 6],
-            4 => ['g' => 7, 'h' => 8, 'i' => 9],
-        ];
-        
-        $result = Stream::from($data)->map(Mappers::reindexKeys())->toArrayAssoc();
-        
-        self::assertSame([
-            5 => [1, 2, 3],
-            2 => [4, 5, 6],
-            4 => [7, 8, 9],
-        ], $result);
-    }
-    
-    public function test_reindex_keys_in_array_values_using_mapper_complex(): void
-    {
-        $data = [
-            5 => ['a' => 1, 'b' => 2, 'c' => 3],
-            2 => ['d' => 4, 'e' => 5, 'f' => 6],
-            4 => ['g' => 7, 'h' => 8, 'i' => 9],
-        ];
-        
-        self::assertSame([
-            5 => [1 => 1, 3 => 2, 5 => 3],
-            2 => [1 => 4, 3 => 5, 5 => 6],
-            4 => [1 => 7, 3 => 8, 5 => 9],
-        ], Stream::from($data)->map(Mappers::reindexKeys(1, 2))->toArrayAssoc());
+        $this->performTest001(false);
     }
     
     public function test_reindex_keys_in_array_values_using_mapper_simple_with_onError_handler(): void
     {
-        $data = [
-            5 => ['a' => 1, 'b' => 2, 'c' => 3],
-            2 => ['d' => 4, 'e' => 5, 'f' => 6],
-            4 => ['g' => 7, 'h' => 8, 'i' => 9],
-        ];
-        
-        $result = Stream::from($data)
-            ->onError(OnError::skip())
-            ->map(Mappers::reindexKeys())
-            ->toArrayAssoc();
-        
-        self::assertSame([
-            5 => [1, 2, 3],
-            2 => [4, 5, 6],
-            4 => [7, 8, 9],
-        ], $result);
+        $this->performTest001(true);
     }
     
-    public function test_reindex_keys_in_array_values_using_mapper_complex_with_onError_handler(): void
+    private function performTest001(bool $onError): void
     {
         $data = [
             5 => ['a' => 1, 'b' => 2, 'c' => 3],
@@ -1846,16 +1804,48 @@ final class StreamATest extends TestCase
             4 => ['g' => 7, 'h' => 8, 'i' => 9],
         ];
         
-        $result = Stream::from($data)
-            ->onError(OnError::skip())
-            ->map(Mappers::reindexKeys(1, 2))
-            ->toArrayAssoc();
+        $stream = Stream::from($data)->map(Mappers::reindexKeys());
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([
+            5 => [1, 2, 3],
+            2 => [4, 5, 6],
+            4 => [7, 8, 9],
+        ], $stream->toArrayAssoc());
+    }
+    
+    public function test_reindex_keys_in_array_values_using_mapper_complex(): void
+    {
+        $this->performTest002(false);
+    }
+    
+    public function test_reindex_keys_in_array_values_using_mapper_complex_with_onError_handler(): void
+    {
+        $this->performTest002(true);
+    }
+    
+    private function performTest002(bool $onError): void
+    {
+        $data = [
+            5 => ['a' => 1, 'b' => 2, 'c' => 3],
+            2 => ['d' => 4, 'e' => 5, 'f' => 6],
+            4 => ['g' => 7, 'h' => 8, 'i' => 9],
+        ];
+        
+        $stream = Stream::from($data)->map(Mappers::reindexKeys(1, 2));
+        
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
         
         self::assertSame([
             5 => [1 => 1, 3 => 2, 5 => 3],
             2 => [1 => 4, 3 => 5, 5 => 6],
             4 => [1 => 7, 3 => 8, 5 => 9],
-        ], $result);
+        ], $stream->toArrayAssoc());
     }
     
     public function test_reindex_keys_in_array_values_using_mapper_complex_can_decrease_keys(): void

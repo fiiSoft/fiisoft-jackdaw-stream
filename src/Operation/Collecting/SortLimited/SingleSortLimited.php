@@ -74,9 +74,9 @@ final class SingleSortLimited extends SortLimited
     
     protected function __clone()
     {
-        parent::__clone();
-        
         $this->best = null;
+        
+        parent::__clone();
     }
     
     public function destroy(): void

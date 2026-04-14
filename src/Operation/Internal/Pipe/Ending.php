@@ -61,6 +61,11 @@ final class Ending implements Operation
         throw ImpossibleSituationException::called(__METHOD__);
     }
     
+    public function streamingStart(Signal $signal): void
+    {
+        //noop
+    }
+    
     public function streamingFinished(Signal $signal): bool
     {
         return false;

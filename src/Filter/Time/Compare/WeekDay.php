@@ -15,7 +15,7 @@ final class WeekDay extends TimeComparator
     
     /**
      * @param bool $isDay false value means "is not day"
-     * @param string[] $days it MUST be array of Day::* constants
+     * @param string[] $days it MUST be an array of Day::* constants
      */
     public function __construct(bool $isDay, array $days)
     {

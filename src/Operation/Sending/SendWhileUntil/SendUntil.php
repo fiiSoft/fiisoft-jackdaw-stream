@@ -8,10 +8,13 @@ final class SendUntil extends SendWhileUntil
 {
     public function handle(Signal $signal): void
     {
-        if ($this->condition->isAllowed($signal->item->value, $signal->item->key)) {
-            $signal->forget($this);
-        } else {
-            $this->consumer->consume($signal->item->value, $signal->item->key);
+        if ($this->isActive) {
+            if ($this->condition->isAllowed($signal->item->value, $signal->item->key)) {
+                $this->isActive = false;
+                $signal->forget($this);
+            } else {
+                $this->consumer->consume($signal->item->value, $signal->item->key);
+            }
         }
         
         $this->next->handle($signal);

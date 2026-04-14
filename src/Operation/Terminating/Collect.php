@@ -7,6 +7,7 @@ use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Operation\Terminating\Collect\CollectKeepKeys;
 use FiiSoft\Jackdaw\Operation\Terminating\Collect\CollectReindexKeys;
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\Transformer\Transformer;
 
 abstract class Collect extends BaseCollect implements Reindexable
 {
@@ -19,9 +20,16 @@ abstract class Collect extends BaseCollect implements Reindexable
             : new CollectKeepKeys($stream, $reindex);
     }
     
-    final protected function __construct(Stream $stream, bool $reindex = false)
-    {
-        parent::__construct($stream);
+    /**
+     * @param callable|mixed|null $orElse
+     */
+    final protected function __construct(
+        Stream $stream,
+        bool $reindex = false,
+        $orElse = null,
+        ?Transformer $transformer = null
+    ) {
+        parent::__construct($stream, $orElse, $transformer);
         
         $this->reindex = $reindex;
     }
@@ -34,5 +42,10 @@ abstract class Collect extends BaseCollect implements Reindexable
     final public function reindexed(): Operation
     {
         return $this->reindex ? $this : self::create($this->stream, true);
+    }
+    
+    final public function makeDetachedCopy(): self
+    {
+        return new $this($this->stream, $this->reindex, $this->orElse, $this->transformer);
     }
 }

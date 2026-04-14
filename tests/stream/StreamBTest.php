@@ -12,7 +12,6 @@ use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
-use FiiSoft\Jackdaw\Internal\Exception\PipeExceptionFactory;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Operation\Special\Assert\AssertionFailed;
@@ -39,20 +38,15 @@ final class StreamBTest extends TestCase
     
     public function test_omitBy(): void
     {
-        $rowset = [
-            ['id' => 2, 'name' => 'Sue', 'age' => 22],
-            ['id' => 9, 'name' => 'Chris', 'age' => 17],
-            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
-            ['id' => 5, 'name' => 'Chris', 'age' => 24],
-            ['id' => 7, 'name' => 'Sue', 'age' => 18],
-        ];
-        
-        $ids = Stream::from($rowset)->omitBy('age', Filters::lessThan(18))->extract('id')->toArray();
-        
-        self::assertSame([2, 5, 7], $ids);
+        $this->performTest003(false);
     }
     
     public function test_omitBy_with_onerror_handler(): void
+    {
+        $this->performTest003(true);
+    }
+    
+    private function performTest003(bool $onError): void
     {
         $rowset = [
             ['id' => 2, 'name' => 'Sue', 'age' => 22],
@@ -62,13 +56,13 @@ final class StreamBTest extends TestCase
             ['id' => 7, 'name' => 'Sue', 'age' => 18],
         ];
         
-        $ids = Stream::from($rowset)
-            ->onError(OnError::abort())
-            ->omitBy('age', Filters::lessThan(18))
-            ->extract('id')
-            ->toArray();
+        $stream = Stream::from($rowset)->omitBy('age', Filters::lessThan(18))->extract('id');
         
-        self::assertSame([2, 5, 7], $ids);
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([2, 5, 7], $stream->toArray());
     }
     
     public function test_castToString_simple_values(): void
@@ -396,20 +390,6 @@ final class StreamBTest extends TestCase
         self::assertSame(1, $flag);
     }
     
-    public function test_cannot_add_operation_to_stream_that_has_already_started(): void
-    {
-        //Assert
-        $this->expectExceptionObject(PipeExceptionFactory::cannotAddOperationToStartedStream());
-        
-        //Arrange
-        $stream = Stream::from([1, 2, 3]);
-        $stream = $stream->limit(2);
-        $stream->run();
-        
-        //Act
-        $stream->filter('is_int');
-    }
-    
     public function test_fork_with_tail_of_substream(): void
     {
         $result = Stream::from(['a', 1, 'b', 2, 'c', 3, 'd'])
@@ -442,7 +422,7 @@ final class StreamBTest extends TestCase
         ], $result);
     }
     
-    public function test_fork_with_shuffle_and_redue(): void
+    public function test_fork_with_shuffle_and_reduce(): void
     {
         $result = Stream::from(['a', 1, 'b', 2, 'c', 3, 'd'])
             ->fork('is_string', Stream::empty()->shuffle()->collect())

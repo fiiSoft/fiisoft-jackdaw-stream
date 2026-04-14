@@ -13,12 +13,12 @@ interface TimeFilterPicker
     /**
      * @param string ...$days at least one of Day::* constants
      */
-    public function isDay(...$days): Filter;
+    public function isDay(string ...$days): Filter;
     
     /**
      * @param string ...$days at least one of Day::* constants
      */
-    public function isNotDay(...$days): Filter;
+    public function isNotDay(string ...$days): Filter;
     
     /**
      * @param \DateTimeInterface|string $time

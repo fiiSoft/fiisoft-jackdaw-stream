@@ -771,36 +771,15 @@ final class StreamGTest extends TestCase
     
     public function test_chunk_with_changing_size(): void
     {
-        $size = 1;
-        
-        $changeSize = Consumers::changeIntBy($size, static function () use (&$size): int {
-            static $up = true;
-            
-            if ($up) {
-                if ($size < 5) {
-                    return 1;
-                }
-                
-                $up = false;
-            }
-            
-            return -1;
-        });
-        
-        $result = Producers::repeater('*')
-            ->stream()
-            ->while(static function () use (&$size): bool {
-                return $size > 0;
-            })
-            ->chunk(IntNum::readFrom($size), true)
-            ->concat('')
-            ->call($changeSize)
-            ->toArray();
-        
-        self::assertSame(['*', '**', '***', '****', '*****', '****', '***', '**', '*'], $result);
+        $this->performTest039(false);
     }
     
     public function test_chunk_with_changing_size_with_onerror_handler(): void
+    {
+        $this->performTest039(true);
+    }
+    
+    private function performTest039(bool $onError): void
     {
         $size = 1;
         
@@ -818,18 +797,20 @@ final class StreamGTest extends TestCase
             return -1;
         });
         
-        $result = Producers::repeater('*')
+        $stream = Producers::repeater('*')
             ->stream()
-            ->onError(OnError::abort())
             ->while(static function () use (&$size): bool {
                 return $size > 0;
             })
             ->chunk(IntNum::readFrom($size), true)
             ->concat('')
-            ->call($changeSize)
-            ->toArray();
+            ->call($changeSize);
         
-        self::assertSame(['*', '**', '***', '****', '*****', '****', '***', '**', '*'], $result);
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame(['*', '**', '***', '****', '*****', '****', '***', '**', '*'], $stream->toArray());
     }
     
     public function test_stream_from_cyclic_producer(): void
@@ -1299,58 +1280,46 @@ final class StreamGTest extends TestCase
     
     public function test_use_fork_to_send_data_sequence_memo(): void
     {
-        $result = Stream::from(['aa', 'vvv', 'c', 'dddd', 'aa', 'c', 'vvv', 'aa'])
-            ->fork('strlen', Memo::sequence())
-            ->toArrayAssoc();
-        
-        self::assertSame([
-            2 => ['aa', 4 => 'aa', 7 => 'aa'],
-            3 => [1 => 'vvv', 6 => 'vvv'],
-            1 => [2 => 'c', 5 => 'c'],
-            4 => [3 => 'dddd'],
-        ], $result);
+        $this->performTest040(false);
     }
     
     public function test_use_fork_to_send_data_sequence_memo_with_onerror_handler(): void
     {
-        $result = Stream::from(['aa', 'vvv', 'c', 'dddd', 'aa', 'c', 'vvv', 'aa'])
-            ->onError(OnError::abort())
-            ->fork('strlen', Memo::sequence())
-            ->toArrayAssoc();
+        $this->performTest040(true);
+    }
+    
+    private function performTest040(bool $onError): void
+    {
+        $stream = Stream::from(['aa', 'vvv', 'c', 'dddd', 'aa', 'c', 'vvv', 'aa'])
+            ->fork('strlen', Memo::sequence());
+        
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
         
         self::assertSame([
             2 => ['aa', 4 => 'aa', 7 => 'aa'],
             3 => [1 => 'vvv', 6 => 'vvv'],
             1 => [2 => 'c', 5 => 'c'],
             4 => [3 => 'dddd'],
-        ], $result);
+        ], $stream->toArrayAssoc());
     }
     
     public function test_call_filter_map_by_arguments_from_array_send_to_callable_1(): void
     {
-        $collector = Collectors::default();
-        
-        $result = Stream::from(self::ROWSET)
-            ->reorder(['name', 'age', 'sex', 'id'])
-            ->callArgs(static function (string $name, int $age, $_, int $id) use ($collector) {
-                if ($age === 18) {
-                    $collector->set($id, $name);
-                }
-            })
-            ->filterArgs(static fn($_, int $age, string $sex): bool => $sex === 'female' && $age < 18)
-            ->mapArgs(static fn(string $name, int $age): string => $name.' ('.$age.')')
-            ->toArray();
-        
-        self::assertSame(['Sue (17)', 'Joanna (15)'], $result);
-        self::assertSame([9 => 'Chris', 1 => 'Kila'], $collector->toArray());
+        $this->performTest041(false);
     }
     
     public function test_call_filter_map_by_arguments_from_array_send_to_callable_with_onerror_handler_1(): void
     {
+        $this->performTest041(true);
+    }
+    
+    private function performTest041(bool $onError): void
+    {
         $collector = Collectors::default();
         
-        $result = Stream::from(self::ROWSET)
-            ->onError(OnError::abort())
+        $stream = Stream::from(self::ROWSET)
             ->reorder(['name', 'age', 'sex', 'id'])
             ->callArgs(static function (string $name, int $age, $_, int $id) use ($collector) {
                 if ($age === 18) {
@@ -1358,38 +1327,31 @@ final class StreamGTest extends TestCase
                 }
             })
             ->filterArgs(static fn($_, int $age, string $sex): bool => $sex === 'female' && $age < 18)
-            ->mapArgs(static fn(string $name, int $age): string => $name.' ('.$age.')')
-            ->toArray();
+            ->mapArgs(static fn(string $name, int $age): string => $name.' ('.$age.')');
         
-        self::assertSame(['Sue (17)', 'Joanna (15)'], $result);
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame(['Sue (17)', 'Joanna (15)'], $stream->toArray());
         self::assertSame([9 => 'Chris', 1 => 'Kila'], $collector->toArray());
     }
     
     public function test_call_filter_map_by_arguments_from_array_send_to_callable_2(): void
     {
-        $collector = Collectors::default();
-        
-        $result = Stream::from(self::ROWSET)
-            ->reorder(['name', 'age', 'sex', 'id'])
-            ->call(Consumers::byArgs(static function (string $name, int $age, $_, int $id) use ($collector) {
-                if ($age === 18) {
-                    $collector->set($id, $name);
-                }
-            }))
-            ->filter(Filters::byArgs(static fn($_, int $age, string $sex): bool => $sex === 'female' && $age < 18))
-            ->map(Mappers::byArgs(static fn(string $name, int $age): string => $name.' ('.$age.')'))
-            ->toArray();
-        
-        self::assertSame(['Sue (17)', 'Joanna (15)'], $result);
-        self::assertSame([9 => 'Chris', 1 => 'Kila'], $collector->toArray());
+        $this->performTest042(false);
     }
     
     public function test_call_filter_map_by_arguments_from_array_send_to_callable_with_onerror_handler_2(): void
     {
+        $this->performTest042(true);
+    }
+    
+    private function performTest042(bool $onError): void
+    {
         $collector = Collectors::default();
         
-        $result = Stream::from(self::ROWSET)
-            ->onError(OnError::abort())
+        $stream = Stream::from(self::ROWSET)
             ->reorder(['name', 'age', 'sex', 'id'])
             ->call(Consumers::byArgs(static function (string $name, int $age, $_, int $id) use ($collector) {
                 if ($age === 18) {
@@ -1397,10 +1359,13 @@ final class StreamGTest extends TestCase
                 }
             }))
             ->filter(Filters::byArgs(static fn($_, int $age, string $sex): bool => $sex === 'female' && $age < 18))
-            ->map(Mappers::byArgs(static fn(string $name, int $age): string => $name.' ('.$age.')'))
-            ->toArray();
+            ->map(Mappers::byArgs(static fn(string $name, int $age): string => $name.' ('.$age.')'));
         
-        self::assertSame(['Sue (17)', 'Joanna (15)'], $result);
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame(['Sue (17)', 'Joanna (15)'], $stream->toArray());
         self::assertSame([9 => 'Chris', 1 => 'Kila'], $collector->toArray());
     }
     
@@ -1724,21 +1689,16 @@ final class StreamGTest extends TestCase
     
     public function test_filter_using_four_OR_filters(): void
     {
-        $len = Filters::length();
-        
-        $filter = $len->eq(1)
-            ->or($len->eq(2))
-            ->or($len->eq(3))
-            ->or($len->eq(4));
-        
-        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
-        $result = Stream::from($data)->filter($filter)->toArray();
-        
-        self::assertSame(\array_slice($data, 0, 4), $result);
+        $this->performTest043(false);
     }
     
     public function test_filter_using_four_OR_filters_with_onerror_handler(): void
     {
+        $this->performTest043(true);
+    }
+    
+    private function performTest043(bool $onError): void
+    {
         $len = Filters::length();
         
         $filter = $len->eq(1)
@@ -1747,29 +1707,27 @@ final class StreamGTest extends TestCase
             ->or($len->eq(4));
         
         $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
-        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        $stream = Stream::from($data)->filter($filter);
         
-        self::assertSame(\array_slice($data, 0, 4), $result);
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame(\array_slice($data, 0, 4), $stream->toArray());
     }
     
     public function test_filter_using_five_OR_filters(): void
     {
-        $len = Filters::length();
-        
-        $filter = $len->eq(1)
-            ->or($len->eq(2))
-            ->or($len->eq(3))
-            ->or($len->eq(4))
-            ->or($len->eq(5));
-        
-        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
-        $result = Stream::from($data)->filter($filter)->toArray();
-        
-        self::assertSame(\array_slice($data, 0, 5), $result);
+        $this->performTest044(false);
     }
     
     public function test_filter_using_five_OR_filters_with_onerror_handler(): void
     {
+        $this->performTest044(true);
+    }
+    
+    private function performTest044(bool $onError): void
+    {
         $len = Filters::length();
         
         $filter = $len->eq(1)
@@ -1779,30 +1737,27 @@ final class StreamGTest extends TestCase
             ->or($len->eq(5));
         
         $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
-        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        $stream = Stream::from($data)->filter($filter);
         
-        self::assertSame(\array_slice($data, 0, 5), $result);
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame(\array_slice($data, 0, 5), $stream->toArray());
     }
     
     public function test_filter_using_six_OR_filters(): void
     {
-        $len = Filters::length();
-        
-        $filter = $len->eq(1)
-            ->or($len->eq(2))
-            ->or($len->eq(3))
-            ->or($len->eq(4))
-            ->or($len->eq(5))
-            ->or($len->eq(6));
-        
-        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
-        $result = Stream::from($data)->filter($filter)->toArray();
-        
-        self::assertSame(\array_slice($data, 0, 6), $result);
+        $this->performTest045(false);
     }
     
     public function test_filter_using_six_OR_filters_with_onerror_handler(): void
     {
+        $this->performTest045(true);
+    }
+    
+    private function performTest045(bool $onError): void
+    {
         $len = Filters::length();
         
         $filter = $len->eq(1)
@@ -1813,31 +1768,27 @@ final class StreamGTest extends TestCase
             ->or($len->eq(6));
         
         $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
-        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        $stream = Stream::from($data)->filter($filter);
         
-        self::assertSame(\array_slice($data, 0, 6), $result);
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame(\array_slice($data, 0, 6), $stream->toArray());
     }
     
     public function test_filter_using_seven_OR_filters(): void
     {
-        $len = Filters::length();
-        
-        $filter = $len->eq(1)
-            ->or($len->eq(2))
-            ->or($len->eq(3))
-            ->or($len->eq(4))
-            ->or($len->eq(5))
-            ->or($len->eq(6))
-            ->or($len->eq(7));
-        
-        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
-        $result = Stream::from($data)->filter($filter)->toArray();
-        
-        self::assertSame(\array_slice($data, 0, 7), $result);
+        $this->performTest046(false);
     }
     
     public function test_filter_using_seven_OR_filters_with_onerror_handler(): void
     {
+        $this->performTest046(true);
+    }
+    
+    private function performTest046(bool $onError): void
+    {
         $len = Filters::length();
         
         $filter = $len->eq(1)
@@ -1849,31 +1800,26 @@ final class StreamGTest extends TestCase
             ->or($len->eq(7));
         
         $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
-        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        $stream = Stream::from($data)->filter($filter);
         
-        self::assertSame(\array_slice($data, 0, 7), $result);
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame(\array_slice($data, 0, 7), $stream->toArray());
     }
     
     public function test_filter_using_eight_OR_filters(): void
     {
-        $len = Filters::length();
-        
-        $filter = $len->eq(1)
-            ->or($len->eq(2))
-            ->or($len->eq(3))
-            ->or($len->eq(4))
-            ->or($len->eq(5))
-            ->or($len->eq(6))
-            ->or($len->eq(7))
-            ->or($len->eq(8));
-        
-        $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678'];
-        $result = Stream::from($data)->filter($filter)->toArray();
-        
-        self::assertSame($data, $result);
+        $this->performTest047(false);
     }
     
     public function test_filter_using_eight_OR_filters_with_onerror_handler(): void
+    {
+        $this->performTest047(true);
+    }
+    
+    private function performTest047(bool $onError): void
     {
         $len = Filters::length();
         
@@ -1887,9 +1833,13 @@ final class StreamGTest extends TestCase
             ->or($len->eq(8));
         
         $data = ['1', '12', '123', '1234', '12345', '123456', '1234567', '12345678', '123456789'];
-        $result = Stream::from($data)->onError(OnError::skip())->filter($filter)->toArray();
+        $stream = Stream::from($data)->filter($filter);
         
-        self::assertSame(\array_slice($data, 0, 8), $result);
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame(\array_slice($data, 0, 8), $stream->toArray());
     }
     
     public function test_filter_using_eight_OR_filters_checkKey(): void
@@ -1914,36 +1864,30 @@ final class StreamGTest extends TestCase
     
     public function test_route_sends_value_to_handler_when_condition_is_satisfied(): void
     {
-        $concatStrings = Reducers::concat('|');
-        $positiveInts = Collectors::values();
-        $negativeInts = Stream::empty()->map('abs')->reduce(Reducers::product());
-        
-        $floats = Stream::from(['a', 1, 'b', 15.25, -2, 'c', 3, 'd', 18.0, -4, 'e', 5, 'f', -6])
-            ->route('is_string', $concatStrings)
-            ->route(Filters::isInt()->and(Filters::greaterOrEqual(0.0)), $positiveInts)
-            ->route(Filters::isInt()->and(Filters::lessThan(0.0)), $negativeInts)
-            ->toArray();
-        
-        self::assertSame([15.25, 18.0], $floats);
-        self::assertSame('a|b|c|d|e|f', $concatStrings->result());
-        self::assertSame([1, 3, 5], $positiveInts->toArray());
-        self::assertSame(48, $negativeInts->get());
+        $this->performTest048(false);
     }
     
     public function test_route_sends_value_to_handler_when_condition_is_satisfied_with_onerror_handler(): void
+    {
+        $this->performTest048(true);
+    }
+    
+    private function performTest048(bool $onError): void
     {
         $concatStrings = Reducers::concat('|');
         $positiveInts = Collectors::values();
         $negativeInts = Stream::empty()->map('abs')->reduce(Reducers::product());
         
-        $floats = Stream::from(['a', 1, 'b', 15.25, -2, 'c', 3, 'd', 18.0, -4, 'e', 5, 'f', -6])
-            ->onError(OnError::abort())
+        $stream = Stream::from(['a', 1, 'b', 15.25, -2, 'c', 3, 'd', 18.0, -4, 'e', 5, 'f', -6])
             ->route('is_string', $concatStrings)
             ->route(Filters::isInt()->and(Filters::greaterOrEqual(0.0)), $positiveInts)
-            ->route(Filters::isInt()->and(Filters::lessThan(0.0)), $negativeInts)
-            ->toArray();
+            ->route(Filters::isInt()->and(Filters::lessThan(0.0)), $negativeInts);
         
-        self::assertSame([15.25, 18.0], $floats);
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([15.25, 18.0], $stream->toArray());
         self::assertSame('a|b|c|d|e|f', $concatStrings->result());
         self::assertSame([1, 3, 5], $positiveInts->toArray());
         self::assertSame(48, $negativeInts->get());
@@ -1951,35 +1895,15 @@ final class StreamGTest extends TestCase
     
     public function test_switch_sends_value_to_handler_according_to_discriminator(): void
     {
-        $concatStrings = Reducers::concat('|');
-        $positiveInts = Collectors::values();
-        $negativeInts = Stream::empty()->map('abs')->reduce(Reducers::product());
-        
-        $discriminator = static function ($value): string {
-            if (\is_string($value)) {
-                return 'string';
-            } elseif (\is_int($value)) {
-                return $value >= 0.0 ? 'positiveInt' : 'negativeInt';
-            } else {
-                return 'unknown';
-            }
-        };
-        
-        $floats = Stream::from(['a', 1, 'b', 15.25, -2, 'c', 3, 'd', 18.0, -4, 'e', 5, 'f', -6])
-            ->switch($discriminator, [
-                'string' => $concatStrings,
-                'positiveInt' => $positiveInts,
-                'negativeInt' => $negativeInts,
-            ])
-            ->toArray();
-        
-        self::assertSame([15.25, 18.0], $floats);
-        self::assertSame('a|b|c|d|e|f', $concatStrings->result());
-        self::assertSame([1, 3, 5], $positiveInts->toArray());
-        self::assertSame(48, $negativeInts->get());
+        $this->performTest049(false);
     }
     
     public function test_switch_sends_value_to_handler_according_to_discriminator_with_onerror_handler(): void
+    {
+        $this->performTest049(true);
+    }
+    
+    private function performTest049(bool $onError): void
     {
         $concatStrings = Reducers::concat('|');
         $positiveInts = Collectors::values();
@@ -1995,16 +1919,18 @@ final class StreamGTest extends TestCase
             }
         };
         
-        $floats = Stream::from(['a', 1, 'b', 15.25, -2, 'c', 3, 'd', 18.0, -4, 'e', 5, 'f', -6])
-            ->onError(OnError::abort())
+        $stream = Stream::from(['a', 1, 'b', 15.25, -2, 'c', 3, 'd', 18.0, -4, 'e', 5, 'f', -6])
             ->switch($discriminator, [
                 'string' => $concatStrings,
                 'positiveInt' => $positiveInts,
                 'negativeInt' => $negativeInts,
-            ])
-            ->toArray();
+            ]);
         
-        self::assertSame([15.25, 18.0], $floats);
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([15.25, 18.0], $stream->toArray());
         self::assertSame('a|b|c|d|e|f', $concatStrings->result());
         self::assertSame([1, 3, 5], $positiveInts->toArray());
         self::assertSame(48, $negativeInts->get());

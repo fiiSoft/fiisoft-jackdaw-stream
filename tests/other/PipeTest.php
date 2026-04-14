@@ -12,7 +12,7 @@ use FiiSoft\Jackdaw\Internal\Exception\PipeExceptionFactory;
 use FiiSoft\Jackdaw\Internal\Pipe;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mappers;
-use FiiSoft\Jackdaw\Operation\Collecting\{Gather, Reverse, Segregate, ShuffleAll, Sort, SortLimited,
+use FiiSoft\Jackdaw\Operation\Collecting\{Cache, Gather, Reverse, Segregate, ShuffleAll, Sort, SortLimited,
     SortLimited\SingleSortLimited, Tail};
 use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, FilterByMany, FilterMany, FilterOp, Omit, OmitReps, Skip, SkipUntil,
     SkipWhile, Unique, Uptrends};
@@ -59,7 +59,35 @@ final class PipeTest extends TestCase
         $pipe = $this->getPipeFromStream($stream);
 
         //when
-        $this->chainOperations($pipe, $stream, ...$operations);
+        $pipe = $this->chainOperations($pipe, $stream, ...$operations);
+        
+        //then
+        $this->assertPipeContainsOperations($pipe, ...$expected);
+    }
+    
+    /**
+     * @dataProvider getDataForTestGeneralChainOperations
+     */
+    #[DataProvider('getDataForTestGeneralChainOperations')]
+    public function test_general_chain_operations_for_prototypes(...$testData): void
+    {
+        //prepare
+        $operations = $expected = [];
+
+        foreach ($testData as $item) {
+            if (\is_object($item)) {
+                $operations[] = $item;
+            } else {
+                $expected[] = $item;
+            }
+        }
+
+        //given
+        $stream = Stream::prototype();
+        $pipe = $this->getPipeFromStream($stream);
+
+        //when
+        $pipe = $this->chainOperations($pipe, $stream, ...$operations);
 
         //then
         $this->assertPipeContainsOperations($pipe, ...$expected);
@@ -80,6 +108,8 @@ final class PipeTest extends TestCase
             OP::aggregate(['a']), OP::reindex(1), Aggregate::class, Reindex::class
         ];
         yield 'Aggregate_Reindex_default' => [OP::aggregate(['a']), OP::reindex(), Aggregate::class];
+
+        yield 'Cache_Cache' => [OP::cache(), OP::cache(), Cache::class];
 
         yield 'Chunk_Flat_1' => [OP::chunk(1), OP::flat(1)];
         yield 'Chunk_Flat_3' => [OP::chunk(2, true), OP::flat(1), Chunk::class, Flat::class];
@@ -113,7 +143,7 @@ final class PipeTest extends TestCase
             OP::filter('is_string'), OP::omit('is_int'), OP::unique(), OP::filter('is_string'),
             FilterOp::class, Unique::class
         ];
-        
+
         yield 'Filter_First' => [OP::filter('is_string'), OP::first($stream), Find::class];
 
         yield 'FilterBy_FilterBy' => [
@@ -283,6 +313,7 @@ final class PipeTest extends TestCase
         yield 'Reverse_Sort' => [OP::reverse(), OP::sort(), Sort::class];
         yield 'Reverse_SortLimited' => [OP::reverse(), OP::sortLimited(3), SortLimited::class];
         yield 'Reverse_Tail' => [OP::reverse(), OP::tail(6), Limit::class, Reverse::class];
+        yield 'Reverse_Filter_Reverse' => [OP::reverse(), OP::filter('is_string'), OP::reverse(), FilterOp::class];
         
         yield 'Segregate_equal' => [OP::segregate(5), OP::tail(5), Segregate::class];
         yield 'Segregate_greater' => [OP::segregate(7), OP::tail(5), Segregate::class, Skip::class];
@@ -403,7 +434,7 @@ final class PipeTest extends TestCase
         
         //when
         $flat = OP::flat($firstLevel);
-        $this->chainOperations($pipe, $stream, $flat, OP::flat($secondLevel));
+        $pipe = $this->chainOperations($pipe, $stream, $flat, OP::flat($secondLevel));
         
         //then
         $this->assertPipeContainsOperations($pipe, Flat::class);
@@ -434,7 +465,7 @@ final class PipeTest extends TestCase
         
         //when
         $shuffle = OP::shuffle($firstChunkSize);
-        $this->chainOperations($pipe, $stream, $shuffle, OP::shuffle($secondChunkSize));
+        $pipe = $this->chainOperations($pipe, $stream, $shuffle, OP::shuffle($secondChunkSize));
         
         //then
         if ($isChunked) {
@@ -476,7 +507,7 @@ final class PipeTest extends TestCase
         $everyNth = OP::everyNth(2);
 
         //when
-        $this->chainOperations($pipe, $stream, $everyNth, OP::everyNth(3));
+        $pipe = $this->chainOperations($pipe, $stream, $everyNth, OP::everyNth(3));
 
         //then
         $this->assertPipeContainsOperations($pipe, EveryNth::class);
@@ -758,7 +789,7 @@ final class PipeTest extends TestCase
         $operation = OP::until(Filters::NOT('is_string'));
         
         //when
-        $this->chainOperations($pipe, $stream, $operation);
+        $pipe = $this->chainOperations($pipe, $stream, $operation);
         
         //then
         $addedOperation = $pipe->head->getNext();
@@ -780,7 +811,7 @@ final class PipeTest extends TestCase
         $operation = OP::skipWhile(Filters::NOT('is_string'));
         
         //when
-        $this->chainOperations($pipe, $stream, $operation);
+        $pipe = $this->chainOperations($pipe, $stream, $operation);
         
         //then
         $addedOperation = $pipe->head->getNext();
@@ -797,7 +828,7 @@ final class PipeTest extends TestCase
         $operation = OP::skipUntil(Filters::NOT('is_string'));
         
         //when
-        $this->chainOperations($pipe, $stream, $operation);
+        $pipe = $this->chainOperations($pipe, $stream, $operation);
         
         //then
         $addedOperation = $pipe->head->getNext();
@@ -856,13 +887,16 @@ final class PipeTest extends TestCase
         self::assertInstanceOf(Ending::class, $next);
     }
     
-    private function chainOperations(Pipe $pipe, Stream $stream, Operation ...$operations): void
+    private function chainOperations(Pipe $pipe, Stream $stream, Operation ...$operations): Pipe
     {
         $pipe->assignStream($stream);
         
         foreach ($operations as $operation) {
-            $pipe->chainOperation($operation);
+            $result = $pipe->chainOperation($operation);
+            $pipe = $result->pipe;
         }
+        
+        return $pipe;
     }
     
     private function addOperations(Pipe $pipe, Operation ...$operations): void

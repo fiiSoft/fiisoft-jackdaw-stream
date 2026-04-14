@@ -26,4 +26,11 @@ abstract class SendWhileUntil extends BaseOperation
         $this->condition = Filters::getAdapter($condition);
         $this->consumer = Consumers::getAdapter($consumer);
     }
+    
+    protected function __clone()
+    {
+        $this->isActive = true;
+        
+        parent::__clone();
+    }
 }

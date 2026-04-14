@@ -811,6 +811,16 @@ final class DestroyTest extends TestCase
         $stream2->destroy();
     }
     
+    public function test_Cache_destroy(): void
+    {
+        $stream = Stream::prototype([1, 'a', 2, 'b', 3, 'c', 4])->onlyIntegers()->cache();
+        
+        self::assertSame(4, $stream->count()->get());
+        self::assertSame([1, 2, 3, 4], $stream->toArray());
+        
+        $stream->destroy();
+    }
+    
     /**
      * @return Item[]
      */

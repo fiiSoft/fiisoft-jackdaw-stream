@@ -1,5 +1,10 @@
 # Changelog
 
+## 14.1.0
+
+- added Stream::cache()
+- fixed many old and new errors
+
 ## 14.0.0
 
 - added Stream::prototype()

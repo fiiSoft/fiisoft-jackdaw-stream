@@ -38,6 +38,7 @@ abstract class ReduceFinal extends FinalOperation
     final protected function __clone()
     {
         $this->reducer = clone $this->reducer;
+        $this->reducer->reset();
         
         parent::__clone();
     }

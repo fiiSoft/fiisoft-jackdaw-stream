@@ -3,8 +3,9 @@
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
 use FiiSoft\Jackdaw\Internal\Item;
+use FiiSoft\Jackdaw\Operation\Internal\Detachable;
 
-abstract class BaseCollect extends SimpleFinal
+abstract class BaseCollect extends SimpleFinal implements Detachable
 {
     /** @var array<string|int, mixed> */
     protected array $collected = [];

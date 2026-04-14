@@ -7,7 +7,7 @@
     ],
     "homepage": "https://github.com/fiiSoft/fiisoft-jackdaw-stream",
     "license": "MIT",
-    "version": "14.0.0",
+    "version": "14.1.0",
     "authors": [
         {
             "name": "fiiSoft",
@@ -42,7 +42,12 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "FiiSoft\\Test\\Jackdaw\\": "tests/"
+            "FiiSoft\\Test\\Jackdaw\\": [
+                "tests/component",
+                "tests/other",
+                "tests/prototype",
+                "tests/stream"
+            ]
         }
     },
     "require-dev": {
@@ -69,8 +74,8 @@
             "vendor/bin/psalm",
             "vendor/bin/phpmd src html phpmd.xml.dist --reportfile var/phpmd.html --cache --cache-file var/phpmd.result-cache.php"
         ],
-        "test": "vendor/bin/phpunit --no-coverage",
-        "report" : "XDEBUG_MODE=coverage php vendor/bin/phpunit",
+        "test": "vendor/bin/phpunit --no-coverage --columns 120",
+        "report" : "XDEBUG_MODE=coverage php vendor/bin/phpunit --columns 120",
         "mutate": "vendor/bin/infection --test-framework=phpunit --only-covered --coverage=var/phpunit/xml/ --skip-initial-tests --threads=4 --min-covered-msi=100 --min-msi=100",
         "all": [
             "@report",

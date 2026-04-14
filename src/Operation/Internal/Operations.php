@@ -10,8 +10,8 @@ use FiiSoft\Jackdaw\Filter\{FilterReady, Filters};
 use FiiSoft\Jackdaw\Internal\{Check, ForkCollaborator};
 use FiiSoft\Jackdaw\Mapper\{MapperReady, Mappers};
 use FiiSoft\Jackdaw\Memo\MemoWriter;
-use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Fork, ForkMatch, Gather, Reverse, Segregate, Sort, SortLimited,
-    Tail};
+use FiiSoft\Jackdaw\Operation\Collecting\{Cache, Categorize, Fork, ForkMatch, Gather, Reverse, Segregate, Sort,
+    SortLimited, Tail};
 use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, Extrema, FilterBy, FilterOp, FilterUntil, FilterWhen, FilterWhile,
     Increasing, Maxima, Omit, OmitBy, OmitReps, OmitWhen, Skip, SkipNth, SkipUntil, SkipWhile, Unique, Uptrends};
 use FiiSoft\Jackdaw\Operation\LastOperation;
@@ -270,6 +270,11 @@ final class Operations
     public static function collectKeysIn($collector): Operation
     {
         return new CollectKeysIn($collector);
+    }
+    
+    public static function cache(): Operation
+    {
+        return Cache::create();
     }
     
     /**

@@ -227,7 +227,7 @@ final class Producers
     }
     
     /**
-     * @param resource|string $resource resource or full filepath; it have to be readable
+     * @param resource|string $resource resource or full filepath; it has to be readable
      */
     public static function resource($resource, bool $closeOnFinish = false, ?int $readBytes = null): Producer
     {

@@ -28,4 +28,9 @@ final class StreamExceptionFactory
     {
         return InvalidOperationException::create('Cannot reuse utilized stream');
     }
+    
+    public static function cannotAddOperationToStartedStream(): JackdawException
+    {
+        return InvalidOperationException::create('Cannot add operation to a stream that has already started');
+    }
 }

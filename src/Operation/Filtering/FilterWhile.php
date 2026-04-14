@@ -8,12 +8,17 @@ final class FilterWhile extends WhileUntil
 {
     public function handle(Signal $signal): void
     {
-        if ($this->condition->isAllowed($signal->item->value, $signal->item->key)) {
-            if ($this->filter->isAllowed($signal->item->value, $signal->item->key)) {
+        if ($this->isActive) {
+            if ($this->condition->isAllowed($signal->item->value, $signal->item->key)) {
+                if ($this->filter->isAllowed($signal->item->value, $signal->item->key)) {
+                    $this->next->handle($signal);
+                }
+            } else {
+                $this->isActive = false;
+                $signal->forget($this);
                 $this->next->handle($signal);
             }
         } else {
-            $signal->forget($this);
             $this->next->handle($signal);
         }
     }
@@ -21,7 +26,7 @@ final class FilterWhile extends WhileUntil
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            if ($this->active) {
+            if ($this->isActive) {
                 if ($this->condition->isAllowed($value, $key)) {
                     if ($this->filter->isAllowed($value, $key)) {
                         yield $key => $value;
@@ -30,7 +35,7 @@ final class FilterWhile extends WhileUntil
                     continue;
                 }
                 
-                $this->active = false;
+                $this->isActive = false;
             }
             
             yield $key => $value;

@@ -14,7 +14,6 @@ use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Memo\Memo;
-use FiiSoft\Jackdaw\Operation\Special\Assert\AssertionFailed;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Registry\Registry;
@@ -24,156 +23,46 @@ use PHPUnit\Framework\TestCase;
 
 final class StreamFTest extends TestCase
 {
-    public function test_iterate_array_with_callback_filter_and_get_assoc_array(): void
-    {
-        self::assertSame(
-            [1 => 1, 3 => 2, 5 => 3],
-            Stream::from(['a', 1, 'b', 2, 'c', 3])->filter('is_int')->toArrayAssoc()
-        );
-    }
-    
-    public function test_iterate_array_and_filter_only_numbers_and_get_assoc_json(): void
-    {
-        self::assertSame(
-            '{"0":"a","1":1,"2":"b","3":2,"4":"c","6":"d"}',
-            Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4])->filterWhen('is_int', Filters::lessThan(3))->toJsonAssoc()
-        );
-    }
-    
-    public function test_iterate_producer_and_agregate_keys_into_array(): void
-    {
-        $producer = Producers::combinedFrom(
-            ['a', 'c', 'b', 'a', 'b', 'b', 'c', 'a', 'a', 'c', 'a'],
-            [3,    2,   1,   5,   3,   7,   6,   0,   4,   5,   2]
-        );
-        
-        self::assertSame([
-            ['a' => 3, 'b' => 1],
-            ['a' => 5, 'b' => 3],
-            ['b' => 7, 'a' => 0],
-        ], Stream::from($producer)->aggregate(['a', 'b'])->toArray(true));
-    }
-    
-    public function test_iterate_sequential_int_producer_and_assert_every_number_is_less_than_5(): void
-    {
-        $this->expectExceptionObject(AssertionFailed::exception(5, 4, Check::VALUE));
-        
-        Producers::sequentialInt()->stream()->assert(Filters::lessThan(5))->run();
-    }
-    
-    public function test_classify_even_odd_numbers_and_group_in_array(): void
-    {
-        self::assertSame([
-            'odd' => [5, 3, 1],
-            'even' => [2, 4],
-        ], Stream::from([5, 2, 3, 4, 1])->classify(Discriminators::evenOdd())->group()->toArray());
-    }
-    
-    public function test_collect_data_in_collector(): void
-    {
-        $all = Collectors::default();
-        $numbers = Collectors::default(false);
-        
-        Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4])
-            ->collectIn($all)
-            ->onlyIntegers()
-            ->collectIn($numbers)
-            ->run();
-        
-        self::assertSame(['a', 1, 'b', 2, 'c', 3, 'd', 4], $all->toArray());
-        self::assertSame([1, 2, 3, 4], $numbers->toArray());
-    }
-    
-    public function test_collectKeysIn(): void
-    {
-        $keys = [];
-        
-        Stream::from(['a' => 1, 'b' => 2, 'c' => 3])->collectKeysIn(Collectors::array($keys))->run();
-        
-        self::assertSame(['a', 'b', 'c'], $keys);
-    }
-    
-    public function test_countIn_with_filter(): void
-    {
-        Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4])->onlyIntegers()->countIn($countInts)->run();
-        
-        self::assertSame(4, $countInts);
-    }
-    
-    public function test_everyNth_with_filter(): void
-    {
-        self::assertSame('a,d', Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4])->onlyStrings()->everyNth(3)->toString());
-    }
-    
-    public function test_filterMany_unconditional(): void
-    {
-        $actual = Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e', 5])
-            ->onlyIntegers()
-            ->greaterThan(1)
-            ->lessThan(5)
-            ->toArray();
-        
-        self::assertSame([2, 3, 4], $actual);
-    }
-    
-    public function test_filterMany_conditional(): void
-    {
-        $actual = Stream::from(['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e', 5])
-            ->filterWhen('is_int', Filters::greaterThan(1))
-            ->filterWhen('is_int', Filters::lessThan(5))
-            ->omit('is_string')
-            ->toArray();
-        
-        self::assertSame([2, 3, 4], $actual);
-    }
-    
-    public function test_filterWhile(): void
-    {
-        self::assertSame(
-            [1, 0, 1, -1],
-            Stream::from([-3, -2, -1, 1, 0, 1, -1])->filterWhile(Filters::lessThan(1), false)->toArray()
-        );
-    }
-    
-    public function test_flip_with_filter(): void
-    {
-        $actual = Stream::from(['a', 'b', 'c', 'd'])
-            ->filter(Filters::greaterThan(0), Check::KEY)
-            ->flip()
-            ->filter(Filters::lessThan(3))
-            ->flip()
-            ->toArrayAssoc();
-        
-        self::assertSame([1 => 'b', 2 => 'c'], $actual);
-    }
-    
     public function test_increasing(): void
     {
-        self::assertSame([4, 4, 5], Stream::from([4, 2, 3, 4, 1, 2, 5, 3, 4])->increasingTrend()->toArray());
+        $this->performTest009(false);
     }
     
     public function test_increasing_with_onerror_handler(): void
     {
-        self::assertSame(
-            [4, 4, 5],
-            Stream::from([4, 2, 3, 4, 1, 2, 5, 3, 4])->onError(OnError::skip())->increasingTrend()->toArray()
-        );
+        $this->performTest009(true);
+    }
+    
+    private function performTest009(bool $onError): void
+    {
+        $stream = Stream::from([4, 2, 3, 4, 1, 2, 5, 3, 4])->increasingTrend();
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([4, 4, 5], $stream->toArray());
     }
     
     public function test_omitReps(): void
     {
-        self::assertSame(
-            [3, 2, 4, 1, 2, 1, 5, 2],
-            Stream::from([3, 2, 2, 4, 4, 1, 2, 1, 1, 1, 5, 5, 2, 2])->omitReps()->toArray()
-        );
+        $this->performTest010(false);
     }
     
     public function test_omitReps_with_onerror_handler(): void
     {
-        self::assertSame(
-            [3, 2, 4, 1, 2, 1, 5, 2],
-            Stream::from([3, 2, 2, 4, 4, 1, 2, 1, 1, 1, 5, 5, 2, 2])->onError(OnError::abort())->omitReps()->toArray()
-        );
+        $this->performTest010(true);
+    }
+    
+    private function performTest010(bool $onError): void
+    {
+        $stream = Stream::from([3, 2, 2, 4, 4, 1, 2, 1, 1, 1, 5, 5, 2, 2])->omitReps();
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([3, 2, 4, 1, 2, 1, 5, 2], $stream->toArray());
     }
     
     public function test_iterate_stream_as_array_with_filter(): void
@@ -196,18 +85,25 @@ final class StreamFTest extends TestCase
     
     public function test_remember(): void
     {
-        $registry = Registry::new();
-        
-        Stream::from(['e', 'a', 'b'])->remember($registry->value('foo'))->run();
-        
-        self::assertSame('b', $registry->get('foo'));
+        $this->performTest011(false);
     }
     
     public function test_remember_with_onerror_handler(): void
     {
+        $this->performTest011(true);
+    }
+    
+    private function performTest011(bool $onError): void
+    {
         $registry = Registry::new();
         
-        Stream::from(['e', 'a', 'b'])->onError(OnError::skip())->remember($registry->value('foo'))->run();
+        $stream = Stream::from(['e', 'a', 'b'])->remember($registry->value('foo'));
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        $stream->run();
         
         self::assertSame('b', $registry->get('foo'));
     }
@@ -221,75 +117,79 @@ final class StreamFTest extends TestCase
     
     public function test_call_many(): void
     {
-        $data = [5, 2, 4, 1, 3];
-        $value = null;
-        
-        Stream::from($data)
-            ->call(Consumers::sendValueTo($value))
-            ->call(static function () use (&$value, &$data) {
-                self::assertSame(\array_shift($data), $value);
-            })
-            ->run();
-        
-        self::assertSame(3, $value);
+        $this->performTest012(false);
     }
     
     public function test_call_many_with_onerror_handler(): void
     {
+        $this->performTest012(true);
+    }
+    
+    private function performTest012(bool $onError): void
+    {
         $data = [5, 2, 4, 1, 3];
         $value = null;
         
-        Stream::from($data)
-            ->onError(OnError::skip())
+        $stream = Stream::from($data)
             ->call(Consumers::sendValueTo($value))
             ->call(static function () use (&$value, &$data) {
                 self::assertSame(\array_shift($data), $value);
-            })
-            ->run();
+            });
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        $stream->run();
         
         self::assertSame(3, $value);
     }
     
     public function test_callMax(): void
     {
-        Stream::from(['a', 'b', 'c', 'd'])->callMax(2, Consumers::sendValueTo($value))->run();
-        
-        self::assertSame('b', $value);
+        $this->performTest013(false);
     }
     
     public function test_callMax_with_onerror_handler(): void
     {
-        Stream::from(['a', 'b', 'c', 'd'])
-            ->onError(OnError::skip())
-            ->callMax(2, Consumers::sendValueTo($value))
-            ->run();
+        $this->performTest013(true);
+    }
+    
+    private function performTest013(bool $onError): void
+    {
+        $stream = Stream::from(['a', 'b', 'c', 'd'])->callMax(2, Consumers::sendValueTo($value));
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        $stream->run();
         
         self::assertSame('b', $value);
     }
     
     public function test_callWhen(): void
     {
-        $countStrings = Consumers::counter();
-        $countInts = Consumers::counter();
-        
-        Stream::from(['a', 1, 2, 'c', 3])
-            ->callWhen('is_string', $countStrings)
-            ->callWhen('is_int', $countInts)
-            ->run();
-        
-        self::assertSame(3, $countInts->get());
-        self::assertSame(2, $countStrings->get());
+        $this->performTest014(false);
     }
     
     public function test_callWhen_with_else_consumer_and_onerror_handler(): void
     {
+        $this->performTest014(true);
+    }
+    
+    private function performTest014(bool $onError): void
+    {
         $countStrings = Consumers::counter();
         $countInts = Consumers::counter();
         
-        Stream::from(['a', 1, 2, 'c', 3])
-            ->onError(OnError::skip())
-            ->callWhen('is_string', $countStrings, $countInts)
-            ->run();
+        $stream = Stream::from(['a', 1, 2, 'c', 3])->callWhen('is_string', $countStrings, $countInts);
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        $stream->run();
         
         self::assertSame(3, $countInts->get());
         self::assertSame(2, $countStrings->get());
@@ -297,110 +197,183 @@ final class StreamFTest extends TestCase
     
     public function test_callWhile(): void
     {
-        $numOfIntsAtTheBeginning = Consumers::counter();
-        
-        Stream::from([3, 2, 'a', 1, 2, 'b'])->callWhile('is_int', $numOfIntsAtTheBeginning)->run();
-        
-        self::assertSame(2, $numOfIntsAtTheBeginning->get());
+        $this->performTest015(false);
     }
     
     public function test_callWhile_with_onerror_handler(): void
     {
+        $this->performTest015(true);
+    }
+    
+    private function performTest015(bool $onError): void
+    {
         $numOfIntsAtTheBeginning = Consumers::counter();
         
-        Stream::from([3, 2, 'a', 1, 2, 'b'])
-            ->onError(OnError::skip())
-            ->callWhile('is_int', $numOfIntsAtTheBeginning)
-            ->run();
+        $stream = Stream::from([3, 2, 'a', 1, 2, 'b'])->callWhile('is_int', $numOfIntsAtTheBeginning);
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        $stream->run();
         
         self::assertSame(2, $numOfIntsAtTheBeginning->get());
     }
     
+    public function test_callUntil(): void
+    {
+        $this->performTest016(false);
+    }
+
     public function test_callUntil_with_onerror_handler(): void
     {
-        $numOfIntsAtTheBeginning = Consumers::counter();
-        
-        Stream::from([3, 2, 'a', 1, 2, 'b'])
-            ->onError(OnError::skip())
-            ->callUntil('is_string', $numOfIntsAtTheBeginning)
-            ->run();
-        
-        self::assertSame(2, $numOfIntsAtTheBeginning->get());
+        $this->performTest016(true);
     }
     
-    public function test_skip(): void
+    private function performTest016(bool $onError): void
     {
-        self::assertSame([6, 5, 3], Stream::from([4, 1, 2, 6, 5, 3])->skip(3)->toArray());
+        $numOfIntsAtTheBeginning = Consumers::counter();
+        
+        $stream = Stream::from([3, 2, 'a', 1, 2, 'b'])->callUntil('is_string', $numOfIntsAtTheBeginning);
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        $stream->run();
+        
+        self::assertSame(2, $numOfIntsAtTheBeginning->get());
     }
     
     public function test_skipWhile(): void
     {
-        self::assertSame(['a', 1, 2, 'b'], Stream::from([3, 2, 'a', 1, 2, 'b'])->skipWhile('is_int')->toArray());
+        $this->performTest017(false);
     }
     
     public function test_skipWhile_with_onerror_handler(): void
     {
-        self::assertSame(
-            ['a', 1, 2, 'b'],
-            Stream::from([3, 2, 'a', 1, 2, 'b'])->onError(OnError::skip())->skipWhile('is_int')->toArray()
-        );
+        $this->performTest017(true);
+    }
+    
+    private function performTest017(bool $onError): void
+    {
+        $stream = Stream::from([3, 2, 'a', 1, 2, 'b'])->skipWhile('is_int');
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame(['a', 1, 2, 'b'], $stream->toArray());
+    }
+    
+    public function test_skipUntil(): void
+    {
+        $this->performTest018(false);
     }
     
     public function test_skipUntil_with_onerror_handler(): void
     {
-        self::assertSame(
-            ['a', 1, 2, 'b'],
-            Stream::from([3, 2, 'a', 1, 2, 'b'])->onError(OnError::skip())->skipUntil('is_string')->toArray()
-        );
+        $this->performTest018(true);
+    }
+    
+    private function performTest018(bool $onError): void
+    {
+        $stream = Stream::from([3, 2, 'a', 1, 2, 'b'])->skipUntil('is_string');
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame(['a', 1, 2, 'b'], $stream->toArray());
     }
     
     public function test_makeTuple(): void
     {
-        self::assertSame(
-            [['a', 1], ['b', 2], ['c', 3]],
-            Stream::from(['a' => 1, 'b' => 2, 'c' => 3])->makeTuple()->toArray()
-        );
+        $this->performTest019(false);
     }
     
     public function test_makeTuple_with_onerror_handler(): void
     {
-        self::assertSame(
-            [['a', 1], ['b', 2], ['c', 3]],
-            Stream::from(['a' => 1, 'b' => 2, 'c' => 3])->onError(OnError::skip())->makeTuple()->toArray()
-        );
+        $this->performTest019(true);
+    }
+    
+    private function performTest019(bool $onError): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3])->makeTuple();
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([['a', 1], ['b', 2], ['c', 3]], $stream->toArray());
+    }
+    
+    public function test_makeTuple_assoc(): void
+    {
+        $this->performTest020(false);
     }
     
     public function test_makeTuple_assoc_with_onerror_handler(): void
     {
+        $this->performTest020(true);
+    }
+    
+    private function performTest020(bool $onError): void
+    {
+        $stream = Stream::from(['a' => 1, 'b' => 2, 'c' => 3])->makeTuple(true);
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
         self::assertSame(
             [['key' => 'a', 'value' => 1], ['key' => 'b', 'value' => 2], ['key' => 'c', 'value' => 3]],
-            Stream::from(['a' => 1, 'b' => 2, 'c' => 3])->onError(OnError::skip())->makeTuple(true)->toArrayAssoc()
+            $stream->toArrayAssoc()
         );
     }
     
     public function test_unpackTuple(): void
     {
-        self::assertSame(
-            ['a' => 1, 'b' => 2, 'c' => 3],
-            Stream::from([['a', 1], ['b', 2], ['c', 3]])->unpackTuple()->toArrayAssoc()
-        );
+        $this->performTest021(false);
     }
     
     public function test_unpackTuple_with_onerror_handler(): void
     {
-        $actual = Stream::from([['a', 1], ['b', 2], ['c', 3]])->onError(OnError::skip())->unpackTuple()->toArrayAssoc();
+        $this->performTest021(true);
+    }
+    
+    private function performTest021(bool $onError): void
+    {
+        $stream = Stream::from([['a', 1], ['b', 2], ['c', 3]])->unpackTuple();
         
-        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3], $actual);
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3], $stream->toArrayAssoc());
+    }
+    
+    public function test_unpackTuple_assoc(): void
+    {
+        $this->performTest022(false);
     }
     
     public function test_unpackTuple_assoc_with_onerror_handler(): void
     {
-        $data = [['key' => 'a', 'value' => 1], ['key' => 'b', 'value' => 2], ['key' => 'c', 'value' => 3]];
+        $this->performTest022(true);
+    }
+    
+    private function performTest022(bool $onError): void
+    {
+        $stream = Stream::from(
+            [['key' => 'a', 'value' => 1], ['key' => 'b', 'value' => 2], ['key' => 'c', 'value' => 3]]
+        )->unpackTuple(true);
         
-        self::assertSame(
-            ['a' => 1, 'b' => 2, 'c' => 3],
-            Stream::from($data)->onError(OnError::skip())->unpackTuple(true)->toArrayAssoc()
-        );
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3], $stream->toArrayAssoc());
     }
     
     public function test_unique(): void
@@ -426,23 +399,44 @@ final class StreamFTest extends TestCase
     
     public function test_zip(): void
     {
-        self::assertSame(
-            [[1, 'a'], [2, 'b'], [3, 'c'], [4, null]],
-            Stream::from([1, 2, 3, 4])->zip(['a', 'b', 'c'])->toArray()
-        );
+        $this->performTest023(false);
     }
     
     public function test_zip_with_onerror_handler(): void
     {
-        self::assertSame(
-            [[1, 'a'], [2, 'b'], [3, 'c'], [4, null]],
-            Stream::from([1, 2, 3, 4])->onError(OnError::skip())->zip(['a', 'b', 'c'])->toArray()
-        );
+        $this->performTest023(true);
     }
     
+    private function performTest023(bool $onError): void
+    {
+        $stream = Stream::from([1, 2, 3, 4])->zip(['a', 'b', 'c']);
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([[1, 'a'], [2, 'b'], [3, 'c'], [4, null]], $stream->toArray());
+    }
+    
+    public function test_zip_empty_string(): void
+    {
+        $this->performTest024(false);
+    }
+
     public function test_zip_empty_string_with_onerror_handler(): void
     {
-        self::assertSame([[1], [2], [3], [4]], Stream::from([1, 2, 3, 4])->onError(OnError::skip())->zip()->toArray());
+        $this->performTest024(true);
+    }
+    
+    private function performTest024(bool $onError): void
+    {
+        $stream = Stream::from([1, 2, 3, 4])->zip();
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([[1], [2], [3], [4]], $stream->toArray());
     }
     
     public function test_reduce(): void
@@ -809,12 +803,23 @@ final class StreamFTest extends TestCase
     
     public function test_chunk_one_keep_keys(): void
     {
-        self::assertSame([[0 => 2], [1 => 5]], Stream::from([2, 5])->chunk(1)->toArray());
+        $this->performTest025(false);
     }
     
     public function test_chunk_one_keep_keys_onerror_handlers(): void
     {
-        self::assertSame([[0 => 2], [1 => 5]], Stream::from([2, 5])->onError(OnError::skip())->chunk(1)->toArray());
+        $this->performTest025(true);
+    }
+    
+    private function performTest025(bool $onError): void
+    {
+        $stream = Stream::from([2, 5])->chunk(1);
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([[0 => 2], [1 => 5]], $stream->toArray());
     }
     
     public function test_chunk_many_reindex_onerror_handlers(): void
@@ -916,25 +921,15 @@ final class StreamFTest extends TestCase
     
     public function test_mapFieldWhen(): void
     {
-        $rowset = [
-            ['id' => 1, 'temp' => null],
-            ['id' => 2, 'temp' => 15.4],
-            ['id' => 3, 'temp' => 22.3],
-            ['id' => 4, 'temp' => null],
-        ];
-        
-        $actual = Stream::from($rowset)
-            ->mapFieldWhen('temp', Filters::notNull(), static fn(float $v): float => $v * 1.8 + 32);
-        
-        self::assertSame([
-            ['id' => 1, 'temp' => null],
-            ['id' => 2, 'temp' => 59.72],
-            ['id' => 3, 'temp' => 72.14],
-            ['id' => 4, 'temp' => null],
-        ], $actual->toArray());
+        $this->performTest026(false);
     }
     
     public function test_mapFieldWhen_with_onerror_handler(): void
+    {
+        $this->performTest026(true);
+    }
+    
+    private function performTest026(bool $onError): void
     {
         $rowset = [
             ['id' => 1, 'temp' => '---'],
@@ -943,8 +938,7 @@ final class StreamFTest extends TestCase
             ['id' => 4, 'temp' => '---'],
         ];
         
-        $actual = Stream::from($rowset)
-            ->onError(OnError::skip())
+        $stream = Stream::from($rowset)
             ->mapFieldWhen(
                 'temp',
                 Filters::same('---'),
@@ -952,12 +946,16 @@ final class StreamFTest extends TestCase
                 Mappers::toFloat(),
             );
         
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
         self::assertSame([
             ['id' => 1, 'temp' => null],
             ['id' => 2, 'temp' => 15.4],
             ['id' => 3, 'temp' => 22.3],
             ['id' => 4, 'temp' => null],
-        ], $actual->toArray());
+        ], $stream->toArray());
     }
     
     public function test_extrema(): void
@@ -985,23 +983,26 @@ final class StreamFTest extends TestCase
     
     public function test_categorize(): void
     {
-        self::assertSame([
-            'odd' => [3, 5, 1],
-            'even' => [6, 2, 4],
-        ], Stream::from([3, 6, 5, 2, 1, 4])->categorize(Discriminators::evenOdd(), true)->toArrayAssoc());
+        $this->performTest027(false);
     }
     
     public function test_categorize_with_onerror_handler(): void
     {
-        $actual = Stream::from([3, 6, 5, 2, 1, 4])
-            ->onError(OnError::skip())
-            ->categorize(Discriminators::evenOdd(), true)
-            ->toArrayAssoc();
+        $this->performTest027(true);
+    }
+    
+    private function performTest027(bool $onError): void
+    {
+        $stream = Stream::from([3, 6, 5, 2, 1, 4])->categorize(Discriminators::evenOdd(), true);
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
         
         self::assertSame([
             'odd' => [3, 5, 1],
             'even' => [6, 2, 4],
-        ], $actual);
+        ], $stream->toArrayAssoc());
     }
     
     public function test_categorize_with_onerror_handler_and_DataCollector(): void
@@ -1126,61 +1127,89 @@ final class StreamFTest extends TestCase
     
     public function test_mapWhile(): void
     {
-        $actual = Stream::from([3, 2, 1, 0, 4, 5, 6])
-            ->mapWhile(Filters::greaterThan(0), static fn(int $v): int => $v * 2)
-            ->toArray();
-        
-        self::assertSame([6, 4, 2, 0, 4, 5, 6], $actual);
+        $this->performTest028(false);
     }
     
     public function test_mapWhile_with_onerror_handler(): void
     {
-        $actual = Stream::from([3, 2, 1, 0, 4, 5, 6])
-            ->onError(OnError::skip())
-            ->mapWhile(Filters::greaterThan(0), static fn(int $v): int => $v * 2)
-            ->toArray();
+        $this->performTest028(true);
+    }
+    
+    private function performTest028(bool $onError): void
+    {
+        $stream = Stream::from([3, 2, 1, 0, 4, 5, 6])
+            ->mapWhile(Filters::greaterThan(0), static fn(int $v): int => $v * 2);
         
-        self::assertSame([6, 4, 2, 0, 4, 5, 6], $actual);
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([6, 4, 2, 0, 4, 5, 6], $stream->toArray());
+    }
+    
+    public function test_mapUntil(): void
+    {
+        $this->performTest029(false);
     }
     
     public function test_mapUntil_with_onerror_handler(): void
     {
-        $actual = Stream::from([3, 2, 1, 0, 4, 5, 6])
-            ->onError(OnError::skip())
-            ->mapUntil(Filters::lessOrEqual(0), static fn(int $v): int => $v * 2)
-            ->toArray();
+        $this->performTest029(true);
+    }
+    
+    private function performTest029(bool $onError): void
+    {
+        $stream = Stream::from([3, 2, 1, 0, 4, 5, 6])
+            ->mapUntil(Filters::lessOrEqual(0), static fn(int $v): int => $v * 2);
         
-        self::assertSame([6, 4, 2, 0, 4, 5, 6], $actual);
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame([6, 4, 2, 0, 4, 5, 6], $stream->toArray());
     }
     
     public function test_maxima(): void
     {
-        $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
-        
-        self::assertSame([7, 8, 5, 4], Stream::from($data)->onlyMaxima(false)->toArray());
+        $this->performTest030(false);
     }
     
     public function test_maxima_with_onerror_handler(): void
     {
-        $data = [6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9];
+        $this->performTest030(true);
+    }
+    
+    private function performTest030(bool $onError): void
+    {
+        $stream = Stream::from([6, 4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 5, 3, 2, 4, 4, 5, 8, 9])
+            ->onlyMaxima();
         
-        self::assertSame([6, 7, 8, 5, 4, 9], Stream::from($data)->onError(OnError::skip())->onlyMaxima()->toArray());
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame([6, 7, 8, 5, 4, 9], $stream->toArray());
     }
     
     public function test_reverse(): void
     {
-        self::assertSame([2 => 'c', 1 => 'b', 0 => 'a'], Stream::from(['a', 'b', 'c'])->reverse()->toArrayAssoc());
+        $this->performTest031(false);
     }
     
     public function test_tail_reverse_with_onerror_handler(): void
     {
-        $actual = Stream::from(['e', 'a', 'h', 'q', 'f'])
-            ->onError(OnError::skip())
-            ->tail(3)
-            ->reverse()
-            ->toArrayAssoc();
+        $this->performTest031(true);
+    }
+    
+    private function performTest031(bool $onError): void
+    {
+        $stream = Stream::from(['e', 'a', 'h', 'q', 'f'])->tail(3)->reverse();
         
-        self::assertSame([4 => 'f', 3 => 'q', 2 => 'h'], $actual);
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame([4 => 'f', 3 => 'q', 2 => 'h'], $stream->toArrayAssoc());
     }
     
     public function test_reverse_empty_string_with_onerror_handler(): void
@@ -1190,43 +1219,44 @@ final class StreamFTest extends TestCase
     
     public function test_scan(): void
     {
-        $actual = Stream::from([3, 4, 5])
-            ->scan(0, static fn(int $acc, int $curr): int => $acc + $curr)
-            ->toArray();
-        
-        self::assertSame([0, 3, 7, 12], $actual);
+        $this->performTest032(false);
     }
     
     public function test_scan_with_onerror_handler(): void
     {
-        $actual = Stream::from([3, 4, 5])
-            ->onError(OnError::skip())
-            ->scan(0, static fn(int $acc, int $curr): int => $acc + $curr)
-            ->toArray();
+        $this->performTest032(true);
+    }
+    
+    private function performTest032(bool $onError): void
+    {
+        $stream = Stream::from([3, 4, 5])->scan(0, static fn(int $acc, int $curr): int => $acc + $curr);
         
-        self::assertSame([0, 3, 7, 12], $actual);
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame([0, 3, 7, 12], $stream->toArray());
     }
     
     public function test_shuffle_chunked(): void
     {
-        $actual = Stream::from([1, 2, 3, 4, 5, 6, 7, 8])->shuffle(3)->toArray();
-        
-        $slice = \array_slice($actual, 0, 3);
-        \sort($slice);
-        self::assertSame([1, 2, 3], $slice);
-        
-        $slice = \array_slice($actual, 3, 3);
-        \sort($slice);
-        self::assertSame([4, 5, 6], $slice);
-        
-        $slice = \array_slice($actual, 6, 3);
-        \sort($slice);
-        self::assertSame([7, 8], $slice);
+        $this->performTest033(false);
     }
     
     public function test_shuffle_chunked_with_onerror_handler(): void
     {
-        $actual = Stream::from([1, 2, 3, 4, 5, 6, 7, 8])->onError(OnError::skip())->shuffle(3)->toArray();
+        $this->performTest033(true);
+    }
+    
+    private function performTest033(bool $onError): void
+    {
+        $stream = Stream::from([1, 2, 3, 4, 5, 6, 7, 8])->shuffle(3);
+        
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        $actual = $stream->toArray();
         
         $slice = \array_slice($actual, 0, 3);
         \sort($slice);
@@ -1309,27 +1339,47 @@ final class StreamFTest extends TestCase
     
     public function test_window(): void
     {
-        self::assertSame([
-            [0 => 'a', 'b', 'c'],
-            [2 => 'c', 'd', 'e'],
-            [4 => 'e', 'f'],
-        ], Stream::from(['a', 'b', 'c', 'd', 'e', 'f'])->window(3, 2)->toArrayAssoc());
+        $this->performTest034(false);
     }
     
     public function test_window_with_onerror_handler(): void
     {
+        $this->performTest034(true);
+    }
+    
+    private function performTest034(bool $onError): void
+    {
+        $stream = Stream::from(['a', 'b', 'c', 'd', 'e', 'f'])->window(3, 2);
+        
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
         self::assertSame([
             [0 => 'a', 'b', 'c'],
             [2 => 'c', 'd', 'e'],
             [4 => 'e', 'f'],
-        ], Stream::from(['a', 'b', 'c', 'd', 'e', 'f'])->onError(OnError::skip())->window(3, 2)->toArrayAssoc());
+        ], $stream->toArrayAssoc());
     }
     
-    public function test_accumulateUptrends(): void
+    public function test_accumulateUptrends_reindex_keys(): void
     {
-        $actual = Stream::from([4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 8, 9])
-            ->accumulateUptrends(true)
-            ->toArray();
+        $this->performTest035(false);
+    }
+    
+    public function test_accumulateUptrends_reindex_keys_with_onerror_handler(): void
+    {
+        $this->performTest035(true);
+    }
+    
+    private function performTest035(bool $onError): void
+    {
+        $stream = Stream::from([4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 8, 9])
+            ->accumulateUptrends(true);
+        
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
         
         self::assertSame([
             [2, 4, 5, 7],
@@ -1337,15 +1387,26 @@ final class StreamFTest extends TestCase
             [3, 5],
             [2, 4],
             [1, 3, 5, 8, 9]
-        ], $actual);
+        ], $stream->toArray());
     }
     
+    public function test_accumulateUptrends_keep_keys(): void
+    {
+        $this->performTest036(false);
+    }
+
     public function test_accumulateUptrends_keep_keys_with_onerror_handler(): void
     {
-        $actual = Stream::from([4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 8, 9])
-            ->onError(OnError::skip())
-            ->accumulateUptrends()
-            ->toArray();
+        $this->performTest036(true);
+    }
+    
+    private function performTest036(bool $onError): void
+    {
+        $stream = Stream::from([4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 8, 9])->accumulateUptrends();
+        
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
         
         self::assertSame([
             [2 => 2, 4, 5, 7],
@@ -1353,23 +1414,7 @@ final class StreamFTest extends TestCase
             [12 => 3, 5],
             [14 => 2, 4],
             [16 => 1, 3, 5, 8, 9]
-        ], $actual);
-    }
-    
-    public function test_accumulateUptrends_reindex_keys_with_onerror_handler(): void
-    {
-        $actual = Stream::from([4, 3, 2, 4, 5, 7, 6, 7, 8, 6, 5, 3, 3, 5, 2, 4, 1, 3, 5, 8, 9])
-            ->onError(OnError::skip())
-            ->accumulateUptrends(true)
-            ->toArray();
-        
-        self::assertSame([
-            [2, 4, 5, 7],
-            [6, 7, 8],
-            [3, 5],
-            [2, 4],
-            [1, 3, 5, 8, 9]
-        ], $actual);
+        ], $stream->toArray());
     }
     
     public function test_segregate(): void
@@ -1627,24 +1672,25 @@ final class StreamFTest extends TestCase
     
     public function test_feedMany(): void
     {
+        $this->performTest037(false);
+    }
+    
+    public function test_feedMany_with_onerror_handler(): void
+    {
+        $this->performTest037(true);
+    }
+    
+    private function performTest037(bool $onError): void
+    {
         $data = [1, 2, 3, 4, 5];
         
         $firstThree = Stream::empty()->limit(3)->collect();
         $lastThree = Stream::empty()->tail(3)->collect();
         $stream = Stream::from($data)->feed($firstThree, $lastThree);
         
-        self::assertSame($data, $stream->toArrayAssoc());
-        self::assertSame([1, 2, 3], $firstThree->get());
-        self::assertSame([2 => 3, 4, 5], $lastThree->get());
-    }
-    
-    public function test_feedMany_with_onerror_handler(): void
-    {
-        $data = [1, 2, 3, 4, 5];
-        
-        $firstThree = Stream::empty()->limit(3)->collect();
-        $lastThree = Stream::empty()->tail(3)->collect();
-        $stream = Stream::from($data)->feed($firstThree, $lastThree)->onError(OnError::skip());
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
         
         self::assertSame($data, $stream->toArrayAssoc());
         self::assertSame([1, 2, 3], $firstThree->get());
@@ -1864,20 +1910,23 @@ final class StreamFTest extends TestCase
     
     public function test_combined(): void
     {
-        self::assertSame(
-            ['a' => 1, 'b' => 2, 'c' => 3],
-            Producers::combinedFrom(['a', 'b', 'c'], new \ArrayIterator([1, 2, 3]))->stream()->toArrayAssoc()
-        );
+        $this->performTest038(false);
     }
     
     public function test_combined_with_onerror_handler(): void
     {
-        $actual = Producers::combinedFrom(['a', 'b', 'c'], new \ArrayIterator([1, 2, 3]))
-            ->stream()
-            ->onError(OnError::skip())
-            ->toArrayAssoc();
+        $this->performTest038(true);
+    }
+    
+    private function performTest038(bool $onError): void
+    {
+        $stream = Producers::combinedFrom(['a', 'b', 'c'], new \ArrayIterator([1, 2, 3]))->stream();
         
-        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3], $actual);
+        if ($onError) {
+            $stream->onError(OnError::skip());
+        }
+        
+        self::assertSame(['a' => 1, 'b' => 2, 'c' => 3], $stream->toArrayAssoc());
     }
     
     public function test_Segregate_Reindex_default_with_onerror_handler(): void

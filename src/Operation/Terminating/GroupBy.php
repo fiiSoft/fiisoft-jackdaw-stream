@@ -22,6 +22,9 @@ abstract class GroupBy extends GroupingOperation
     
     final public function result(): BaseStreamCollection
     {
-        return BaseStreamCollection::create($this, $this->collections);
+        $collections = $this->collections;
+        $this->collections = [];
+        
+        return BaseStreamCollection::create($this, $collections);
     }
 }

@@ -12,7 +12,7 @@ final class IdleForkHandler implements ForkHandler, ForkReady
         return $this;
     }
     
-    final public function prepare(): void
+    public function prepare(): void
     {
         //noop
     }

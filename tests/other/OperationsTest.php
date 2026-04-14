@@ -16,6 +16,7 @@ use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Memo\Inspector\SequenceIsFull;
 use FiiSoft\Jackdaw\Memo\Memo;
+use FiiSoft\Jackdaw\Operation\Collecting\Cache;
 use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
 use FiiSoft\Jackdaw\Operation\Filtering\FilterByMany;
 use FiiSoft\Jackdaw\Operation\Filtering\FilterMany;
@@ -1058,5 +1059,16 @@ final class OperationsTest extends TestCase
         $this->expectExceptionObject(OperationExceptionFactory::forkMatchHandlersCannotBeEmpty());
         
         OP::forkMatch('is_string', []);
+    }
+    
+    public function test_cache(): void
+    {
+        $standardCacheOp = OP::cache();
+        self::assertInstanceOf(Cache::class, $standardCacheOp);
+        
+        $eagerCacheOp = $standardCacheOp->forceCollectingData();
+        
+        self::assertNotSame($standardCacheOp, $eagerCacheOp);
+        self::assertSame($eagerCacheOp, $eagerCacheOp->forceCollectingData());
     }
 }

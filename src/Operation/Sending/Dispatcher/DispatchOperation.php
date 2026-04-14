@@ -8,7 +8,6 @@ use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Operation\Internal\CommonOperationCode;
 use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Stream;
 
 abstract class DispatchOperation extends StreamPipe implements Operation
 {
@@ -29,18 +28,13 @@ abstract class DispatchOperation extends StreamPipe implements Operation
         $this->handlers = Handlers::prepare($handlers);
     }
     
-    public function prepare(): void
+    final public function prepare(): void
     {
         $this->commonPrepare();
         
         foreach ($this->handlers as $handler) {
             $handler->prepare();
         }
-    }
-    
-    final public function assignStream(Stream $stream): void
-    {
-        $this->next->assignStream($stream);
     }
     
     final public function streamingFinished(Signal $signal): bool

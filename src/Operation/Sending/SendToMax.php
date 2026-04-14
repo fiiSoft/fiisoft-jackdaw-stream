@@ -16,6 +16,8 @@ final class SendToMax extends BaseOperation
     private int $times;
     private int $count = 0;
     
+    private bool $isActive = true;
+    
     /**
      * @param int $times how many times consumer can be called
      * @param ConsumerReady|callable|resource $consumer
@@ -32,11 +34,13 @@ final class SendToMax extends BaseOperation
     
     public function handle(Signal $signal): void
     {
-        if ($this->count < $this->times) {
-            ++$this->count;
+        if ($this->isActive) {
+            if (++$this->count === $this->times) {
+                $this->isActive = false;
+                $signal->forget($this);
+            }
+            
             $this->consumer->consume($signal->item->value, $signal->item->key);
-        } else {
-            $signal->forget($this);
         }
         
         $this->next->handle($signal);
@@ -45,13 +49,23 @@ final class SendToMax extends BaseOperation
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            if ($this->count < $this->times) {
-                ++$this->count;
+            if ($this->isActive) {
+                if (++$this->count === $this->times) {
+                    $this->isActive = false;
+                }
                 
                 $this->consumer->consume($value, $key);
             }
             
             yield $key => $value;
         }
+    }
+    
+    public function __clone()
+    {
+        $this->count = 0;
+        $this->isActive = true;
+        
+        parent::__clone();
     }
 }

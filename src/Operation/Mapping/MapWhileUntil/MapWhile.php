@@ -8,10 +8,13 @@ final class MapWhile extends MapWhileUntil
 {
     public function handle(Signal $signal): void
     {
-        if ($this->condition->isAllowed($signal->item->value, $signal->item->key)) {
-            $signal->item->value = $this->mapper->map($signal->item->value, $signal->item->key);
-        } else {
-            $signal->forget($this);
+        if ($this->isActive) {
+            if ($this->condition->isAllowed($signal->item->value, $signal->item->key)) {
+                $signal->item->value = $this->mapper->map($signal->item->value, $signal->item->key);
+            } else {
+                $this->isActive = false;
+                $signal->forget($this);
+            }
         }
         
         $this->next->handle($signal);

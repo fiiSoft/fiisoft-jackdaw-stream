@@ -243,8 +243,27 @@ final class StreamETest extends TestCase
     
     public function test_StoreIn_can_preserve_keys(): void
     {
+        $this->performTest008(false);
+    }
+    
+    public function test_StoreIn_preserve_keys_with_onerror_handler(): void
+    {
+        $this->performTest008(true);
+    }
+    
+    private function performTest008(bool $onError): void
+    {
         $letters = [];
-        Stream::from(['a', 1, 'b', 2, 'c', 3])->onlyStrings()->storeIn($letters)->run();
+        
+        $stream = Stream::from(['a', 1, 'b', 2, 'c', 3])
+            ->onlyStrings()
+            ->storeIn($letters);
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        $stream->run();
         
         self::assertSame(['a', 2 => 'b', 4 => 'c'], $letters);
     }
@@ -255,18 +274,6 @@ final class StreamETest extends TestCase
         Stream::from(['a', 1, 'b', 2, 'c', 3])->onlyStrings()->storeIn($letters, true)->run();
         
         self::assertSame(['a', 'b', 'c'], $letters);
-    }
-    
-    public function test_StoreIn_preserve_keys_with_onerror_handler(): void
-    {
-        $letters = [];
-        Stream::from(['a', 1, 'b', 2, 'c', 3])
-            ->onError(OnError::abort())
-            ->onlyStrings()
-            ->storeIn($letters)
-            ->run();
-        
-        self::assertSame(['a', 2 => 'b', 4 => 'c'], $letters);
     }
     
     public function test_StoreIn_can_also_handle_all_ArrayAccess_instances(): void

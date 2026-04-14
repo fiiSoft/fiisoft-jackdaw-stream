@@ -25,7 +25,7 @@ final class ForkMatch extends BaseFork
         }
         
         if ($prototype !== null) {
-            $this->prototype = ForkHandlerFactory::adaptPrototype($prototype);
+            $this->prototype = ForkHandlerFactory::getAdapter($prototype);
         }
         
         parent::__construct($discriminator, $handlers);

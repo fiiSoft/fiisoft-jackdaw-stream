@@ -11,7 +11,7 @@ final class QueueProducer extends BaseProducer implements Consumer
     /** @var Item[] */
     private array $buffer = [];
     
-    private int $autoKey = 0;
+    private int $autoKey = -1;
     
     /**
      * @param array<string|int, mixed> $elements
@@ -52,7 +52,7 @@ final class QueueProducer extends BaseProducer implements Consumer
      */
     public function append($value, $key = null): self
     {
-        $this->buffer[] = new Item($key ?? $this->autoKey++, $value);
+        $this->buffer[] = new Item($key ?? ++$this->autoKey, $value);
         
         return $this;
     }
@@ -82,14 +82,14 @@ final class QueueProducer extends BaseProducer implements Consumer
      */
     public function prepend($value, $key = null): self
     {
-        \array_unshift($this->buffer, new Item($key ?? $this->autoKey++, $value));
+        \array_unshift($this->buffer, new Item($key ?? ++$this->autoKey, $value));
         
         return $this;
     }
     
     public function consume($value, $key): void
     {
-        $this->buffer[] = new Item($key ?? $this->autoKey++, $value);
+        $this->buffer[] = new Item($key ?? ++$this->autoKey, $value);
     }
     
     /**
@@ -99,7 +99,7 @@ final class QueueProducer extends BaseProducer implements Consumer
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            $this->buffer[] = new Item($key ?? $this->autoKey++, $value);
+            $this->buffer[] = new Item($key ?? ++$this->autoKey, $value);
             
             yield $key => $value;
         }

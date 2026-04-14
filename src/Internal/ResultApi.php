@@ -3,13 +3,15 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Consumer\ConsumerReady;
+use FiiSoft\Jackdaw\Mapper\MapperReady;
+use FiiSoft\Jackdaw\Producer\ProducerReady;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\TransformerReady;
 
 /**
  * @extends \IteratorAggregate<string|int, mixed>
  */
-interface ResultApi extends ResultCaster, Destroyable, \Countable, \IteratorAggregate
+interface ResultApi extends ProducerReady, MapperReady, Destroyable, \Countable, \IteratorAggregate
 {
     public function found(): bool;
     
@@ -26,7 +28,6 @@ interface ResultApi extends ResultCaster, Destroyable, \Countable, \IteratorAggr
      * Register single transformer to perform final opertations on result (when result is available).
      *
      * @param TransformerReady|callable|null $transformer
-     * @return $this fluent interface
      */
     public function transform($transformer): self;
     
@@ -56,4 +57,25 @@ interface ResultApi extends ResultCaster, Destroyable, \Countable, \IteratorAggr
      * Because result holds computed values, every call to this method creates new stream.
      */
     public function stream(): Stream;
+    
+    public function toString(string $separator = ','): string;
+    
+    public function toJson(?int $flags = null, bool $preserveKeys = false): string;
+    
+    /**
+     * It works in the same way as toJson($flags, true).
+     */
+    public function toJsonAssoc(?int $flags = null): string;
+    
+    /**
+     * @return array<string|int, mixed>
+     */
+    public function toArray(bool $preserveKeys = false): array;
+    
+    /**
+     * It works in the same way as toArray(true).
+     *
+     * @return array<string|int, mixed>
+     */
+    public function toArrayAssoc(): array;
 }

@@ -12,7 +12,7 @@ abstract class WhileUntil extends BaseOperation
     protected Filter $condition;
     protected Filter $filter;
     
-    protected bool $active = true;
+    protected bool $isActive = true;
     
     /**
      * @param FilterReady|callable|array<string|int, mixed>|scalar $condition
@@ -22,5 +22,12 @@ abstract class WhileUntil extends BaseOperation
     {
         $this->condition = Filters::getAdapter($condition, $mode);
         $this->filter = Filters::getAdapter($filter, $mode);
+    }
+    
+    protected function __clone()
+    {
+        $this->isActive = true;
+        
+        parent::__clone();
     }
 }

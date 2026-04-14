@@ -15,7 +15,7 @@ abstract class ForkCollaborator extends ProtectedCloning
     }
     
     //StreamFork->, *FinalOperation->, *Stream
-    protected function cloneStream(): Stream
+    protected function cloneForFork(): Stream
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }

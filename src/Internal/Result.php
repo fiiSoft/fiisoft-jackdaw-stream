@@ -3,7 +3,6 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Operation\Internal\DispatchReady;
-use FiiSoft\Jackdaw\Operation\Terminating\FinalOperation;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\Transformer\Transformer;
 use FiiSoft\Jackdaw\Transformer\Transformers;
@@ -11,7 +10,7 @@ use FiiSoft\Jackdaw\Transformer\Transformers;
 final class Result implements ResultApi, DispatchReady
 {
     private Stream $stream;
-    private FinalOperation $resultProvider;
+    private ResultProvider $resultProvider;
     private ?ResultItem $resultItem = null;
     private ?Transformer $transformer = null;
     
@@ -29,14 +28,16 @@ final class Result implements ResultApi, DispatchReady
      */
     public function __construct(
         Stream $stream,
-        FinalOperation $resultProvider,
+        ResultProvider $resultProvider,
         $orElse = null,
-        array $parents = []
+        array $parents = [],
+        ?Transformer $transformer = null
     ) {
         $this->stream = $stream;
         $this->resultProvider = $resultProvider;
         $this->orElse = $orElse;
         $this->parents = $parents;
+        $this->transformer = $transformer;
     }
     
     public function found(): bool
@@ -209,6 +210,13 @@ final class Result implements ResultApi, DispatchReady
             }
             
             $this->resultProvider->destroy();
+        }
+    }
+    
+    public function __clone()
+    {
+        if ($this->resultItem !== null) {
+            $this->resultItem = clone $this->resultItem;
         }
     }
 }

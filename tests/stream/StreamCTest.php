@@ -29,6 +29,8 @@ use PHPUnit\Framework\TestCase;
 
 final class StreamCTest extends TestCase
 {
+    private const PATH_TO_TEST_FILE = __DIR__.'/../component/CollectionTest.php';
+    
     private const ROWSET = [
         ['id' => 2, 'name' => 'Sue', 'age' => 22],
         ['id' => 9, 'name' => 'Chris', 'age' => 17],
@@ -523,7 +525,7 @@ final class StreamCTest extends TestCase
         self::assertSame(6, $countIntsAtTheBeginning->get());
     }
     
-    public function test_call_until(): void
+    public function test_callUntil_callWhen(): void
     {
         $countIntsAtTheBeginning = Consumers::counter();
         $countAllInts = Consumers::counter();
@@ -1434,22 +1436,22 @@ final class StreamCTest extends TestCase
     
     public function test_stream_file_Producers_resource_file(): void
     {
-        $this->examineTextFileReader(Producers::resource(__DIR__.'/CollectionTest.php'));
+        $this->examineTextFileReader(Producers::resource(self::PATH_TO_TEST_FILE));
     }
     
     public function test_stream_file_Producers_getAdapter_file(): void
     {
-        $this->examineTextFileReader(Producers::getAdapter(__DIR__.'/CollectionTest.php'));
+        $this->examineTextFileReader(Producers::getAdapter(self::PATH_TO_TEST_FILE));
     }
     
     public function test_stream_file_Producers_resource_with_long_readBytes(): void
     {
-        $this->examineTextFileReader(Producers::resource(\fopen(__DIR__.'/CollectionTest.php', 'rb'), true, 4096));
+        $this->examineTextFileReader(Producers::resource(\fopen(self::PATH_TO_TEST_FILE, 'rb'), true, 4096));
     }
     
     public function test_stream_file_more_than_once(): void
     {
-        $producer = Producers::getAdapter(__DIR__.'/CollectionTest.php');
+        $producer = Producers::getAdapter(self::PATH_TO_TEST_FILE);
         
         $this->examineTextFileReader($producer);
         $this->examineTextFileReader($producer);

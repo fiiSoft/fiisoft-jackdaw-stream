@@ -16,20 +16,10 @@ use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class ForkHandlerFactory
 {
-    public static function adaptPrototype(ForkReady $prototype): ForkHandler
-    {
-        return self::createAdapter($prototype, false);
-    }
-    
-    public static function adaptHandler(ForkReady $prototype): ForkHandler
-    {
-        return self::createAdapter($prototype, true);
-    }
-    
-    private static function createAdapter(ForkReady $prototype, bool $isHandler): ForkHandler
+    public static function getAdapter(ForkReady $prototype): ForkHandler
     {
         if ($prototype instanceof StreamPipe) {
-            return new StreamFork($prototype, null, $isHandler);
+            return new StreamFork($prototype);
         }
         
         if ($prototype instanceof Reducer) {

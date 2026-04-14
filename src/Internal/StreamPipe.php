@@ -13,8 +13,8 @@ abstract class StreamPipe extends ForkCollaborator
         throw ImpossibleSituationException::called(__METHOD__);
     }
     
-    //StreamFork->, *FinalOperation
-    protected function getStream(): Stream
+    //FinalOperation->, *Stream
+    protected function cloneStream(): Stream
     {
         throw ImpossibleSituationException::called(__METHOD__);
     }

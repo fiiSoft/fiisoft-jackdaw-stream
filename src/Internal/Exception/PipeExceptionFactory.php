@@ -12,13 +12,8 @@ final class PipeExceptionFactory
         return InvalidOperationException::create('Cannot clone Pipe with non-empty stack');
     }
     
-    public static function cannotAddOperationToStartedStream(): JackdawException
+    public static function cannotAddOperationToTheFinalOne(): JackdawException
     {
-        return InvalidOperationException::create('Cannot add operation to a stream that has already started');
-    }
-    
-    public static function cannotAddOperationToFinalOne(): JackdawException
-    {
-        return InvalidOperationException::create('You cannot add another operation to the final one');
+        return InvalidOperationException::create('Cannot add an operation to the final one');
     }
 }

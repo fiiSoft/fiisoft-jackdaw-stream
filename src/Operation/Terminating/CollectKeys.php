@@ -51,4 +51,9 @@ final class CollectKeys extends BaseCollect
     {
         return true;
     }
+    
+    public function makeDetachedCopy(): self
+    {
+        return new $this($this->stream, $this->orElse, $this->transformer);
+    }
 }

@@ -14,12 +14,16 @@ final class SkipWhile extends PossiblyInversible
     
     public function handle(Signal $signal): void
     {
-        if ($this->filter->isAllowed($signal->item->value, $signal->item->key)) {
-            return;
+        if ($this->isActive) {
+            if ($this->filter->isAllowed($signal->item->value, $signal->item->key)) {
+                return;
+            }
+            
+            $this->isActive = false;
+            $signal->forget($this);
         }
         
         $this->next->handle($signal);
-        $signal->forget($this);
     }
     
     public function buildStream(iterable $stream): iterable
@@ -40,5 +44,12 @@ final class SkipWhile extends PossiblyInversible
     protected function inversedOperation(Filter $filter): Operation
     {
         return Operations::skipUntil($filter);
+    }
+    
+    protected function __clone()
+    {
+        $this->isActive = true;
+        
+        parent::__clone();
     }
 }

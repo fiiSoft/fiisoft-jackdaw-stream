@@ -12,9 +12,9 @@ final class Initial extends ProtectedCloning implements Operation
 {
     private Operation $next;
     
-    public function __construct()
+    public function __construct(?Operation $next = null)
     {
-        $this->next = new Ending($this);
+        $this->next = $next ?? new Ending($this);
     }
     
     public function handle(Signal $signal): void
@@ -67,6 +67,11 @@ final class Initial extends ProtectedCloning implements Operation
     public function removeFromChain(): Operation
     {
         return $this->next instanceof Ending ? $this : $this->next;
+    }
+    
+    public function streamingStart(Signal $signal): void
+    {
+        $this->next->streamingStart($signal);
     }
     
     public function streamingFinished(Signal $signal): bool

@@ -10,7 +10,9 @@ use FiiSoft\Jackdaw\Filter\Filters;
 use FiiSoft\Jackdaw\Handler\OnError;
 use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Mapper\Mappers;
+use FiiSoft\Jackdaw\Memo\FullMemo;
 use FiiSoft\Jackdaw\Memo\Memo;
+use FiiSoft\Jackdaw\Operation\Exception\OperationExceptionFactory;
 use FiiSoft\Jackdaw\Operation\Special\Assert\AssertionFailed;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
@@ -847,34 +849,16 @@ final class StreamDTest extends TestCase
     
     public function test_separate_can_preserve_keys(): void
     {
-        $rowset = [
-            ['id' => 2, 'name' => 'Sue', 'age' => 22],
-            ['id' => 9, 'name' => 'Chris', 'age' => 17],
-            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
-            ['id' => 5, 'name' => 'Chris', 'age' => 24],
-            ['id' => 4, 'name' => 'Kael', 'age' => 32],
-            ['id' => 7, 'name' => 'Sue', 'age' => 18],
-            ['id' => 1, 'name' => 'Ronald', 'age' => 67],
-        ];
-        
-        $adults = Stream::from($rowset)
-            ->reindexBy('id', true)
-            ->separateBy(Filters::filterBy('age', Filters::lessOrEqual(18)));
-        
-        self::assertSame([
-            [
-                2 => ['name' => 'Sue', 'age' => 22],
-            ], [
-                5 => ['name' => 'Chris', 'age' => 24],
-                4 => ['name' => 'Kael', 'age' => 32],
-            ], [
-                1 => ['name' => 'Ronald', 'age' => 67]
-            ],
-        ], $adults->toArray());
+        $this->performTest004(false);
     }
     
     public function test_separate_preserve_keys_with_onerror_handler(): void
     {
+        $this->performTest004(true);
+    }
+    
+    private function performTest004(bool $onError): void
+    {
         $rowset = [
             ['id' => 2, 'name' => 'Sue', 'age' => 22],
             ['id' => 9, 'name' => 'Chris', 'age' => 17],
@@ -885,10 +869,13 @@ final class StreamDTest extends TestCase
             ['id' => 1, 'name' => 'Ronald', 'age' => 67],
         ];
         
-        $adults = Stream::from($rowset)
-            ->onError(OnError::skip())
+        $stream = Stream::from($rowset)
             ->reindexBy('id', true)
             ->separateBy(Filters::filterBy('age', Filters::lessOrEqual(18)));
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
         
         self::assertSame([
             [
@@ -899,38 +886,20 @@ final class StreamDTest extends TestCase
             ], [
                 1 => ['name' => 'Ronald', 'age' => 67]
             ],
-        ], $adults->toArray());
+        ], $stream->toArray());
     }
     
     public function test_separate_reindex_keys(): void
     {
-        $rowset = [
-            ['id' => 2, 'name' => 'Sue', 'age' => 22],
-            ['id' => 9, 'name' => 'Chris', 'age' => 17],
-            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
-            ['id' => 5, 'name' => 'Chris', 'age' => 24],
-            ['id' => 4, 'name' => 'Kael', 'age' => 32],
-            ['id' => 7, 'name' => 'Sue', 'age' => 18],
-            ['id' => 1, 'name' => 'Ronald', 'age' => 67],
-        ];
-        
-        $adults = Stream::from($rowset)
-            ->reindexBy('id', true)
-            ->separateBy(Filters::filterBy('age', Filters::lessOrEqual(18)), true);
-        
-        self::assertSame([
-            [
-                ['name' => 'Sue', 'age' => 22],
-            ], [
-                ['name' => 'Chris', 'age' => 24],
-                ['name' => 'Kael', 'age' => 32],
-            ], [
-                ['name' => 'Ronald', 'age' => 67]
-            ],
-        ], $adults->toArray());
+        $this->performTest005(false);
     }
     
     public function test_separate_reindex_keys_with_onerror_handler(): void
+    {
+        $this->performTest005(true);
+    }
+    
+    private function performTest005(bool $onError): void
     {
         $rowset = [
             ['id' => 2, 'name' => 'Sue', 'age' => 22],
@@ -942,10 +911,13 @@ final class StreamDTest extends TestCase
             ['id' => 1, 'name' => 'Ronald', 'age' => 67],
         ];
         
-        $adults = Stream::from($rowset)
-            ->onError(OnError::abort())
+        $stream = Stream::from($rowset)
             ->reindexBy('id', true)
             ->separateBy(Filters::filterBy('age', Filters::lessOrEqual(18)), true);
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
         
         self::assertSame([
             [
@@ -956,7 +928,7 @@ final class StreamDTest extends TestCase
             ], [
                 ['name' => 'Ronald', 'age' => 67]
             ],
-        ], $adults->toArray());
+        ], $stream->toArray());
     }
     
     public function test_mapWhen_with_value_as_mapper_has_no_effect(): void
@@ -1836,5 +1808,176 @@ final class StreamDTest extends TestCase
         self::assertSame(['b', 'c', 'd', 'e', 'f', 'g'], Stream::from($data)->readMany(6)->toArray());
         self::assertSame(['b', 'c', 'd', 'e', 'f', 'g', 'h'], Stream::from($data)->readMany(7)->toArray());
         self::assertSame(['b', 'c', 'd', 'e', 'f', 'g', 'h'], Stream::from($data)->readMany(8)->toArray());
+    }
+    
+    /**
+     * @dataProvider getDataForTestIterateOverZeroArgs
+     */
+    #[DataProvider('getDataForTestIterateOverZeroArgs')]
+    public function test_iterateOver_zero_args(FullMemo $num, callable $producer): void
+    {
+        $actual = Stream::from([2, 0, 1, 3, 1, 2])
+            ->remember($num)
+            ->iterate($producer)
+            ->without(['e', 'y', 'u', 'i', 'o', 'a'])
+            ->chunkBy($num->key())
+            ->concat('')
+            ->toString();
+        
+        self::assertSame('hp,chj,kqn,bzvr,kqn,hp', $actual);
+    }
+    
+    public static function getDataForTestIterateOverZeroArgs(): iterable
+    {
+        $dataSet = [
+            ['c', 'e', 'h', 'j'],
+            ['k', 'q', 'n'],
+            ['h', 'p'],
+            ['b', 'z', 'o', 'v', 'r'],
+        ];
+        
+        $num = Memo::full();
+        
+        yield 'array' => [$num, static fn(): array => $dataSet[$num->value()->read()]];
+        
+        yield 'iterable' => [$num, static fn(): iterable => $dataSet[$num->value()->read()]];
+        
+        yield 'Generator' => [$num, static function () use ($dataSet, $num): \Generator {
+            yield from $dataSet[$num->value()->read()];
+        }];
+        
+        yield 'Iterator' => [$num, static function () use ($dataSet, $num): \Iterator {
+            return new \ArrayIterator($dataSet[$num->value()->read()]);
+        }];
+        
+        yield 'Traversable' => [$num, static function () use ($dataSet, $num): \Traversable {
+            return new \ArrayIterator($dataSet[$num->value()->read()]);
+        }];
+    }
+    
+    public function test_iterateOver_zero_args_with_onerror_handler(): void
+    {
+        $dataSet = [
+            ['c', 'e', 'h', 'j'],
+            ['k', 'q', 'n'],
+            ['h', 'p'],
+            ['b', 'z', 'o', 'v', 'r'],
+        ];
+        
+        $num = Memo::full();
+        
+        $actual = Stream::from([2, 0, 1, 3, 1, 2])
+            ->onError(OnError::abort())
+            ->remember($num)
+            ->iterate(static fn(): array => $dataSet[$num->value()->read()])
+            ->without(['e', 'y', 'u', 'i', 'o', 'a'])
+            ->chunkBy($num->key())
+            ->concat('')
+            ->toString();
+        
+        self::assertSame('hp,chj,kqn,bzvr,kqn,hp', $actual);
+    }
+    
+    public function test_iterateOver_one_arg(): void
+    {
+        $this->performTest006(false);
+    }
+    
+    public function test_iterateOver_one_arg_with_onerror_handler(): void
+    {
+        $this->performTest006(true);
+    }
+    
+    private function performTest006(bool $onError): void
+    {
+        $dataSet = [
+            ['c', 'e', 'h', 'j'],
+            ['k', 'q', 'n'],
+            ['h', 'p'],
+            ['b', 'z', 'o', 'v', 'r'],
+        ];
+        
+        $stream = Stream::from([2, 0, 1, 3, 1, 2])
+            ->putIn($key, Check::KEY)
+            ->iterate(static fn(int $num): array => $dataSet[$num])
+            ->without(['e', 'y', 'u', 'i', 'o', 'a'])
+            ->chunkBy(Discriminators::readFrom($key))
+            ->concat('');
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame('hp,chj,kqn,bzvr,kqn,hp', $stream->toString());
+    }
+    
+    public function test_iterateOver_two_args(): void
+    {
+        $this->performTest007(false);
+    }
+    
+    public function test_iterateOver_two_args_with_onerror_handler(): void
+    {
+        $this->performTest007(true);
+    }
+    
+    private function performTest007(bool $onError): void
+    {
+        $dataSet = [
+            ['c', 'e', 'h', 'j'],
+            ['k', 'q', 'n'],
+            ['h', 'p'],
+            ['b', 'z', 'o', 'v', 'r'],
+        ];
+        
+        $stream = Stream::from([2, 0, 1, 3, 1, 2])
+            ->iterate(static function (int $num, int $key) use ($dataSet): \Generator {
+                foreach ($dataSet[$num] as $value) {
+                    yield $key => $value;
+                }
+            })
+            ->without(['e', 'y', 'u', 'i', 'o', 'a'])
+            ->chunkByKey()
+            ->concat('');
+        
+        if ($onError) {
+            $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame('hp,chj,kqn,bzvr,kqn,hp', $stream->toString());
+    }
+    
+    public function test_use_flatMap_instead_of_iterateOver(): void
+    {
+        $dataSet = [
+            ['c', 'e', 'h', 'j'],
+            ['k', 'q', 'n'],
+            ['h', 'p'],
+            ['b', 'z', 'o', 'v', 'r'],
+        ];
+        
+        $actual = Stream::from([2, 0, 1, 3, 1, 2])
+            ->putIn($key, Check::KEY)
+            ->flatMap(static fn(int $num): array => $dataSet[$num], 1)
+            ->without(['e', 'y', 'u', 'i', 'o', 'a'])
+            ->chunkBy(Discriminators::readFrom($key))
+            ->concat('')
+            ->toString();
+        
+        self::assertSame('hp,chj,kqn,bzvr,kqn,hp', $actual);
+    }
+    
+    public function test_iterateOver_throws_exception_when_callable_requires_invalid_number_of_args(): void
+    {
+        $this->expectExceptionObject(OperationExceptionFactory::invalidIterateOverCallback(3));
+        
+        Stream::empty()->iterate(static fn($a, $b, $c): iterable => []);
+    }
+    
+    public function test_iterateOver_throws_exception_when_declared_type_of_callable_is_invalid(): void
+    {
+        $this->expectExceptionObject(OperationExceptionFactory::wrongTypeOfIterateOverCallback());
+        
+        Stream::empty()->iterate(static fn(): int => 5);
     }
 }

@@ -26,4 +26,11 @@ abstract class MapWhileUntil extends BaseOperation
         $this->condition = Filters::getAdapter($condition);
         $this->mapper = Mappers::getAdapter($mapper);
     }
+    
+    protected function __clone()
+    {
+        $this->isActive = true;
+        
+        parent::__clone();
+    }
 }

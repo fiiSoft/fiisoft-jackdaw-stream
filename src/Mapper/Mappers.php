@@ -5,12 +5,10 @@ namespace FiiSoft\Jackdaw\Mapper;
 use FiiSoft\Jackdaw\Discriminator\Discriminator;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Filter\Filter;
-use FiiSoft\Jackdaw\Internal\ResultCaster;
 use FiiSoft\Jackdaw\Mapper\Adapter\DiscriminatorAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\GeneratorAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\MemoReaderAdapter;
-use FiiSoft\Jackdaw\Mapper\Adapter\ProducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\ReducerAdapter;
 use FiiSoft\Jackdaw\Mapper\Adapter\SequenceMemoAdapter;
 use FiiSoft\Jackdaw\Mapper\Cast\ToArray;
@@ -24,7 +22,6 @@ use FiiSoft\Jackdaw\Mapper\ReindexKeys\ReindexKeysComplex;
 use FiiSoft\Jackdaw\Mapper\ReindexKeys\ReindexKeysSimple;
 use FiiSoft\Jackdaw\Memo\MemoReader;
 use FiiSoft\Jackdaw\Memo\SequenceMemo;
-use FiiSoft\Jackdaw\Producer\Producer;
 use FiiSoft\Jackdaw\Reducer\Reducer;
 
 final class Mappers
@@ -107,27 +104,9 @@ final class Mappers
             return new DiscriminatorAdapter($mapper);
         }
         
-        if ($mapper instanceof ResultCaster) {
-            return new GeneratorAdapter((static function () use ($mapper): \Generator {
-                foreach ($mapper->toArrayAssoc() as $key => $value) {
-                    yield $key => $value;
-                }
-            })());
-        }
-        
-        if ($mapper instanceof Producer) {
-            return new ProducerAdapter($mapper);
-        }
-        
-        if ($mapper instanceof \Generator) {
-            return new GeneratorAdapter($mapper);
-        }
-        
         if ($mapper instanceof \Traversable) {
-            return new GeneratorAdapter((static function () use ($mapper) {
-                foreach ($mapper as $key => $value) {
-                    yield $key => $value;
-                }
+            return new GeneratorAdapter((static function () use ($mapper): \Generator {
+                yield from $mapper;
             })());
         }
         

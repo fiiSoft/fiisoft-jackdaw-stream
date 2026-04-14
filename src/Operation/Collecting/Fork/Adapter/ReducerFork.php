@@ -19,7 +19,7 @@ final class ReducerFork implements ForkHandler
         return new self(clone $this->reducer);
     }
     
-    final public function prepare(): void
+    public function prepare(): void
     {
         //noop
     }

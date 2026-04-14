@@ -7,25 +7,16 @@ use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Internal\StreamPipe;
 use FiiSoft\Jackdaw\Operation\Collecting\Fork\ForkHandler;
-use FiiSoft\Jackdaw\Operation\LastOperation;
 
 final class StreamFork extends StreamPipe implements ForkHandler
 {
     private StreamPipe $stream;
     private Item $item;
-    private ?Signal $signal = null;
+    private Signal $signal;
     
-    private bool $isHandler;
-    
-    public function __construct(
-        StreamPipe $stream,
-        ?Signal $signal = null,
-        bool $isHandler = true,
-        bool $prepare = false
-    ) {
+    public function __construct(StreamPipe $stream, bool $prepare = false)
+    {
         $this->stream = $stream;
-        $this->signal = $signal;
-        $this->isHandler = $isHandler;
         
         if ($prepare) {
             $this->prepare();
@@ -34,23 +25,12 @@ final class StreamFork extends StreamPipe implements ForkHandler
     
     public function create(): ForkHandler
     {
-        return new self($this->stream->cloneStream(), $this->signal, false, true);
+        return new self($this->stream->cloneForFork(), true);
     }
     
     public function prepare(): void
     {
-        if ($this->isHandler) {
-            $this->stream->prepareSubstream(false);
-            
-            if ($this->stream instanceof LastOperation) {
-                $this->stream = $this->stream->getStream();
-            }
-        }
-        
-        if ($this->signal === null) {
-            $this->signal = Signal::shared();
-        }
-        
+        $this->signal = Signal::shared();
         $this->item = $this->signal->item;
     }
     

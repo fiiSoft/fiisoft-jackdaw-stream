@@ -3,29 +3,33 @@
 namespace FiiSoft\Jackdaw\Internal;
 
 use FiiSoft\Jackdaw\Internal\Exception\PipeExceptionFactory;
+use FiiSoft\Jackdaw\Internal\Pipe\CanAppendResult;
+use FiiSoft\Jackdaw\Internal\Pipe\ChainOperationResult;
 use FiiSoft\Jackdaw\Mapper\Key;
 use FiiSoft\Jackdaw\Mapper\Mappers;
 use FiiSoft\Jackdaw\Mapper\Tokenize as TokenizeMapper;
 use FiiSoft\Jackdaw\Mapper\Value;
-use FiiSoft\Jackdaw\Operation\Collecting\{Categorize, Gather, Reverse, Segregate, ShuffleAll, Sort, SortLimited, Tail};
+use FiiSoft\Jackdaw\Operation\Collecting\{Cache, Categorize, Fork, ForkMatch, Gather, Reverse, Segregate, ShuffleAll,
+    Sort, SortLimited, Tail};
 use FiiSoft\Jackdaw\Operation\Filtering\{EveryNth, FilterByMany, FilterMany, FilterOp, Omit, OmitReps, Skip, SkipNth,
     StackableFilter, StackableFilterBy, Unique};
-use FiiSoft\Jackdaw\Operation\Internal\{Limitable, Operations as OP, Pipe\Initial, PossiblyInversible, Reindexable,
-    SingularOperation};
+use FiiSoft\Jackdaw\Operation\Internal\{Detachable, Limitable, Operations as OP, Pipe\Initial, PossiblyInversible,
+    Reindexable, SingularOperation};
 use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Mapping\{AccumulateSeparate, Aggregate, Chunk, ChunkBy, Classify, ConditionalMap, Flat,
     Flip, Map, MapBy, MapFieldWhen, MapKey, MapKeyValue, MapMany, MapWhen, Reindex, Scan, Tokenize, Tuple, UnpackTuple,
     Window};
 use FiiSoft\Jackdaw\Operation\Operation;
-use FiiSoft\Jackdaw\Operation\Sending\{Feed, FeedMany, SendTo, SendToMany, StoreIn};
-use FiiSoft\Jackdaw\Operation\Special\{CollectInArray, CountableRead, Limit, ReadMany, ReadNext, ReadWhileUntil,
-    Shuffle, SwapHead};
+use FiiSoft\Jackdaw\Operation\Sending\{Feed, FeedMany, SendTo, SendToMany};
+use FiiSoft\Jackdaw\Operation\Special\{CountableRead, Limit, ReadMany, ReadNext, ReadWhileUntil, Shuffle, SwapHead};
 use FiiSoft\Jackdaw\Operation\Terminating\{Collect, CollectKeys, Count, Find, First, Has, HasEvery, HasOnly, IsEmpty,
     Last};
 use FiiSoft\Jackdaw\Stream;
 
 final class Pipe implements StreamBuilder, Destroyable
 {
+//    private static int $instanceCounter = 0;
+    
     public Operation $head;
     public Operation $last;
     
@@ -41,24 +45,57 @@ final class Pipe implements StreamBuilder, Destroyable
     private bool $isPrepared = false;
     private bool $isDestroying = false;
     private bool $isResuming = false;
+    private bool $isPrototype;
+    
+//    private int $myNumber;
     
     private Stream $stream;
     
-    public function __construct(Stream $stream)
+    private ?ChainOperationResult $chainOperationResult = null;
+    private ?Operation $restartedFrom = null;
+    
+    public function __construct(Stream $stream, bool $isPrototype = false)
     {
+//        $this->myNumber = ++self::$instanceCounter;
+        
         $this->stream = $stream;
+        $this->isPrototype = $isPrototype;
         
         $this->head = new Initial();
         $this->last = $this->head;
     }
     
-    public function __clone()
+    public function clone(): self
     {
+        $copy = clone $this;
+        
+        if ($this->isPrototype) {
+            $copy->isPrepared = false;
+        }
+        
+        return $copy;
+    }
+    
+    private function __clone()
+    {
+//        $this->myNumber = ++self::$instanceCounter;
+        
         if (!empty($this->stack) || !empty($this->heads)) {
             throw PipeExceptionFactory::cannotClonePipeWithNoneEmptyStack();
         }
         
-        $this->head = clone $this->head;
+        $this->cloneAndSetHeadAndLast($this->restartedFrom ?? $this->head);
+        $this->restartedFrom = null;
+    }
+    
+    private function cloneAndSetHeadAndLast(Operation $head): void
+    {
+        if ($head instanceof Initial) {
+            $this->head = clone $head;
+        } else {
+            $this->head = (clone new Initial($head))->getNext();
+        }
+        
         $this->last = $this->head->getLast();
     }
     
@@ -77,6 +114,41 @@ final class Pipe implements StreamBuilder, Destroyable
             $this->stack = [];
             $this->heads = [];
         }
+    }
+    
+    public function prepareForWrap(): void
+    {
+        $this->substituteWithCopyFor(Detachable::class);
+    }
+    
+    public function prepareForJoin(): void
+    {
+        $this->substituteWithCopyFor(Detachable::class);
+    }
+    
+    public function prepareForConsume(): void
+    {
+        $this->substituteWithCopyFor(Cache::class);
+    }
+    
+    private function substituteWithCopyFor(string $desired): void
+    {
+        for ($node = $this->head; $node !== null; $node = $node->getNext()) {
+            if ($node instanceof Detachable && $node instanceof $desired) {
+                $this->substituteNode($node, $node->makeDetachedCopy());
+            }
+        }
+    }
+    
+    private function substituteNode(Operation $node, Operation $substitute): void
+    {
+        $prev = $node->getPrev();
+        $next = $node->getNext();
+        
+        $prev->setNext($substitute, true);
+        $substitute->setNext($next, true);
+        
+        $this->last = $this->head->getLast();
     }
     
     /**
@@ -106,55 +178,56 @@ final class Pipe implements StreamBuilder, Destroyable
     public function assignStream(Stream $stream): void
     {
         $this->stream = $stream;
+        $this->head->assignStream($stream);
     }
     
-    /**
-     * @return Operation|LastOperation
-     */
-    public function chainOperation(Operation $operation)
+    public function restartWith(Operation $operation): void
     {
-        if ($this->cannotChain($operation)) {
-            throw PipeExceptionFactory::cannotAddOperationToStartedStream();
+        if ($this->isPrototype && $this->restartedFrom === null) {
+            $this->restartedFrom = $this->head;
         }
         
-        if ($this->canAppend($operation)) {
-            $this->append($operation);
-        }
-        
-        if ($this->replacement === null) {
-            return $operation;
-        }
-        
-        $replacement = $this->replacement;
-        $this->replacement = null;
-        
-        return $replacement;
+        $this->head = $operation;
     }
     
-    private function cannotChain(Operation $operation): bool
+    public function chainOperation(Operation $operation): ChainOperationResult
     {
-        return $this->isPrepared
-            && !$operation instanceof CollectInArray
-            && !$operation instanceof StoreIn
-            && !$operation instanceof LastOperation
-            && !$operation instanceof Feed
-            && !$operation instanceof FeedMany;
+        $canAppendResult = $this->canAppend($operation);
+        
+        if ($canAppendResult->canAppend) {
+            if ($canAppendResult->pipe !== null) {
+                $canAppendResult->pipe->append($operation);
+            } else {
+                $this->append($operation);
+            }
+            
+            $operation->assignStream($this->stream);
+        } elseif ($this->replacement !== null) {
+            $operation = $this->replacement;
+            $this->replacement = null;
+            
+            if ($operation instanceof Operation) {
+                $operation->assignStream($this->stream);
+            }
+        }
+        
+        return new ChainOperationResult($canAppendResult->pipe ?? $this, $this->stream, $operation);
     }
     
-    private function canAppend(Operation $next): bool
+    private function canAppend(Operation $next): CanAppendResult
     {
         if ($this->last instanceof LastOperation) {
-            throw PipeExceptionFactory::cannotAddOperationToFinalOne();
+            throw PipeExceptionFactory::cannotAddOperationToTheFinalOne();
         }
         
         if ($next instanceof StackableFilter) {
             if ($this->last instanceof FilterMany) {
                 $this->last->add($next);
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof StackableFilter) {
                 $this->replaceLastOperation(new FilterMany($this->last, $next));
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->keepsItemsUnchanged($this->last)) {
                 $node = $this->findPlaceForFilterMany($this->last);
@@ -165,38 +238,40 @@ final class Pipe implements StreamBuilder, Destroyable
                 } else {
                     $node->getNext()->prepend($next);
                 }
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof Map) {
             if ($next->mapper() instanceof Value) {
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof MapKey) {
-                return !($this->last->mapper() instanceof Value && $next->mapper() instanceof Key);
+                return $this->canAppendChooseResult(
+                    !($this->last->mapper() instanceof Value && $next->mapper() instanceof Key)
+                );
             }
             if ($this->last instanceof Flip && $next->mapper() instanceof Key) {
                 $this->removeLastNode();
-                $this->stream->mapKey(Mappers::value());
-                return false;
+                $this->insertOperations(OP::mapKey(Mappers::value()));
+                return $this->cannotAppend();
             }
             if ($this->last instanceof MapMany) {
                 $this->last->add($next);
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Map) {
                 if (!$this->last->mergeWith($next)) {
                     $this->replaceLastOperation(new MapMany($this->last, $next));
                 }
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof StackableFilterBy) {
             if ($this->last instanceof FilterByMany) {
                 $this->last->add($next);
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof StackableFilterBy) {
                 $this->replaceLastOperation(new FilterByMany($this->last, $next));
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->keepsItemsUnchanged($this->last)) {
                 $node = $this->findPlaceForFilterByMany($this->last);
@@ -205,64 +280,66 @@ final class Pipe implements StreamBuilder, Destroyable
                 } else {
                     $node->getNext()->prepend(new FilterByMany($next));
                 }
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof MapKey) {
             if ($next->mapper() instanceof Key) {
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Flip && $next->mapper() instanceof Value) {
                 $this->removeLastNode();
-                $this->stream->map(Mappers::key());
-                return false;
+                $this->insertOperations(OP::map(Mappers::key()));
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Map) {
-                return !($this->last->mapper() instanceof Key && $next->mapper() instanceof Value);
+                return $this->canAppendChooseResult(
+                    !($this->last->mapper() instanceof Key && $next->mapper() instanceof Value)
+                );
             }
             if ($this->last instanceof MapKey) {
-                return !$this->last->mergeWith($next);
+                return $this->canAppendChooseResult(!$this->last->mergeWith($next));
             }
         } elseif ($next instanceof Limit) {
             if ($this->last instanceof Limitable) {
                 if ($this->last->applyLimit($next->limit())) {
-                    return false;
+                    return $this->cannotAppend();
                 }
                 $this->replaceLastOperation($this->last->createWithLimit($next->limit()));
-                return true;
+                return $this->yesCanAppend();
             }
             if ($this->last instanceof Sort) {
                 $this->replaceLastOperation($this->last->createSortLimited($next->limit()));
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Reverse) {
                 $this->removeLastNode();
-                $this->stream->tail($next->limit())->reverse();
-                return false;
+                $this->insertOperations(OP::tail($next->limit()), OP::reverse());
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof Skip) {
             if ($this->last instanceof Skip) {
                 $this->replaceLastOperation($this->last->mergeWith($next));
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof Reverse) {
             if ($this->last instanceof Reverse) {
                 $this->removeLastNode();
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Shuffle) {
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Limitable && $this->last->limit() === 1) {
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Sort) {
                 $this->last->reverseOrder();
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof Reindex) {
             if ($this->last instanceof Reindex) {
                 $this->last->mergeWith($next);
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof MapKey) {
                 $this->removeLastNode();
@@ -275,28 +352,28 @@ final class Pipe implements StreamBuilder, Destroyable
                     || $this->last instanceof Tokenize
                     || $this->last instanceof Tuple
                 ) {
-                    return false;
+                    return $this->cannotAppend();
                 }
             }
         } elseif ($next instanceof Flip) {
             if ($this->last instanceof Flip) {
                 $this->removeLastNode();
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Map && $this->last->mapper() instanceof Key) {
                 $this->removeLastNode();
-                $this->stream->map(Mappers::key());
-                return false;
+                $this->insertOperations(OP::map(Mappers::key()));
+                return $this->cannotAppend();
             }
             if ($this->last instanceof MapKey && $this->last->mapper() instanceof Value) {
                 $this->removeLastNode();
-                $this->stream->mapKey(Mappers::value());
-                return false;
+                $this->chainOperation(OP::mapKey(Mappers::value()));
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof Shuffle) {
             if ($this->last instanceof Shuffle) {
                 $this->replaceLastOperation($this->last->mergedWith($next));
-                return false;
+                return $this->cannotAppend();
             }
             if ($next instanceof ShuffleAll) {
                 if ($this->last instanceof Reverse || $this->last instanceof Sort) {
@@ -304,50 +381,50 @@ final class Pipe implements StreamBuilder, Destroyable
                 }
             }
             if ($this->last instanceof Limitable && $this->last->limit() === 1) {
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof Tail) {
             if ($this->last instanceof Tail) {
                 $this->last->mergeWith($next);
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Sort) {
                 $this->last->reverseOrder();
-                $this->stream->limit($next->length())->reverse();
-                return false;
+                $this->insertOperations(OP::limit($next->length()), OP::reverse());
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Limitable) {
                 if ($this->last->limit() > $next->length()) {
-                    $this->stream->skip($this->last->limit() - $next->length());
+                    $this->insertOperations(OP::skip($this->last->limit() - $next->length()));
                 }
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Reverse) {
                 $this->removeLastNode();
-                $this->stream->limit($next->length())->reverse();
-                return false;
+                $this->insertOperations(OP::limit($next->length()), OP::reverse());
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof Flat) {
             if ($this->last instanceof Flat) {
                 $this->last->mergeWith($next);
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Map) {
                 $mapper = $this->last->mapper();
                 if ($mapper instanceof TokenizeMapper) {
                     $this->removeLastNode();
-                    $this->stream->tokenize($mapper->tokens());
-                    return false;
+                    $this->insertOperations(OP::tokenize($mapper->tokens()));
+                    return $this->cannotAppend();
                 }
             }
             if ($this->last instanceof Gather) {
                 $reindex = $this->last->isReindexed();
                 $this->removeLastNode();
                 if ($reindex) {
-                    $this->stream->reindex();
+                    $this->insertOperations(OP::reindex());
                 }
                 if ($next->isLevel(1)) {
-                    return false;
+                    return $this->cannotAppend();
                 }
                 if (!$next->isLevel(0)) {
                     $next->decreaseLevel();
@@ -355,21 +432,21 @@ final class Pipe implements StreamBuilder, Destroyable
             }
             if ($this->last instanceof Chunk && !$this->last->isReindexed()) {
                 $this->removeLastNode();
-                return !$next->isLevel(1);
+                return $this->canAppendChooseResult(!$next->isLevel(1));
             }
         } elseif ($next instanceof SendTo) {
             if ($this->last instanceof SendTo) {
                 $this->replaceLastOperation($this->last->createSendToMany($next));
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof SendToMany) {
                 $this->last->addConsumers($next->consumer());
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof SendToMany) {
             if ($this->last instanceof SendToMany) {
                 $this->last->addConsumers(...$next->getConsumers());
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof SendTo) {
                 $next->addConsumers($this->last->consumer());
@@ -384,29 +461,28 @@ final class Pipe implements StreamBuilder, Destroyable
                 if ($next->isReindexed()) {
                     $this->removeLastNode();
                 } elseif ($this->last->isDefaultReindex()) {
-                    $this->removeLastNode();
-                    $this->append($next->reindexed());
-                    return false;
+                    $this->replaceLastOperation($next->reindexed());
+                    return $this->cannotAppend();
                 }
             }
         } elseif ($next instanceof Feed) {
             if ($this->last instanceof FeedMany) {
                 $this->last->add($next);
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Feed) {
                 $this->replaceLastOperation($this->last->createFeedMany($next));
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof ConditionalMap) {
             if ($next->shouldBeNonConditional()) {
-                $this->stream->map($next->getMaper());
-                return false;
+                $this->insertOperations(OP::map($next->getMaper()));
+                return $this->cannotAppend();
             }
-            return !$next->isBarren();
+            return $this->canAppendChooseResult(!$next->isBarren());
         } elseif ($next instanceof First) {
             if ($this->last instanceof Sort) {
-                $this->stream->limit(1);
+                $this->insertOperations(OP::limit(1));
             } elseif ($this->last instanceof Limit) {
                 $this->removeLastNode();
             } elseif ($this->last instanceof Limitable) {
@@ -415,22 +491,22 @@ final class Pipe implements StreamBuilder, Destroyable
                 }
             } elseif ($this->last instanceof Reverse) {
                 $this->removeLastNode();
-                $this->replacement = $this->stream->last();
-                return false;
+                $this->insertLastOperation(OP::last($this->stream));
+                return $this->cannotAppend();
             } elseif ($this->last instanceof FilterOp || $this->last instanceof Omit) {
                 $this->replaceTerminatingOperation($this->last->createFind($this->stream));
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof Last) {
             if ($this->last instanceof Sort) {
                 $this->last->reverseOrder();
-                $this->replacement = $this->stream->first();
-                return false;
+                $this->insertLastOperation(OP::first($this->stream));
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Reverse) {
                 $this->removeLastNode();
-                $this->replacement = $this->stream->first();
-                return false;
+                $this->insertLastOperation(OP::first($this->stream));
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Tail) {
                 $this->removeLastNode();
@@ -482,21 +558,21 @@ final class Pipe implements StreamBuilder, Destroyable
         } elseif ($next instanceof Collect) {
             if ($this->last instanceof Reindex && $this->last->isDefaultReindex()) {
                 $this->replaceTerminatingOperation($next->reindexed());
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Flip && $next->isReindexed()) {
                 $this->replaceTerminatingOperation(OP::collectKeys($this->stream));
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof CollectKeys) {
             if ($this->last instanceof Flip) {
                 $this->replaceTerminatingOperation(OP::collect($this->stream, true));
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof UnpackTuple) {
             if ($this->last instanceof Tuple && $next->isAssoc() === $this->last->isAssoc()) {
                 $this->removeLastNode();
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof Reindex || $this->last instanceof MapKey) {
                 $this->removeLastNode();
@@ -504,58 +580,110 @@ final class Pipe implements StreamBuilder, Destroyable
         } elseif ($next instanceof Tuple) {
             if ($this->last instanceof UnpackTuple && $next->isAssoc() === $this->last->isAssoc()) {
                 $this->removeLastNode();
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof PossiblyInversible) {
             $inversed = $next->createInversed();
             if ($inversed !== null) {
-                $this->append($inversed);
-                return false;
+                $this->appendReplacement($inversed);
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof Window && $next->isLikeChunk()) {
-            $this->stream->chunk($next->size(), $next->reindex());
-            return false;
+            $this->insertOperations(OP::chunk($next->size(), $next->reindex()));
+            return $this->cannotAppend();
         } elseif ($next instanceof EveryNth) {
             if ($next->num() === 1) {
-                return false;
+                return $this->cannotAppend();
             }
             if ($this->last instanceof EveryNth) {
                 $this->last->applyNum($next->num());
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof SkipNth) {
             if ($next->num() === 2) {
                 if ($this->last instanceof SkipNth && $this->last->num() === 3) {
                     $this->removeLastNode();
-                    $this->stream->everyNth(3);
+                    $this->insertOperations(OP::everyNth(3));
                 } else {
-                    $this->stream->everyNth(2);
+                    $this->insertOperations(OP::everyNth(2));
                 }
-                return false;
+                return $this->cannotAppend();
             }
         } elseif ($next instanceof CountableRead) {
             if ($next->howManyIsConstantZero()) {
-                return false;
+                return $this->cannotAppend();
             }
             if ($next instanceof ReadNext) {
                 if ($this->last instanceof ReadNext) {
                     $this->last->mergeWith($next);
-                    return false;
+                    return $this->cannotAppend();
                 }
             } elseif ($next instanceof ReadMany && $next->howManyIsConstantOne()) {
-                $this->stream->readNext();
+                $this->insertOperations(OP::readNext());
                 if ($next->reindexKeys()) {
-                    $this->stream->mapKey(0);
+                    $this->insertOperations(OP::mapKey(0));
                 }
-                return false;
+                return $this->cannotAppend();
+            }
+        } elseif ($next instanceof Cache) {
+            if ($this->last instanceof Cache) {
+                return $this->cannotAppend();
+            }
+            if ($this->isCollectingOperation($this->last)) {
+                $this->appendReplacement($next->forceCollectingData());
+                return $this->cannotAppend();
             }
         }
         
         if ($next instanceof Reindexable && $this->last instanceof Reindex && $next->isReindexed()) {
             $this->removeLastNode();
         }
-
-        return true;
+        
+        return $this->yesCanAppend();
+    }
+    
+    private function yesCanAppend(): CanAppendResult
+    {
+        return $this->canAppendChooseResult(true);
+    }
+    
+    private function cannotAppend(): CanAppendResult
+    {
+        return $this->canAppendChooseResult(false);
+    }
+    
+    private function canAppendChooseResult(bool $canAppend): CanAppendResult
+    {
+        if ($this->chainOperationResult !== null) {
+            $canAppendResult = $this->chainOperationResult->createCanAppendResult($canAppend);
+            $this->chainOperationResult = null;
+        } else {
+            $canAppendResult = new CanAppendResult($canAppend);
+        }
+        
+        return $canAppendResult;
+    }
+    
+    private function insertLastOperation(Operation $operation): void
+    {
+        $this->insertOperations($operation);
+        $this->replacement = $this->chainOperationResult->operation;
+    }
+    
+    private function insertOperations(Operation ...$operations): void
+    {
+        $instance = $this->isPrototype ? clone $this : $this;
+        
+        foreach ($operations as $operation) {
+            $this->chainOperationResult = $instance->chainOperation($operation);
+            $instance = $this->chainOperationResult->pipe;
+        }
+    }
+    
+    private function appendReplacement(Operation $operation): void
+    {
+        $this->replacement = $operation;
+        $this->append($operation);
     }
     
     private function replaceTerminatingOperation(Operation $operation): void
@@ -577,12 +705,28 @@ final class Pipe implements StreamBuilder, Destroyable
     
     private function removeInitialNode(): void
     {
-        $this->head = $this->head->removeFromChain();
+        if ($this->head instanceof Initial) {
+            $this->head = $this->head->removeFromChain();
+        }
     }
     
     private function removeLastNode(): void
     {
         $this->last = $this->last->removeFromChain();
+    }
+    
+    private function isCollectingOperation(Operation $operation): bool
+    {
+        return $operation instanceof Categorize
+            || $operation instanceof Fork
+            || $operation instanceof ForkMatch
+            || $operation instanceof Gather
+            || $operation instanceof Reverse
+            || $operation instanceof Segregate
+            || $operation instanceof ShuffleAll
+            || $operation instanceof Sort
+            || $operation instanceof SortLimited
+            || $operation instanceof Tail;
     }
     
     private function findPlaceForFilterMany(Operation $last): Operation

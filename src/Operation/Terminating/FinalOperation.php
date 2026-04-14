@@ -4,36 +4,42 @@ namespace FiiSoft\Jackdaw\Operation\Terminating;
 
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Result;
+use FiiSoft\Jackdaw\Internal\ResultProvider;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Internal\CommonOperationCode;
 use FiiSoft\Jackdaw\Operation\LastOperation;
 use FiiSoft\Jackdaw\Operation\Operation;
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Jackdaw\Transformer\Transformer;
+use FiiSoft\Jackdaw\Transformer\Transformers;
 
-abstract class FinalOperation extends LastOperation implements Operation
+abstract class FinalOperation extends LastOperation implements Operation, ResultProvider
 {
     use CommonOperationCode { destroy as commonDestroy; resume as commonResume; }
     
     protected Stream $stream;
     protected ?Result $result = null;
+    protected ?Transformer $transformer = null;
+    
+    /** @var callable|mixed|null */
+    protected $orElse;
     
     /** @var Stream[] */
     private array $parents = [];
     
-    /** @var callable|mixed|null */
-    private $orElse;
-    
     private bool $isCloning = false;
     private bool $refreshResult = false;
     private bool $isResuming = false;
+    private bool $isSettingTransformer = false;
     
     /**
      * @param callable|mixed|null $orElse
      */
-    public function __construct(Stream $stream, $orElse = null)
+    public function __construct(Stream $stream, $orElse = null, ?Transformer $transformer = null)
     {
         $this->stream = $stream;
         $this->orElse = $orElse;
+        $this->transformer = $transformer;
     }
     
     final public function found(): bool
@@ -59,9 +65,42 @@ abstract class FinalOperation extends LastOperation implements Operation
      */
     final public function transform($transformer): LastOperation
     {
-        $this->result()->transform($transformer);
+        $transformer = Transformers::getAdapter($transformer);
+        
+        if ($this->isSettingTransformer) {
+            $this->isSettingTransformer = false;
+        } elseif ($this->stream->isPrototype()) {
+            $this->isSettingTransformer = true;
+            $copy = $this->stream->cloneStream()->getLastOperation();
+            $copy->transform($transformer);
+            $this->isSettingTransformer = false;
+            
+            return $copy;
+        }
+        
+        $this->transformer = $transformer;
+        $this->result()->transform($this->transformer);
         
         return $this;
+    }
+    
+    protected function __clone()
+    {
+        if ($this->isSettingTransformer) {
+            if ($this->result !== null) {
+                $this->result = clone $this->result;
+            }
+        } else {
+            $this->result = null;
+        }
+        
+        $this->refreshResult = false;
+        $this->isResuming = false;
+        
+        if ($this->next !== null) {
+            $this->next = clone $this->next;
+            $this->next->setPrev($this);
+        }
     }
     
     /**
@@ -136,7 +175,7 @@ abstract class FinalOperation extends LastOperation implements Operation
     private function result(): Result
     {
         if ($this->result === null) {
-            $this->result = new Result($this->stream, $this, $this->orElse, $this->parents);
+            $this->result = new Result($this->stream, $this, $this->orElse, $this->parents, $this->transformer);
         } elseif ($this->refreshResult) {
             $this->result->refreshResult();
             $this->refreshResult = false;
@@ -145,24 +184,12 @@ abstract class FinalOperation extends LastOperation implements Operation
         return $this->result;
     }
     
-    protected function __clone()
-    {
-        $this->result = null;
-        $this->refreshResult = false;
-        $this->isResuming = false;
-        
-        if ($this->next !== null) {
-            $this->next = clone $this->next;
-            $this->next->setPrev($this);
-        }
-    }
-    
-    final protected function cloneStream(): Stream
+    final protected function cloneForFork(): Stream
     {
         \assert($this->result === null && !$this->isCloning, 'Invalid cloning of FinalOperation');
         
         $this->isCloning = true;
-        $streamCopy = $this->stream->cloneStream();
+        $streamCopy = $this->stream->cloneForFork();
         $this->isCloning = false;
         
         return $streamCopy;
@@ -198,11 +225,6 @@ abstract class FinalOperation extends LastOperation implements Operation
         $this->stream->consume($producer);
     }
     
-    final public function streamingFinished(Signal $signal): bool
-    {
-        return $this->next->streamingFinished($signal);
-    }
-    
     final protected function prepareSubstream(bool $isLoop): void
     {
         $this->stream->prepareSubstream($isLoop);
@@ -218,11 +240,6 @@ abstract class FinalOperation extends LastOperation implements Operation
     final protected function continueIteration(bool $once = false): bool
     {
         return $this->stream->continueIteration($once);
-    }
-    
-    final protected function getStream(): Stream
-    {
-        return $this->stream;
     }
     
     final public function resume(): void
@@ -242,6 +259,11 @@ abstract class FinalOperation extends LastOperation implements Operation
         $this->stream->finish();
     }
     
+    final public function refreshResult(): void
+    {
+        $this->refreshResult = true;
+    }
+    
     public function destroy(): void
     {
         if (!$this->isDestroying) {
@@ -255,11 +277,6 @@ abstract class FinalOperation extends LastOperation implements Operation
             
             $this->stream->destroy();
         }
-    }
-    
-    public function refreshResult(): void
-    {
-        $this->refreshResult = true;
     }
     
     abstract public function isReindexed(): bool;

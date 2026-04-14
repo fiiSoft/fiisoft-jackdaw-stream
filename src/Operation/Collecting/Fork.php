@@ -20,7 +20,7 @@ final class Fork extends BaseFork
     {
         parent::__construct($discriminator);
         
-        $this->prototype = ForkHandlerFactory::adaptPrototype($prototype);
+        $this->prototype = ForkHandlerFactory::getAdapter($prototype);
     }
     
     public function prepare(): void

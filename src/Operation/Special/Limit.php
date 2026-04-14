@@ -49,6 +49,10 @@ final class Limit extends BaseOperation implements Limitable
                     break;
                 }
             }
+        } else {
+            foreach ($stream as $_) {
+                break;
+            }
         }
     }
     
