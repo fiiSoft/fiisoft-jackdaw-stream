@@ -20,6 +20,7 @@ use FiiSoft\Jackdaw\Internal\Check;
 use FiiSoft\Jackdaw\Memo\Memo;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\ValueRef\IntNum;
+use FiiSoft\Test\Helper\TestHelper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -365,11 +366,7 @@ final class FakeFilterByAdjuster implements FilterAdjuster
     public function adjust(Filter $filter): Filter
     {
         if ($filter instanceof FilterBy) {
-            $refl = new \ReflectionObject($filter);
-            $prop = $refl->getProperty('filter');
-            $prop->setAccessible(true);
-            
-            return Filters::filterBy($this->field, $prop->getValue($filter));
+            return Filters::filterBy($this->field, TestHelper::getValueOfProp($filter, 'filter'));
         }
         
         return $filter;
@@ -382,21 +379,15 @@ final class FakeValueEqualFilterReplacer implements FilterAdjuster
     {
         if ($filter instanceof Equal\ValueEqual)
         {
-            $refl = new \ReflectionObject($filter);
-            
-            $prop = $refl->getProperty('number');
-            $prop->setAccessible(true);
-            $number = $prop->getValue($filter);
+            $number = TestHelper::getValueOfProp($filter, 'number');
             
             $refl = new \ReflectionClass(FakeValueEqualFilter::class);
             $replacement = $refl->newInstanceWithoutConstructor();
             
-            $prop = $refl->getProperty('number');
-            $prop->setAccessible(true);
+            $prop = TestHelper::getProperty($refl, 'number');
             $prop->setValue($replacement, $number);
             
-            $prop = $refl->getProperty('mode');
-            $prop->setAccessible(true);
+            $prop = TestHelper::getProperty($refl, 'mode');
             $prop->setValue($replacement, $filter->getMode());
             
             return $replacement;
@@ -433,12 +424,9 @@ final class FakeStringFilter extends StringFilterSingle
     
     public function negate(): StringFilter {
         $refl = new \ReflectionClass(FilterNOT::class);
-        
-        $prop = $refl->getProperty('filter');
-        $prop->setAccessible(true);
-        
         $filterNOT = $refl->newInstanceWithoutConstructor();
-        $prop->setValue($filterNOT, $this);
+        
+        TestHelper::getProperty($refl, 'filter')->setValue($filterNOT, $this);
         
         return new StringFilterPhony($filterNOT, $this->ignoreCase);
     }

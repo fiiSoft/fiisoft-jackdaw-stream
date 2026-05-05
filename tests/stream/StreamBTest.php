@@ -925,6 +925,33 @@ final class StreamBTest extends TestCase
         self::assertSame([5, 2, 8, 0], $result->toArrayAssoc());
     }
     
+    public function test_gather_empty_with_first(): void
+    {
+        $result = Stream::empty()->gatherUntil('is_string')->first();
+        
+        self::assertNull($result->get());
+        self::assertSame([], $result->toArray());
+        self::assertSame([], $result->toArrayAssoc());
+    }
+    
+    public function test_gather_with_last(): void
+    {
+        $result = Stream::from([5, 2, 8, 0, 'a', 3, 1, 'b', 4])->gatherUntil('is_string')->last();
+        
+        self::assertSame([5, 2, 8, 0], $result->get());
+        self::assertSame([5, 2, 8, 0], $result->toArray());
+        self::assertSame([5, 2, 8, 0], $result->toArrayAssoc());
+    }
+    
+    public function test_gather_empty_with_last(): void
+    {
+        $result = Stream::empty()->gatherUntil('is_string')->last();
+        
+        self::assertNull($result->get());
+        self::assertSame([], $result->toArray());
+        self::assertSame([], $result->toArrayAssoc());
+    }
+    
     public function test_sort_limited_with_first(): void
     {
         self::assertSame(0, Stream::from([6, 3, 8, 7, 0, 9, 1, 2, 5, 4])->sort()->limit(5)->first()->get());
@@ -951,6 +978,11 @@ final class StreamBTest extends TestCase
         $data = [1, 2, 3, 4, 5, 6];
         
         self::assertContains(Stream::from($data)->shuffle()->last()->get(), $data);
+    }
+    
+    public function test_shuffle_empty_with_last(): void
+    {
+        self::assertNull(Stream::empty()->shuffle()->last()->get());
     }
     
     public function test_sortLimited_with_last(): void

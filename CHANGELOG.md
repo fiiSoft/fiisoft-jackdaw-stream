@@ -1,5 +1,10 @@
 # Changelog
 
+## 14.2.0
+
+- added Reducers::largest() and Reducers::smallest()
+- some internal operations have been improved
+
 ## 14.1.0
 
 - added Stream::cache()

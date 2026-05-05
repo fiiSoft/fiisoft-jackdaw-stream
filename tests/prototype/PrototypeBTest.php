@@ -414,12 +414,12 @@ final class PrototypeBTest extends TestCase
         self::assertSame(7, $counter->get());
     }
     
-    public function test_prototype_shuffleAll_cache(): void
+    public function test_prototype_cache_shuffleAll(): void
     {
         $this->performTest091(false);
     }
     
-    public function test_prototype_shuffleAll_cache_with_onerror_handler(): void
+    public function test_prototype_cache_shuffleAll_with_onerror_handler(): void
     {
         $this->performTest091(true);
     }
@@ -472,6 +472,73 @@ final class PrototypeBTest extends TestCase
         self::assertSame(3, $counter->get());
         
         self::assertSame(5, $stream1->count()->get());
+        self::assertSame(3, $counter->get());
+    }
+    
+    public function test_prototype_shuffleAll_cache(): void
+    {
+        $this->performTest102(false);
+    }
+    
+    public function test_prototype_shuffleAll_cache_with_onerror_handler(): void
+    {
+        $this->performTest102(true);
+    }
+    
+    private function performTest102(bool $onError): void
+    {
+        $counter = Consumers::counter();
+        
+        $stream1 = Stream::prototype(['a', 'b', 1, 'c', 'd', 2, 'e'])
+            ->callOnce($counter)
+            ->onlyStrings()
+            ->shuffle()
+            ->cache();
+        
+        if ($onError) {
+            $stream1 = $stream1->onError(OnError::abort());
+        }
+        
+        self::assertSame(5, $stream1->count()->get()); //iteration
+        self::assertSame(1, $counter->get());
+        
+        self::assertSame(5, \strlen($stream1->toString('')));
+        self::assertSame(1, $counter->get());
+        
+        $stream2 = $stream1->join(['f', 4, 'g']); //new stream
+        self::assertNotSame($stream1, $stream2);
+        
+        self::assertSame(7, $stream2->count()->get()); //iteration
+        self::assertSame(2, $counter->get());
+        
+        self::assertSame(5, $stream1->count()->get());
+        self::assertSame(2, $counter->get());
+        
+        $stream3 = $stream1->reduce(Reducers::concat())->transform('strlen'); //new stream
+        self::assertNotSame($stream1, $stream3);
+        
+        self::assertSame(5, $stream3->get()); //iteration
+        self::assertSame(2, $counter->get());
+        
+        $stream4 = $stream3->wrap(['p', 'o', 'q', 1]); //new stream
+        self::assertNotSame($stream3, $stream4);
+        
+        self::assertSame(3, $stream4->get()); //iteration
+        self::assertSame(3, $counter->get());
+        
+        self::assertSame(5, $stream3->get());
+        self::assertSame(3, $counter->get());
+        
+        self::assertSame(7, $stream2->count()->get());
+        self::assertSame(3, $counter->get());
+        
+        self::assertSame(5, $stream1->count()->get());
+        self::assertSame(3, $counter->get());
+        
+        self::assertSame($stream1->toArrayAssoc(), $stream1->toArrayAssoc());
+        self::assertSame($stream2->toArrayAssoc(), $stream2->toArrayAssoc());
+        self::assertSame($stream3->toArrayAssoc(), $stream3->toArrayAssoc());
+        self::assertSame($stream4->toArrayAssoc(), $stream4->toArrayAssoc());
         self::assertSame(3, $counter->get());
     }
     
@@ -1243,5 +1310,55 @@ final class PrototypeBTest extends TestCase
         
         self::assertSame([6, 2, 8, 5], $stream1->toArray());
         self::assertSame(4, $counter->get());
+    }
+    
+    public function test_prototype_sortLimited_not_full(): void
+    {
+        $this->performTest105(false);
+    }
+    
+    public function test_prototype_sortLimited_not_full_with_onerror_handler(): void
+    {
+        $this->performTest105(true);
+    }
+    
+    private function performTest105(bool $onError): void
+    {
+        $counter = Consumers::counter();
+        
+        $stream1 = Stream::prototype([5, 'b', 1, 4, 6, 'a', 3, 2])
+            ->callOnce($counter)
+            ->onlyIntegers()
+            ->sort()
+            ->limit(10)
+            ->cache();
+        
+        if ($onError) {
+            $stream1 = $stream1->onError(OnError::abort());
+        }
+        
+        self::assertSame([1, 2, 3, 4, 5, 6], $stream1->toArray()); //iteration
+        self::assertSame(1, $counter->get());
+        
+        self::assertSame(6, $stream1->last()->get());
+        self::assertSame(1, $counter->get());
+        
+        $stream2 = $stream1->join([2, 6, 'c', 1]);
+        self::assertNotSame($stream1, $stream2);
+        
+        self::assertSame([1, 1, 2, 2, 3, 4, 5, 6, 6], $stream2->toArray()); //iteration
+        self::assertSame(2, $counter->get());
+        
+        $stream3 = $stream2->omitReps();
+        self::assertNotSame($stream2, $stream3);
+        
+        self::assertSame([1, 2, 3, 4, 5, 6], $stream3->toArray());
+        self::assertSame(2, $counter->get());
+        
+        self::assertSame('112234566', $stream2->toString(''));
+        self::assertSame(2, $counter->get());
+        
+        self::assertSame(\array_sum([1, 2, 3, 4, 5, 6]), $stream1->reduce(Reducers::sum())->get());
+        self::assertSame(2, $counter->get());
     }
 }

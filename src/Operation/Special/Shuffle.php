@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Special;
 
+use FiiSoft\Jackdaw\Internal\DataAware;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\ShuffleAll;
@@ -32,6 +33,13 @@ abstract class Shuffle extends BaseOperation
         }
     
         \shuffle($this->items);
+        
+        if ($this->next instanceof DataAware && $this instanceof ShuffleAll) {
+            $this->next->setCollectedItems($this->items);
+            $this->reset();
+            
+            return $this->next->streamingFinished($signal);
+        }
         
         $signal->restartWith($this->iterator->with($this->items), $this->next);
         $this->reset();

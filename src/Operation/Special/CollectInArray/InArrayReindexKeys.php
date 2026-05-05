@@ -23,4 +23,21 @@ final class InArrayReindexKeys extends CollectInArray
         
         yield;
     }
+    
+    /**
+     * @inheritDoc
+     */
+    public function setCollectedItems(array $items): void
+    {
+        $this->result = [];
+        
+        foreach ($items as $item) {
+            $this->result[] = $item->value;
+        }
+    }
+    
+    public function setCollectedData(array $data): void
+    {
+        $this->result = \array_values($data);
+    }
 }

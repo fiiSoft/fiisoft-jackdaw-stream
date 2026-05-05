@@ -532,7 +532,27 @@ final class StreamGTest extends TestCase
         self::assertSame(self::FIND_SEQUENCES_RESULT, $collector->get());
     }
     
-    public function test_sequences_of_particular_length_in_stream_4(): void
+    public function test_sequences_of_particular_length_in_stream_4_keep_keys(): void
+    {
+        $this->performTest108(false, false);
+    }
+    
+    public function test_sequences_of_particular_length_in_stream_4_reindex(): void
+    {
+        $this->performTest108(false, true);
+    }
+    
+    public function test_sequences_of_particular_length_in_stream_4_keep_keys_with_onerror_handler(): void
+    {
+        $this->performTest108(true, false);
+    }
+    
+    public function test_sequences_of_particular_length_in_stream_4_reindex_with_onerror_handler(): void
+    {
+        $this->performTest108(true, true);
+    }
+    
+    private function performTest108(bool $onError, bool $reindex): void
     {
         $length = Memo::value(-1);
         $sequence = Memo::sequence();
@@ -541,7 +561,7 @@ final class StreamGTest extends TestCase
             ->map($sequence)
             ->map('\array_values')
             ->categorize('\count', true)
-            ->collect();
+            ->collect($reindex);
 
         $handler = static function () use ($length, $sequence, $collector): void {
             if ($sequence->count() === $length->read()) {
@@ -551,13 +571,21 @@ final class StreamGTest extends TestCase
             $sequence->clear();
         };
 
-        Stream::from(self::FIND_SEQUENCES_DATA)
+        $stream = Stream::from(self::FIND_SEQUENCES_DATA)
             ->remember($length)
             ->readWhile('is_string', null, false, $handler)
-            ->remember($sequence)
-            ->run();
-
-        self::assertSame(self::FIND_SEQUENCES_RESULT, $collector->get());
+            ->remember($sequence);
+        
+        if ($onError) {
+            $stream = $stream->onError(OnError::abort());
+        }
+        
+        $stream->run();
+        
+        self::assertSame(
+            $reindex ? \array_values(self::FIND_SEQUENCES_RESULT) : self::FIND_SEQUENCES_RESULT,
+            $collector->get()
+        );
     }
     
     public function test_use_negation_of_sequence_predicate_filter(): void
@@ -1059,7 +1087,7 @@ final class StreamGTest extends TestCase
         self::assertSame([10, 10, 11, 12, 13], $collector->get());
     }
     
-    public function test_consume_with_limit__tokenize_chunk_and_sort(): void
+    public function test_consume_with_limit_tokenize_chunk_and_sort(): void
     {
         $collector = Stream::empty()
             ->tokenize()

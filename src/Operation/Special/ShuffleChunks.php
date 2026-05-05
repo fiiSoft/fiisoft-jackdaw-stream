@@ -54,10 +54,6 @@ final class ShuffleChunks extends Shuffle
             }
         }
         
-        if (empty($this->items)) {
-            return [];
-        }
-        
         \shuffle($this->items);
         
         foreach ($this->items as $item) {

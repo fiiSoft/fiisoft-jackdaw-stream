@@ -2,10 +2,11 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
+use FiiSoft\Jackdaw\Internal\DataAware;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 
-final class Count extends SimpleFinal
+final class Count extends SimpleFinal implements DataAware
 {
     private int $count = 0;
     
@@ -31,5 +32,15 @@ final class Count extends SimpleFinal
     public function isReindexed(): bool
     {
         return true;
+    }
+    
+    public function setCollectedItems(array $items): void
+    {
+        $this->count = \count($items);
+    }
+    
+    public function setCollectedData(array $data): void
+    {
+        $this->count = \count($data);
     }
 }

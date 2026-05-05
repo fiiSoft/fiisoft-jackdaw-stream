@@ -42,7 +42,7 @@ final class ForkMatch extends BaseFork
     
     public function handle(Signal $signal): void
     {
-        $classifier = $this->discriminator->classify($signal->item->value, $signal->item->key);
+        $classifier = $this->discriminator->classify($signal->item->value, $signal->item->key) ?? '';
         
         if (isset($this->handlers[$classifier])) {
             $handler = $this->handlers[$classifier];
@@ -62,7 +62,7 @@ final class ForkMatch extends BaseFork
     public function buildStream(iterable $stream): iterable
     {
         foreach ($stream as $key => $value) {
-            $classifier = $this->discriminator->classify($value, $key);
+            $classifier = $this->discriminator->classify($value, $key) ?? '';
             
             if (isset($this->handlers[$classifier])) {
                 $handler = $this->handlers[$classifier];

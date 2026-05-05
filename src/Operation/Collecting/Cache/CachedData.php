@@ -14,10 +14,17 @@ final class CachedData implements \IteratorAggregate
     /** @var Item[] */
     public array $items = [];
     
+    /** @var array<string|int, mixed> */
+    public array $data = [];
+    
     public function getIterator(): \Generator
     {
-        foreach ($this->items as $x) {
-            yield $x->key => $x->value;
+        if (empty($this->items)) {
+            yield from $this->data;
+        } else {
+            foreach ($this->items as $x) {
+                yield $x->key => $x->value;
+            }
         }
     }
 }

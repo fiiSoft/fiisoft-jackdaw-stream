@@ -9,6 +9,15 @@ use PHPUnit\Framework\TestCase;
 
 final class ApiRegressionTest extends TestCase
 {
+    private static bool $isPHP85 = false;
+    
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+        
+        self::$isPHP85 = \version_compare(\PHP_VERSION, '8.5.0') >= 0;
+    }
+    
     public function test_AssertionFailed(): void
     {
         try {
@@ -1038,7 +1047,9 @@ final class ApiRegressionTest extends TestCase
                 'concat' => [['type' => 'string', 'def' => '']],
                 'countUnique' => [['type' => 'DiscriminatorReady|callable|array<string|int>|null', 'def' => null]],
             ], [
-                'methods' => ['sum', 'product', 'min', 'max', 'minMax', 'longest', 'shortest', 'count']
+                'methods' => [
+                    'sum', 'product', 'min', 'max', 'minMax', 'longest', 'shortest', 'count', 'largest', 'smallest'
+                ]
             ], [
                 'methods' => ['average', 'basicStats'],
                 'params' => [['type' => '?int', 'def' => null]]
@@ -1756,7 +1767,10 @@ final class ApiRegressionTest extends TestCase
                     }
                     
                     self::assertSame($allowsNull, $method->getReturnType()->allowsNull(), $message);
-                    self::assertSame(\ltrim($methodType, '\\'), $method->getReturnType()->getName(), $message);
+                    
+                    if (!self::$isPHP85 || $spec['type'] !== 'self') {
+                        self::assertSame(\ltrim($methodType, '\\'), $method->getReturnType()->getName(), $message);
+                    }
                 }
             } else {
                 self::assertNull($method->getReturnType(), $message);

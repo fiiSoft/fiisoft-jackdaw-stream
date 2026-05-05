@@ -3,6 +3,7 @@
 namespace FiiSoft\Jackdaw\Operation\Collecting;
 
 use FiiSoft\Jackdaw\Discriminator\DiscriminatorReady;
+use FiiSoft\Jackdaw\Internal\DataAware;
 use FiiSoft\Jackdaw\Internal\Helper;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\Categorize\CategorizeKeepKeys;
@@ -24,9 +25,15 @@ abstract class Categorize extends GroupingOperation
     
     final public function streamingFinished(Signal $signal): bool
     {
-        $signal->restartWith(Producers::getAdapter($this->collections), $this->next);
-        
+        $data = $this->collections;
         $this->collections = [];
+        
+        if ($this->next instanceof DataAware) {
+            $this->next->setCollectedData($data);
+            $data = [];
+        }
+        
+        $signal->restartWith(Producers::getAdapter($data), $this->next);
         
         return true;
     }

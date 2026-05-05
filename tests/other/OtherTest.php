@@ -23,6 +23,7 @@ use FiiSoft\Jackdaw\Operation\Internal\ItemBuffer\ItemBufferClient;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\ValueRef\Adapter\CompoundIntValue;
 use FiiSoft\Jackdaw\ValueRef\IntNum;
+use FiiSoft\Test\Helper\TestHelper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -866,12 +867,9 @@ final class OtherTest extends TestCase implements ItemBufferClient
     
     public function test_MultiArgsLogicFilter_removeDuplicates(): void
     {
+        $method = TestHelper::getMethod(MultiArgsLogicFilter::class, 'removeDuplicates');
+        
         $filters = ['is_string', Filters::isString(), 'is_string', Filters::isString()];
-        
-        $refl = new \ReflectionClass(MultiArgsLogicFilter::class);
-        $method = $refl->getMethod('removeDuplicates');
-        $method->setAccessible(true);
-        
         $filtered = $method->invoke(null, $filters);
         
         self::assertEquals(['is_string', Filters::isString()], $filtered);

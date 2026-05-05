@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
+use FiiSoft\Jackdaw\Comparator\Sorting\By;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Exception\StreamExceptionFactory;
 use FiiSoft\Jackdaw\Filter\Filters;
@@ -1017,5 +1018,305 @@ final class StreamHTest extends TestCase
         //Act
         $buffer = [];
         $stream->storeIn($buffer);
+    }
+    
+    public function test_sortLimited_not_full_with_reducer(): void
+    {
+        $this->performTest106(false);
+    }
+    
+    public function test_sortLimited_not_full_with_reducer_and_onerror_handler(): void
+    {
+        $this->performTest106(true);
+    }
+    
+    private function performTest106(bool $onError): void
+    {
+        $stream = Stream::from([5, 1, 4, 6, 3, 2])->sort()->limit(10);
+        
+        if ($onError) {
+            $stream = $stream->onError(OnError::abort());
+        }
+        
+        $stream = $stream->reduce(Reducers::sum());
+        
+        self::assertSame(\array_sum([5, 1, 4, 6, 3, 2]), $stream->get());
+    }
+    
+    public function test_shuffleAll_toArray(): void
+    {
+        $this->performTest107(false);
+    }
+    
+    public function test_shuffleAll_toArray_with_onerror_handler(): void
+    {
+        $this->performTest107(true);
+    }
+    
+    private function performTest107(bool $onError): void
+    {
+        $data = [1, 2, 3, 4, 5, 6, 7];
+        
+        $stream = Stream::from($data)->shuffle();
+        
+        if ($onError) {
+            $stream = $stream->onError(OnError::abort());
+        }
+        
+        $actual = $stream->toArray();
+        self::assertCount(7, $actual);
+        
+        \sort($actual);
+        self::assertSame($data, $actual);
+    }
+    
+    public function test_sort_collectKeys(): void
+    {
+        $this->performTest109(false);
+    }
+    
+    public function test_sort_collectKeys_with_onerror_handlers(): void
+    {
+        $this->performTest109(true);
+    }
+    
+    private function performTest109(bool $onError): void
+    {
+        $stream = Stream::from(['b' => 1, 'c' => 2, 'a' => 3, 'd' => 4]);
+        
+        if ($onError) {
+            $stream = $stream->onError(OnError::abort());
+        }
+        
+        $stream = $stream->sort(By::key())->collectKeys();
+        
+        self::assertSame(['a', 'b', 'c', 'd'], $stream->toArray());
+    }
+    
+    public function test_categorize_keep_keys_collectKeys(): void
+    {
+        $this->performTest110(false);
+    }
+    
+    public function test_categorize_keep_keys_collectKeys_with_onerror_handlers(): void
+    {
+        $this->performTest110(true);
+    }
+    
+    private function performTest110(bool $onError): void
+    {
+        self::assertSame(
+            ['a', 'b', 'c', 'd'],
+            $this->streamWithRepeatedKeys($onError)->categorizeByKey()->collectKeys()->toArray()
+        );
+    }
+    
+    public function test_categorize_keep_keys_collectValues(): void
+    {
+        $this->performTest111(false);
+    }
+    
+    public function test_categorize_keep_keys_collectValues_with_onerror_handlers(): void
+    {
+        $this->performTest111(true);
+    }
+    
+    private function performTest111(bool $onError): void
+    {
+        self::assertSame([
+            [1, 5, 9],
+            [2, 6, 10],
+            [3, 7, 11],
+            [4, 8, 12]
+        ], $this->streamWithRepeatedKeys($onError)->categorizeByKey()->toArray());
+    }
+    
+    public function test_sortLimited_count_1(): void
+    {
+        $this->performTest112(false);
+    }
+    
+    public function test_sortLimited_count_1_with_onerror_handler(): void
+    {
+        $this->performTest112(true);
+    }
+    
+    private function performTest112(bool $onError): void
+    {
+        $stream = Stream::from([6, 3, 7, 2, 5, 3])->sort()->limit(10);
+        
+        if ($onError) {
+            $stream = $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame(6, $stream->count()->get());
+    }
+    
+    public function test_sortLimited_count_2(): void
+    {
+        $this->performTest113(false);
+    }
+    
+    public function test_sortLimited_count_2_with_onerror_handler(): void
+    {
+        $this->performTest113(true);
+    }
+    
+    private function performTest113(bool $onError): void
+    {
+        $stream = Stream::from([6, 3, 7, 2, 5, 3])->sort()->limit(4);
+        
+        if ($onError) {
+            $stream = $stream->onError(OnError::abort());
+        }
+        
+        self::assertSame(4, $stream->count()->get());
+    }
+    
+    public function test_shuffle_first(): void
+    {
+        $this->performTest114(false);
+    }
+    
+    public function test_shuffle_first_with_onerror_handler(): void
+    {
+        $this->performTest114(true);
+    }
+    
+    public function performTest114(bool $onError): void
+    {
+        $stream = Stream::from([1, 2, 3, 4, 5])->shuffle();
+        
+        if ($onError) {
+            $stream = $stream->onError(OnError::abort());
+        }
+        
+        self::assertNotNull($stream->first()->get());
+    }
+    
+    public function test_shuffle_empty_first(): void
+    {
+        $this->performTest115(false);
+    }
+    
+    public function test_shuffle_empty_first_with_onerror_handler(): void
+    {
+        $this->performTest115(true);
+    }
+    
+    public function performTest115(bool $onError): void
+    {
+        $stream = Stream::empty()->shuffle();
+        
+        if ($onError) {
+            $stream = $stream->onError(OnError::abort());
+        }
+        
+        self::assertNull($stream->first()->get());
+    }
+    
+    public function test_categorize_first(): void
+    {
+        $this->performTest116(false);
+    }
+    
+    public function test_categorize_first_with_onerror_handler(): void
+    {
+        $this->performTest116(true);
+    }
+    
+    public function performTest116(bool $onError): void
+    {
+        $first = $this->streamWithRepeatedKeys($onError)->categorizeByKey()->first();
+        
+        self::assertSame([1, 5, 9], $first->get());
+        self::assertSame('a', $first->key());
+    }
+    
+    public function test_categorize_last(): void
+    {
+        $this->performTest117(false);
+    }
+    
+    public function test_categorize_last_with_onerror_handler(): void
+    {
+        $this->performTest117(true);
+    }
+    
+    public function performTest117(bool $onError): void
+    {
+        $last = $this->streamWithRepeatedKeys($onError)->categorizeByKey()->last();
+        
+        self::assertSame([4, 8, 12], $last->get());
+        self::assertSame('d', $last->key());
+    }
+    
+    public function test_categorize_empty_first(): void
+    {
+        self::assertNull(Stream::from(['a'])->onlyIntegers()->categorizeByKey()->first()->get());
+        self::assertNull(
+            Stream::from(['a'])->onlyIntegers()->onError(OnError::abort())->categorizeByKey()->first()->get()
+        );
+    }
+    
+    public function test_categorize_empty_last(): void
+    {
+        self::assertNull(Stream::from(['a'])->onlyIntegers()->categorizeByKey()->last()->get());
+        self::assertNull(
+            Stream::from(['a'])->onlyIntegers()->onError(OnError::abort())->categorizeByKey()->last()->get()
+        );
+    }
+    
+    private function streamWithRepeatedKeys(bool $onError): Stream
+    {
+        $stream = Producers::cyclic(['a', 'b', 'c', 'd'])->stream()->limit(12)->reindex(1)->flip();
+        
+        if ($onError) {
+            $stream = $stream->onError(OnError::abort());
+        }
+        
+        return $stream;
+    }
+    
+    public function test_reduce_largest_and_its_equivalents(): void
+    {
+        $expected = [1, 5, 8, 11, 13];
+        $values = ['b', 'a', 'e', 'b', 'c', 'a', 'd', 'e', 'a', 'c', 'b', 'a', 'c', 'a'];
+        
+        self::assertSame(
+            $expected,
+            Stream::from($values)->flip()->categorizeByKey()->reduce(Reducers::largest())->get()
+        );
+        
+        self::assertSame(
+            $expected,
+            Stream::from($values)->flip()->categorizeByKey()->sort(By::sizeDesc())->first()->get()
+        );
+        
+        self::assertSame(
+            $expected,
+            Stream::from($values)->flip()->categorizeByKey()->collect()->transform(Reducers::largest())->get()
+        );
+    }
+    
+    public function test_reduce_smallest_and_its_equivalents(): void
+    {
+        $expected = [6];
+        $values = ['b', 'a', 'e', 'b', 'c', 'a', 'd', 'e', 'a', 'c', 'b', 'a', 'c', 'a'];
+        
+        self::assertSame(
+            $expected,
+            Stream::from($values)->flip()->categorizeByKey()->reduce(Reducers::smallest())->get()
+        );
+        
+        self::assertSame(
+            $expected,
+            Stream::from($values)->flip()->categorizeByKey()->sort(By::sizeAsc())->first()->get()
+        );
+        
+        self::assertSame(
+            $expected,
+            Stream::from($values)->flip()->categorizeByKey()->collect()->transform(Reducers::smallest())->get()
+        );
     }
 }

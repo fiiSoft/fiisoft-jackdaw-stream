@@ -5,29 +5,24 @@ namespace FiiSoft\Jackdaw\Reducer;
 final class Shortest implements Reducer
 {
     private ?string $result = null;
-    private int $length = 0;
+    
+    private int $length = \PHP_INT_MAX;
     
     /**
      * @param string $value
-     * @return void
      */
     public function consume($value): void
     {
-        if ($this->result === null) {
-            $this->result = (string) $value;
-            $this->length = \mb_strlen($this->result);
-        } else {
-            $value = (string) $value;
-            $length = \mb_strlen($value);
-            
-            if ($length < $this->length) {
-                $this->result = $value;
-                $this->length = $length;
-            }
+        $value = (string) $value;
+        $length = \mb_strlen($value);
+        
+        if ($length < $this->length) {
+            $this->result = $value;
+            $this->length = $length;
         }
     }
     
-    public function result(): string
+    public function result(): ?string
     {
         return $this->result;
     }
@@ -40,6 +35,6 @@ final class Shortest implements Reducer
     public function reset(): void
     {
         $this->result = null;
-        $this->length = 0;
+        $this->length = \PHP_INT_MAX;
     }
 }

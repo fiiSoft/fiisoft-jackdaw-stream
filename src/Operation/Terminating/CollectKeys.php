@@ -47,6 +47,23 @@ final class CollectKeys extends BaseCollect
         yield;
     }
     
+    /**
+     * @inheritDoc
+     */
+    public function setCollectedItems(array $items): void
+    {
+        $this->collected = [];
+        
+        foreach ($items as $item) {
+            $this->collected[] = $item->key;
+        }
+    }
+    
+    public function setCollectedData(array $data): void
+    {
+        $this->collected = \array_keys($data);
+    }
+    
     public function isReindexed(): bool
     {
         return true;

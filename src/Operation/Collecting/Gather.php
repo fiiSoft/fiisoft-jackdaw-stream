@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Collecting;
 
+use FiiSoft\Jackdaw\Internal\DataAware;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\Gather\GatherKeepKeys;
 use FiiSoft\Jackdaw\Operation\Collecting\Gather\GatherReindexKeys;
@@ -32,7 +33,15 @@ abstract class Gather extends BaseOperation implements Reindexable
             return parent::streamingFinished($signal);
         }
         
-        $signal->restartWith(Producers::getAdapter([$this->data]), $this->next);
+        $data = [$this->data];
+        $this->data = [];
+        
+        if ($this->next instanceof DataAware) {
+            $this->next->setCollectedData($data);
+            $data = [];
+        }
+        
+        $signal->restartWith(Producers::getAdapter($data), $this->next);
         
         return true;
     }
@@ -54,5 +63,23 @@ abstract class Gather extends BaseOperation implements Reindexable
     final public function reindexed(): self
     {
         return $this->reindex ? $this : self::create(true);
+    }
+    
+    /**
+     * @return iterable<int, array<string|int, mixed>>
+     */
+    final protected function collectedData(): iterable
+    {
+        if (empty($this->data)) {
+            return [];
+        }
+        
+        if ($this->next instanceof DataAware) {
+            $this->next->setCollectedData([$this->data]);
+        } else {
+            yield 0 => $this->data;
+        }
+        
+        $this->data = [];
     }
 }

@@ -21,6 +21,23 @@ final class CollectKeepKeys extends Collect
     }
     
     /**
+     * @inheritDoc
+     */
+    public function setCollectedItems(array $items): void
+    {
+        $this->collected = [];
+        
+        foreach ($items as $item) {
+            $this->collected[$item->key] = $item->value;
+        }
+    }
+    
+    public function setCollectedData(array $data): void
+    {
+        $this->collected = $data;
+    }
+    
+    /**
      * @param iterable<mixed, mixed> $stream
      * @return iterable<mixed, mixed>
      */

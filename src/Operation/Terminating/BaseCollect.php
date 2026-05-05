@@ -2,10 +2,11 @@
 
 namespace FiiSoft\Jackdaw\Operation\Terminating;
 
+use FiiSoft\Jackdaw\Internal\DataAware;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Operation\Internal\Detachable;
 
-abstract class BaseCollect extends SimpleFinal implements Detachable
+abstract class BaseCollect extends SimpleFinal implements Detachable, DataAware
 {
     /** @var array<string|int, mixed> */
     protected array $collected = [];

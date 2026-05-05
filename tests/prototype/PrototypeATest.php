@@ -1638,12 +1638,12 @@ final class PrototypeATest extends TestCase
         self::assertSame(7, $counter->get());
     }
     
-    public function test_prototype_gather_cache(): void
+    public function test_prototype_gather_cache_1(): void
     {
         $this->performTest081(false);
     }
     
-    public function test_prototype_gather_cache_with_onerror_handler(): void
+    public function test_prototype_gather_cache_1_with_onerror_handler(): void
     {
         $this->performTest081(true);
     }
@@ -1688,6 +1688,110 @@ final class PrototypeATest extends TestCase
         self::assertSame(3, $counter->get());
         
         self::assertSame('{"numbers":[7,3,8,2,5]}', $stream1->toJsonAssoc());
+        self::assertSame(3, $counter->get());
+    }
+    
+    public function test_prototype_gather_cache_2(): void
+    {
+        $this->performTest103(false);
+    }
+    
+    public function test_prototype_gather_cache_2_with_onerror_handler(): void
+    {
+        $this->performTest103(true);
+    }
+    
+    private function performTest103(bool $onError): void
+    {
+        $counter = Consumers::counter();
+        
+        $stream1 = Stream::prototype([7, 3, 'foo', 8, 2, 'bar', 5])
+            ->callOnce($counter)
+            ->onlyIntegers()
+            ->gather(true)
+            ->cache();
+        
+        if ($onError) {
+            $stream1 = $stream1->onError(OnError::abort());
+        }
+        
+        self::assertSame('[[7,3,8,2,5]]', $stream1->toJsonAssoc()); //iteration
+        self::assertSame(1, $counter->get());
+        
+        $stream2 = $stream1->map(Reducers::sum());
+        
+        self::assertSame([25], $stream2->toArrayAssoc());
+        self::assertSame(1, $counter->get());
+        
+        $stream3 = $stream2->join([5, 'zoo', 4, 6]);
+        
+        self::assertSame([40], $stream3->toArrayAssoc()); //iteration
+        self::assertSame(2, $counter->get());
+        
+        $stream4 = $stream1->wrap([1, 2, 3]);
+        
+        self::assertSame('[[1,2,3]]', $stream4->toJsonAssoc()); //iteration
+        self::assertSame(3, $counter->get());
+        
+        self::assertSame([40], $stream3->toArrayAssoc());
+        self::assertSame(3, $counter->get());
+        
+        self::assertSame([25], $stream2->toArrayAssoc());
+        self::assertSame(3, $counter->get());
+        
+        self::assertSame('[[7,3,8,2,5]]', $stream1->toJsonAssoc());
+        self::assertSame(3, $counter->get());
+    }
+    
+    public function test_prototype_gather_cache_3(): void
+    {
+        $this->performTest104(false);
+    }
+    
+    public function test_prototype_gather_cache_3_with_onerror_handler(): void
+    {
+        $this->performTest104(true);
+    }
+    
+    private function performTest104(bool $onError): void
+    {
+        $counter = Consumers::counter();
+        
+        $stream1 = Stream::prototype([7, 3, 'foo', 8, 2, 'bar', 5])
+            ->callOnce($counter)
+            ->onlyIntegers()
+            ->gather()
+            ->cache();
+        
+        if ($onError) {
+            $stream1 = $stream1->onError(OnError::abort());
+        }
+        
+        self::assertSame('[{"0":7,"1":3,"3":8,"4":2,"6":5}]', $stream1->toJsonAssoc()); //iteration
+        self::assertSame(1, $counter->get());
+        
+        $stream2 = $stream1->map(Reducers::sum());
+        
+        self::assertSame([25], $stream2->toArrayAssoc());
+        self::assertSame(1, $counter->get());
+        
+        $stream3 = $stream2->join([7 => 5, 'zoo', 4, 6]);
+        
+        self::assertSame([40], $stream3->toArrayAssoc()); //iteration
+        self::assertSame(2, $counter->get());
+        
+        $stream4 = $stream1->wrap([1, 2, 3]);
+        
+        self::assertSame('[[1,2,3]]', $stream4->toJsonAssoc()); //iteration
+        self::assertSame(3, $counter->get());
+        
+        self::assertSame([40], $stream3->toArrayAssoc());
+        self::assertSame(3, $counter->get());
+        
+        self::assertSame([25], $stream2->toArrayAssoc());
+        self::assertSame(3, $counter->get());
+        
+        self::assertSame('[{"0":7,"1":3,"3":8,"4":2,"6":5}]', $stream1->toJsonAssoc());
         self::assertSame(3, $counter->get());
     }
     

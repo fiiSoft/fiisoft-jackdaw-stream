@@ -18,12 +18,6 @@ final class GatherReindexKeys extends Gather
             $this->data[] = $value;
         }
         
-        if (empty($this->data)) {
-            return [];
-        }
-        
-        yield 0 => $this->data;
-        
-        $this->data = [];
+        yield from $this->collectedData();
     }
 }

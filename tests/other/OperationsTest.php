@@ -34,6 +34,7 @@ use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
 use FiiSoft\Jackdaw\ValueRef\Exception\WrongIntValueException;
 use FiiSoft\Jackdaw\ValueRef\IntNum;
+use FiiSoft\Test\Helper\TestHelper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -811,14 +812,9 @@ final class OperationsTest extends TestCase
      */
     private function getPropertyFromStream(Stream $stream, string $property)
     {
-        $method = (new \ReflectionObject($stream))->getMethod('initialize');
-        $method->setAccessible(true);
-        $method->invoke($stream);
+        TestHelper::callMethod($stream, 'initialize');
         
-        $prop = (new \ReflectionObject($stream))->getProperty($property);
-        $prop->setAccessible(true);
-        
-        return $prop->getValue($stream);
+        return TestHelper::getValueOfProp($stream, $property);
     }
     
     public function test_FullAssocChecker_throws_exception_when_Comparator_is_invalid(): void

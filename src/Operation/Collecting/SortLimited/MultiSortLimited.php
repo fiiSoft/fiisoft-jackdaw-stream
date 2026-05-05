@@ -2,13 +2,11 @@
 
 namespace FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
 
-use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Exception\InvalidParamException;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\SortLimited;
-use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 use FiiSoft\Jackdaw\Producer\Internal\ReverseItemsIterator;
 use FiiSoft\Jackdaw\Producer\Producer;
 
@@ -64,9 +62,7 @@ final class MultiSortLimited extends SortLimited
             return parent::streamingFinished($signal);
         }
         
-        $this->sortItems();
-        
-        $signal->restartWith(new ForwardItemsIterator($this->items), $this->next);
+        $this->restartWithSortedItems($signal, $this->sorting, $this->items);
         $this->items = [];
         
         return true;
@@ -101,25 +97,10 @@ final class MultiSortLimited extends SortLimited
 
             yield from $this->createProducer();
         } else {
-            $this->sortItems();
-
-            foreach ($this->items as $x) {
-                yield $x->key => $x->value;
-            }
+            yield from $this->sortedItems($this->sorting, $this->items);
 
             $this->items = [];
         }
-    }
-    
-    private function sortItems(): void
-    {
-        if (\count($this->items) < 2) {
-            return;
-        }
-        
-        $comparator = ItemComparatorFactory::getForSorting($this->sorting);
-        
-        \usort($this->items, [$comparator, 'compare']);
     }
     
     private function fillBuffer(): void

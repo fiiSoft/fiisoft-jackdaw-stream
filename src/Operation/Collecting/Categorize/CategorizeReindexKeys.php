@@ -2,6 +2,7 @@
 
 namespace FiiSoft\Jackdaw\Operation\Collecting\Categorize;
 
+use FiiSoft\Jackdaw\Internal\DataAware;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Operation\Collecting\Categorize;
 
@@ -13,7 +14,11 @@ final class CategorizeReindexKeys extends Categorize
             $this->collections[$this->discriminator->classify($value, $key)][] = $value;
         }
         
-        yield from $this->collections;
+        if ($this->next instanceof DataAware) {
+            $this->next->setCollectedData($this->collections);
+        } else {
+            yield from $this->collections;
+        }
         
         $this->collections = [];
     }

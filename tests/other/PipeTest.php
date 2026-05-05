@@ -32,6 +32,7 @@ use FiiSoft\Jackdaw\Producer\Generator\Flattener;
 use FiiSoft\Jackdaw\Producer\Producers;
 use FiiSoft\Jackdaw\Reducer\Reducers;
 use FiiSoft\Jackdaw\Stream;
+use FiiSoft\Test\Helper\TestHelper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -514,6 +515,36 @@ final class PipeTest extends TestCase
         self::assertSame(6, $everyNth->num());
     }
     
+    public function test_stacked_sort_with_first(): void
+    {
+        //given
+        [$stream, $pipe, $signal] = $this->prepare();
+
+        $first = OP::first($stream);
+        $this->addOperations($pipe, OP::sort(), $first);
+
+        //when
+        $this->sendToPipe([6, 2, 3, 8, 1, 9], $pipe, $signal);
+
+        //then
+        self::assertSame(1, $first->get());
+    }
+    
+    public function test_stacked_sort_empty_with_first(): void
+    {
+        //given
+        [$stream, $pipe, $signal] = $this->prepare();
+
+        $first = OP::first($stream);
+        $this->addOperations($pipe, OP::sort(), $first);
+
+        //when
+        $this->sendToPipe([], $pipe, $signal);
+
+        //then
+        self::assertNull($first->get());
+    }
+    
     public function test_stacked_sort_with_last(): void
     {
         //given
@@ -527,6 +558,21 @@ final class PipeTest extends TestCase
 
         //then
         self::assertSame(9, $last->get());
+    }
+    
+    public function test_stacked_sort_empty_with_last(): void
+    {
+        //given
+        [$stream, $pipe, $signal] = $this->prepare();
+
+        $last = OP::last($stream);
+        $this->addOperations($pipe, OP::sort(), $last);
+
+        //when
+        $this->sendToPipe([], $pipe, $signal);
+
+        //then
+        self::assertNull($last->get());
     }
     
     public function test_stacked_tail_with_last(): void
@@ -709,9 +755,7 @@ final class PipeTest extends TestCase
         $pipe->stack[] = OP::limit(1);
         
         //Act
-        $method = (new \ReflectionObject($pipe))->getMethod('__clone');
-        $method->setAccessible(true);
-        $method->invoke($pipe);
+        TestHelper::callMethod($pipe, '__clone');
     }
     
     public function test_pipe_forget(): void
@@ -935,16 +979,11 @@ final class PipeTest extends TestCase
     {
         $this->initializeStream($stream);
         
-        $prop = (new \ReflectionObject($stream))->getProperty($property);
-        $prop->setAccessible(true);
-        
-        return $prop->getValue($stream);
+        return TestHelper::getProperty($stream, $property)->getValue($stream);
     }
     
     private function initializeStream(Stream $stream): void
     {
-        $method = (new \ReflectionObject($stream))->getMethod('initialize');
-        $method->setAccessible(true);
-        $method->invoke($stream);
+        TestHelper::callMethod($stream, 'initialize');
     }
 }

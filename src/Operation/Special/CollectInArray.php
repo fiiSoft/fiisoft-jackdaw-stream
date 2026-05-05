@@ -2,11 +2,12 @@
 
 namespace FiiSoft\Jackdaw\Operation\Special;
 
+use FiiSoft\Jackdaw\Internal\DataAware;
 use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Special\CollectInArray\InArrayKeepKeys;
 use FiiSoft\Jackdaw\Operation\Special\CollectInArray\InArrayReindexKeys;
 
-abstract class CollectInArray extends BaseOperation
+abstract class CollectInArray extends BaseOperation implements DataAware
 {
     /** @var array<string|int, mixed> */
     protected array $result = [];

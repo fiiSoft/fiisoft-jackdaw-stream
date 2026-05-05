@@ -7,11 +7,10 @@ use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Signal;
 use FiiSoft\Jackdaw\Operation\Collecting\SortLimited\MultiSortLimited;
 use FiiSoft\Jackdaw\Operation\Collecting\SortLimited\SingleSortLimited;
-use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
 use FiiSoft\Jackdaw\Operation\Internal\Limitable;
 use FiiSoft\Jackdaw\Producer\Producer;
 
-abstract class SortLimited extends BaseOperation implements Limitable
+abstract class SortLimited extends BaseSort implements Limitable
 {
     protected Sorting $sorting;
     

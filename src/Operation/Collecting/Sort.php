@@ -3,14 +3,11 @@
 namespace FiiSoft\Jackdaw\Operation\Collecting;
 
 use FiiSoft\Jackdaw\Comparator\ComparatorReady;
-use FiiSoft\Jackdaw\Comparator\ItemComparator\ItemComparatorFactory;
 use FiiSoft\Jackdaw\Comparator\Sorting\Sorting;
 use FiiSoft\Jackdaw\Internal\Item;
 use FiiSoft\Jackdaw\Internal\Signal;
-use FiiSoft\Jackdaw\Operation\Internal\BaseOperation;
-use FiiSoft\Jackdaw\Producer\Internal\ForwardItemsIterator;
 
-final class Sort extends BaseOperation
+final class Sort extends BaseSort
 {
     private Sorting $sorting;
     
@@ -36,20 +33,14 @@ final class Sort extends BaseOperation
             $this->items[] = new Item($key, $value);
         }
         
-        $this->sortItems();
-        
-        foreach ($this->items as $item) {
-            yield $item->key => $item->value;
-        }
+        yield from $this->sortedItems($this->sorting, $this->items);
         
         $this->items = [];
     }
     
     public function streamingFinished(Signal $signal): bool
     {
-        $this->sortItems();
-        
-        $signal->restartWith(new ForwardItemsIterator($this->items), $this->next);
+        $this->restartWithSortedItems($signal, $this->sorting, $this->items);
         $this->items = [];
         
         return true;
@@ -63,17 +54,6 @@ final class Sort extends BaseOperation
     public function createSortLimited(int $limit): SortLimited
     {
         return SortLimited::create($limit, $this->sorting);
-    }
-    
-    private function sortItems(): void
-    {
-        if (\count($this->items) < 2) {
-            return;
-        }
-        
-        $comparator = ItemComparatorFactory::getForSorting($this->sorting);
-        
-        \usort($this->items, [$comparator, 'compare']);
     }
     
     public function destroy(): void
