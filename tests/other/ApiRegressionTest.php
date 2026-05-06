@@ -76,6 +76,12 @@ final class ApiRegressionTest extends TestCase
                 'methods' => ['size', 'length'],
                 'params' => [['type' => 'bool', 'def' => false]],
             ], [
+                'methods' => ['fieldAsc', 'fieldDesc'],
+                'params' => ['string|int'],
+            ], [
+                'methods' => ['field'],
+                'params' => ['string|int', ['type' => 'bool', 'def' => false]],
+            ], [
                 'methods' => ['fieldsAsc', 'fieldsDesc'],
                 'params' => ['array'],
             ], [
@@ -194,6 +200,7 @@ final class ApiRegressionTest extends TestCase
                     'params' => ['ComparatorReady|callable|null'],
                     'type' => '?\FiiSoft\Jackdaw\Comparator\Comparator',
                 ],
+                'field' => ['string|int'],
                 'fields' => ['array'],
                 'multi' => [
                     'type' => '\FiiSoft\Jackdaw\Comparator\Basic\MultiComparator',

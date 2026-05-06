@@ -765,7 +765,7 @@ final class Stream extends StreamSource
      */
     public function sortBy(...$fields): Stream
     {
-        return $this->sort(By::fields($fields));
+        return $this->sort(\count($fields) === 1 ? By::field(\reset($fields)) : By::fields($fields));
     }
     
     /**

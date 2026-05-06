@@ -162,30 +162,51 @@ final class ComparatorsTest extends TestCase
         Comparators::getAdapter(static fn($a, $b, $c, $d): bool => true)->compare(1, 2);
     }
     
-    public function test_FieldsComparator(): void
+    public function test_fields(): void
     {
         self::assertSame(0, Comparators::fields(['id'])->compare(['id' => 1], ['id' => 1]));
     }
     
-    public function test_FieldsComparator_throws_exception_when_fields_is_empty(): void
+    public function test_fields_throws_exception_when_fields_is_empty(): void
     {
         $this->expectExceptionObject(ComparatorExceptionFactory::paramFieldsCannotBeEmpty());
         
         Comparators::fields([]);
     }
     
-    public function test_FieldsComparator_throws_exception_when_fields_contains_invalid_value(): void
+    public function test_fields_throws_exception_when_fields_contains_invalid_value_1(): void
     {
         $this->expectExceptionObject(ComparatorExceptionFactory::paramFieldsIsInvalid());
+        
+        Comparators::fields(['a', true]);
+    }
+    
+    public function test_fields_throws_exception_when_fields_contains_invalid_value_2(): void
+    {
+        $this->expectExceptionObject(ComparatorExceptionFactory::paramFieldIsInvalid());
         
         Comparators::fields([true]);
     }
     
-    public function test_FieldsComparator_compareAssoc_is_not_implemented_and_cannot_be_called(): void
+    public function test_fields_compareAssoc_is_not_implemented_and_cannot_be_called(): void
     {
         $this->expectExceptionObject(ComparatorExceptionFactory::compareAssocIsNotImplemented());
         
         Comparators::fields(['a'])->compareAssoc(1, 2, 3, 4);
+    }
+    
+    public function test_field_throws_exception_when_param_field_is_invalid(): void
+    {
+        $this->expectExceptionObject(ComparatorExceptionFactory::paramFieldIsInvalid());
+        
+        Comparators::field('');
+    }
+    
+    public function test_field_compareAssoc_is_not_implemented_and_cannot_be_called(): void
+    {
+        $this->expectExceptionObject(ComparatorExceptionFactory::compareAssocIsNotImplemented());
+        
+        Comparators::field('a')->compareAssoc(1, 2, 3, 4);
     }
     
     public function test_SizeComparator_can_compare_number_of_elements_in_arrays(): void

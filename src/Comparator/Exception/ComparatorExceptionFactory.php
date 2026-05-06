@@ -44,9 +44,14 @@ final class ComparatorExceptionFactory
         return InvalidParamException::create('Param fields cannot be empty');
     }
     
+    public static function paramFieldIsInvalid(): JackdawException
+    {
+        return InvalidParamException::create('Param field must be a non empty string or integer');
+    }
+    
     public static function paramFieldsIsInvalid(): JackdawException
     {
-        return InvalidParamException::create('Each element of array fields have to be a non empty string or integer');
+        return InvalidParamException::create('Each element of array fields must be a non empty string or integer');
     }
     
     public static function compareAssocIsNotImplemented(): JackdawException

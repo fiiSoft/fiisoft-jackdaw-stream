@@ -102,6 +102,30 @@ final class By
     }
     
     /**
+     * @param string|int $filter
+     */
+    public static function field($filter, bool $reversed = false): Sorting
+    {
+        return self::value(Comparators::field($filter), $reversed);
+    }
+    
+    /**
+     * @param string|int $filter
+     */
+    public static function fieldAsc($filter): Sorting
+    {
+        return self::field($filter);
+    }
+    
+    /**
+     * @param string|int $filter
+     */
+    public static function fieldDesc($filter): Sorting
+    {
+        return self::field($filter, true);
+    }
+    
+    /**
      * @param array<string|int> $fields
      */
     public static function fields(array $fields, bool $reversed = false): Sorting

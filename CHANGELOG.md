@@ -1,5 +1,10 @@
 # Changelog
 
+## 14.3.0
+
+- added By::field(), By::fieldAsc(), By::fieldDesc()
+- added Comparators::field()
+
 ## 14.2.0
 
 - added Reducers::largest() and Reducers::smallest()

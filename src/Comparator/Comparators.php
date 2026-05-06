@@ -5,7 +5,8 @@ namespace FiiSoft\Jackdaw\Comparator;
 use FiiSoft\Jackdaw\Comparator\Adapter\DiscriminatorAdapter;
 use FiiSoft\Jackdaw\Comparator\Adapter\FilterAdapter;
 use FiiSoft\Jackdaw\Comparator\Basic\DefaultComparator;
-use FiiSoft\Jackdaw\Comparator\Basic\FieldsComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\Field\MultiFieldsComparator;
+use FiiSoft\Jackdaw\Comparator\Basic\Field\SingleFieldComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\GenericComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\LengthComparator;
 use FiiSoft\Jackdaw\Comparator\Basic\MultiComparator;
@@ -68,11 +69,19 @@ final class Comparators
     }
     
     /**
+     * @param string|int $field
+     */
+    public static function field($field): Comparator
+    {
+        return SingleFieldComparator::create($field);
+    }
+    
+    /**
      * @param array<string|int> $fields
      */
     public static function fields(array $fields): Comparator
     {
-        return new FieldsComparator($fields);
+        return \count($fields) === 1 ? self::field(\reset($fields)) : new MultiFieldsComparator($fields);
     }
     
     /**

@@ -3,6 +3,7 @@
 namespace FiiSoft\Test\Jackdaw;
 
 use FiiSoft\Jackdaw\Collector\Collectors;
+use FiiSoft\Jackdaw\Comparator\Comparators;
 use FiiSoft\Jackdaw\Comparator\Sorting\By;
 use FiiSoft\Jackdaw\Discriminator\Discriminators;
 use FiiSoft\Jackdaw\Exception\StreamExceptionFactory;
@@ -23,6 +24,14 @@ use PHPUnit\Framework\TestCase;
 
 final class StreamHTest extends TestCase
 {
+    private const ROWSET = [
+        ['id' => 2, 'name' => 'Sue', 'age' => 22],
+        ['id' => 9, 'name' => 'Chris', 'age' => 17],
+        ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+        ['id' => 5, 'name' => 'Chris', 'age' => 24],
+        ['id' => 7, 'name' => 'Sue', 'age' => 18],
+    ];
+    
     public function test_mapper_skip_keep_keys(): void
     {
         $result = Stream::from(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'])
@@ -1318,5 +1327,78 @@ final class StreamHTest extends TestCase
             $expected,
             Stream::from($values)->flip()->categorizeByKey()->collect()->transform(Reducers::smallest())->get()
         );
+    }
+    
+    public function test_unique_with_various_types_of_elements(): void
+    {
+        self::assertSame(
+            [5, '5', '5.0', 5.0, '5.00', '5.000'],
+            Stream::from([5, '5', '5.0', 5.0, 5, '5', '5.0', 5.0, 5, '5.00', 5.000, '5.000'])->unique()->toArray()
+        );
+    }
+    
+    public function test_unique_by_field_in_different_ways(): void
+    {
+        $expected = [
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+        ];
+        
+        self::assertSame($expected, Stream::from(self::ROWSET)->unique(Discriminators::byField('name'))->toArray());
+        self::assertSame($expected, Stream::from(self::ROWSET)->unique(Comparators::field('name'))->toArray());
+        self::assertSame($expected, Stream::from(self::ROWSET)->unique(By::field('name'))->toArray());
+    }
+    
+    public function test_sort_by_single_field_asc_in_different_ways(): void
+    {
+        $expected = [
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+        ];
+        
+        self::assertSame($expected, Stream::from(self::ROWSET)->sortBy('age')->toArray());
+        self::assertSame($expected, Stream::from(self::ROWSET)->sortBy('age asc')->toArray());
+        self::assertSame($expected, Stream::from(self::ROWSET)->sort(By::field('age'))->toArray());
+        self::assertSame($expected, Stream::from(self::ROWSET)->sort(By::field('age asc'))->toArray());
+        self::assertSame($expected, Stream::from(self::ROWSET)->sort(By::fieldAsc('age'))->toArray());
+    }
+    
+    public function test_sort_by_single_field_desc_in_different_ways(): void
+    {
+        $expected = [
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+        ];
+        
+        self::assertSame($expected, Stream::from(self::ROWSET)->sortBy('age desc')->toArray());
+        self::assertSame($expected, Stream::from(self::ROWSET)->sortBy('age')->reverse()->toArray());
+        self::assertSame($expected, Stream::from(self::ROWSET)->sort(By::field('age desc'))->toArray());
+        self::assertSame($expected, Stream::from(self::ROWSET)->sort(By::fieldDesc('age'))->toArray());
+        self::assertSame($expected, Stream::from(self::ROWSET)->sort(By::field('age', true))->toArray());
+    }
+    
+    public function test_sort_by_many_fields(): void
+    {
+        $rowset = self::ROWSET;
+        $rowset[] = ['id' => 3, 'name' => 'Chris', 'age' => 17];
+        
+        $expected = [
+            ['id' => 6, 'name' => 'Joanna', 'age' => 15],
+            ['id' => 9, 'name' => 'Chris', 'age' => 17],
+            ['id' => 3, 'name' => 'Chris', 'age' => 17],
+            ['id' => 7, 'name' => 'Sue', 'age' => 18],
+            ['id' => 2, 'name' => 'Sue', 'age' => 22],
+            ['id' => 5, 'name' => 'Chris', 'age' => 24],
+        ];
+        
+        self::assertSame($expected, Stream::from($rowset)->sortBy('age', 'name')->toArray());
+        self::assertSame($expected, Stream::from($rowset)->sort(By::fields(['age', 'name']))->toArray());
     }
 }
